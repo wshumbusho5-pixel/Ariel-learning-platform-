@@ -2,6 +2,7 @@ from typing import List, Dict, Optional
 from app.core.config import settings
 import openai
 from anthropic import Anthropic
+import ollama
 
 class AIService:
     def __init__(self, provider: str = None):
@@ -29,6 +30,8 @@ class AIService:
             return await self._openai_generate(prompt)
         elif self.provider == "anthropic":
             return await self._anthropic_generate(prompt)
+        elif self.provider == "ollama":
+            return await self._ollama_generate(prompt)
         else:
             raise ValueError(f"Unsupported AI provider: {self.provider}")
 
@@ -47,6 +50,8 @@ class AIService:
             result = await self._openai_generate(prompt)
         elif self.provider == "anthropic":
             result = await self._anthropic_generate(prompt)
+        elif self.provider == "ollama":
+            result = await self._ollama_generate(prompt)
         else:
             raise ValueError(f"Unsupported AI provider: {self.provider}")
 
@@ -141,6 +146,25 @@ Questions:
             return json.loads(response.content[0].text)
         except Exception as e:
             raise Exception(f"Anthropic API error: {str(e)}")
+
+    async def _ollama_generate(self, prompt: str) -> Dict:
+        try:
+            response = ollama.chat(
+                model=settings.OLLAMA_MODEL,
+                messages=[
+                    {"role": "system", "content": "You are Ariel, a positive learning assistant. Always respond in valid JSON format."},
+                    {"role": "user", "content": prompt}
+                ],
+                options={
+                    "temperature": 0.3,
+                }
+            )
+
+            import json
+            content = response['message']['content']
+            return json.loads(content)
+        except Exception as e:
+            raise Exception(f"Ollama API error: {str(e)}")
 
     def _parse_batch_response(self, response: Dict, expected_count: int) -> List[Dict[str, str]]:
         """Parse batch response and ensure we have all answers"""
