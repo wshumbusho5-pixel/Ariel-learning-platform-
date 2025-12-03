@@ -5,7 +5,8 @@ class Settings(BaseSettings):
     # AI Provider Settings
     OPENAI_API_KEY: str = ""
     ANTHROPIC_API_KEY: str = ""
-    DEFAULT_AI_PROVIDER: str = "openai"  # openai, anthropic, or ollama
+    DEFAULT_AI_PROVIDER: str = "ollama"  # openai, anthropic, or ollama
+    OLLAMA_MODEL: str = "llama3.2:3b"  # ollama model to use
 
     # Database
     MONGODB_URL: str = "mongodb://localhost:27017"
