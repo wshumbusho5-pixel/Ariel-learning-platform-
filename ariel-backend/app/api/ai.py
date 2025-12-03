@@ -29,8 +29,8 @@ async def get_available_providers():
         },
         {
             "name": "ollama",
-            "available": False,
-            "description": "Open source models - Free but requires local setup"
+            "available": True,
+            "description": "Open source models - Free, runs locally"
         }
     ]
 
