@@ -39,11 +39,38 @@ export default function InputMethods({ onQuestionsLoaded }: InputMethodsProps) {
   const handleBulkSubmit = async () => {
     if (!bulkText) return;
 
-    // Split by newlines or numbers (1., 2., etc.)
-    const questions = bulkText
-      .split(/\n+/)
-      .map(q => q.trim().replace(/^\d+[\.)]\s*/, ''))
-      .filter(q => q.length > 5);
+    // Smart question detection (Anthropic-style)
+    const smartSplitQuestions = (text: string): string[] => {
+      const questions: string[] = [];
+
+      // First, split by double newlines (blank lines)
+      const blocks = text.split(/\n\s*\n/);
+
+      for (let block of blocks) {
+        block = block.trim();
+        if (!block) continue;
+
+        // Check if block has numbered list items (1., 2., Q1:, etc.)
+        const numberedPattern = /^(\d+[\.)]\s*|Q\d+[:.)]\s*)/gm;
+        const hasNumbers = numberedPattern.test(block);
+
+        if (hasNumbers) {
+          // Split by numbered items
+          const items = block.split(/(?=\d+[\.)]\s*|Q\d+[:.)]\s*)/);
+          for (let item of items) {
+            item = item.trim().replace(/^\d+[\.)]\s*|^Q\d+[:.)]\s*/, '');
+            if (item.length > 5) questions.push(item);
+          }
+        } else {
+          // Treat entire block as one question
+          if (block.length > 5) questions.push(block);
+        }
+      }
+
+      return questions;
+    };
+
+    const questions = smartSplitQuestions(bulkText);
 
     if (questions.length === 0) {
       setError('No valid questions found');
@@ -147,12 +174,12 @@ export default function InputMethods({ onQuestionsLoaded }: InputMethodsProps) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Paste your questions (one per line)
+                  Paste your questions (separate with blank lines or use numbers)
                 </label>
                 <textarea
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
-                  placeholder="1. What is photosynthesis?&#10;2. Name the capital of France&#10;3. What is 2 + 2?"
+                  placeholder="Example 1 - Numbered list:&#10;1. What is photosynthesis?&#10;2. What is the water cycle?&#10;&#10;Example 2 - Blank line separation:&#10;What is gravity and how does it work?&#10;&#10;Why is the sky blue?"
                   rows={10}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
                   disabled={loading}

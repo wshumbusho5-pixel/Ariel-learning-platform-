@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { authAPI } from '@/lib/api';
 
 interface AuthModalProps {
@@ -18,12 +18,53 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Clear error when switching modes
+  const switchMode = (newMode: 'login' | 'register') => {
+    setMode(newMode);
+    setError('');
+  };
+
+  // Clear all fields and errors when modal closes
+  const handleClose = () => {
+    setError('');
+    setEmail('');
+    setPassword('');
+    setUsername('');
+    setFullName('');
+    onClose();
+  };
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setError('');
+      setEmail('');
+      setPassword('');
+      setUsername('');
+      setFullName('');
+      setMode('login');
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Frontend validation
+    if (password.length > 72) {
+      setError('Password is too long. Please use a password with less than 72 characters.');
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      setLoading(false);
+      return;
+    }
 
     try {
       let response;
@@ -38,7 +79,15 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       onSuccess(response.user, response.access_token);
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Authentication failed');
+      // Clean up technical error messages
+      let errorMessage = err.response?.data?.detail || 'Authentication failed';
+
+      // Replace technical bcrypt error with user-friendly message
+      if (errorMessage.includes('72 bytes') || errorMessage.includes('truncate')) {
+        errorMessage = 'Password is too long. Please use a shorter password (maximum 72 characters).';
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -59,7 +108,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             {mode === 'login' ? 'Welcome Back' : 'Create Account'}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-600"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +125,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" key={isOpen ? 'open' : 'closed'}>
           {mode === 'register' && (
             <>
               <div>
@@ -113,7 +162,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError(''); // Clear error when user types
+              }}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="you@example.com"
@@ -127,8 +179,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(''); // Clear error when user types
+              }}
               required
+              autoComplete="new-password"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="••••••••"
             />
@@ -185,7 +241,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
           </span>
           <button
-            onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
+            onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
             className="ml-1 text-blue-600 hover:text-blue-700 font-medium"
           >
             {mode === 'login' ? 'Sign up' : 'Sign in'}
