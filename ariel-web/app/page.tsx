@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import InputMethods from '@/components/InputMethods';
 import QuestionCard from '@/components/QuestionCard';
+import QuestionResults from '@/components/QuestionResults';
 import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/lib/useAuth';
 
@@ -20,6 +21,7 @@ export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showResults, setShowResults] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
@@ -30,8 +32,15 @@ export default function Home() {
   const handleQuestionsLoaded = (loadedQuestions: Question[]) => {
     setQuestions(loadedQuestions);
     setCurrentIndex(0);
-    setIsSessionActive(true);
+    setShowResults(true);
+    setIsSessionActive(false);
     setIsComplete(false);
+  };
+
+  const handleStartReview = () => {
+    setShowResults(false);
+    setIsSessionActive(true);
+    setCurrentIndex(0);
   };
 
   const handleNext = () => {
@@ -43,6 +52,7 @@ export default function Home() {
   };
 
   const handleRestart = () => {
+    setShowResults(false);
     setIsSessionActive(false);
     setIsComplete(false);
     setQuestions([]);
@@ -72,7 +82,7 @@ export default function Home() {
               <p className="text-sm text-gray-600 mt-1">Learning forward, always positive</p>
             </div>
             <div className="flex items-center gap-3">
-              {isSessionActive && (
+              {(isSessionActive || showResults) && (
                 <button
                   onClick={handleRestart}
                   className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
@@ -102,7 +112,7 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        {!isSessionActive && !isComplete && (
+        {!isSessionActive && !isComplete && !showResults && (
           <div className="space-y-8">
             {/* Hero Section */}
             <div className="text-center space-y-4 mb-12">
@@ -174,6 +184,21 @@ export default function Home() {
                   Paste a URL, upload a PDF, or type questions. AI extracts and answers everything instantly.
                 </p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Results View - Show questions with Save to Deck */}
+        {showResults && questions.length > 0 && (
+          <div>
+            <QuestionResults questions={questions} />
+            <div className="mt-8 text-center">
+              <button
+                onClick={handleStartReview}
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all transform hover:scale-105 shadow-lg"
+              >
+                Start Review Session →
+              </button>
             </div>
           </div>
         )}

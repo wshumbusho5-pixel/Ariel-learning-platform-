@@ -135,4 +135,84 @@ export const scraperAPI = {
   },
 };
 
+// Cards API (Flashcards with social features)
+export const cardsAPI = {
+  // Create cards
+  createCard: async (cardData: any) => {
+    const response = await api.post('/api/cards/', cardData);
+    return response.data;
+  },
+
+  createCardsBulk: async (cards: any[], subject?: string, topic?: string, tags?: string[]) => {
+    const response = await api.post('/api/cards/bulk', {
+      cards,
+      subject,
+      topic,
+      tags,
+    });
+    return response.data;
+  },
+
+  // Get cards
+  getMyDeck: async (filters?: { subject?: string; topic?: string; tags?: string[]; limit?: number; skip?: number }) => {
+    const params = new URLSearchParams();
+    if (filters?.subject) params.append('subject', filters.subject);
+    if (filters?.topic) params.append('topic', filters.topic);
+    if (filters?.tags) filters.tags.forEach(tag => params.append('tags', tag));
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    if (filters?.skip) params.append('skip', filters.skip.toString());
+
+    const response = await api.get(`/api/cards/my-deck?${params}`);
+    return response.data;
+  },
+
+  getDueCards: async (limit: number = 20) => {
+    const response = await api.get(`/api/cards/due?limit=${limit}`);
+    return response.data;
+  },
+
+  getTrendingCards: async (limit: number = 50) => {
+    const response = await api.get(`/api/cards/trending?limit=${limit}`);
+    return response.data;
+  },
+
+  getCard: async (cardId: string) => {
+    const response = await api.get(`/api/cards/${cardId}`);
+    return response.data;
+  },
+
+  getDeckStats: async () => {
+    const response = await api.get('/api/cards/stats');
+    return response.data;
+  },
+
+  // Update/Delete cards
+  updateCard: async (cardId: string, updateData: any) => {
+    const response = await api.put(`/api/cards/${cardId}`, updateData);
+    return response.data;
+  },
+
+  deleteCard: async (cardId: string) => {
+    const response = await api.delete(`/api/cards/${cardId}`);
+    return response.data;
+  },
+
+  // Review cards
+  reviewCard: async (cardId: string, quality: number) => {
+    const response = await api.post(`/api/cards/${cardId}/review?quality=${quality}`);
+    return response.data;
+  },
+
+  // Social features
+  likeCard: async (cardId: string) => {
+    const response = await api.post(`/api/cards/${cardId}/like`);
+    return response.data;
+  },
+
+  saveCardToDeck: async (cardId: string) => {
+    const response = await api.post(`/api/cards/${cardId}/save`);
+    return response.data;
+  },
+};
+
 export default api;
