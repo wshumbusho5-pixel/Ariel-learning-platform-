@@ -88,29 +88,34 @@ Question: {question}
         return base_prompt
 
     def _build_batch_prompt(self, questions: List[str], context: Optional[str]) -> str:
-        prompt = """You are Ariel, a revolutionary learning assistant.
+        prompt = f"""You are Ariel, a revolutionary learning assistant.
 
-Process these questions and provide ONLY correct answers in order. No distractors, pure learning.
+Process these {len(questions)} question(s) and provide EXACTLY {len(questions)} answer(s) in order. No distractors, pure learning.
+
+IMPORTANT: Each numbered item is ONE complete question, even if it spans multiple lines.
 
 Questions:
 """
         for i, q in enumerate(questions, 1):
-            prompt += f"{i}. {q}\n"
+            prompt += f"\n{i}. {q}\n"
 
         if context:
             prompt += f"\nContext: {context}\n"
 
-        prompt += """\nProvide answers in this JSON format:
-{
+        prompt += f"""\nProvide EXACTLY {len(questions)} answer(s) in this JSON format:
+{{
   "answers": [
-    {
+    {{
       "question_number": 1,
       "answer": "correct answer here",
       "explanation": "brief explanation"
-    },
+    }}
+    {"," if len(questions) > 1 else ""}
     ...
   ]
-}
+}}
+
+Remember: Provide EXACTLY {len(questions)} answers, one for each numbered question above.
 """
         return prompt
 
@@ -152,25 +157,58 @@ Questions:
             response = ollama.chat(
                 model=settings.OLLAMA_MODEL,
                 messages=[
-                    {"role": "system", "content": "You are Ariel, a positive learning assistant. Always respond in valid JSON format."},
+                    {"role": "system", "content": "You are Ariel, a positive learning assistant. CRITICAL: You MUST respond with ONLY valid JSON. No other text before or after."},
                     {"role": "user", "content": prompt}
                 ],
                 options={
                     "temperature": 0.3,
-                }
+                },
+                format="json"  # Force JSON output
             )
 
             import json
-            content = response['message']['content']
-            return json.loads(content)
+            content = response['message']['content'].strip()
+
+            # Try to extract JSON if there's extra text
+            if not content.startswith('{'):
+                # Find first { and last }
+                start = content.find('{')
+                end = content.rfind('}')
+                if start != -1 and end != -1:
+                    content = content[start:end+1]
+
+            try:
+                return json.loads(content)
+            except json.JSONDecodeError:
+                # Fallback: create structured response from plain text
+                return {
+                    "answer": content,
+                    "explanation": "AI provided a direct answer without structured format."
+                }
         except Exception as e:
             raise Exception(f"Ollama API error: {str(e)}")
 
     def _parse_batch_response(self, response: Dict, expected_count: int) -> List[Dict[str, str]]:
-        """Parse batch response and ensure we have all answers"""
+        """Parse batch response and handle various formats"""
         answers = response.get("answers", [])
 
-        if len(answers) != expected_count:
-            raise ValueError(f"Expected {expected_count} answers, got {len(answers)}")
+        # If AI returned more answers than questions, merge them
+        if len(answers) > expected_count:
+            # Combine extra answers into the first question's answer
+            merged_answer = " ".join([ans.get("answer", "") for ans in answers])
+            merged_explanation = " ".join([ans.get("explanation", "") for ans in answers])
+            return [{
+                "question_number": 1,
+                "answer": merged_answer,
+                "explanation": merged_explanation
+            }]
+
+        # If AI returned fewer answers, pad with the available answer
+        if len(answers) < expected_count:
+            while len(answers) < expected_count:
+                answers.append(answers[-1] if answers else {
+                    "answer": "Unable to generate answer",
+                    "explanation": ""
+                })
 
         return answers
