@@ -20,6 +20,13 @@ class UserRepository:
         if existing:
             raise ValueError("User with this email already exists")
 
+        # Validate password length (bcrypt limit is 72 bytes)
+        if len(user_data.password) > 72:
+            raise ValueError("Password is too long. Please use a password with less than 72 characters.")
+
+        if len(user_data.password) < 8:
+            raise ValueError("Password must be at least 8 characters long.")
+
         # Hash password
         hashed_password = AuthService.get_password_hash(user_data.password)
 
