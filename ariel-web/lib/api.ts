@@ -358,4 +358,47 @@ export const socialAPI = {
   },
 };
 
+// Stories API - 24-hour expiring status updates
+export const storiesAPI = {
+  // Create story
+  createStory: async (storyData: any) => {
+    const response = await api.post('/api/stories/', storyData);
+    return response.data;
+  },
+
+  // Get stories
+  getStoryFeed: async () => {
+    const response = await api.get('/api/stories/feed');
+    return response.data;
+  },
+
+  getMyStories: async () => {
+    const response = await api.get('/api/stories/my-stories');
+    return response.data;
+  },
+
+  getStory: async (storyId: string) => {
+    const response = await api.get(`/api/stories/${storyId}`);
+    return response.data;
+  },
+
+  // Mark viewed
+  markStoryViewed: async (storyId: string) => {
+    const response = await api.post(`/api/stories/${storyId}/view`);
+    return response.data;
+  },
+
+  // Delete story
+  deleteStory: async (storyId: string) => {
+    const response = await api.delete(`/api/stories/${storyId}`);
+    return response.data;
+  },
+
+  // Templates
+  getStoryTemplates: async () => {
+    const response = await api.get('/api/stories/templates/list');
+    return response.data;
+  },
+};
+
 export default api;
