@@ -545,4 +545,55 @@ export const commentsAPI = {
   },
 };
 
+// Messages API - Direct messaging
+export const messagesAPI = {
+  // Conversations
+  getConversations: async (includeArchived: boolean = false) => {
+    const params = includeArchived ? '?include_archived=true' : '';
+    const response = await api.get(`/api/messages/conversations${params}`);
+    return response.data;
+  },
+
+  getOrCreateConversation: async (otherUserId: string) => {
+    const response = await api.get(`/api/messages/conversation/${otherUserId}`);
+    return response.data;
+  },
+
+  getUnreadCount: async () => {
+    const response = await api.get('/api/messages/unread-count');
+    return response.data;
+  },
+
+  // Messages
+  getMessages: async (conversationId: string, limit: number = 50, offset: number = 0) => {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    params.append('offset', offset.toString());
+
+    const response = await api.get(`/api/messages/conversation/${conversationId}/messages?${params}`);
+    return response.data;
+  },
+
+  sendMessage: async (conversationId: string, content: string, messageType: string = 'text', sharedDeckId?: string, sharedCardId?: string) => {
+    const response = await api.post(`/api/messages/conversation/${conversationId}/send`, {
+      content,
+      message_type: messageType,
+      shared_deck_id: sharedDeckId,
+      shared_card_id: sharedCardId,
+    });
+    return response.data;
+  },
+
+  deleteMessage: async (messageId: string) => {
+    const response = await api.delete(`/api/messages/message/${messageId}`);
+    return response.data;
+  },
+
+  // Archive
+  toggleArchive: async (conversationId: string) => {
+    const response = await api.post(`/api/messages/conversation/${conversationId}/archive`);
+    return response.data;
+  },
+};
+
 export default api;
