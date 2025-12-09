@@ -187,6 +187,45 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Quick Actions - New Features */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="grid md:grid-cols-3 gap-4">
+            <button
+              onClick={() => router.push('/feed')}
+              className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl hover:shadow-lg transition-all group"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-all">
+                <span className="text-2xl">⚡</span>
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-1">Activity Feed</h4>
+              <p className="text-sm text-gray-600">See what everyone's learning</p>
+            </button>
+
+            <button
+              onClick={() => router.push('/study-rooms')}
+              className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl hover:shadow-lg transition-all group"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-all">
+                <span className="text-2xl">🏠</span>
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-1">Study Rooms</h4>
+              <p className="text-sm text-gray-600">Study together, learn faster</p>
+            </button>
+
+            <button
+              onClick={() => router.push('/challenges')}
+              className="p-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl hover:shadow-lg transition-all group"
+            >
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-all">
+                <span className="text-2xl">🎯</span>
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-1">Weekly Challenges</h4>
+              <p className="text-sm text-gray-600">Compete and earn rewards</p>
+            </button>
+          </div>
+        </div>
+
         {/* Achievements */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Achievements</h3>
