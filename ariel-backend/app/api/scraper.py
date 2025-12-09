@@ -22,7 +22,9 @@ async def scrape_url(request: URLScrapeRequest):
     Student pastes a link to past paper/questions → AI extracts all questions
     """
     try:
+        print(f"Scraping URL: {request.url}")
         result = await scraper_service.scrape_url(str(request.url))
+        print(f"Found {len(result['questions'])} questions")
 
         # Now get answers for all questions
         questions = result["questions"]
@@ -45,6 +47,9 @@ async def scrape_url(request: URLScrapeRequest):
             ]
         }
     except Exception as e:
+        print(f"Scraper error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/upload-pdf")

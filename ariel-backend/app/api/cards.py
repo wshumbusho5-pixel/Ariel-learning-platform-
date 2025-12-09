@@ -5,6 +5,7 @@ from app.models.user import User
 from app.services.card_repository import CardRepository
 from app.services.gamification_service import GamificationService
 from app.services.user_repository import UserRepository
+from app.services.personalized_feed import personalized_feed_service
 from app.api.auth import get_current_user_dependency
 
 router = APIRouter()
@@ -96,6 +97,43 @@ async def get_trending_cards(
     try:
         cards = await CardRepository.get_trending_cards(limit)
         return cards
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/personalized-feed", response_model=List[Card])
+async def get_personalized_feed(
+    limit: int = 50,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user_dependency)
+):
+    """
+    Get personalized feed for user based on their profile.
+
+    Feed Mix Algorithm:
+    - 50% User's enrolled subjects
+    - 20% Based on search/question history
+    - 15% Spaced repetition (due cards)
+    - 10% Trending in user's subjects
+    - 5% Discover (new topics)
+    """
+    try:
+        feed = await personalized_feed_service.get_personalized_feed(
+            user=current_user,
+            limit=limit,
+            offset=offset
+        )
+        return feed
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/feed-insights")
+async def get_feed_insights(
+    current_user: User = Depends(get_current_user_dependency)
+):
+    """Get insights about user's personalized feed composition"""
+    try:
+        insights = await personalized_feed_service.get_feed_insights(current_user)
+        return insights
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
