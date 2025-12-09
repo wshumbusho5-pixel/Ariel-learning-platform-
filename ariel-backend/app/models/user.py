@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
@@ -13,6 +13,12 @@ class UserRole(str, Enum):
     PREMIUM = "premium"
     ADMIN = "admin"
 
+class EducationLevel(str, Enum):
+    HIGH_SCHOOL = "high-school"
+    UNIVERSITY = "university"
+    PROFESSIONAL = "professional"
+    SELF_STUDY = "self-study"
+
 class User(BaseModel):
     id: Optional[str] = None
     email: EmailStr
@@ -23,6 +29,14 @@ class User(BaseModel):
     provider_id: Optional[str] = None  # Google/GitHub user ID
     profile_picture: Optional[str] = None
     role: UserRole = UserRole.USER
+
+    # Education Profile
+    education_level: Optional[EducationLevel] = None
+    year_level: Optional[str] = None
+    subjects: List[str] = []
+    learning_goals: List[str] = []
+    study_preferences: List[str] = []
+    onboarding_completed: bool = False
 
     # Gamification fields
     total_points: int = 0
@@ -75,3 +89,11 @@ class PasswordResetRequest(BaseModel):
 class PasswordReset(BaseModel):
     token: str
     new_password: str
+
+class UserProfileUpdate(BaseModel):
+    education_level: Optional[EducationLevel] = None
+    year_level: Optional[str] = None
+    subjects: Optional[List[str]] = None
+    learning_goals: Optional[List[str]] = None
+    study_preferences: Optional[List[str]] = None
+    onboarding_completed: Optional[bool] = None

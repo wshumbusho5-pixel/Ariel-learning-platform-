@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.models.user import (
-    UserCreate, UserLogin, Token, User, OAuthLoginRequest, AuthProvider
+    UserCreate, UserLogin, Token, User, OAuthLoginRequest, AuthProvider, UserProfileUpdate
 )
 from app.services.user_repository import UserRepository
 from app.services.auth_service import AuthService
@@ -114,6 +114,27 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         )
 
     user = await UserRepository.get_user_by_id(token_data.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user
+
+@router.put("/profile", response_model=User)
+async def update_profile(
+    profile_data: UserProfileUpdate,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Update user profile with education data"""
+    token = credentials.credentials
+    token_data = AuthService.verify_token(token)
+
+    if not token_data or not token_data.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials"
+        )
+
+    user = await UserRepository.update_user_profile(token_data.user_id, profile_data)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 

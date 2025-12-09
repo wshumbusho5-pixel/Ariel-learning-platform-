@@ -1,5 +1,5 @@
 from typing import Optional
-from app.models.user import User, UserCreate, AuthProvider
+from app.models.user import User, UserCreate, AuthProvider, UserProfileUpdate
 from app.services.database_service import db_service
 from app.services.auth_service import AuthService
 from bson import ObjectId
@@ -142,6 +142,12 @@ class UserRepository:
             {"$set": update_data}
         )
         return await UserRepository.get_user_by_id(user_id)
+
+    @staticmethod
+    async def update_user_profile(user_id: str, profile_data: UserProfileUpdate) -> Optional[User]:
+        """Update user education profile"""
+        update_dict = {k: v for k, v in profile_data.dict(exclude_unset=True).items() if v is not None}
+        return await UserRepository.update_user(user_id, update_dict)
 
     @staticmethod
     async def authenticate_user(email: str, password: str) -> Optional[User]:
