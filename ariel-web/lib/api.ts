@@ -441,4 +441,108 @@ export const achievementsAPI = {
   },
 };
 
+// Notifications API - Real-time notifications
+export const notificationsAPI = {
+  // Get notifications
+  getNotifications: async (limit: number = 50, offset: number = 0, unreadOnly: boolean = false, notificationType?: string) => {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    params.append('offset', offset.toString());
+    if (unreadOnly) params.append('unread_only', 'true');
+    if (notificationType) params.append('notification_type', notificationType);
+
+    const response = await api.get(`/api/notifications/?${params}`);
+    return response.data;
+  },
+
+  getSummary: async () => {
+    const response = await api.get('/api/notifications/summary');
+    return response.data;
+  },
+
+  // Mark as read
+  markAsRead: async (notificationId: string) => {
+    const response = await api.post(`/api/notifications/${notificationId}/read`);
+    return response.data;
+  },
+
+  markAllAsRead: async () => {
+    const response = await api.post('/api/notifications/read-all');
+    return response.data;
+  },
+
+  // Delete/Archive
+  deleteNotification: async (notificationId: string) => {
+    const response = await api.delete(`/api/notifications/${notificationId}`);
+    return response.data;
+  },
+
+  clearAll: async () => {
+    const response = await api.post('/api/notifications/clear-all');
+    return response.data;
+  },
+
+  // Preferences
+  getPreferences: async () => {
+    const response = await api.get('/api/notifications/preferences');
+    return response.data;
+  },
+
+  updatePreferences: async (preferences: any) => {
+    const response = await api.put('/api/notifications/preferences', preferences);
+    return response.data;
+  },
+};
+
+// Comments API - Deck discussions
+export const commentsAPI = {
+  // Get comments
+  getDeckComments: async (deckId: string, limit: number = 50, offset: number = 0, parentOnly: boolean = false) => {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    params.append('offset', offset.toString());
+    if (parentOnly) params.append('parent_only', 'true');
+
+    const response = await api.get(`/api/comments/deck/${deckId}?${params}`);
+    return response.data;
+  },
+
+  getCommentReplies: async (commentId: string, limit: number = 50) => {
+    const response = await api.get(`/api/comments/${commentId}/replies?limit=${limit}`);
+    return response.data;
+  },
+
+  getCommentCount: async (deckId: string) => {
+    const response = await api.get(`/api/comments/deck/${deckId}/count`);
+    return response.data;
+  },
+
+  // Create comment
+  createComment: async (deckId: string, content: string, parentCommentId?: string) => {
+    const response = await api.post(`/api/comments/deck/${deckId}`, {
+      content,
+      parent_comment_id: parentCommentId,
+    });
+    return response.data;
+  },
+
+  // Update comment
+  updateComment: async (commentId: string, content: string) => {
+    const response = await api.put(`/api/comments/${commentId}`, { content });
+    return response.data;
+  },
+
+  // Delete comment
+  deleteComment: async (commentId: string) => {
+    const response = await api.delete(`/api/comments/${commentId}`);
+    return response.data;
+  },
+
+  // Like comment
+  toggleLike: async (commentId: string) => {
+    const response = await api.post(`/api/comments/${commentId}/like`);
+    return response.data;
+  },
+};
+
 export default api;

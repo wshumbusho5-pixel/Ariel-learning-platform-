@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import settings
-from app.api import questions, scraper, ai, auth, progress, gamification, admin, cards, ai_generator, social, stories, achievements
+from app.api import questions, scraper, ai, auth, progress, gamification, admin, cards, ai_generator, social, stories, achievements, notifications, comments
 from app.services.database_service import db_service
 
 @asynccontextmanager
@@ -42,6 +42,8 @@ app.include_router(ai_generator.router)
 app.include_router(social.router)
 app.include_router(stories.router)
 app.include_router(achievements.router)
+app.include_router(notifications.router)
+app.include_router(comments.router)
 
 @app.get("/")
 async def root():
