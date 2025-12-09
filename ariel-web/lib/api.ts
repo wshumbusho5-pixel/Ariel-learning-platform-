@@ -401,4 +401,44 @@ export const storiesAPI = {
   },
 };
 
+// Achievements & Streaks API - Gamification system
+export const achievementsAPI = {
+  // Streaks
+  getStreak: async () => {
+    const response = await api.get('/api/achievements/streak');
+    return response.data;
+  },
+
+  recordActivity: async (cardsReviewed: number = 0, timeSpentMinutes: number = 0) => {
+    const response = await api.post('/api/achievements/streak/record-activity', {
+      cards_reviewed: cardsReviewed,
+      time_spent_minutes: timeSpentMinutes,
+    });
+    return response.data;
+  },
+
+  // Achievements
+  getAchievementsList: async (category?: string) => {
+    const params = category ? `?category=${category}` : '';
+    const response = await api.get(`/api/achievements/list${params}`);
+    return response.data;
+  },
+
+  getUnlockedAchievements: async () => {
+    const response = await api.get('/api/achievements/unlocked');
+    return response.data;
+  },
+
+  shareAchievementToStory: async (achievementId: string) => {
+    const response = await api.post(`/api/achievements/share-to-story/${achievementId}`);
+    return response.data;
+  },
+
+  // Leaderboards
+  getStreakLeaderboard: async (limit: number = 50) => {
+    const response = await api.get(`/api/achievements/leaderboard/streaks?limit=${limit}`);
+    return response.data;
+  },
+};
+
 export default api;
