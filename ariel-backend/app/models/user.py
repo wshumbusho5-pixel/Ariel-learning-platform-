@@ -44,9 +44,20 @@ class User(BaseModel):
     longest_streak: int = 0
     level: int = 1
 
+    # Social fields
+    followers: List[str] = []  # List of user IDs following this user
+    following: List[str] = []  # List of user IDs this user follows
+    followers_count: int = 0
+    following_count: int = 0
+    bio: Optional[str] = None
+    is_profile_public: bool = True  # Public profile by default
+    school: Optional[str] = None
+    courses: List[str] = []  # Course codes like "BIO 101"
+
     # Metadata
     is_active: bool = True
     is_verified: bool = False
+    is_teacher: bool = False  # Teacher verification status
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: Optional[datetime] = None
 

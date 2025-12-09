@@ -51,10 +51,17 @@ class ScraperService:
         Use AI to intelligently extract questions from scraped content.
         This is smarter than regex - it understands context.
         """
+        # First try pattern matching (faster and doesn't need API key)
+        pattern_questions = self._extract_questions_pattern(content)
+
+        if len(pattern_questions) > 0:
+            return pattern_questions
+
+        # If pattern matching found nothing, try AI (if API key is available)
         prompt = f"""Analyze this content from a webpage and extract ALL questions.
 
 Content:
-{content[:8000]}  # Limit to avoid token limits
+{content[:8000]}
 
 Instructions:
 1. Identify all questions (numbered, bulleted, or in paragraphs)
@@ -74,11 +81,18 @@ If no questions are found, return {{"questions": []}}
 """
 
         try:
-            response = await self.ai_service._openai_generate(prompt) if hasattr(self.ai_service, '_openai_generate') else {}
-            return response.get("questions", [])
-        except:
-            # Fallback to simple pattern matching if AI fails
-            return self._extract_questions_pattern(content)
+            if hasattr(self.ai_service, '_openai_generate'):
+                response = await self.ai_service._openai_generate(prompt)
+                ai_questions = response.get("questions", [])
+                if len(ai_questions) > 0:
+                    return ai_questions
+        except Exception as e:
+            print(f"AI extraction failed: {str(e)}")
+            pass
+
+        # If everything fails, return empty list with helpful message
+        if len(pattern_questions) == 0:
+            raise Exception("No questions found on this page. The page might not contain educational questions, or they may be in an unrecognized format. Try the 'Bulk Questions' tab to paste questions directly.")
 
     def _extract_questions_pattern(self, content: str) -> List[str]:
         """
@@ -87,21 +101,61 @@ If no questions are found, return {{"questions": []}}
         """
         questions = []
 
-        # Pattern 1: Numbered questions (1. Question? or 1) Question?)
-        numbered_pattern = r'(?:^|\n)\s*(\d+[.)]\s+.+?\?)'
-        numbered_matches = re.findall(numbered_pattern, content, re.MULTILINE)
-        questions.extend(numbered_matches)
+        # Split into lines for easier processing
+        lines = content.split('\n')
 
-        # Pattern 2: Questions ending with ?
-        question_mark_pattern = r'(?:^|\n)([A-Z][^.!?]*\?)'
-        question_matches = re.findall(question_mark_pattern, content, re.MULTILINE)
-        questions.extend(question_matches)
+        for i, line in enumerate(lines):
+            line = line.strip()
+
+            # Skip empty lines or very short lines
+            if len(line) < 10:
+                continue
+
+            # Pattern 1: Numbered questions (1. Question or 1) Question or Q1. Question)
+            if re.match(r'^\s*(?:\d+[.)]|Q\d+[.:])\s+', line):
+                # Get the full question (might span multiple lines)
+                question = line
+                # Check next few lines for continuation
+                j = i + 1
+                while j < len(lines) and j < i + 5:
+                    next_line = lines[j].strip()
+                    if next_line and not re.match(r'^\s*(?:\d+[.)]|Q\d+[.:])\s+', next_line):
+                        question += " " + next_line
+                        j += 1
+                    else:
+                        break
+                questions.append(question)
+
+            # Pattern 2: Lines ending with question mark
+            elif line.endswith('?'):
+                questions.append(line)
+
+            # Pattern 3: Lines starting with question words
+            elif re.match(r'^(What|When|Where|Who|Why|How|Which|Can|Does|Is|Are|Do|Will|Would|Should|Could)\s+', line, re.IGNORECASE):
+                # Likely a question even without ?
+                question = line
+                # Check if next line continues it
+                if i + 1 < len(lines):
+                    next_line = lines[i + 1].strip()
+                    if next_line and not re.match(r'^\s*(?:\d+[.)]|Q\d+[.:])', next_line):
+                        question += " " + next_line
+                questions.append(question)
 
         # Clean up and deduplicate
-        questions = [q.strip() for q in questions if len(q.strip()) > 10]
+        questions = [q.strip() for q in questions if len(q.strip()) > 15]
         questions = list(dict.fromkeys(questions))  # Remove duplicates while preserving order
 
-        return questions[:50]  # Limit to 50 questions max
+        # Filter out non-questions (like headers, navigation)
+        filtered_questions = []
+        for q in questions:
+            # Skip if too short or looks like navigation/header
+            if len(q) > 200 or len(q) < 10:
+                continue
+            if any(word in q.lower() for word in ['login', 'signup', 'copyright', 'privacy', 'cookie', 'menu', 'navigation']):
+                continue
+            filtered_questions.append(q)
+
+        return filtered_questions[:50]  # Limit to 50 questions max
 
     async def extract_from_pdf(self, pdf_content: bytes) -> List[str]:
         """Extract questions from PDF content"""

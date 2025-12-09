@@ -6,6 +6,8 @@ import InputMethods from '@/components/InputMethods';
 import QuestionCard from '@/components/QuestionCard';
 import QuestionResults from '@/components/QuestionResults';
 import AuthModal from '@/components/AuthModal';
+import BottomNav from '@/components/BottomNav';
+import AICardGenerator from '@/components/AICardGenerator';
 import { useAuth } from '@/lib/useAuth';
 
 interface Question {
@@ -60,7 +62,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <main className="min-h-screen gradient-mesh bg-white">
       {/* Header */}
       {/* Auth Modal */}
       <AuthModal
@@ -72,14 +74,14 @@ export default function Home() {
         }}
       />
 
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+      <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-gray-100 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
                 Ariel
               </h1>
-              <p className="text-sm text-gray-600 mt-1">Learning forward, always positive</p>
+              <p className="text-sm text-gray-600 mt-1 font-medium">Learning forward, always positive</p>
             </div>
             <div className="flex items-center gap-3">
               {(isSessionActive || showResults) && (
@@ -93,14 +95,14 @@ export default function Home() {
               {isAuthenticated ? (
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                  className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-full transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   Dashboard
                 </button>
               ) : (
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                  className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-full transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   Sign In
                 </button>
@@ -143,6 +145,13 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            {/* AI Card Generator (for authenticated users) */}
+            {isAuthenticated && (
+              <div className="mb-12">
+                <AICardGenerator />
+              </div>
+            )}
 
             {/* Input Methods */}
             <InputMethods onQuestionsLoaded={handleQuestionsLoaded} />
@@ -241,6 +250,9 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </main>
   );
 }

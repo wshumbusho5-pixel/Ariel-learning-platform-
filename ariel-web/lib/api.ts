@@ -48,6 +48,18 @@ export const authAPI = {
     const response = await api.get('/api/auth/me');
     return response.data;
   },
+
+  updateProfile: async (profileData: {
+    education_level?: string;
+    year_level?: string;
+    subjects?: string[];
+    learning_goals?: string[];
+    study_preferences?: string[];
+    onboarding_completed?: boolean;
+  }) => {
+    const response = await api.put('/api/auth/profile', profileData);
+    return response.data;
+  },
 };
 
 // Progress API
@@ -176,6 +188,16 @@ export const cardsAPI = {
     return response.data;
   },
 
+  getPersonalizedFeed: async (limit: number = 50, offset: number = 0) => {
+    const response = await api.get(`/api/cards/personalized-feed?limit=${limit}&offset=${offset}`);
+    return response.data;
+  },
+
+  getFeedInsights: async () => {
+    const response = await api.get('/api/cards/feed-insights');
+    return response.data;
+  },
+
   getCard: async (cardId: string) => {
     const response = await api.get(`/api/cards/${cardId}`);
     return response.data;
@@ -211,6 +233,127 @@ export const cardsAPI = {
 
   saveCardToDeck: async (cardId: string) => {
     const response = await api.post(`/api/cards/${cardId}/save`);
+    return response.data;
+  },
+};
+
+// AI Card Generator API
+export const aiGeneratorAPI = {
+  generateForSubject: async (subject: string, numCards: number = 10, topic?: string) => {
+    const response = await api.post('/api/ai/generate/subject', {
+      subject,
+      num_cards: numCards,
+      topic,
+    });
+    return response.data;
+  },
+
+  generateDailyCards: async (cardsPerSubject: number = 5) => {
+    const response = await api.post('/api/ai/generate/daily', {
+      cards_per_subject: cardsPerSubject,
+    });
+    return response.data;
+  },
+
+  generateExamPrep: async (subject: string, examDate?: Date, numCards: number = 20) => {
+    const response = await api.post('/api/ai/generate/exam-prep', {
+      subject,
+      exam_date: examDate?.toISOString(),
+      num_cards: numCards,
+    });
+    return response.data;
+  },
+
+  getAvailableSubjects: async () => {
+    const response = await api.get('/api/ai/subjects');
+    return response.data;
+  },
+};
+
+// Social API - Follow/Unfollow, Profiles, Feed
+export const socialAPI = {
+  // Follow/Unfollow
+  followUser: async (userId: string) => {
+    const response = await api.post('/api/social/follow', { user_id: userId });
+    return response.data;
+  },
+
+  unfollowUser: async (userId: string) => {
+    const response = await api.post('/api/social/unfollow', { user_id: userId });
+    return response.data;
+  },
+
+  // User Profiles
+  getUserProfile: async (userId: string) => {
+    const response = await api.get(`/api/social/profile/${userId}`);
+    return response.data;
+  },
+
+  getFollowers: async (userId: string) => {
+    const response = await api.get(`/api/social/followers/${userId}`);
+    return response.data;
+  },
+
+  getFollowing: async (userId: string) => {
+    const response = await api.get(`/api/social/following/${userId}`);
+    return response.data;
+  },
+
+  // Discovery
+  getSuggestedUsers: async (limit: number = 20) => {
+    const response = await api.get(`/api/social/suggested-users?limit=${limit}`);
+    return response.data;
+  },
+
+  searchUsers: async (query: string, limit: number = 20) => {
+    const response = await api.get(`/api/social/search-users?query=${query}&limit=${limit}`);
+    return response.data;
+  },
+
+  // Deck Posting
+  createDeck: async (deckData: any) => {
+    const response = await api.post('/api/social/decks', deckData);
+    return response.data;
+  },
+
+  updateDeck: async (deckId: string, deckData: any) => {
+    const response = await api.put(`/api/social/decks/${deckId}`, deckData);
+    return response.data;
+  },
+
+  getDeck: async (deckId: string) => {
+    const response = await api.get(`/api/social/decks/${deckId}`);
+    return response.data;
+  },
+
+  deleteDeck: async (deckId: string) => {
+    const response = await api.delete(`/api/social/decks/${deckId}`);
+    return response.data;
+  },
+
+  likeDeck: async (deckId: string) => {
+    const response = await api.post(`/api/social/decks/${deckId}/like`);
+    return response.data;
+  },
+
+  saveDeck: async (deckId: string) => {
+    const response = await api.post(`/api/social/decks/${deckId}/save`);
+    return response.data;
+  },
+
+  // Personalized Feed
+  getPersonalizedFeed: async (limit: number = 50, offset: number = 0) => {
+    const response = await api.get(`/api/social/feed?limit=${limit}&offset=${offset}`);
+    return response.data;
+  },
+
+  getFeedInsights: async () => {
+    const response = await api.get('/api/social/feed/insights');
+    return response.data;
+  },
+
+  exploreSubjectFeed: async (subject: string, limit: number = 50) => {
+    const response = await api.get(`/api/social/feed/explore/${subject}?limit=${limit}`);
     return response.data;
   },
 };

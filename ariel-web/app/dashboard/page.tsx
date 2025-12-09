@@ -4,13 +4,16 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
 import { progressAPI, gamificationAPI } from '@/lib/api';
+import BottomNav from '@/components/BottomNav';
+import Onboarding from '@/components/Onboarding';
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, checkAuth } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [gamification, setGamification] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -21,8 +24,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (isAuthenticated) {
       loadData();
+      // Check if user needs onboarding
+      if (user && !user.onboarding_completed) {
+        setShowOnboarding(true);
+      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const loadData = async () => {
     try {
@@ -38,6 +45,19 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
+  // Show onboarding if user hasn't completed it
+  if (showOnboarding) {
+    return (
+      <Onboarding
+        onComplete={async () => {
+          setShowOnboarding(false);
+          await checkAuth(); // Refresh user data
+          router.push('/explore'); // Redirect to explore page
+        }}
+      />
+    );
+  }
 
   if (isLoading || loading) {
     return (
@@ -191,6 +211,9 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 }
