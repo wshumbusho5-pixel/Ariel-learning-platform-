@@ -33,6 +33,12 @@ export default function ActivityFeedPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No auth token found');
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch('http://localhost:8003/api/activity/feed?limit=50', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -42,6 +48,8 @@ export default function ActivityFeedPage() {
       if (response.ok) {
         const data = await response.json();
         setActivities(data);
+      } else {
+        console.error('Failed to load activities:', response.status);
       }
     } catch (error) {
       console.error('Failed to load activities:', error);
