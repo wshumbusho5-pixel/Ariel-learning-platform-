@@ -82,28 +82,29 @@ export default function ActivityFeedPage() {
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'cards_reviewed':
-        return '📚';
-      case 'deck_created':
-        return '🎨';
-      case 'study_session':
-        return '⏰';
-      case 'achievement_unlocked':
-        return '🏆';
-      case 'streak_milestone':
-        return '🔥';
-      case 'level_up':
-        return '⭐';
-      case 'new_follower':
-        return '👥';
-      case 'card_liked':
-        return '❤️';
-      case 'card_shared':
-        return '🔗';
-      case 'challenge_completed':
-        return '✅';
-      default:
-        return '📌';
+      case 'cards_reviewed': return '📚';
+      case 'deck_created': return '🎨';
+      case 'study_session': return '⏰';
+      case 'achievement_unlocked': return '🏆';
+      case 'streak_milestone': return '🔥';
+      case 'level_up': return '⭐';
+      case 'new_follower': return '👥';
+      case 'card_liked': return '❤️';
+      case 'card_shared': return '🔗';
+      case 'challenge_completed': return '✅';
+      default: return '📌';
+    }
+  };
+
+  const getActivityGradient = (type: string) => {
+    switch (type) {
+      case 'cards_reviewed': return 'from-blue-500 to-cyan-500';
+      case 'deck_created': return 'from-purple-500 to-pink-500';
+      case 'study_session': return 'from-green-500 to-emerald-500';
+      case 'achievement_unlocked': return 'from-yellow-500 to-orange-500';
+      case 'streak_milestone': return 'from-orange-500 to-red-500';
+      case 'level_up': return 'from-purple-600 to-blue-600';
+      default: return 'from-gray-500 to-gray-600';
     }
   };
 
@@ -152,56 +153,64 @@ export default function ActivityFeedPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen gradient-mesh flex items-center justify-center">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-full border-4 border-transparent bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 animate-spin" style={{
-            WebkitMaskImage: 'linear-gradient(transparent 50%, black 50%)',
-            maskImage: 'linear-gradient(transparent 50%, black 50%)'
-          }}></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-full blur-xl opacity-50 animate-pulse-slow"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="relative w-24 h-24 mx-auto">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 animate-spin" style={{ clipPath: 'inset(0 50% 0 0)' }}></div>
+            <div className="absolute inset-2 rounded-full bg-white"></div>
+          </div>
+          <p className="text-lg font-semibold text-gray-700 animate-pulse">Loading feed...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen gradient-mesh pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 pb-24">
+      {/* Animated background blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
+        <div className="absolute top-40 right-10 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-20 left-1/2 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
+      </div>
+
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center shadow-lg">
-              <span className="text-2xl">⚡</span>
+      <div className="sticky top-0 z-40 backdrop-blur-2xl bg-white/80 border-b border-gray-200/50">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          <div className="flex items-center gap-4 animate-reveal">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center shadow-xl">
+              <span className="text-3xl">⚡</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-transparent bg-clip-text">
+              <h1 className="text-3xl font-bold gradient-text">
                 Activity Feed
               </h1>
-              <p className="text-sm text-gray-600">See what everyone's learning</p>
+              <p className="text-sm text-gray-600 font-semibold">See what everyone's learning</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Activities */}
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
+      <div className="relative max-w-4xl mx-auto px-6 py-8 space-y-4">
         {activities.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-32 h-32 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl animate-float">
+          <div className="text-center py-20 animate-reveal">
+            <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 flex items-center justify-center mx-auto mb-8 shadow-2xl animate-float">
               <span className="text-6xl">📱</span>
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-4">No activity yet</h3>
             <p className="text-gray-600">Start following people to see their activities!</p>
           </div>
         ) : (
-          activities.map((activity) => (
+          activities.map((activity, idx) => (
             <div
               key={activity.id}
-              className="glass rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 animate-slideUp"
+              className="neu-card p-6 hover-glow transition-all animate-reveal"
+              style={{animationDelay: `${idx * 0.05}s`}}
             >
               <div className="flex items-start gap-4">
                 {/* Profile Picture */}
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${getActivityGradient(activity.activity_type)} flex items-center justify-center shadow-xl flex-shrink-0`}>
                   {activity.profile_picture ? (
                     <img
                       src={activity.profile_picture}
@@ -209,7 +218,7 @@ export default function ActivityFeedPage() {
                       className="w-full h-full rounded-2xl object-cover"
                     />
                   ) : (
-                    <span className="text-white font-bold text-lg">
+                    <span className="text-white font-bold text-xl">
                       {activity.username[0].toUpperCase()}
                     </span>
                   )}
@@ -217,25 +226,31 @@ export default function ActivityFeedPage() {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-gray-900">{activity.username}</span>
-                    <span className="text-2xl">{getActivityIcon(activity.activity_type)}</span>
-                    <span className="text-gray-600">{getActivityText(activity)}</span>
+                  <div className="flex items-start gap-3 mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-gray-900 text-lg">{activity.username}</span>
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getActivityGradient(activity.activity_type)} flex items-center justify-center shadow-lg`}>
+                          <span className="text-xl">{getActivityIcon(activity.activity_type)}</span>
+                        </div>
+                        <span className="text-gray-700">{getActivityText(activity)}</span>
+                      </div>
+                      <p className="text-sm text-gray-500 font-semibold mt-1">{formatTimestamp(activity.created_at)}</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-500">{formatTimestamp(activity.created_at)}</p>
                 </div>
 
                 {/* Like Button */}
                 <button
                   onClick={() => handleLike(activity.id)}
-                  className="flex flex-col items-center gap-1 group"
+                  className="flex flex-col items-center gap-1 group magnetic-btn"
                 >
-                  <div className="w-10 h-10 rounded-full glass flex items-center justify-center group-hover:scale-110 transition-all">
+                  <div className="w-12 h-12 rounded-full glass-card flex items-center justify-center group-hover:scale-110 transition-all hover-glow">
                     <svg
-                      className="w-5 h-5 text-gray-700 group-hover:text-red-500"
+                      className="w-6 h-6 text-gray-700 group-hover:text-red-500"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       viewBox="0 0 24 24"
                     >
                       <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -249,10 +264,7 @@ export default function ActivityFeedPage() {
         )}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
-        <BottomNav />
-      </div>
+      <BottomNav />
     </div>
   );
 }
