@@ -9,12 +9,12 @@ export default function BottomNav() {
   const navItems = [
     {
       name: 'Home',
-      path: '/',
+      path: '/dashboard',
       icon: (active: boolean) => (
         <svg
-          className={`w-7 h-7 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
+          className={`w-6 h-6 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
           viewBox="0 0 24 24"
-          strokeWidth={active ? 0 : 2}
+          strokeWidth={active ? 0 : 2.5}
         >
           <path
             strokeLinecap="round"
@@ -29,9 +29,9 @@ export default function BottomNav() {
       path: '/explore',
       icon: (active: boolean) => (
         <svg
-          className={`w-7 h-7 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
+          className={`w-6 h-6 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
           viewBox="0 0 24 24"
-          strokeWidth={active ? 0 : 2}
+          strokeWidth={active ? 0 : 2.5}
         >
           <path
             strokeLinecap="round"
@@ -46,44 +46,40 @@ export default function BottomNav() {
       path: '/review',
       icon: (active: boolean) => (
         <svg
-          className={`w-7 h-7 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
+          className="w-7 h-7"
+          fill="white"
           viewBox="0 0 24 24"
-          strokeWidth={active ? 0 : 2}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-          />
+          <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
         </svg>
       ),
       special: true,
     },
     {
-      name: 'Deck',
-      path: '/deck',
+      name: 'Feed',
+      path: '/feed',
       icon: (active: boolean) => (
         <svg
-          className={`w-7 h-7 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
+          className={`w-6 h-6 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
           viewBox="0 0 24 24"
-          strokeWidth={active ? 0 : 2}
+          strokeWidth={active ? 0 : 2.5}
         >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            d="M13 10V3L4 14h7v7l9-11h-7z"
           />
         </svg>
       ),
     },
     {
-      name: 'Profile',
-      path: '/dashboard',
+      name: 'You',
+      path: '/profile',
       icon: (active: boolean) => (
         <svg
-          className={`w-7 h-7 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
+          className={`w-6 h-6 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
           viewBox="0 0 24 24"
-          strokeWidth={active ? 0 : 2}
+          strokeWidth={active ? 0 : 2.5}
         >
           <path
             strokeLinecap="round"
@@ -96,25 +92,35 @@ export default function BottomNav() {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 safe-area-bottom">
-      <div className="max-w-screen-xl mx-auto px-2">
-        <div className="flex items-center justify-around h-16">
+    <div className="fixed bottom-0 left-0 right-0 z-50 safe-area-bottom">
+      {/* Backdrop blur effect */}
+      <div className="absolute inset-0 bg-white/80 backdrop-blur-2xl border-t border-gray-200/50"></div>
+
+      <div className="relative max-w-screen-xl mx-auto px-2">
+        <div className="flex items-center justify-around h-20">
           {navItems.map((item) => {
-            const isActive = pathname === item.path;
+            const isActive = pathname === item.path || (item.path !== '/dashboard' && pathname?.startsWith(item.path));
 
             if (item.special) {
-              // Special center button (like Instagram's post button)
               return (
                 <button
                   key={item.name}
                   onClick={() => router.push(item.path)}
-                  className="flex flex-col items-center justify-center group -mt-6"
+                  className="flex flex-col items-center justify-center group -mt-8 magnetic-btn"
                 >
-                  <div className="w-14 h-14 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105">
-                    {item.icon(true)}
-                    <span className="text-white">
+                  <div className="relative">
+                    {/* Outer glow ring */}
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 blur-xl opacity-60 group-hover:opacity-100 transition-opacity"></div>
+
+                    {/* Main button */}
+                    <div className="relative w-16 h-16 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-all">
                       {item.icon(true)}
-                    </span>
+                    </div>
+
+                    {/* Active indicator dot */}
+                    {isActive && (
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-lg"></div>
+                    )}
                   </div>
                 </button>
               );
@@ -124,20 +130,37 @@ export default function BottomNav() {
               <button
                 key={item.name}
                 onClick={() => router.push(item.path)}
-                className={`flex flex-col items-center justify-center py-2 px-3 min-w-[60px] group ${
-                  isActive ? 'text-blue-600' : 'text-gray-600'
+                className={`flex flex-col items-center justify-center py-2 px-3 min-w-[68px] group transition-all ${
+                  isActive ? 'text-purple-600' : 'text-gray-500'
                 }`}
               >
-                <div className={`transition-all ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}>
-                  {item.icon(isActive)}
+                <div className={`relative transition-all ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}>
+                  {/* Icon background glow when active */}
+                  {isActive && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur-lg opacity-30"></div>
+                  )}
+
+                  {/* Icon container */}
+                  <div className={`relative ${isActive ? 'p-2' : ''}`}>
+                    {item.icon(isActive)}
+                  </div>
                 </div>
+
+                {/* Label */}
                 <span
-                  className={`text-xs mt-1 font-medium ${
-                    isActive ? 'text-blue-600' : 'text-gray-600 group-hover:text-gray-900'
+                  className={`text-xs mt-1 font-semibold transition-all ${
+                    isActive
+                      ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600'
+                      : 'text-gray-500 group-hover:text-gray-700'
                   }`}
                 >
                   {item.name}
                 </span>
+
+                {/* Active indicator */}
+                {isActive && (
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-t-full"></div>
+                )}
               </button>
             );
           })}
