@@ -60,13 +60,13 @@ export default function Dashboard() {
 
   if (isLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="relative w-24 h-24 mx-auto">
+          <div className="relative w-32 h-32 mx-auto">
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 animate-spin" style={{ clipPath: 'inset(0 50% 0 0)' }}></div>
-            <div className="absolute inset-2 rounded-full bg-white"></div>
+            <div className="absolute inset-2 rounded-full bg-black"></div>
           </div>
-          <p className="text-lg font-semibold text-gray-700 animate-pulse">Loading your universe...</p>
+          <p className="text-xl font-bold text-white animate-pulse">Loading your vibe...</p>
         </div>
       </div>
     );
@@ -75,220 +75,288 @@ export default function Dashboard() {
   const streakDays = stats?.current_streak || 0;
   const level = gamification?.level_info?.current_level || 1;
   const progress = gamification?.level_info?.progress_percentage || 0;
+  const cardsDue = stats?.cards_due_today || 0;
+  const accuracy = stats?.retention_rate || 0;
+  const mastered = stats?.cards_mastered || 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 pb-24">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 opacity-10"></div>
-        <div className="absolute top-0 left-0 w-full h-full">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
-          <div className="absolute top-20 right-10 w-72 h-72 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '1s'}}></div>
-          <div className="absolute bottom-10 left-1/2 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
-        </div>
+    <div className="min-h-screen bg-black relative overflow-hidden pb-24">
+      {/* Premium gradient background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-purple-900/20 via-black to-blue-900/20"></div>
 
-        <div className="relative max-w-7xl mx-auto px-6 py-12">
-          <div className="flex items-center justify-between mb-8 animate-reveal">
+      {/* Animated orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-float"></div>
+        <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-pink-600 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
+        <div className="absolute bottom-1/4 left-1/2 w-96 h-96 bg-blue-600 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-float" style={{animationDelay: '4s'}}></div>
+      </div>
+
+      {/* Main content */}
+      <div className="relative max-w-7xl mx-auto px-6 py-8">
+        {/* Instagram-style profile header */}
+        <div className="flex items-center justify-between mb-8 animate-reveal">
+          <div className="flex items-center gap-4">
+            {/* Story-style profile ring */}
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-purple-600 via-pink-600 to-orange-500 p-0.5 animate-pulse">
+                <div className="w-full h-full rounded-full bg-black"></div>
+              </div>
+              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 p-1">
+                <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
+                  <span className="text-3xl font-bold gradient-text">
+                    {user?.username?.[0]?.toUpperCase() || 'U'}
+                  </span>
+                </div>
+              </div>
+              {/* Level badge */}
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center text-xs font-bold text-white shadow-lg">
+                {level}
+              </div>
+            </div>
+
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-2">
-                <span className="gradient-text">Hey {user?.full_name?.split(' ')[0] || user?.username}!</span>
+              <h1 className="text-2xl font-bold text-white mb-1">
+                {user?.full_name || user?.username}
               </h1>
-              <p className="text-gray-600 text-lg">Ready to level up today?</p>
+              <p className="text-gray-400 text-sm">Level {level} Scholar 🎓</p>
             </div>
-            <button
-              onClick={() => router.push('/review')}
-              className="magnetic-btn px-8 py-4 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white rounded-2xl font-bold shadow-xl hover-glow"
-            >
-              ⚡ Start Session
-            </button>
           </div>
 
-          {/* Level Card */}
-          <div className="glass-card p-8 rounded-3xl mb-6 animate-reveal" style={{animationDelay: '0.1s'}}>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-xl">
-                  <span className="text-4xl">🚀</span>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-3xl font-bold text-gray-900">Level {level}</h2>
-                    <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold rounded-full">PRO</span>
+          <button
+            onClick={() => router.push('/review')}
+            className="magnetic-btn px-6 py-3 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-bold rounded-full shadow-2xl hover-glow flex items-center gap-2"
+          >
+            <span>⚡</span>
+            <span>Study Now</span>
+          </button>
+        </div>
+
+        {/* Story-style streak counter */}
+        <div className="mb-8 animate-reveal" style={{animationDelay: '0.1s'}}>
+          <div className="flex items-center gap-3 overflow-x-auto pb-4 scrollbar-hide">
+            {/* Current streak */}
+            <div className="flex-shrink-0">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-r from-orange-500 to-red-500 p-1">
+                  <div className="w-full h-full rounded-full bg-black flex flex-col items-center justify-center">
+                    <span className="text-2xl">🔥</span>
+                    <span className="text-xs font-bold text-white">{streakDays}</span>
                   </div>
-                  <p className="text-gray-600 text-sm mt-1">{gamification?.level_info?.total_points || 0} total XP</p>
+                </div>
+                <p className="text-center text-xs text-gray-400 mt-2">Streak</p>
+              </div>
+            </div>
+
+            {/* Cards due */}
+            <div className="flex-shrink-0">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 p-1">
+                <div className="w-full h-full rounded-full bg-black flex flex-col items-center justify-center">
+                  <span className="text-2xl">📚</span>
+                  <span className="text-xs font-bold text-white">{cardsDue}</span>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600 mb-1">Next Level</p>
-                <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">
-                  {gamification?.level_info?.points_to_next_level || 0} XP
-                </p>
-              </div>
+              <p className="text-center text-xs text-gray-400 mt-2">Due</p>
             </div>
-            <div className="relative w-full h-4 bg-gray-200 rounded-full overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${progress}%` }}></div>
-              <div className="absolute inset-0 bg-white/30 animate-shimmer"></div>
-            </div>
-            <p className="text-center text-sm text-gray-600 mt-2 font-semibold">{progress}% to next level</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="max-w-7xl mx-auto px-6 mb-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="neu-card p-6 hover-glow animate-reveal" style={{animationDelay: '0.2s'}}>
-            <div className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-3 shadow-lg">
-                <span className="text-3xl">📚</span>
+            {/* Accuracy */}
+            <div className="flex-shrink-0">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 p-1">
+                <div className="w-full h-full rounded-full bg-black flex flex-col items-center justify-center">
+                  <span className="text-2xl">🎯</span>
+                  <span className="text-xs font-bold text-white">{accuracy}%</span>
+                </div>
               </div>
-              <p className="text-sm text-gray-600 mb-1">Cards Due</p>
-              <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 text-transparent bg-clip-text">{stats?.cards_due_today || 0}</p>
+              <p className="text-center text-xs text-gray-400 mt-2">Accuracy</p>
             </div>
-          </div>
 
-          <div className="neu-card p-6 hover-glow animate-reveal" style={{animationDelay: '0.3s'}}>
-            <div className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center mb-3 shadow-lg">
-                <span className="text-3xl">🔥</span>
+            {/* Mastered */}
+            <div className="flex-shrink-0">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 p-1">
+                <div className="w-full h-full rounded-full bg-black flex flex-col items-center justify-center">
+                  <span className="text-2xl">⭐</span>
+                  <span className="text-xs font-bold text-white">{mastered}</span>
+                </div>
               </div>
-              <p className="text-sm text-gray-600 mb-1">Streak</p>
-              <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 text-transparent bg-clip-text">{streakDays}</p>
-            </div>
-          </div>
-
-          <div className="neu-card p-6 hover-glow animate-reveal" style={{animationDelay: '0.4s'}}>
-            <div className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mb-3 shadow-lg">
-                <span className="text-3xl">🎯</span>
-              </div>
-              <p className="text-sm text-gray-600 mb-1">Accuracy</p>
-              <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 text-transparent bg-clip-text">{stats?.retention_rate || 0}%</p>
-            </div>
-          </div>
-
-          <div className="neu-card p-6 hover-glow animate-reveal" style={{animationDelay: '0.5s'}}>
-            <div className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-3 shadow-lg">
-                <span className="text-3xl">⭐</span>
-              </div>
-              <p className="text-sm text-gray-600 mb-1">Mastered</p>
-              <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-transparent bg-clip-text">{stats?.cards_mastered || 0}</p>
+              <p className="text-center text-xs text-gray-400 mt-2">Mastered</p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="max-w-7xl mx-auto px-6 mb-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2 animate-reveal" style={{animationDelay: '0.6s'}}>
-          <span className="text-3xl">⚡</span> Quick Actions
-        </h3>
-        <div className="grid md:grid-cols-3 gap-6">
+        {/* Bento Grid Layout - Instagram style */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {/* Large featured card - Level progress */}
+          <div className="md:col-span-2 glass-card rounded-3xl p-8 hover-glow transition-all animate-reveal" style={{animationDelay: '0.2s'}}>
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h3 className="text-3xl font-bold text-white mb-2">Level {level}</h3>
+                <p className="text-gray-400">Keep grinding! 💪</p>
+              </div>
+              <div className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-sm font-bold text-white shadow-xl">
+                PRO
+              </div>
+            </div>
+
+            {/* Circular progress ring */}
+            <div className="flex items-center justify-between">
+              <div className="relative w-32 h-32">
+                <svg className="transform -rotate-90 w-32 h-32">
+                  <circle
+                    cx="64"
+                    cy="64"
+                    r="56"
+                    stroke="rgba(255,255,255,0.1)"
+                    strokeWidth="12"
+                    fill="none"
+                  />
+                  <circle
+                    cx="64"
+                    cy="64"
+                    r="56"
+                    stroke="url(#gradient)"
+                    strokeWidth="12"
+                    fill="none"
+                    strokeDasharray={`${2 * Math.PI * 56}`}
+                    strokeDashoffset={`${2 * Math.PI * 56 * (1 - progress / 100)}`}
+                    className="transition-all duration-1000"
+                    strokeLinecap="round"
+                  />
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#9333EA" />
+                      <stop offset="50%" stopColor="#DB2777" />
+                      <stop offset="100%" stopColor="#3B82F6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-white">{progress}%</span>
+                </div>
+              </div>
+
+              <div className="flex-1 ml-8">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 text-sm">Total XP</span>
+                    <span className="text-white font-bold">{gamification?.level_info?.total_points || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400 text-sm">To next level</span>
+                    <span className="text-white font-bold">{gamification?.level_info?.points_to_next_level || 0} XP</span>
+                  </div>
+                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-full transition-all duration-1000"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Today's goal */}
+          <div className="glass-card rounded-3xl p-6 hover-glow transition-all animate-reveal" style={{animationDelay: '0.3s'}}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                <span className="text-2xl">🎯</span>
+              </div>
+              <div>
+                <h4 className="text-white font-bold">Daily Goal</h4>
+                <p className="text-gray-400 text-xs">You're crushing it!</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 text-sm">Progress</span>
+                <span className="text-white font-bold">{gamification?.daily_goal?.percentage || 0}%</span>
+              </div>
+              <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all duration-1000"
+                  style={{ width: `${gamification?.daily_goal?.percentage || 0}%` }}
+                ></div>
+              </div>
+              <p className="text-gray-400 text-sm">
+                {gamification?.daily_goal?.cards_reviewed || 0} / {gamification?.daily_goal?.daily_goal || 20} cards
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions - Bento style */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <button
             onClick={() => router.push('/feed')}
-            className="group neu-card p-8 hover-glow text-left transition-all animate-reveal"
-            style={{animationDelay: '0.7s'}}
+            className="group glass-card rounded-3xl p-6 hover-glow transition-all text-left animate-reveal"
+            style={{animationDelay: '0.4s'}}
           >
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 flex items-center justify-center mb-4 shadow-xl group-hover:scale-110 transition-transform">
-              <span className="text-4xl">⚡</span>
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <span className="text-3xl">⚡</span>
             </div>
-            <h4 className="text-xl font-bold text-gray-900 mb-2">Activity Feed</h4>
-            <p className="text-gray-600">See what your friends are learning</p>
+            <h4 className="text-xl font-bold text-white mb-2">Activity Feed</h4>
+            <p className="text-gray-400 text-sm">See what's poppin'</p>
           </button>
 
           <button
             onClick={() => router.push('/study-rooms')}
-            className="group neu-card p-8 hover-glow text-left transition-all animate-reveal"
-            style={{animationDelay: '0.8s'}}
+            className="group glass-card rounded-3xl p-6 hover-glow transition-all text-left animate-reveal"
+            style={{animationDelay: '0.5s'}}
           >
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center mb-4 shadow-xl group-hover:scale-110 transition-transform">
-              <span className="text-4xl">🏠</span>
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <span className="text-3xl">🏠</span>
             </div>
-            <h4 className="text-xl font-bold text-gray-900 mb-2">Study Rooms</h4>
-            <p className="text-gray-600">Study together, learn faster</p>
+            <h4 className="text-xl font-bold text-white mb-2">Study Rooms</h4>
+            <p className="text-gray-400 text-sm">Collab with the squad</p>
           </button>
 
           <button
             onClick={() => router.push('/challenges')}
-            className="group neu-card p-8 hover-glow text-left transition-all animate-reveal"
-            style={{animationDelay: '0.9s'}}
+            className="group glass-card rounded-3xl p-6 hover-glow transition-all text-left animate-reveal"
+            style={{animationDelay: '0.6s'}}
           >
-            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 flex items-center justify-center mb-4 shadow-xl group-hover:scale-110 transition-transform">
-              <span className="text-4xl">🎯</span>
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <span className="text-3xl">🎯</span>
             </div>
-            <h4 className="text-xl font-bold text-gray-900 mb-2">Challenges</h4>
-            <p className="text-gray-600">Compete and earn rewards</p>
+            <h4 className="text-xl font-bold text-white mb-2">Challenges</h4>
+            <p className="text-gray-400 text-sm">Compete & flex</p>
           </button>
         </div>
-      </div>
 
-      {/* Daily Goal */}
-      <div className="max-w-7xl mx-auto px-6 mb-8">
-        <div className="glass-card p-8 rounded-3xl animate-reveal" style={{animationDelay: '1s'}}>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <span className="text-3xl">🎯</span> Daily Goal
-              </h3>
-              <p className="text-gray-600 mt-1">Keep the momentum going!</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Progress</p>
-              <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
-                {gamification?.daily_goal?.percentage || 0}%
-              </p>
-            </div>
+        {/* Recent Achievements - Instagram post style */}
+        <div className="animate-reveal" style={{animationDelay: '0.7s'}}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-2xl font-bold text-white">Recent Wins 🏆</h3>
+            <button className="text-purple-400 text-sm font-semibold hover:text-purple-300">See all</button>
           </div>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-gray-700 font-semibold">
-              {gamification?.daily_goal?.cards_reviewed || 0} / {gamification?.daily_goal?.daily_goal || 20} cards
-            </span>
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-sm font-bold rounded-full">
-              {(gamification?.daily_goal?.daily_goal || 20) - (gamification?.daily_goal?.cards_reviewed || 0)} left
-            </span>
-          </div>
-          <div className="relative w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all duration-1000"
-              style={{ width: `${gamification?.daily_goal?.percentage || 0}%` }}></div>
-          </div>
-        </div>
-      </div>
 
-      {/* Recent Achievements */}
-      <div className="max-w-7xl mx-auto px-6 mb-8">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2 animate-reveal" style={{animationDelay: '1.1s'}}>
-          <span className="text-3xl">🏆</span> Recent Achievements
-        </h3>
-        {gamification?.achievements?.filter((a: any) => a.unlocked).length > 0 ? (
-          <div className="grid md:grid-cols-3 gap-4">
-            {gamification?.achievements?.filter((a: any) => a.unlocked).slice(0, 6).map((achievement: any, idx: number) => (
-              <div
-                key={achievement.id}
-                className="glass-card p-6 rounded-3xl hover-glow animate-reveal"
-                style={{animationDelay: `${1.2 + idx * 0.1}s`}}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg flex-shrink-0">
-                    <span className="text-3xl">{achievement.icon}</span>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 text-lg mb-1">{achievement.name}</h4>
-                    <p className="text-sm text-gray-600">{achievement.description}</p>
+          {gamification?.achievements?.filter((a: any) => a.unlocked).length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {gamification?.achievements?.filter((a: any) => a.unlocked).slice(0, 6).map((achievement: any, idx: number) => (
+                <div
+                  key={achievement.id}
+                  className="glass-card rounded-2xl p-4 hover-glow transition-all animate-reveal"
+                  style={{animationDelay: `${0.8 + idx * 0.05}s`}}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mb-3 shadow-xl">
+                      <span className="text-3xl">{achievement.icon || '🏆'}</span>
+                    </div>
+                    <h5 className="font-bold text-white text-sm mb-1">{achievement.name}</h5>
+                    <p className="text-gray-400 text-xs line-clamp-2">{achievement.description}</p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="glass-card p-12 rounded-3xl text-center animate-reveal" style={{animationDelay: '1.2s'}}>
-            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center mx-auto mb-4">
-              <span className="text-5xl opacity-50">🏆</span>
+              ))}
             </div>
-            <p className="text-gray-600 text-lg">Complete reviews to unlock achievements!</p>
-          </div>
-        )}
+          ) : (
+            <div className="glass-card rounded-3xl p-12 text-center">
+              <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+                <span className="text-4xl">🏆</span>
+              </div>
+              <p className="text-gray-400">Start reviewing to unlock achievements!</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <BottomNav />
