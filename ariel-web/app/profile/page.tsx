@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
 import { progressAPI, gamificationAPI } from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
+import ArielAssistant from '@/components/ArielAssistant';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -381,6 +382,7 @@ export default function ProfilePage() {
       </div>
 
       <BottomNav />
+      <ArielAssistant />
     </div>
   );
 }

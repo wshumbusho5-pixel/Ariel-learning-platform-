@@ -17,31 +17,54 @@ export default function Dashboard() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
+    console.log('🔐 Auth state:', { isLoading, isAuthenticated, user: user?.username });
     if (!isLoading && !isAuthenticated) {
+      console.log('⚠️ Not authenticated, redirecting to login...');
       router.push('/');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, user]);
 
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('✅ Authenticated, loading data...');
       loadData();
       if (user && !user.onboarding_completed) {
         setShowOnboarding(true);
       }
+
+      // Fallback timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ Timeout: Force setting loading to false');
+        setLoading(false);
+      }, 5000);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [isAuthenticated, user]);
 
   const loadData = async () => {
+    console.log('🚀 Loading dashboard data...');
     try {
       const [progressStats, gamificationStats] = await Promise.all([
-        progressAPI.getStats(),
-        gamificationAPI.getStats(),
+        progressAPI.getStats().catch(err => {
+          console.error('❌ Progress API failed:', err);
+          return null;
+        }),
+        gamificationAPI.getStats().catch(err => {
+          console.error('❌ Gamification API failed:', err);
+          return null;
+        }),
       ]);
-      setStats(progressStats);
-      setGamification(gamificationStats);
+      console.log('✅ Data loaded:', { progressStats, gamificationStats });
+      setStats(progressStats || {});
+      setGamification(gamificationStats || {});
     } catch (error) {
-      console.error('Failed to load stats:', error);
+      console.error('💥 Failed to load stats:', error);
+      // Set default empty objects to prevent UI from breaking
+      setStats({});
+      setGamification({});
     } finally {
+      console.log('✅ Setting loading to false');
       setLoading(false);
     }
   };

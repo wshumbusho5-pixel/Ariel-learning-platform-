@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CardFeed from '@/components/CardFeed';
 import BottomNav from '@/components/BottomNav';
+import ArielAssistant from '@/components/ArielAssistant';
 import { useAuth } from '@/lib/useAuth';
 import { cardsAPI } from '@/lib/api';
 
@@ -143,6 +144,7 @@ export default function DeckPage() {
 
       {/* Bottom Navigation */}
       <BottomNav />
+      <ArielAssistant />
     </div>
   );
 }

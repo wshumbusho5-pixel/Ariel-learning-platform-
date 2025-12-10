@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import BottomNav from '@/components/BottomNav';
+import ArielAssistant from '@/components/ArielAssistant';
 
 interface Activity {
   id: string;
@@ -265,6 +266,7 @@ export default function ActivityFeedPage() {
       </div>
 
       <BottomNav />
+      <ArielAssistant />
     </div>
   );
 }

@@ -31,7 +31,7 @@ export const useAuth = create<AuthState>((set) => ({
 
   login: (user, token) => {
     localStorage.setItem('auth_token', token);
-    set({ user, token, isAuthenticated: true });
+    set({ user, token, isAuthenticated: true, isLoading: false });
   },
 
   logout: () => {

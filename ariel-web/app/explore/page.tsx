@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { cardsAPI } from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
+import ArielAssistant from '@/components/ArielAssistant';
 
 interface Card {
   id: string;
@@ -336,6 +337,7 @@ export default function ExplorePage() {
       </div>
 
       <BottomNav />
+      <ArielAssistant />
     </div>
   );
 }

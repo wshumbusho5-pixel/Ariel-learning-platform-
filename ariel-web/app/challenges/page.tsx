@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import BottomNav from '@/components/BottomNav';
+import ArielAssistant from '@/components/ArielAssistant';
 
 interface Challenge {
   id: string;
@@ -331,6 +332,7 @@ export default function ChallengesPage() {
       )}
 
       <BottomNav />
+      <ArielAssistant />
     </div>
   );
 }
