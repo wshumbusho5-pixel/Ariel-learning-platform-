@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/useAuth';
 import { progressAPI, gamificationAPI } from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
 import Onboarding from '@/components/Onboarding';
+import ArielAssistant from '@/components/ArielAssistant';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -291,6 +292,7 @@ export default function Dashboard() {
       </div>
 
       <BottomNav />
+      <ArielAssistant />
     </div>
   );
 }
