@@ -18,7 +18,7 @@ interface Question {
 
 export default function Home() {
   const router = useRouter();
-  const { user, isAuthenticated, login, checkAuth } = useAuth();
+  const { user, isAuthenticated, isLoading, login, checkAuth } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -34,10 +34,10 @@ export default function Home() {
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
-    if (isAuthenticated && !isSessionActive && !showResults) {
+    if (isAuthenticated && !isSessionActive && !showResults && !isLoading) {
       router.push('/dashboard');
     }
-  }, [isAuthenticated, isSessionActive, showResults, router]);
+  }, [isAuthenticated, isSessionActive, showResults, isLoading, router]);
 
   const handleQuestionsLoaded = (loadedQuestions: Question[]) => {
     setQuestions(loadedQuestions);
