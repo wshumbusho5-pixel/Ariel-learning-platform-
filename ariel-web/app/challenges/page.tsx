@@ -137,42 +137,49 @@ export default function ChallengesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen gradient-mesh flex items-center justify-center">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-full border-4 border-transparent bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 animate-spin" style={{
-            WebkitMaskImage: 'linear-gradient(transparent 50%, black 50%)',
-            maskImage: 'linear-gradient(transparent 50%, black 50%)'
-          }}></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-full blur-xl opacity-50 animate-pulse-slow"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="relative w-24 h-24 mx-auto">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 animate-spin" style={{ clipPath: 'inset(0 50% 0 0)' }}></div>
+            <div className="absolute inset-2 rounded-full bg-white"></div>
+          </div>
+          <p className="text-lg font-semibold text-gray-700 animate-pulse">Loading challenges...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen gradient-mesh pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 pb-24">
+      {/* Animated background blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
+        <div className="absolute top-40 right-10 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-20 left-1/2 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
+      </div>
+
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center shadow-lg">
-              <span className="text-2xl">🎯</span>
+      <div className="sticky top-0 z-40 backdrop-blur-2xl bg-white/80 border-b border-gray-200/50">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex items-center gap-4 animate-reveal">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 flex items-center justify-center shadow-xl">
+              <span className="text-3xl">🎯</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-transparent bg-clip-text">
+              <h1 className="text-3xl font-bold gradient-text">
                 Weekly Challenges
               </h1>
-              <p className="text-sm text-gray-600">Compete and earn rewards</p>
+              <p className="text-sm text-gray-600 font-semibold">Compete and earn rewards</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Challenges Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="relative max-w-7xl mx-auto px-6 py-8">
         {challenges.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-32 h-32 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl animate-float">
+          <div className="text-center py-20 animate-reveal">
+            <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 flex items-center justify-center mx-auto mb-8 shadow-2xl animate-float">
               <span className="text-6xl">🎯</span>
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-4">No active challenges</h3>
@@ -180,14 +187,15 @@ export default function ChallengesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {challenges.map((challenge) => {
+            {challenges.map((challenge, idx) => {
               const daysRemaining = getDaysRemaining(challenge.end_date);
               const isExpiringSoon = daysRemaining <= 2;
 
               return (
                 <div
                   key={challenge.id}
-                  className="glass rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 animate-slideUp"
+                  className="neu-card p-6 hover-glow transition-all animate-reveal"
+                  style={{animationDelay: `${idx * 0.1}s`}}
                 >
                   {/* Challenge Icon */}
                   <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${getChallengeColor(challenge.challenge_type)} flex items-center justify-center mx-auto mb-4 shadow-lg`}>
@@ -230,7 +238,7 @@ export default function ChallengesPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => joinChallenge(challenge.id)}
-                      className={`flex-1 py-3 bg-gradient-to-r ${getChallengeColor(challenge.challenge_type)} text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105`}
+                      className={`flex-1 py-3 bg-gradient-to-r ${getChallengeColor(challenge.challenge_type)} text-white rounded-2xl font-bold shadow-lg hover-glow transition-all magnetic-btn`}
                     >
                       Join Challenge
                     </button>
@@ -239,7 +247,7 @@ export default function ChallengesPage() {
                         setSelectedChallenge(challenge);
                         loadLeaderboard(challenge.id);
                       }}
-                      className="px-4 py-3 glass rounded-2xl font-bold hover:scale-105 transition-all"
+                      className="px-4 py-3 glass-card rounded-2xl font-bold hover-glow transition-all magnetic-btn text-2xl"
                     >
                       🏆
                     </button>
@@ -254,12 +262,12 @@ export default function ChallengesPage() {
       {/* Leaderboard Modal */}
       {showLeaderboard && selectedChallenge && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="glass rounded-3xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl animate-scaleIn">
+          <div className="glass-card rounded-3xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl animate-scaleIn">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Leaderboard</h2>
               <button
                 onClick={() => setShowLeaderboard(false)}
-                className="w-10 h-10 rounded-full glass flex items-center justify-center hover:scale-110 transition-all"
+                className="w-10 h-10 rounded-full glass-card flex items-center justify-center hover-glow magnetic-btn"
               >
                 ✕
               </button>
@@ -322,10 +330,7 @@ export default function ChallengesPage() {
         </div>
       )}
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
-        <BottomNav />
-      </div>
+      <BottomNav />
     </div>
   );
 }
