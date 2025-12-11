@@ -7,8 +7,8 @@ from datetime import datetime
 from pydantic import BaseModel
 import json
 
-from app.core.database import get_database
-from app.core.security import get_current_user
+from app.services.database_service import db_service
+from app.api.auth import get_current_user_dependency
 from app.models.user import User
 
 router = APIRouter(prefix="/api/reels", tags=["reels"])
@@ -53,8 +53,7 @@ class ReelResponse(BaseModel):
 async def get_reels_feed(
     limit: int = 20,
     offset: int = 0,
-    current_user: User = Depends(get_current_user),
-    db=Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Get personalized "For You" feed of reels
@@ -64,6 +63,7 @@ async def get_reels_feed(
     - Creator diversity
     - Trending content
     """
+    db = db_service.get_db()
     try:
         # Get user interests
         user_subjects = current_user.subjects if hasattr(current_user, 'subjects') else []
@@ -204,10 +204,10 @@ async def get_reels_feed(
 async def get_following_reels(
     limit: int = 20,
     offset: int = 0,
-    current_user: User = Depends(get_current_user),
-    db=Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """Get reels from creators the user follows"""
+    db = db_service.get_db()
     try:
         # Get list of users the current user follows
         follows = await db["follows"].find(
@@ -317,14 +317,14 @@ async def upload_reel(
     description: Optional[str] = Form(None),
     category: Optional[str] = Form(None),
     hashtags: Optional[str] = Form(None),
-    current_user: User = Depends(get_current_user),
-    db=Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Upload a new reel
     TODO: Implement actual video storage (S3, Cloudinary, etc.)
     For now, this is a placeholder that simulates upload
     """
+    db = db_service.get_db()
     try:
         # Parse hashtags
         hashtag_list = None
@@ -392,10 +392,10 @@ async def upload_reel(
 @router.post("/{reel_id}/like")
 async def like_reel(
     reel_id: str,
-    current_user: User = Depends(get_current_user),
-    db=Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """Like or unlike a reel"""
+    db = db_service.get_db()
     try:
         from bson import ObjectId
 
@@ -456,10 +456,10 @@ async def like_reel(
 @router.get("/{reel_id}", response_model=ReelResponse)
 async def get_reel(
     reel_id: str,
-    current_user: User = Depends(get_current_user),
-    db=Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """Get a specific reel by ID"""
+    db = db_service.get_db()
     try:
         from bson import ObjectId
 
