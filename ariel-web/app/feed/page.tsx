@@ -8,18 +8,29 @@ interface Activity {
   id: string;
   user_id: string;
   username: string;
+  full_name?: string;
   profile_picture?: string;
+  is_verified?: boolean;
   activity_type: string;
+  title: string;
+  description?: string;
+  icon?: string;
+  related_deck_id?: string;
+  related_achievement_id?: string;
+  related_user_id?: string;
   metadata: {
     count?: number;
     achievement_name?: string;
     streak_days?: number;
     deck_title?: string;
+    duration?: number;
+    new_level?: number;
     [key: string]: any;
   };
   created_at: string;
   likes: number;
-  liked_by: string[];
+  is_liked_by_current_user?: boolean;
+  liked_by?: string[];
 }
 
 export default function ActivityFeedPage() {
@@ -33,7 +44,7 @@ export default function ActivityFeedPage() {
   const loadActivities = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (!token) {
         console.error('No auth token found');
         setLoading(false);
@@ -61,8 +72,8 @@ export default function ActivityFeedPage() {
 
   const handleLike = async (activityId: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8003/api/activity/${activityId}/like`, {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`http://localhost:8003/activity/${activityId}/like`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -97,42 +108,37 @@ export default function ActivityFeedPage() {
     }
   };
 
-  const getActivityGradient = (type: string) => {
-    switch (type) {
-      case 'cards_reviewed': return 'from-blue-500 to-cyan-500';
-      case 'deck_created': return 'from-purple-500 to-pink-500';
-      case 'study_session': return 'from-green-500 to-emerald-500';
-      case 'achievement_unlocked': return 'from-yellow-500 to-orange-500';
-      case 'streak_milestone': return 'from-orange-500 to-red-500';
-      case 'level_up': return 'from-purple-600 to-blue-600';
-      default: return 'from-gray-500 to-gray-600';
-    }
-  };
-
   const getActivityText = (activity: Activity) => {
+    // Use the title from backend if available, otherwise fall back to metadata
+    if (activity.description) {
+      return activity.description;
+    }
+
     const { activity_type, metadata } = activity;
 
     switch (activity_type) {
       case 'cards_reviewed':
-        return `reviewed ${metadata.count} cards`;
+        return `reviewed ${metadata.count || 0} cards`;
       case 'deck_created':
-        return `created "${metadata.deck_title}"`;
+        return `created "${metadata.deck_title || 'a new deck'}"`;
       case 'study_session':
         return `studied for ${Math.round((metadata.duration || 0) / 60)} minutes`;
       case 'achievement_unlocked':
-        return `unlocked "${metadata.achievement_name}"`;
+        return `unlocked "${metadata.achievement_name || 'an achievement'}"`;
       case 'streak_milestone':
-        return `hit ${metadata.streak_days} day streak`;
+        return `hit ${metadata.streak_days || 0} day streak`;
       case 'level_up':
-        return `reached level ${metadata.new_level}`;
-      case 'new_follower':
-        return `gained a new follower`;
-      case 'card_liked':
-        return `liked a card`;
-      case 'card_shared':
-        return `shared a card`;
-      case 'challenge_completed':
-        return `completed a challenge`;
+        return `reached level ${metadata.new_level || 0}`;
+      case 'followed_user':
+        return `followed a new user`;
+      case 'deck_liked':
+        return `liked a deck`;
+      case 'deck_saved':
+        return `saved a deck`;
+      case 'story_posted':
+        return `posted a story`;
+      case 'comment_posted':
+        return `commented on a card`;
       default:
         return 'did something awesome';
     }
@@ -146,118 +152,93 @@ export default function ActivityFeedPage() {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
+    if (minutes < 1) return 'now';
+    if (minutes < 60) return `${minutes}m`;
+    if (hours < 24) return `${hours}h`;
+    return `${days}d`;
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="relative w-24 h-24 mx-auto">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 animate-spin" style={{ clipPath: 'inset(0 50% 0 0)' }}></div>
-            <div className="absolute inset-2 rounded-full bg-white"></div>
-          </div>
-          <p className="text-lg font-semibold text-gray-700 animate-pulse">Loading feed...</p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-200 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm text-gray-600 font-medium">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 pb-24">
-      {/* Animated background blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
-        <div className="absolute top-40 right-10 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-20 left-1/2 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
-      </div>
-
-      {/* Header */}
-      <div className="sticky top-0 z-40 backdrop-blur-2xl bg-white/80 border-b border-gray-200/50">
-        <div className="max-w-4xl mx-auto px-6 py-6">
-          <div className="flex items-center gap-4 animate-reveal">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center shadow-xl">
-              <span className="text-3xl">⚡</span>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold gradient-text">
-                Activity Feed
-              </h1>
-              <p className="text-sm text-gray-600 font-semibold">See what everyone's learning</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-white pb-20">
+      {/* Instagram-style Header */}
+      <header className="sticky top-0 bg-white border-b border-gray-200 z-30">
+        <div className="max-w-2xl mx-auto px-4 py-3">
+          <h1 className="text-2xl font-bold text-gray-900">Activity</h1>
         </div>
-      </div>
+      </header>
 
-      {/* Activities */}
-      <div className="relative max-w-4xl mx-auto px-6 py-8 space-y-4">
+      {/* Instagram/Twitter-style Feed */}
+      <div className="max-w-2xl mx-auto">
         {activities.length === 0 ? (
-          <div className="text-center py-20 animate-reveal">
-            <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 flex items-center justify-center mx-auto mb-8 shadow-2xl animate-float">
-              <span className="text-6xl">📱</span>
+          <div className="text-center py-20 px-4">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-5xl">📱</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">No activity yet</h3>
-            <p className="text-gray-600">Start following people to see their activities!</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No activity yet</h3>
+            <p className="text-sm text-gray-600">Follow people to see their learning journey</p>
           </div>
         ) : (
-          activities.map((activity, idx) => (
+          activities.map((activity) => (
             <div
               key={activity.id}
-              className="neu-card p-6 hover-glow transition-all animate-reveal"
-              style={{animationDelay: `${idx * 0.05}s`}}
+              className="border-b border-gray-200 px-4 py-4 hover:bg-gray-50 transition-colors"
             >
-              <div className="flex items-start gap-4">
+              <div className="flex gap-3">
                 {/* Profile Picture */}
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${getActivityGradient(activity.activity_type)} flex items-center justify-center shadow-xl flex-shrink-0`}>
-                  {activity.profile_picture ? (
-                    <img
-                      src={activity.profile_picture}
-                      alt={activity.username}
-                      className="w-full h-full rounded-2xl object-cover"
-                    />
-                  ) : (
-                    <span className="text-white font-bold text-xl">
-                      {activity.username[0].toUpperCase()}
-                    </span>
-                  )}
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                    {activity.profile_picture ? (
+                      <img
+                        src={activity.profile_picture}
+                        alt={activity.username}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-semibold text-sm">
+                        {activity.username[0].toUpperCase()}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-3 mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-gray-900 text-lg">{activity.username}</span>
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getActivityGradient(activity.activity_type)} flex items-center justify-center shadow-lg`}>
-                          <span className="text-xl">{getActivityIcon(activity.activity_type)}</span>
-                        </div>
-                        <span className="text-gray-700">{getActivityText(activity)}</span>
-                      </div>
-                      <p className="text-sm text-gray-500 font-semibold mt-1">{formatTimestamp(activity.created_at)}</p>
-                    </div>
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="font-semibold text-gray-900 text-sm">{activity.username}</span>
+                    <span className="text-gray-600 text-sm">{getActivityText(activity)}</span>
+                    <span className="text-2xl">{getActivityIcon(activity.activity_type)}</span>
                   </div>
+                  <p className="text-xs text-gray-500">{formatTimestamp(activity.created_at)}</p>
                 </div>
 
                 {/* Like Button */}
                 <button
                   onClick={() => handleLike(activity.id)}
-                  className="flex flex-col items-center gap-1 group magnetic-btn"
+                  className="flex flex-col items-center gap-0.5 group"
                 >
-                  <div className="w-12 h-12 rounded-full glass-card flex items-center justify-center group-hover:scale-110 transition-all hover-glow">
-                    <svg
-                      className="w-6 h-6 text-gray-700 group-hover:text-red-500"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-bold text-gray-600">{activity.likes}</span>
+                  <svg
+                    className="w-5 h-5 text-gray-600 group-hover:text-red-500 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  {activity.likes > 0 && (
+                    <span className="text-xs text-gray-600">{activity.likes}</span>
+                  )}
                 </button>
               </div>
             </div>

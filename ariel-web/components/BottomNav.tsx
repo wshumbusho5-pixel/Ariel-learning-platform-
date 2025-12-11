@@ -42,18 +42,21 @@ export default function BottomNav() {
       ),
     },
     {
-      name: 'Review',
-      path: '/review',
+      name: 'Reels',
+      path: '/reels',
       icon: (active: boolean) => (
         <svg
-          className="w-7 h-7"
-          fill="white"
+          className={`w-6 h-6 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
           viewBox="0 0 24 24"
+          strokeWidth={active ? 0 : 2.5}
         >
-          <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+          />
         </svg>
       ),
-      special: true,
     },
     {
       name: 'Feed',

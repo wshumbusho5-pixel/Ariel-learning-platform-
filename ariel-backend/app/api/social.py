@@ -10,7 +10,9 @@ from app.core.database import get_database
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.deck import Deck, DeckCreate, DeckUpdate, DeckPost, DeckVisibility, DeckComment
+from app.models.activity import ActivityType
 from app.services.feed_algorithm import FeedAlgorithm, enrich_deck_with_author
+from app.api.activity_feed import create_activity
 
 router = APIRouter(prefix="/api/social", tags=["social"])
 
@@ -195,6 +197,94 @@ async def unfollow_user(
         is_following=False,
         followers_count=updated_target.get("followers_count", 0)
     )
+
+
+@router.post("/users/{user_id}/follow")
+async def toggle_follow_user(
+    user_id: str,
+    current_user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """
+    Toggle follow/unfollow a user (simpler endpoint for frontend)
+    """
+    current_user_id = str(current_user.id)
+
+    # Can't follow yourself
+    if user_id == current_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot follow yourself"
+        )
+
+    # Check if target user exists
+    target_user = await db.users.find_one({"_id": user_id})
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    # Check if already following
+    current_user_data = await db.users.find_one({"_id": current_user_id})
+    is_following = user_id in current_user_data.get("following", [])
+
+    if is_following:
+        # Unfollow
+        await db.users.update_one(
+            {"_id": current_user_id},
+            {
+                "$pull": {"following": user_id},
+                "$inc": {"following_count": -1}
+            }
+        )
+        await db.users.update_one(
+            {"_id": user_id},
+            {
+                "$pull": {"followers": current_user_id},
+                "$inc": {"followers_count": -1}
+            }
+        )
+        action = "unfollowed"
+        new_status = False
+    else:
+        # Follow
+        await db.users.update_one(
+            {"_id": current_user_id},
+            {
+                "$addToSet": {"following": user_id},
+                "$inc": {"following_count": 1}
+            }
+        )
+        await db.users.update_one(
+            {"_id": user_id},
+            {
+                "$addToSet": {"followers": current_user_id},
+                "$inc": {"followers_count": 1}
+            }
+        )
+        action = "followed"
+        new_status = True
+
+        # Create activity for following a user
+        await create_activity(
+            db=db,
+            user_id=current_user_id,
+            activity_type=ActivityType.FOLLOWED_USER,
+            title=f"{current_user.username} followed {target_user.get('username')}",
+            description=f"followed {target_user.get('username')}",
+            icon="👥",
+            related_user_id=user_id
+        )
+
+    updated_target = await db.users.find_one({"_id": user_id})
+
+    return {
+        "success": True,
+        "action": action,
+        "is_following": new_status,
+        "followers_count": updated_target.get("followers_count", 0)
+    }
 
 
 @router.get("/profile/{user_id}", response_model=UserProfileResponse)

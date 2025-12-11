@@ -2,11 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from app.models.card import Card, CardCreate, CardUpdate, DeckStats, BulkCardCreate, CardReview
 from app.models.user import User
+from app.models.activity import ActivityType
 from app.services.card_repository import CardRepository
 from app.services.gamification_service import GamificationService
 from app.services.user_repository import UserRepository
 from app.services.personalized_feed import personalized_feed_service
 from app.api.auth import get_current_user_dependency
+from app.core.database import get_database
+from app.api.activity_feed import create_activity
 
 router = APIRouter()
 
@@ -25,7 +28,8 @@ async def create_card(
 @router.post("/bulk", response_model=List[Card])
 async def create_cards_bulk(
     bulk_data: BulkCardCreate,
-    current_user: User = Depends(get_current_user_dependency)
+    current_user: User = Depends(get_current_user_dependency),
+    db = Depends(get_database)
 ):
     """Create multiple flashcards at once (from question set)"""
     try:
@@ -48,6 +52,18 @@ async def create_cards_bulk(
             current_user.id,
             {"total_points": current_user.total_points + points_earned}
         )
+
+        # Create activity for deck creation
+        if len(cards) >= 5:  # Only create activity if creating significant number of cards
+            await create_activity(
+                db=db,
+                user_id=current_user.id,
+                activity_type=ActivityType.DECK_CREATED,
+                title=f"{current_user.username} created a new deck",
+                description=f"created a deck with {len(cards)} cards",
+                icon="🎨",
+                metadata={"count": len(cards), "subject": bulk_data.subject or "General"}
+            )
 
         return cards
     except Exception as e:
@@ -235,3 +251,156 @@ async def save_card_to_deck(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found or is private")
     return card
+
+# ============== COMMENTS ==============
+
+@router.get("/{card_id}/comments")
+async def get_card_comments(
+    card_id: str,
+    current_user: User = Depends(get_current_user_dependency),
+    db=Depends(get_database)
+):
+    """Get comments for a card"""
+    try:
+        from bson import ObjectId
+
+        # Query comments
+        pipeline = [
+            {"$match": {"card_id": card_id, "is_deleted": {"$ne": True}}},
+            {
+                "$lookup": {
+                    "from": "users",
+                    "localField": "user_id",
+                    "foreignField": "_id",
+                    "as": "user"
+                }
+            },
+            {"$unwind": "$user"},
+            {"$sort": {"created_at": -1}},
+            {
+                "$project": {
+                    "id": {"$toString": "$_id"},
+                    "user_id": {"$toString": "$user_id"},
+                    "username": "$user.username",
+                    "profile_picture": "$user.profile_picture",
+                    "text": "$content",
+                    "created_at": {"$toString": "$created_at"},
+                    "likes": {"$ifNull": ["$likes", 0]},
+                    "replies_count": 0,
+                    "liked_by_current_user": {
+                        "$in": [current_user.id, {"$ifNull": ["$liked_by", []]}]
+                    }
+                }
+            }
+        ]
+
+        comments = await db["card_comments"].aggregate(pipeline).to_list(length=100)
+        return comments
+
+    except Exception as e:
+        print(f"Error getting card comments: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get comments: {str(e)}"
+        )
+
+
+@router.post("/{card_id}/comments")
+async def create_card_comment(
+    card_id: str,
+    text: dict,
+    current_user: User = Depends(get_current_user_dependency),
+    db=Depends(get_database)
+):
+    """Create a comment on a card"""
+    try:
+        from datetime import datetime
+
+        comment_doc = {
+            "card_id": card_id,
+            "user_id": current_user.id,
+            "content": text.get("text", ""),
+            "created_at": datetime.utcnow(),
+            "likes": 0,
+            "liked_by": [],
+            "is_deleted": False
+        }
+
+        result = await db["card_comments"].insert_one(comment_doc)
+
+        # Create activity for commenting
+        await create_activity(
+            db=db,
+            user_id=current_user.id,
+            activity_type=ActivityType.COMMENT_POSTED,
+            title=f"{current_user.username} commented on a card",
+            description=f"commented: \"{text.get('text', '')[:50]}...\"",
+            icon="💬",
+            metadata={"card_id": card_id}
+        )
+
+        # Return comment with user info
+        return {
+            "id": str(result.inserted_id),
+            "user_id": current_user.id,
+            "username": current_user.username,
+            "profile_picture": getattr(current_user, 'profile_picture', None),
+            "text": text.get("text", ""),
+            "created_at": datetime.utcnow().isoformat(),
+            "likes": 0,
+            "replies_count": 0,
+            "liked_by_current_user": False
+        }
+
+    except Exception as e:
+        print(f"Error creating card comment: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create comment: {str(e)}"
+        )
+
+
+@router.post("/comments/{comment_id}/like")
+async def like_comment(
+    comment_id: str,
+    current_user: User = Depends(get_current_user_dependency),
+    db=Depends(get_database)
+):
+    """Like or unlike a comment"""
+    try:
+        from bson import ObjectId
+
+        comment = await db["card_comments"].find_one({"_id": ObjectId(comment_id)})
+        if not comment:
+            raise HTTPException(status_code=404, detail="Comment not found")
+
+        liked_by = comment.get("liked_by", [])
+        is_liked = current_user.id in liked_by
+
+        if is_liked:
+            # Unlike
+            await db["card_comments"].update_one(
+                {"_id": ObjectId(comment_id)},
+                {
+                    "$pull": {"liked_by": current_user.id},
+                    "$inc": {"likes": -1}
+                }
+            )
+        else:
+            # Like
+            await db["card_comments"].update_one(
+                {"_id": ObjectId(comment_id)},
+                {
+                    "$addToSet": {"liked_by": current_user.id},
+                    "$inc": {"likes": 1}
+                }
+            )
+
+        return {"success": True}
+
+    except Exception as e:
+        print(f"Error liking comment: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to like comment: {str(e)}"
+        )
