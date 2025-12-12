@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from datetime import datetime, timedelta
 
-from app.core.database import get_database
-from app.core.security import get_current_user
+from app.services.database_service import db_service
+from app.api.auth import get_current_user_dependency
 from app.models.user import User
 from app.models.activity import Activity, ActivityWithUser, ActivityType
 
@@ -15,8 +15,7 @@ router = APIRouter(prefix="/api/activity", tags=["activity"])
 
 @router.get("/feed", response_model=List[ActivityWithUser])
 async def get_activity_feed(
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database),
+    current_user: User = Depends(get_current_user_dependency),
     limit: int = 50,
     offset: int = 0
 ):
@@ -27,6 +26,7 @@ async def get_activity_feed(
     - Shows own activities
     - Sorted by created_at descending
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
     following = current_user.following or []
 
@@ -73,12 +73,12 @@ async def get_activity_feed(
 @router.post("/activity/{activity_id}/like")
 async def toggle_activity_like(
     activity_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Toggle like on an activity
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     activity = await db.activities.find_one({"_id": activity_id})

@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 from datetime import datetime, timedelta
 
-from app.core.database import get_database
-from app.core.security import get_current_user
+from app.services.database_service import db_service
+from app.api.auth import get_current_user_dependency
 from app.models.user import User
 from app.models.notification import (
     Notification, NotificationPreferences, NotificationSummary,
@@ -20,8 +20,7 @@ router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
 @router.get("/", response_model=List[Notification])
 async def get_notifications(
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database),
+    current_user: User = Depends(get_current_user_dependency),
     limit: int = 50,
     offset: int = 0,
     unread_only: bool = False,
@@ -35,6 +34,7 @@ async def get_notifications(
     - Filter by notification_type
     - Sorted by created_at descending
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     # Build query
@@ -77,8 +77,7 @@ async def get_notifications(
 
 @router.get("/summary", response_model=NotificationSummary)
 async def get_notification_summary(
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Get notification summary
@@ -88,6 +87,7 @@ async def get_notification_summary(
     - Unread by type
     - Latest 5 notifications
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     # Total count
@@ -142,12 +142,12 @@ async def get_notification_summary(
 @router.post("/{notification_id}/read")
 async def mark_notification_read(
     notification_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Mark notification as read
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     # Find notification
@@ -178,12 +178,12 @@ async def mark_notification_read(
 
 @router.post("/read-all")
 async def mark_all_read(
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Mark all notifications as read
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     result = await db.notifications.update_many(
@@ -207,12 +207,12 @@ async def mark_all_read(
 @router.delete("/{notification_id}")
 async def delete_notification(
     notification_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Archive notification (soft delete)
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     result = await db.notifications.update_one(
@@ -231,12 +231,12 @@ async def delete_notification(
 
 @router.post("/clear-all")
 async def clear_all_notifications(
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Archive all notifications
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     result = await db.notifications.update_many(
@@ -254,12 +254,12 @@ async def clear_all_notifications(
 
 @router.get("/preferences", response_model=NotificationPreferences)
 async def get_notification_preferences(
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Get notification preferences
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     prefs = await db.notification_preferences.find_one({"user_id": user_id})
@@ -276,12 +276,12 @@ async def get_notification_preferences(
 @router.put("/preferences")
 async def update_notification_preferences(
     preferences: NotificationPreferences,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Update notification preferences
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
     preferences.user_id = user_id
     preferences.updated_at = datetime.utcnow()

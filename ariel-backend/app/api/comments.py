@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 from datetime import datetime
 
-from app.core.database import get_database
-from app.core.security import get_current_user
+from app.services.database_service import db_service
+from app.api.auth import get_current_user_dependency
 from app.models.user import User
 from app.models.comment import Comment, CommentWithAuthor, CommentCreate, CommentUpdate
 from app.api.notifications import create_notification
@@ -20,8 +20,7 @@ router = APIRouter(prefix="/api/comments", tags=["comments"])
 @router.get("/deck/{deck_id}", response_model=List[CommentWithAuthor])
 async def get_deck_comments(
     deck_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database),
+    current_user: User = Depends(get_current_user_dependency),
     limit: int = 50,
     offset: int = 0,
     parent_only: bool = False
@@ -34,6 +33,7 @@ async def get_deck_comments(
     - parent_only: If true, only return top-level comments (no replies)
     - Sorted by created_at descending
     """
+    db = db_service.get_db()
     current_user_id = str(current_user.id)
 
     # Build query
@@ -85,13 +85,13 @@ async def get_deck_comments(
 @router.get("/{comment_id}/replies", response_model=List[CommentWithAuthor])
 async def get_comment_replies(
     comment_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database),
+    current_user: User = Depends(get_current_user_dependency),
     limit: int = 50
 ):
     """
     Get replies to a specific comment
     """
+    db = db_service.get_db()
     current_user_id = str(current_user.id)
 
     # Get replies
@@ -137,8 +137,7 @@ async def get_comment_replies(
 async def create_comment(
     deck_id: str,
     comment_data: CommentCreate,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Create a comment on a deck
@@ -146,6 +145,7 @@ async def create_comment(
     - Can be a top-level comment or a reply (via parent_comment_id)
     - Notifies deck author and parent comment author
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     # Validate deck exists
@@ -239,8 +239,7 @@ async def create_comment(
 async def update_comment(
     comment_id: str,
     comment_data: CommentUpdate,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Update a comment
@@ -248,6 +247,7 @@ async def update_comment(
     - Only author can update
     - Marks as edited
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     # Find comment
@@ -289,8 +289,7 @@ async def update_comment(
 @router.delete("/{comment_id}")
 async def delete_comment(
     comment_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Delete a comment (soft delete)
@@ -298,6 +297,7 @@ async def delete_comment(
     - Only author can delete
     - Also removes from deck's comment count
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     # Find comment
@@ -338,8 +338,7 @@ async def delete_comment(
 @router.post("/{comment_id}/like")
 async def toggle_comment_like(
     comment_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Toggle like on a comment
@@ -347,6 +346,7 @@ async def toggle_comment_like(
     - If not liked, adds like
     - If already liked, removes like
     """
+    db = db_service.get_db()
     user_id = str(current_user.id)
 
     # Find comment
@@ -391,12 +391,12 @@ async def toggle_comment_like(
 
 @router.get("/deck/{deck_id}/count")
 async def get_comment_count(
-    deck_id: str,
-    db = Depends(get_database)
+    deck_id: str
 ):
     """
     Get total comment count for a deck
     """
+    db = db_service.get_db()
     count = await db.comments.count_documents({
         "deck_id": deck_id,
         "is_deleted": False
