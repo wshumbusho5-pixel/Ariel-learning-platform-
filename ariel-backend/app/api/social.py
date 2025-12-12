@@ -205,6 +205,7 @@ async def toggle_follow_user(
     """
     Toggle follow/unfollow a user (simpler endpoint for frontend)
     """
+    db = db_service.get_db()
     current_user_id = str(current_user.id)
 
     # Can't follow yourself

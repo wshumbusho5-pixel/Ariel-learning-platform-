@@ -121,7 +121,7 @@ export default function ReelsPage() {
   const handleFollow = async (creatorId: string) => {
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:8003/api/users/${creatorId}/follow`, {
+      const response = await fetch(`http://localhost:8003/api/social/users/${creatorId}/follow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
