@@ -6,8 +6,8 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 
-from app.core.database import get_database
-from app.core.security import get_current_user
+from app.services.database_service import db_service
+from app.api.auth import get_current_user_dependency
 from app.models.user import User
 from app.models.deck import Deck, DeckCreate, DeckUpdate, DeckPost, DeckVisibility, DeckComment
 from app.models.activity import ActivityType
@@ -73,8 +73,7 @@ class FollowListItem(BaseModel):
 @router.post("/follow", response_model=FollowResponse)
 async def follow_user(
     request: FollowRequest,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Follow a user
@@ -141,8 +140,7 @@ async def follow_user(
 @router.post("/unfollow", response_model=FollowResponse)
 async def unfollow_user(
     request: FollowRequest,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Unfollow a user
@@ -202,8 +200,7 @@ async def unfollow_user(
 @router.post("/users/{user_id}/follow")
 async def toggle_follow_user(
     user_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Toggle follow/unfollow a user (simpler endpoint for frontend)
@@ -290,8 +287,7 @@ async def toggle_follow_user(
 @router.get("/profile/{user_id}", response_model=UserProfileResponse)
 async def get_user_profile(
     user_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Get a user's public profile
@@ -348,8 +344,7 @@ async def get_user_profile(
 @router.get("/followers/{user_id}", response_model=List[FollowListItem])
 async def get_followers(
     user_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Get list of users who follow this user
@@ -387,8 +382,7 @@ async def get_followers(
 @router.get("/following/{user_id}", response_model=List[FollowListItem])
 async def get_following(
     user_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Get list of users this user follows
@@ -425,8 +419,7 @@ async def get_following(
 
 @router.get("/suggested-users", response_model=List[FollowListItem])
 async def get_suggested_users(
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database),
+    current_user: User = Depends(get_current_user_dependency),
     limit: int = 20
 ):
     """
@@ -491,8 +484,7 @@ async def get_suggested_users(
 @router.get("/search-users")
 async def search_users(
     query: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database),
+    current_user: User = Depends(get_current_user_dependency),
     limit: int = 20
 ):
     """
@@ -535,8 +527,7 @@ async def search_users(
 @router.post("/decks", response_model=DeckPost)
 async def create_deck(
     deck_data: DeckCreate,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Create a new deck
@@ -599,8 +590,7 @@ async def create_deck(
 async def update_deck(
     deck_id: str,
     deck_update: DeckUpdate,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Update a deck
@@ -679,8 +669,7 @@ async def update_deck(
 @router.get("/decks/{deck_id}", response_model=DeckPost)
 async def get_deck(
     deck_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Get a single deck by ID
@@ -779,8 +768,7 @@ async def get_deck(
 @router.delete("/decks/{deck_id}")
 async def delete_deck(
     deck_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Delete a deck
@@ -808,8 +796,7 @@ async def delete_deck(
 @router.post("/decks/{deck_id}/like")
 async def like_deck(
     deck_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Like/unlike a deck
@@ -836,8 +823,7 @@ async def like_deck(
 @router.post("/decks/{deck_id}/save")
 async def save_deck(
     deck_id: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Save/fork a deck to your library
@@ -896,8 +882,7 @@ async def save_deck(
 
 @router.get("/feed", response_model=List[DeckPost])
 async def get_personalized_feed(
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database),
+    current_user: User = Depends(get_current_user_dependency),
     limit: int = 50,
     offset: int = 0
 ):
@@ -937,8 +922,7 @@ async def get_personalized_feed(
 
 @router.get("/feed/insights")
 async def get_feed_insights(
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database)
+    current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Get insights about user's feed composition
@@ -995,8 +979,7 @@ async def get_feed_insights(
 @router.get("/feed/explore/{subject}")
 async def explore_subject_feed(
     subject: str,
-    current_user: User = Depends(get_current_user),
-    db = Depends(get_database),
+    current_user: User = Depends(get_current_user_dependency),
     limit: int = 50
 ):
     """
