@@ -295,6 +295,8 @@ async def get_user_profile(
     - Returns profile data if public or if user is followed
     - Shows social context (is_following, follows_you)
     """
+    db = db_service.get_db()
+
     # Get target user
     target_user = await db.users.find_one({"_id": user_id})
     if not target_user:

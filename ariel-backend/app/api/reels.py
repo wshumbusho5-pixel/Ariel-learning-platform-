@@ -6,6 +6,10 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 import json
+import os
+import uuid
+import aiofiles
+from pathlib import Path
 
 from app.services.database_service import db_service
 from app.api.auth import get_current_user_dependency
@@ -330,9 +334,7 @@ async def upload_reel(
     current_user: User = Depends(get_current_user_dependency)
 ):
     """
-    Upload a new reel
-    TODO: Implement actual video storage (S3, Cloudinary, etc.)
-    For now, this is a placeholder that simulates upload
+    Upload a new reel with actual video storage
     """
     db = db_service.get_db()
     try:
@@ -344,10 +346,26 @@ async def upload_reel(
             except:
                 hashtag_list = [h.strip() for h in hashtags.split('#') if h.strip()]
 
-        # In production, upload video to cloud storage and get URL
-        # For now, use a placeholder
-        video_url = f"https://storage.ariel.com/reels/{current_user.id}/{datetime.utcnow().timestamp()}.mp4"
-        thumbnail_url = f"https://storage.ariel.com/thumbnails/{current_user.id}/{datetime.utcnow().timestamp()}.jpg"
+        # Create uploads directory
+        upload_dir = Path("uploads/reels")
+        upload_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate unique filename
+        file_extension = os.path.splitext(video.filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        file_path = upload_dir / unique_filename
+
+        # Save video file
+        async with aiofiles.open(file_path, 'wb') as f:
+            content = await video.read()
+            await f.write(content)
+
+        # Generate accessible URL (served by FastAPI static files)
+        video_url = f"http://localhost:8003/uploads/reels/{unique_filename}"
+
+        # For thumbnail, use a placeholder for now
+        # TODO: Generate actual thumbnail from video
+        thumbnail_url = f"http://localhost:8003/uploads/reels/{unique_filename}"
 
         # Create reel document
         reel_doc = {
