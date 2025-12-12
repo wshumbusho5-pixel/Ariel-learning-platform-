@@ -6,6 +6,7 @@ from typing import List, Optional
 from datetime import datetime
 import secrets
 import json
+from bson import ObjectId
 
 from app.services.database_service import db_service
 from app.api.auth import get_current_user_dependency
@@ -106,7 +107,10 @@ async def discover_streams(
     streams = []
     async for stream in db.livestreams.find(query).sort("created_at", -1).limit(limit):
         # Get streamer info
-        streamer = await db.users.find_one({"_id": stream["streamer_id"]})
+        try:
+            streamer = await db.users.find_one({"_id": ObjectId(stream["streamer_id"])})
+        except:
+            streamer = await db.users.find_one({"_id": stream["streamer_id"]})
         if not streamer:
             continue
 
@@ -176,7 +180,10 @@ async def get_stream(
         raise HTTPException(status_code=404, detail="Stream not found")
 
     # Get streamer info
-    streamer = await db.users.find_one({"_id": stream["streamer_id"]})
+    try:
+        streamer = await db.users.find_one({"_id": ObjectId(stream["streamer_id"])})
+    except:
+        streamer = await db.users.find_one({"_id": stream["streamer_id"]})
     if not streamer:
         raise HTTPException(status_code=404, detail="Streamer not found")
 

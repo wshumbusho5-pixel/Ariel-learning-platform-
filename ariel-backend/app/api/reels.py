@@ -72,14 +72,19 @@ async def get_reels_feed(
         # Query reels with personalization
         pipeline = [
             {
+                "$addFields": {
+                    "creator_id_obj": {"$toObjectId": "$creator_id"}
+                }
+            },
+            {
                 "$lookup": {
                     "from": "users",
-                    "localField": "creator_id",
+                    "localField": "creator_id_obj",
                     "foreignField": "_id",
                     "as": "creator"
                 }
             },
-            {"$unwind": "$creator"},
+            {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": False}},
             {
                 "$lookup": {
                     "from": "reel_likes",
@@ -223,14 +228,19 @@ async def get_following_reels(
         pipeline = [
             {"$match": {"creator_id": {"$in": following_ids}}},
             {
+                "$addFields": {
+                    "creator_id_obj": {"$toObjectId": "$creator_id"}
+                }
+            },
+            {
                 "$lookup": {
                     "from": "users",
-                    "localField": "creator_id",
+                    "localField": "creator_id_obj",
                     "foreignField": "_id",
                     "as": "creator"
                 }
             },
-            {"$unwind": "$creator"},
+            {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": False}},
             {
                 "$lookup": {
                     "from": "reel_likes",
