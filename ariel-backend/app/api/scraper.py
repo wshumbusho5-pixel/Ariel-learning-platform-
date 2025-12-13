@@ -8,6 +8,9 @@ router = APIRouter()
 scraper_service = ScraperService()
 ai_service = AIService()
 
+MAX_FILE_BYTES = 8 * 1024 * 1024  # 8 MB limit for uploads
+MAX_BULK_QUESTIONS = 50
+
 class URLScrapeRequest(BaseModel):
     url: HttpUrl
 
@@ -62,6 +65,8 @@ async def upload_pdf(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="File must be a PDF")
 
         content = await file.read()
+        if len(content) > MAX_FILE_BYTES:
+            raise HTTPException(status_code=400, detail="PDF too large. Max 8MB.")
         questions = await scraper_service.extract_from_pdf(content)
 
         # Get answers
@@ -92,6 +97,8 @@ async def upload_image(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="File must be an image")
 
         content = await file.read()
+        if len(content) > MAX_FILE_BYTES:
+            raise HTTPException(status_code=400, detail="Image too large. Max 8MB.")
         questions = await scraper_service.extract_from_image(content)
 
         # Get answers
@@ -118,6 +125,14 @@ async def process_bulk_questions(request: BulkQuestionsRequest):
     Process multiple questions submitted as text
     """
     try:
+        if len(request.questions) == 0:
+            raise HTTPException(status_code=400, detail="No questions provided")
+        if len(request.questions) > MAX_BULK_QUESTIONS:
+            raise HTTPException(status_code=400, detail=f"Too many questions. Limit {MAX_BULK_QUESTIONS} at a time.")
+        trimmed = [q.strip() for q in request.questions if q.strip()]
+        if not trimmed:
+            raise HTTPException(status_code=400, detail="No valid questions found")
+
         answers = await ai_service.generate_answers_batch(request.questions)
 
         return {

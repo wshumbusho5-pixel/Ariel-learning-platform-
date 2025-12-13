@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
 import re
 from app.services.ai_service import AIService
+from app.core.config import settings
 
 class ScraperService:
     def __init__(self):
@@ -20,6 +21,28 @@ class ScraperService:
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                 })
                 response.raise_for_status()
+
+            content_type = response.headers.get("content-type", "").lower()
+
+            # If the URL is a PDF, process as PDF
+            if "application/pdf" in content_type or url.lower().endswith(".pdf"):
+                questions = await self.extract_from_pdf(response.content)
+                return {
+                    "url": url,
+                    "title": url.split("/")[-1],
+                    "questions": questions,
+                    "question_count": len(questions)
+                }
+
+            # If it's an image, process as image
+            if any(img_type in content_type for img_type in ["image/", "image/png", "image/jpeg", "image/jpg", "image/webp"]):
+                questions = await self.extract_from_image(response.content)
+                return {
+                    "url": url,
+                    "title": url.split("/")[-1],
+                    "questions": questions,
+                    "question_count": len(questions)
+                }
 
             # Parse HTML
             soup = BeautifulSoup(response.text, 'lxml')
@@ -81,11 +104,9 @@ If no questions are found, return {{"questions": []}}
 """
 
         try:
-            if hasattr(self.ai_service, '_openai_generate'):
-                response = await self.ai_service._openai_generate(prompt)
-                ai_questions = response.get("questions", [])
-                if len(ai_questions) > 0:
-                    return ai_questions
+            ai_questions = await self._extract_questions_with_provider(prompt)
+            if ai_questions:
+                return ai_questions
         except Exception as e:
             print(f"AI extraction failed: {str(e)}")
             pass
@@ -93,6 +114,74 @@ If no questions are found, return {{"questions": []}}
         # If everything fails, return empty list with helpful message
         if len(pattern_questions) == 0:
             raise Exception("No questions found on this page. The page might not contain educational questions, or they may be in an unrecognized format. Try the 'Bulk Questions' tab to paste questions directly.")
+
+    async def _extract_questions_with_provider(self, prompt: str) -> Optional[List[str]]:
+        """
+        Call AI extraction using the configured provider first, then fallbacks.
+        Honors DEFAULT_AI_PROVIDER so Ollama works when chosen.
+        """
+        preferred = self._get_provider_priority()
+
+        for provider in preferred:
+            try:
+                if provider == "ollama":
+                    response = await self.ai_service._ollama_generate(prompt)
+                elif provider == "anthropic" and hasattr(self.ai_service, "anthropic_client"):
+                    response = await self.ai_service._anthropic_generate(prompt)
+                elif provider == "openai" and settings.OPENAI_API_KEY:
+                    response = await self.ai_service._openai_generate(prompt)
+                else:
+                    continue
+
+                questions = self._extract_questions_from_response(response)
+                if questions:
+                    return questions
+            except Exception as e:
+                print(f"AI extraction failed with {provider}: {e}")
+                continue
+
+        return None
+
+    def _get_provider_priority(self) -> List[str]:
+        """Order providers so we try the configured default first, with sensible fallbacks."""
+        base_order = ["ollama", "anthropic", "openai"]
+        if self.ai_service.provider in base_order:
+            first = self.ai_service.provider
+            return [first] + [p for p in base_order if p != first]
+        return base_order
+
+    def _extract_questions_from_response(self, response: any) -> List[str]:
+        """
+        Normalize AI responses into a list of questions.
+        Handles JSON dict, list, or plain text fallbacks.
+        """
+        questions: List[str] = []
+
+        # Dict with "questions"
+        if isinstance(response, dict):
+            if "questions" in response and isinstance(response["questions"], list):
+                questions = [q for q in response["questions"] if isinstance(q, str) and q.strip()]
+            elif "answer" in response and isinstance(response["answer"], list):
+                questions = [q for q in response["answer"] if isinstance(q, str) and q.strip()]
+        # Plain list
+        elif isinstance(response, list):
+            questions = [q for q in response if isinstance(q, str) and q.strip()]
+        # JSON string or plain text
+        elif isinstance(response, str):
+            try:
+                import json
+                data = json.loads(response)
+                return self._extract_questions_from_response(data)
+            except Exception:
+                # Fallback: split lines that look like questions
+                lines = [l.strip() for l in response.splitlines() if l.strip()]
+                for line in lines:
+                    if line.endswith("?") or line.lower().startswith(("what", "why", "how", "when", "where", "who", "which")):
+                        questions.append(line)
+
+        # Deduplicate and limit
+        questions = list(dict.fromkeys(questions))
+        return questions[:50]
 
     def _extract_questions_pattern(self, content: str) -> List[str]:
         """

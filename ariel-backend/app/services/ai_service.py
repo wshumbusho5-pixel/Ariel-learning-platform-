@@ -1,8 +1,9 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from app.core.config import settings
 import openai
 from anthropic import Anthropic
 import ollama
+import json
 
 class AIService:
     def __init__(self, provider: str = None):
@@ -44,6 +45,11 @@ class AIService:
         Generate answers for multiple questions in batch.
         More efficient for processing many questions at once.
         """
+        if len(questions) == 0:
+            return []
+        if len(questions) > 50:
+            raise ValueError("Too many questions. Please limit to 50 at a time.")
+
         prompt = self._build_batch_prompt(questions, context)
 
         if self.provider == "openai":
@@ -51,7 +57,7 @@ class AIService:
         elif self.provider == "anthropic":
             result = await self._anthropic_generate(prompt)
         elif self.provider == "ollama":
-            result = await self._ollama_generate(prompt)
+            result = await self._ollama_generate(prompt, expect_answers_list=True)
         else:
             raise ValueError(f"Unsupported AI provider: {self.provider}")
 
@@ -131,7 +137,6 @@ Remember: Provide EXACTLY {len(questions)} answers, one for each numbered questi
                 temperature=0.3
             )
 
-            import json
             return json.loads(response.choices[0].message.content)
         except Exception as e:
             raise Exception(f"OpenAI API error: {str(e)}")
@@ -147,12 +152,11 @@ Remember: Provide EXACTLY {len(questions)} answers, one for each numbered questi
                 ]
             )
 
-            import json
             return json.loads(response.content[0].text)
         except Exception as e:
             raise Exception(f"Anthropic API error: {str(e)}")
 
-    async def _ollama_generate(self, prompt: str) -> Dict:
+    async def _ollama_generate(self, prompt: str, expect_answers_list: bool = False) -> Dict:
         try:
             response = ollama.chat(
                 model=settings.OLLAMA_MODEL,
@@ -166,7 +170,6 @@ Remember: Provide EXACTLY {len(questions)} answers, one for each numbered questi
                 format="json"  # Force JSON output
             )
 
-            import json
             content = response['message']['content'].strip()
 
             # Try to extract JSON if there's extra text
@@ -178,9 +181,20 @@ Remember: Provide EXACTLY {len(questions)} answers, one for each numbered questi
                     content = content[start:end+1]
 
             try:
-                return json.loads(content)
+                parsed = json.loads(content)
+                # Normalize single-answer payloads into answers list if needed
+                if expect_answers_list and "answers" not in parsed and "answer" in parsed:
+                    parsed = {"answers": [{"answer": parsed.get("answer", ""), "explanation": parsed.get("explanation", "")}]}
+                return parsed
             except json.JSONDecodeError:
                 # Fallback: create structured response from plain text
+                if expect_answers_list:
+                    return {
+                        "answers": [{
+                            "answer": content,
+                            "explanation": "AI provided a direct answer without structured format."
+                        }]
+                    }
                 return {
                     "answer": content,
                     "explanation": "AI provided a direct answer without structured format."
@@ -188,27 +202,49 @@ Remember: Provide EXACTLY {len(questions)} answers, one for each numbered questi
         except Exception as e:
             raise Exception(f"Ollama API error: {str(e)}")
 
-    def _parse_batch_response(self, response: Dict, expected_count: int) -> List[Dict[str, str]]:
+    def _parse_batch_response(self, response: Any, expected_count: int) -> List[Dict[str, str]]:
         """Parse batch response and handle various formats"""
-        answers = response.get("answers", [])
+        # Ensure we have a list to work with
+        answers = []
 
-        # If AI returned more answers than questions, merge them
+        if isinstance(response, dict):
+            answers = response.get("answers", [])
+            # Handle anthropic/openai style nested responses
+            if isinstance(answers, dict):
+                answers = [answers]
+            if not answers and "answer" in response:
+                answers = [{"answer": response.get("answer", ""), "explanation": response.get("explanation", "")}]
+        elif isinstance(response, list):
+            answers = response
+        elif isinstance(response, str):
+            try:
+                data = json.loads(response)
+                return self._parse_batch_response(data, expected_count)
+            except Exception:
+                answers = [{"answer": response, "explanation": ""}]
+
+        # Normalize to expected_count length
         if len(answers) > expected_count:
-            # Combine extra answers into the first question's answer
             merged_answer = " ".join([ans.get("answer", "") for ans in answers])
             merged_explanation = " ".join([ans.get("explanation", "") for ans in answers])
-            return [{
+            answers = [{
                 "question_number": 1,
                 "answer": merged_answer,
                 "explanation": merged_explanation
             }]
 
-        # If AI returned fewer answers, pad with the available answer
         if len(answers) < expected_count:
+            filler = answers[-1] if answers else {"answer": "Unable to generate answer", "explanation": ""}
             while len(answers) < expected_count:
-                answers.append(answers[-1] if answers else {
-                    "answer": "Unable to generate answer",
-                    "explanation": ""
-                })
+                answers.append(filler)
 
-        return answers
+        # Ensure all items have consistent keys
+        normalized = []
+        for idx, ans in enumerate(answers, 1):
+            normalized.append({
+                "question_number": ans.get("question_number", idx),
+                "answer": ans.get("answer", ""),
+                "explanation": ans.get("explanation", "")
+            })
+
+        return normalized

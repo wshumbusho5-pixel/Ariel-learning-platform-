@@ -9,10 +9,21 @@ from app.services.auth_service import AuthService
 router = APIRouter()
 security = HTTPBearer()
 
+MIN_PASSWORD_LENGTH = 8
+MAX_PASSWORD_BYTES = 72
+
+def _validate_password(password: str):
+    """Ensure passwords meet minimum and bcrypt byte limits."""
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+    if len(password.encode("utf-8")) > MAX_PASSWORD_BYTES:
+        raise HTTPException(status_code=400, detail="Password must be at most 72 bytes")
+
 @router.post("/register", response_model=Token)
 async def register(user_data: UserCreate):
     """Register a new user with email and password"""
     try:
+        _validate_password(user_data.password)
         user = await UserRepository.create_user(user_data)
         access_token = AuthService.create_user_token(user)
 
