@@ -22,6 +22,7 @@ export default function DeckPage() {
   const { isAuthenticated, checkAuth } = useAuth();
   const [stats, setStats] = useState<DeckStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [subjectFilter, setSubjectFilter] = useState<string>('all');
 
   useEffect(() => {
     checkAuth();
@@ -60,6 +61,8 @@ export default function DeckPage() {
       </div>
     );
   }
+
+  const subjects = stats ? Object.keys(stats.by_subject || {}) : [];
 
   return (
     <div className="min-h-screen bg-white pb-20">
@@ -101,19 +104,33 @@ export default function DeckPage() {
             </div>
           </div>
 
-          {/* Subject Tags */}
-          {Object.keys(stats.by_subject).length > 0 && (
+          {/* Subject Tags / Filters */}
+          {subjects.length > 0 && (
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-gray-900 mb-2">Subjects</h3>
               <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSubjectFilter('all')}
+                  className={`px-3 py-1.5 rounded-full text-sm border ${
+                    subjectFilter === 'all'
+                      ? 'bg-black text-white border-black'
+                      : 'bg-gray-100 text-gray-800 border-gray-200'
+                  }`}
+                >
+                  All ({stats.total_cards})
+                </button>
                 {Object.entries(stats.by_subject).map(([subject, count]) => (
-                  <div
+                  <button
                     key={subject}
-                    className="px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-full text-sm"
+                    onClick={() => setSubjectFilter(subject)}
+                    className={`px-3 py-1.5 rounded-full text-sm border ${
+                      subjectFilter === subject
+                        ? 'bg-black text-white border-black'
+                        : 'bg-gray-100 text-gray-800 border-gray-200'
+                    }`}
                   >
-                    <span className="font-semibold text-gray-900">{subject}</span>
-                    <span className="text-gray-600 ml-1">({count})</span>
-                  </div>
+                    {subject} ({count})
+                  </button>
                 ))}
               </div>
             </div>
@@ -141,7 +158,7 @@ export default function DeckPage() {
 
       {/* Cards Feed - Instagram Grid Style */}
       <div className="max-w-2xl mx-auto px-4">
-        <CardFeed type="my-deck" />
+        <CardFeed type="my-deck" subjectFilter={subjectFilter} groupBySubject />
       </div>
 
       <BottomNav />

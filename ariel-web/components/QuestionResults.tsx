@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { cardsAPI } from '@/lib/api';
+import { useAuth } from '@/lib/useAuth';
 
 interface Question {
   question: string;
@@ -12,16 +13,31 @@ interface Question {
 interface QuestionResultsProps {
   questions: Question[];
   onSaved?: () => void;
+  onRequireAuth?: () => void;
 }
 
-export default function QuestionResults({ questions, onSaved }: QuestionResultsProps) {
+export default function QuestionResults({ questions, onSaved, onRequireAuth }: QuestionResultsProps) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const { isAuthenticated } = useAuth();
+
+  const handleOpenSaveDialog = () => {
+    if (!isAuthenticated) {
+      onRequireAuth?.();
+      return;
+    }
+    setShowSaveDialog(true);
+  };
 
   const handleSaveToDeck = async () => {
+    if (!isAuthenticated) {
+      onRequireAuth?.();
+      return;
+    }
+
     setSaving(true);
     try {
       const cards = questions.map(q => ({
@@ -57,7 +73,7 @@ export default function QuestionResults({ questions, onSaved }: QuestionResultsP
           </div>
           {!saved ? (
             <button
-              onClick={() => setShowSaveDialog(true)}
+              onClick={handleOpenSaveDialog}
               className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

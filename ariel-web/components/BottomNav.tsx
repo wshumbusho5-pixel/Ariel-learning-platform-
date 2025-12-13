@@ -42,6 +42,28 @@ export default function BottomNav() {
       ),
     },
     {
+      name: 'My Deck',
+      path: '/deck',
+      icon: (active: boolean) => (
+        <svg
+          className={`w-6 h-6 ${active ? 'fill-current' : 'fill-none stroke-current'}`}
+          viewBox="0 0 24 24"
+          strokeWidth={active ? 0 : 2.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3 7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M7 9h6M7 12h6M7 15h3"
+          />
+        </svg>
+      ),
+    },
+    {
       name: 'Reels',
       path: '/reels',
       icon: (active: boolean) => (

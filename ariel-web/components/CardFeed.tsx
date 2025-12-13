@@ -20,9 +20,11 @@ interface Card {
 interface CardFeedProps {
   type: 'trending' | 'my-deck';
   onCardClick?: (card: Card) => void;
+  subjectFilter?: string | null;
+  groupBySubject?: boolean;
 }
 
-export default function CardFeed({ type, onCardClick }: CardFeedProps) {
+export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubject = false }: CardFeedProps) {
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -115,18 +117,31 @@ export default function CardFeed({ type, onCardClick }: CardFeedProps) {
     );
   }
 
-  return (
-    <div className="space-y-6 pb-24">
-      {cards.map((card, index) => {
-        const isExpanded = expandedCards.has(card.id);
-        const isLiked = likedCards.has(card.id);
+  const filteredCards =
+    subjectFilter && subjectFilter !== 'all'
+      ? cards.filter((c) => (c.subject || '').toLowerCase() === subjectFilter.toLowerCase())
+      : cards;
 
-        return (
-          <div
-            key={card.id}
-            className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300 animate-slideUp"
-            style={{ animationDelay: `${index * 0.05}s` }}
-          >
+  const grouped =
+    groupBySubject && (!subjectFilter || subjectFilter === 'all')
+      ? filteredCards.reduce<Record<string, Card[]>>((acc, card) => {
+          const key = card.subject || 'General';
+          acc[key] = acc[key] || [];
+          acc[key].push(card);
+          return acc;
+        }, {})
+      : null;
+
+  const renderCard = (card: Card, index: number) => {
+    const isExpanded = expandedCards.has(card.id);
+    const isLiked = likedCards.has(card.id);
+
+    return (
+      <div
+        key={card.id}
+        className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300 animate-slideUp"
+        style={{ animationDelay: `${index * 0.05}s` }}
+      >
             {/* Card Header - Instagram style */}
             <div className="p-4 flex items-center justify-between border-b border-gray-100">
               <div className="flex items-center gap-3">
@@ -288,8 +303,29 @@ export default function CardFeed({ type, onCardClick }: CardFeedProps) {
               <p className="text-xs text-gray-500 uppercase tracking-wide">2 hours ago</p>
             </div>
           </div>
-        );
-      })}
+      );
+    };
+
+  if (grouped) {
+    return (
+      <div className="space-y-8 pb-24">
+        {Object.entries(grouped).map(([subject, subjectCards]) => (
+          <div key={subject} className="space-y-3">
+            <div className="px-2">
+              <h3 className="text-sm font-semibold text-gray-700">{subject} · {subjectCards.length} cards</h3>
+            </div>
+            <div className="space-y-6">
+              {subjectCards.map((card, idx) => renderCard(card, idx))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 pb-24">
+      {filteredCards.map((card, index) => renderCard(card, index))}
     </div>
   );
 }
