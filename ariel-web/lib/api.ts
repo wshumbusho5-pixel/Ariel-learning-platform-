@@ -270,6 +270,14 @@ export const aiGeneratorAPI = {
   },
 };
 
+// General AI chat
+export const aiChatAPI = {
+  sendMessage: async (message: string, context?: string) => {
+    const response = await api.post('/api/ai/chat', { message, context });
+    return response.data as { reply: string; cards?: { question: string; answer: string; explanation?: string }[] };
+  },
+};
+
 // Social API - Follow/Unfollow, Profiles, Feed
 export const socialAPI = {
   // Follow/Unfollow

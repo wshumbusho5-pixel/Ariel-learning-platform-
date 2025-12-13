@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { aiChatAPI } from '@/lib/api';
 
 export default function ArielAssistant() {
   const [isMinimized, setIsMinimized] = useState(true);
@@ -8,36 +9,42 @@ export default function ArielAssistant() {
     { text: "Hey! I'm Ariel, your AI study buddy! 👋 Need help with anything?", isBot: true }
   ]);
   const [inputText, setInputText] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const quickActions = [
-    { icon: '🎴', label: 'Create cards', action: 'create' },
-    { icon: '📚', label: 'Study tips', action: 'tips' },
-    { icon: '🔥', label: 'Boost streak', action: 'streak' },
-    { icon: '❓', label: 'Help', action: 'help' },
+    { icon: '🎴', label: 'Create cards', prompt: 'Generate 5 flashcards from this topic: ' },
+    { icon: '📚', label: 'Study tips', prompt: 'Give me 3 quick study tips for my next exam.' },
+    { icon: '🔥', label: 'Boost streak', prompt: 'Give me a 10-minute review plan to keep my streak alive.' },
+    { icon: '❓', label: 'Help', prompt: 'What can you do for me right now?' },
   ];
 
-  const handleQuickAction = (action: string) => {
-    const responses: { [key: string]: string } = {
-      create: "Let's create some fire flashcards! Just paste your notes or upload a file and I'll handle the rest! ✨",
-      tips: "Pro tip: Study in short 25-min sessions (Pomodoro style), take breaks, and review before bed. Your brain will thank you! 🧠",
-      streak: "Keep that streak alive! Try to review at least 10 cards daily. Small wins = big gains! 🔥",
-      help: "I can help you create cards, study better, track progress, or just chat about anything study-related! What do you need? 💬",
-    };
+  const sendToAI = async (userMessage: string) => {
+    if (!userMessage.trim()) return;
 
-    setMessages([...messages,
-      { text: quickActions.find(q => q.action === action)?.label || '', isBot: false },
-      { text: responses[action], isBot: true }
-    ]);
+    setMessages(prev => [...prev, { text: userMessage, isBot: false }]);
+    setInputText('');
+    setIsSending(true);
+    setIsTyping(true);
+
+    try {
+      const response = await aiChatAPI.sendMessage(userMessage);
+      const reply = response?.reply || "I'm here to help! Let's try that again.";
+      setMessages(prev => [...prev, { text: reply, isBot: true }]);
+    } catch (error) {
+      setMessages(prev => [...prev, { text: "I'm having trouble reaching the server. Try again in a moment.", isBot: true }]);
+    } finally {
+      setIsSending(false);
+      setIsTyping(false);
+    }
   };
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
+  const handleQuickAction = (prompt: string) => {
+    sendToAI(prompt);
+  };
 
-    setMessages([...messages,
-      { text: inputText, isBot: false },
-      { text: "That's a great question! I'm still learning, but I'm here to help you study smarter! 💪", isBot: true }
-    ]);
-    setInputText('');
+  const handleSend = async () => {
+    await sendToAI(inputText);
   };
 
   return (
@@ -108,6 +115,17 @@ export default function ArielAssistant() {
                 </div>
               </div>
             ))}
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-white shadow-sm">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <span className="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></span>
+                    <span className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></span>
+                    <span className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Quick Actions */}
@@ -116,10 +134,10 @@ export default function ArielAssistant() {
             <div className="grid grid-cols-4 gap-2">
               {quickActions.map((action) => (
                 <button
-                  key={action.action}
-                  onClick={() => handleQuickAction(action.action)}
+                  key={action.label}
+                  onClick={() => handleQuickAction(action.prompt)}
                   className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-white/80 transition-all group"
-                >
+                  >
                   <span className="text-2xl group-hover:scale-110 transition-transform">{action.icon}</span>
                   <span className="text-xs text-gray-600 font-semibold">{action.label}</span>
                 </button>
@@ -137,9 +155,11 @@ export default function ArielAssistant() {
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Ask me anything..."
                 className="flex-1 px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-600 focus:outline-none text-sm"
+                disabled={isSending}
               />
               <button
                 onClick={handleSend}
+                disabled={isSending}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

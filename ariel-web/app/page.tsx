@@ -114,7 +114,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 py-12">
           {showResults && questions.length > 0 && (
             <div>
-              <QuestionResults questions={questions} />
+              <QuestionResults
+                questions={questions}
+                onRequireAuth={() => setShowAuthModal(true)}
+              />
               <div className="mt-8 text-center">
                 <button
                   onClick={handleStartReview}
