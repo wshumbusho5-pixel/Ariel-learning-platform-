@@ -7,6 +7,8 @@ import { progressAPI, gamificationAPI } from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
 import Onboarding from '@/components/Onboarding';
 import ArielAssistant from '@/components/ArielAssistant';
+import ArielSpotlight from '@/components/ArielSpotlight';
+import Link from 'next/link';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -191,6 +193,25 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto p-4 pb-24">
+        {/* Ariel AI Spotlight */}
+        <div className="mb-6">
+          <ArielSpotlight />
+          <div className="mt-3 flex flex-wrap gap-3">
+            <Link
+              href="/create-cards"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl transition"
+            >
+              Create cards from URL / PDF / Image
+            </Link>
+            <Link
+              href="/explore"
+              className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-800 font-semibold hover:bg-gray-50 transition"
+            >
+              Explore decks
+            </Link>
+          </div>
+        </div>
+
         {/* Stats Cards - Instagram Post Style */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
