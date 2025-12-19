@@ -140,10 +140,10 @@ export default function BottomNav() {
                 >
                   <div className="relative">
                     {/* Outer glow ring */}
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 blur-xl opacity-60 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#0A4D68] via-[#0F4C75] to-[#2C5F2D] blur-xl opacity-60 group-hover:opacity-100 transition-opacity"></div>
 
                     {/* Main button */}
-                    <div className="relative w-16 h-16 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-all">
+                    <div className="relative w-16 h-16 bg-gradient-to-r from-[#0A4D68] via-[#0F4C75] to-[#2C5F2D] rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-all">
                       {item.icon(true)}
                     </div>
 
@@ -161,13 +161,13 @@ export default function BottomNav() {
                 key={item.name}
                 onClick={() => router.push(item.path)}
                 className={`flex flex-col items-center justify-center py-2 px-3 min-w-[68px] group transition-all ${
-                  isActive ? 'text-purple-600' : 'text-gray-500'
+                  isActive ? 'text-[#0F4C75]' : 'text-gray-500'
                 }`}
               >
                 <div className={`relative transition-all ${isActive ? 'scale-110' : 'group-hover:scale-105'}`}>
                   {/* Icon background glow when active */}
                   {isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur-lg opacity-30"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0A4D68] to-[#2C5F2D] rounded-xl blur-lg opacity-30"></div>
                   )}
 
                   {/* Icon container */}
@@ -180,7 +180,7 @@ export default function BottomNav() {
                 <span
                   className={`text-xs mt-1 font-semibold transition-all ${
                     isActive
-                      ? 'text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600'
+                      ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#0A4D68] to-[#2C5F2D]'
                       : 'text-gray-500 group-hover:text-gray-700'
                   }`}
                 >
@@ -189,7 +189,7 @@ export default function BottomNav() {
 
                 {/* Active indicator */}
                 {isActive && (
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-t-full"></div>
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-[#0A4D68] to-[#2C5F2D] rounded-t-full"></div>
                 )}
               </button>
             );

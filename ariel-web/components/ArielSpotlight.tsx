@@ -122,7 +122,7 @@ export default function ArielSpotlight() {
   };
 
   return (
-    <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white rounded-3xl shadow-2xl overflow-hidden">
+    <div className="bg-gradient-to-r from-[#0A4D68] via-[#0F4C75] to-[#2C5F2D] text-white rounded-3xl shadow-2xl overflow-hidden">
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -180,7 +180,7 @@ export default function ArielSpotlight() {
                 <button
                   onClick={handleSaveCards}
                   disabled={saving}
-                  className="px-4 py-2 bg-white text-purple-600 rounded-xl font-semibold text-sm shadow-md disabled:opacity-70"
+                  className="px-4 py-2 bg-white text-[#0A4D68] rounded-xl font-semibold text-sm shadow-md disabled:opacity-70"
                 >
                   {saving ? 'Saving…' : 'Save to deck'}
                 </button>
@@ -228,7 +228,7 @@ export default function ArielSpotlight() {
               }
             }}
             disabled={loading}
-            className="px-4 py-2 bg-white text-purple-600 rounded-xl font-semibold text-sm shadow-md disabled:opacity-70"
+            className="px-4 py-2 bg-white text-[#0A4D68] rounded-xl font-semibold text-sm shadow-md disabled:opacity-70"
           >
             Send
           </button>
