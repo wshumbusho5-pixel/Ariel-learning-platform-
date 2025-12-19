@@ -23,6 +23,8 @@ export default function Dashboard() {
   >([]);
   const [showAdvancedAI, setShowAdvancedAI] = useState(false);
   const [showSecondaryStats, setShowSecondaryStats] = useState(false);
+  const [isFirstSession, setIsFirstSession] = useState(true);
+  const [showFullDashboard, setShowFullDashboard] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -35,6 +37,13 @@ export default function Dashboard() {
       loadData();
       if (user && !user.onboarding_completed) {
         setShowOnboarding(true);
+      }
+
+      // Check if first session
+      const hasSeenDashboard = localStorage.getItem('ariel_seen_dashboard');
+      if (hasSeenDashboard) {
+        setIsFirstSession(false);
+        setShowFullDashboard(true);
       }
 
       const timeoutId = setTimeout(() => setLoading(false), 5000);
@@ -114,12 +123,14 @@ export default function Dashboard() {
     );
   }
 
+  // Stats and data
   const streakDays = stats?.current_streak || 0;
   const level = gamification?.level_info?.current_level || 1;
   const accuracy = stats?.retention_rate || 0;
   const mastered = stats?.cards_mastered || 0;
   const cardsDue = stats?.cards_due_today || 0;
 
+  // Handlers
   const handleReact = (id: number, type: 'fire' | 'star' | 'brain') => {
     setFeedCards((prev) =>
       prev.map((card) =>
@@ -128,6 +139,17 @@ export default function Dashboard() {
           : card
       )
     );
+  };
+
+  const unlockFullDashboard = () => {
+    localStorage.setItem('ariel_seen_dashboard', 'true');
+    setShowFullDashboard(true);
+    setIsFirstSession(false);
+  };
+
+  const handleStartLearning = () => {
+    unlockFullDashboard();
+    router.push('/reels');
   };
 
   return (
@@ -179,10 +201,10 @@ export default function Dashboard() {
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={() => router.push('/reels')}
-                  className="px-4 py-2 rounded-xl bg-white text-slate-900 font-semibold shadow-md hover:-translate-y-0.5 transition"
+                  onClick={handleStartLearning}
+                  className={`px-6 py-3 rounded-xl bg-white text-slate-900 font-bold shadow-lg hover:-translate-y-0.5 transition ${isFirstSession && !showFullDashboard ? 'scale-110 ring-4 ring-white/30' : ''}`}
                 >
-                  Start learning
+                  {isFirstSession && !showFullDashboard ? '▶ Start your first session' : 'Start learning'}
                 </button>
                 <button
                   type="button"
@@ -238,51 +260,56 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        {/* Quick stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-sm text-white/60">Cards due</p>
-            <p className="text-3xl font-bold">{cardsDue > 0 ? cardsDue : '—'}</p>
-            <p className="text-xs text-white/50 mt-1">
-              {cardsDue > 0 ? 'Clear your queue to keep streaks alive.' : 'You’re clear. Add cards or explore new decks.'}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-sm text-white/60">Streak</p>
-            <p className="text-3xl font-bold">{streakDays > 0 ? `${streakDays} days` : '—'}</p>
-            <p className="text-xs text-white/50 mt-1">
-              {streakDays > 0 ? 'Stay hot. Parents love this number.' : 'Grace days apply—life happens.'}
-            </p>
-          </div>
-          {showSecondaryStats && (
-            <>
+        {/* Quick stats - hidden for first-time users */}
+        {(showFullDashboard || !isFirstSession) && (
+          <>
+            <div className="grid grid-cols-2 gap-3 animate-fadeIn">
               <div className="rounded-2xl bg-white/5 p-4">
-                <p className="text-sm text-white/60">Retention</p>
-                <p className="text-3xl font-bold">{accuracy > 0 ? `${accuracy}%` : '—'}</p>
+                <p className="text-sm text-white/60">Cards due</p>
+                <p className="text-3xl font-bold">{cardsDue > 0 ? cardsDue : '—'}</p>
                 <p className="text-xs text-white/50 mt-1">
-                  {accuracy > 0 ? 'Higher = safer brain.' : 'Starts tracking after your first review.'}
+                  {cardsDue > 0 ? 'Clear your queue to keep streaks alive.' : "You're clear. Add cards or explore new decks."}
                 </p>
               </div>
               <div className="rounded-2xl bg-white/5 p-4">
-                <p className="text-sm text-white/60">Mastered</p>
-                <p className="text-3xl font-bold">{mastered > 0 ? mastered : '—'}</p>
+                <p className="text-sm text-white/60">Streak</p>
+                <p className="text-3xl font-bold">{streakDays > 0 ? `${streakDays} days` : '—'}</p>
                 <p className="text-xs text-white/50 mt-1">
-                  {mastered > 0 ? 'Flex these in your feed.' : 'Master one card to unlock sharing.'}
+                  {streakDays > 0 ? 'Stay hot. Parents love this number.' : 'Grace days apply - life happens.'}
                 </p>
               </div>
-            </>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowSecondaryStats((v) => !v)}
-          className="text-xs text-white/60 hover:text-white font-semibold px-3 py-2 rounded-full bg-white/5"
-        >
-          {showSecondaryStats ? 'Hide secondary stats' : 'Show secondary stats'}
-        </button>
+              {showSecondaryStats && (
+                <>
+                  <div className="rounded-2xl bg-white/5 p-4">
+                    <p className="text-sm text-white/60">Retention</p>
+                    <p className="text-3xl font-bold">{accuracy > 0 ? `${accuracy}%` : '—'}</p>
+                    <p className="text-xs text-white/50 mt-1">
+                      {accuracy > 0 ? 'Higher = safer brain.' : 'Starts tracking after your first review.'}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/5 p-4">
+                    <p className="text-sm text-white/60">Mastered</p>
+                    <p className="text-3xl font-bold">{mastered > 0 ? mastered : '—'}</p>
+                    <p className="text-xs text-white/50 mt-1">
+                      {mastered > 0 ? 'Flex these in your feed.' : 'Master one card to unlock sharing.'}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSecondaryStats((v) => !v)}
+              className="text-xs text-white/60 hover:text-white font-semibold px-3 py-2 rounded-full bg-white/5"
+            >
+              {showSecondaryStats ? 'Hide secondary stats' : 'Show secondary stats'}
+            </button>
+          </>
+        )}
 
-        {/* Spotlight & Feed */}
-        <div className="grid lg:grid-cols-3 gap-4">
+        {/* Spotlight & Feed - hidden for first-time users */}
+        {(showFullDashboard || !isFirstSession) && (
+          <div className="grid lg:grid-cols-3 gap-4 animate-fadeIn">
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white/[0.04] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
@@ -387,11 +414,28 @@ export default function Dashboard() {
               </ul>
             </div>
           </div>
-        </div>
+          </div>
+        )}
+
+        {/* First-time user CTA */}
+        {isFirstSession && !showFullDashboard && (
+          <div className="max-w-2xl mx-auto text-center py-12 space-y-4 animate-fadeIn">
+            <p className="text-white/70 text-sm">
+              Ready to experience a feed built for your brain?
+            </p>
+            <button
+              onClick={() => setShowFullDashboard(true)}
+              className="text-sm text-[#65B741] font-semibold hover:underline"
+            >
+              Or explore the full dashboard →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Advanced AI - tucked away for power users */}
-      <div id="advanced-ai" className="max-w-6xl mx-auto px-4 pb-10">
+      {(showFullDashboard || !isFirstSession) && (
+        <div id="advanced-ai" className="max-w-6xl mx-auto px-4 pb-10 animate-fadeIn">
         <div className="rounded-2xl bg-white/5 border border-white/10 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -412,7 +456,8 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      )}
 
       <BottomNav />
       <ArielAssistant />

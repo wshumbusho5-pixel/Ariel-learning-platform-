@@ -1,0 +1,50 @@
+[
+  {
+    "question": "What's the fastest way to check if an element exists in Python?",
+    "answer": "Use a hash map (dict) or set - both have O(1) lookup time",
+    "explanation": "Hash maps and sets use hash tables internally, allowing constant-time lookups. Lists require O(n) time to search.",
+    "category": "Data Structures",
+    "difficulty": "intermediate",
+    "tags": ["python", "hash-map", "performance"]
+  },
+  {
+    "question": "How do you create an empty hash map in Python?",
+    "answer": "hash_map = {} or hash_map = dict()",
+    "explanation": "Both create an empty dictionary. {} is more concise and commonly used.",
+    "category": "Data Structures",
+    "difficulty": "beginner",
+    "tags": ["python", "hash-map", "syntax"]
+  },
+  {
+    "question": "When should you use a set instead of a list?",
+    "answer": "When you need to track unique items or check for duplicates quickly",
+    "explanation": "Sets automatically handle uniqueness and provide O(1) membership testing, while lists allow duplicates and have O(n) search time.",
+    "category": "Data Structures",
+    "difficulty": "intermediate",
+    "tags": ["python", "set", "optimization"]
+  },
+  {
+    "question": "What does nums[::-1] do in Python?",
+    "answer": "Reverses the string or list",
+    "explanation": "The slice notation [start:stop:step] with step=-1 traverses the sequence backwards, creating a reversed copy.",
+    "category": "String Operations",
+    "difficulty": "intermediate",
+    "tags": ["python", "slicing", "strings"]
+  },
+  {
+    "question": "What's the difference between nums.sort() and sorted(nums)?",
+    "answer": "nums.sort() modifies the list in-place and returns None. sorted(nums) returns a new sorted list.",
+    "explanation": "Use .sort() when you want to modify the original list. Use sorted() when you need to keep the original unchanged.",
+    "category": "Sorting",
+    "difficulty": "intermediate",
+    "tags": ["python", "sorting", "mutation"]
+  },
+  {
+    "question": "How do you remove duplicates from a list in Python?",
+    "answer": "Convert to a set: unique = list(set(nums))",
+    "explanation": "Sets only store unique values. Converting a list to a set automatically removes duplicates. Convert back to list if needed.",
+    "category": "Data Structures",
+    "difficulty": "beginner",
+    "tags": ["python", "set", "duplicates"]
+  }
+]
