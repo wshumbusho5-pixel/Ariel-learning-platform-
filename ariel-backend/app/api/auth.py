@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Optional
 from app.models.user import (
     UserCreate, UserLogin, Token, User, OAuthLoginRequest, AuthProvider, UserProfileUpdate
 )
@@ -8,6 +9,7 @@ from app.services.auth_service import AuthService
 
 router = APIRouter()
 security = HTTPBearer()
+optional_security = HTTPBearer(auto_error=False)
 
 MIN_PASSWORD_LENGTH = 8
 MAX_PASSWORD_BYTES = 72
@@ -22,8 +24,10 @@ def _validate_password(password: str):
 @router.post("/register", response_model=Token)
 async def register(user_data: UserCreate):
     """Register a new user with email and password"""
+    # Validate password first (raises HTTPException on failure)
+    _validate_password(user_data.password)
+
     try:
-        _validate_password(user_data.password)
         user = await UserRepository.create_user(user_data)
         access_token = AuthService.create_user_token(user)
 
@@ -49,7 +53,11 @@ async def register(user_data: UserCreate):
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin):
     """Login with email and password"""
-    user = await UserRepository.authenticate_user(credentials.email, credentials.password)
+    try:
+        user = await UserRepository.authenticate_user(credentials.email, credentials.password)
+    except RuntimeError as e:
+        # Fast feedback when DB is down instead of hanging
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
 
     if not user:
         raise HTTPException(
@@ -124,7 +132,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail="Invalid authentication credentials"
         )
 
-    user = await UserRepository.get_user_by_id(token_data.user_id)
+    try:
+        user = await UserRepository.get_user_by_id(token_data.user_id)
+    except RuntimeError as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -165,8 +177,26 @@ async def get_current_user_dependency(
             detail="Invalid authentication credentials"
         )
 
-    user = await UserRepository.get_user_by_id(token_data.user_id)
+    try:
+        user = await UserRepository.get_user_by_id(token_data.user_id)
+    except RuntimeError as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     return user
+
+
+async def get_optional_user_dependency(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security)
+) -> Optional[User]:
+    """Best-effort user lookup; returns None if no/invalid token."""
+    if not credentials:
+        return None
+
+    token_data = AuthService.verify_token(credentials.credentials)
+    if not token_data or not token_data.user_id:
+        return None
+
+    return await UserRepository.get_user_by_id(token_data.user_id)

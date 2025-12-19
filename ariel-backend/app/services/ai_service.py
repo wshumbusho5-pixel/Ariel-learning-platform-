@@ -6,13 +6,17 @@ import ollama
 import json
 
 class AIService:
-    def __init__(self, provider: str = None):
+    def __init__(self, provider: str = None, api_key: Optional[str] = None, model: Optional[str] = None):
         self.provider = provider or settings.DEFAULT_AI_PROVIDER
+        self.api_key = api_key
+        self.model = model
 
-        if self.provider == "openai" and settings.OPENAI_API_KEY:
-            openai.api_key = settings.OPENAI_API_KEY
-        elif self.provider == "anthropic" and settings.ANTHROPIC_API_KEY:
-            self.anthropic_client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+        if self.provider == "openai":
+            self.api_key = self.api_key or settings.OPENAI_API_KEY
+        elif self.provider == "anthropic":
+            self.api_key = self.api_key or settings.ANTHROPIC_API_KEY
+            if self.api_key:
+                self.anthropic_client = Anthropic(api_key=self.api_key)
 
     async def generate_answer(
         self,
@@ -126,15 +130,20 @@ Remember: Provide EXACTLY {len(questions)} answers, one for each numbered questi
         return prompt
 
     async def _openai_generate(self, prompt: str) -> Dict:
+        if not self.api_key:
+            raise Exception("OpenAI API key not configured")
+        model_name = self.model or "gpt-4-turbo-preview"
+
         try:
             response = await openai.ChatCompletion.acreate(
-                model="gpt-4-turbo-preview",
+                model=model_name,
                 messages=[
                     {"role": "system", "content": "You are Ariel, a positive learning assistant."},
                     {"role": "user", "content": prompt}
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.3
+                temperature=0.3,
+                api_key=self.api_key
             )
 
             return json.loads(response.choices[0].message.content)
@@ -142,9 +151,14 @@ Remember: Provide EXACTLY {len(questions)} answers, one for each numbered questi
             raise Exception(f"OpenAI API error: {str(e)}")
 
     async def _anthropic_generate(self, prompt: str) -> Dict:
+        if not self.api_key:
+            raise Exception("Anthropic API key not configured")
+        model_name = self.model or "claude-3-5-sonnet-20241022"
+        if not hasattr(self, "anthropic_client"):
+            self.anthropic_client = Anthropic(api_key=self.api_key)
         try:
             response = self.anthropic_client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model=model_name,
                 max_tokens=2048,
                 temperature=0.3,
                 messages=[
@@ -157,9 +171,10 @@ Remember: Provide EXACTLY {len(questions)} answers, one for each numbered questi
             raise Exception(f"Anthropic API error: {str(e)}")
 
     async def _ollama_generate(self, prompt: str, expect_answers_list: bool = False) -> Dict:
+        model_name = self.model or settings.OLLAMA_MODEL
         try:
             response = ollama.chat(
-                model=settings.OLLAMA_MODEL,
+                model=model_name,
                 messages=[
                     {"role": "system", "content": "You are Ariel, a positive learning assistant. CRITICAL: You MUST respond with ONLY valid JSON. No other text before or after."},
                     {"role": "user", "content": prompt}

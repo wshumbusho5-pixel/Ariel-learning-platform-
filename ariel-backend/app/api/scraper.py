@@ -1,12 +1,13 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Depends
 from pydantic import BaseModel, HttpUrl
 from typing import List
 from app.services.scraper_service import ScraperService
 from app.services.ai_service import AIService
+from app.api.auth import get_optional_user_dependency
+from app.utils.ai_credentials import resolve_ai_credentials
 
 router = APIRouter()
 scraper_service = ScraperService()
-ai_service = AIService()
 
 MAX_FILE_BYTES = 8 * 1024 * 1024  # 8 MB limit for uploads
 MAX_BULK_QUESTIONS = 50
@@ -18,7 +19,11 @@ class BulkQuestionsRequest(BaseModel):
     questions: List[str]
 
 @router.post("/scrape-url")
-async def scrape_url(request: URLScrapeRequest):
+async def scrape_url(
+    request: URLScrapeRequest,
+    raw_request: Request,
+    current_user=Depends(get_optional_user_dependency)
+):
     """
     Scrape questions from a URL - CORE DIFFERENTIATOR FEATURE
 
@@ -26,7 +31,9 @@ async def scrape_url(request: URLScrapeRequest):
     """
     try:
         print(f"Scraping URL: {request.url}")
-        result = await scraper_service.scrape_url(str(request.url))
+        creds = resolve_ai_credentials(raw_request, current_user)
+        ai_service = AIService(provider=creds.provider, api_key=creds.api_key, model=creds.model)
+        result = await scraper_service.scrape_url(str(request.url), ai_service=ai_service)
         print(f"Found {len(result['questions'])} questions")
 
         # Now get answers for all questions
@@ -56,7 +63,11 @@ async def scrape_url(request: URLScrapeRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/upload-pdf")
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(
+    raw_request: Request,
+    file: UploadFile = File(...),
+    current_user=Depends(get_optional_user_dependency)
+):
     """
     Upload PDF and extract questions
     """
@@ -70,6 +81,8 @@ async def upload_pdf(file: UploadFile = File(...)):
         questions = await scraper_service.extract_from_pdf(content)
 
         # Get answers
+        creds = resolve_ai_credentials(raw_request, current_user)
+        ai_service = AIService(provider=creds.provider, api_key=creds.api_key, model=creds.model)
         answers = await ai_service.generate_answers_batch(questions)
 
         return {
@@ -88,7 +101,11 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/upload-image")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(
+    raw_request: Request,
+    file: UploadFile = File(...),
+    current_user=Depends(get_optional_user_dependency)
+):
     """
     Upload image and extract questions using OCR
     """
@@ -102,6 +119,8 @@ async def upload_image(file: UploadFile = File(...)):
         questions = await scraper_service.extract_from_image(content)
 
         # Get answers
+        creds = resolve_ai_credentials(raw_request, current_user)
+        ai_service = AIService(provider=creds.provider, api_key=creds.api_key, model=creds.model)
         answers = await ai_service.generate_answers_batch(questions)
 
         return {
@@ -120,7 +139,11 @@ async def upload_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/bulk-questions")
-async def process_bulk_questions(request: BulkQuestionsRequest):
+async def process_bulk_questions(
+    request: BulkQuestionsRequest,
+    raw_request: Request,
+    current_user=Depends(get_optional_user_dependency)
+):
     """
     Process multiple questions submitted as text
     """
@@ -133,6 +156,8 @@ async def process_bulk_questions(request: BulkQuestionsRequest):
         if not trimmed:
             raise HTTPException(status_code=400, detail="No valid questions found")
 
+        creds = resolve_ai_credentials(raw_request, current_user)
+        ai_service = AIService(provider=creds.provider, api_key=creds.api_key, model=creds.model)
         answers = await ai_service.generate_answers_batch(request.questions)
 
         return {

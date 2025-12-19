@@ -114,7 +114,7 @@ export default function StoryViewer({ storyGroup, onClose, onNext, onPrevious }:
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
       {/* Progress Bars */}
       <div className="absolute top-0 left-0 right-0 flex gap-1 p-2 z-10">
-        {stories.map((_, index) => (
+        {stories.map((story: Story, index: number) => (
           <div key={index} className="flex-1 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
             <div
               className="h-full bg-white transition-all duration-100"

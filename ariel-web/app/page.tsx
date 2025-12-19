@@ -7,6 +7,7 @@ import QuestionCard from '@/components/QuestionCard';
 import QuestionResults from '@/components/QuestionResults';
 import AuthModal from '@/components/AuthModal';
 import AICardGenerator from '@/components/AICardGenerator';
+import AIProviderSettings from '@/components/AIProviderSettings';
 import { useAuth } from '@/lib/useAuth';
 
 interface Question {
@@ -27,6 +28,8 @@ export default function Home() {
   const [isComplete, setIsComplete] = useState(false);
   const [showArielAssistant, setShowArielAssistant] = useState(false);
   const [arielMinimized, setArielMinimized] = useState(true);
+  const [showAdvancedAI, setShowAdvancedAI] = useState(false);
+  const [demoRevealed, setDemoRevealed] = useState(true); // Auto-reveal demo
 
   useEffect(() => {
     checkAuth();
@@ -200,223 +203,220 @@ export default function Home() {
                 <p className="text-xs text-gray-600 font-semibold">Study smarter, not harder</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="magnetic-btn px-6 py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-bold rounded-2xl shadow-xl hover-glow"
-            >
-              Get Started
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAuthModal(true)}
+                className="px-4 py-2 rounded-2xl border border-slate-200 bg-white/70 text-slate-700 font-semibold hover:bg-white transition"
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/reels')}
+                className="magnetic-btn px-6 py-2.5 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-bold rounded-2xl shadow-xl hover-glow"
+              >
+                Start learning
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Hero Section - World Class */}
-      <div className="relative max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center space-y-8 animate-reveal">
-          {/* Floating Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-xl rounded-full border border-gray-200/50 shadow-lg animate-float">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span className="text-sm font-semibold text-gray-700">10,000+ students crushing it daily</span>
-          </div>
-
-          {/* Main Headline */}
-          <h2 className="text-5xl md:text-7xl font-bold text-gray-900 leading-tight">
-            Your <span className="gradient-text">AI study buddy</span>
-            <br />that actually gets you
-          </h2>
-
-          {/* Subheadline */}
-          <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            No cap, Ariel turns your notes into fire flashcards instantly.
-            Study anywhere, ace everything. It's giving main character energy. 💅
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <button
-              onClick={() => setShowAuthModal(true)}
-              className="magnetic-btn px-8 py-4 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-bold rounded-2xl shadow-2xl hover-glow text-lg"
-            >
-              Start For Free ⚡
-            </button>
-            <button
-              onClick={() => {
-                const element = document.getElementById('how-it-works');
-                element?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="magnetic-btn px-8 py-4 glass-card text-gray-900 font-bold rounded-2xl shadow-lg hover-glow text-lg"
-            >
-              See How It Works
-            </button>
-          </div>
-
-          {/* Trust Signals */}
-          <div className="flex flex-wrap items-center justify-center gap-8 pt-8 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">⚡</span>
-              <span className="font-semibold">Instant flashcards</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🧠</span>
-              <span className="font-semibold">AI-powered</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🎯</span>
-              <span className="font-semibold">Actually fun</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🔥</span>
-              <span className="font-semibold">Track streaks</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Hero Visual - Interactive Demo Preview */}
-        <div className="mt-16 animate-reveal" style={{animationDelay: '0.2s'}}>
-          <div className="relative max-w-5xl mx-auto">
-            {/* Main Card Preview */}
-            <div className="glass-card rounded-3xl p-8 shadow-2xl">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg">
-                  <span className="text-xl">📚</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Preview Card</h3>
-                  <p className="text-sm text-gray-600">Tap to flip & learn</p>
-                </div>
-              </div>
-              <div className="neu-card p-8 rounded-2xl hover-glow">
-                <p className="text-xl font-bold text-gray-900 mb-4">What is the mitochondria?</p>
-                <p className="text-gray-600">Tap to reveal answer...</p>
+      {/* Hero Section - hook first, no setup */}
+      <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-16">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-100 via-white to-slate-50 text-gray-900 shadow-2xl border border-white/70">
+          <div className="absolute -left-24 -top-24 w-80 h-80 bg-purple-200/30 blur-3xl rounded-full" />
+          <div className="absolute -right-16 bottom-10 w-64 h-64 bg-blue-200/30 blur-3xl rounded-full" />
+          <div className="relative grid lg:grid-cols-2 gap-12 p-10 lg:p-16">
+            <div className="space-y-6">
+              <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-slate-900">
+                A feed built for your brain — not addiction.
+              </h2>
+              <p className="text-xl md:text-2xl text-slate-700 leading-relaxed">
+                Learn one useful concept in 20 seconds.<br />
+                No setup. No scrolling traps.
+              </p>
+              <div className="space-y-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => router.push('/reels')}
+                  className="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold shadow-lg hover:-translate-y-0.5 transition text-lg"
+                >
+                  ▶ Start learning (20s)
+                </button>
+                <p className="text-sm text-slate-500">
+                  No account required · Free to try
+                </p>
               </div>
             </div>
-
-            {/* Floating Stats */}
-            <div className="absolute -right-4 top-8 neu-card p-4 rounded-2xl shadow-xl animate-float hidden md:block">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
-                  <span className="text-2xl">🔥</span>
+            <div className="space-y-4">
+              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-sm text-slate-500">See how it works</p>
+                    <p className="text-base font-bold text-slate-900">20-second explainer</p>
+                  </div>
+                  <div className="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold">Live demo</div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Streak</p>
-                  <p className="text-2xl font-bold text-gray-900">7 days</p>
+                <div className="rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6 shadow-xl">
+                  <p className="text-sm text-white/60 mb-2">Question</p>
+                  <p className="text-xl font-bold mb-4">What does chlorophyll do?</p>
+                  <div className="p-4 rounded-lg bg-white/10 border border-white/15">
+                    <p className="text-sm font-semibold text-emerald-200 mb-1">Answer</p>
+                    <p className="text-white leading-relaxed">It captures light energy to power photosynthesis.</p>
+                    <p className="text-white/60 text-sm mt-3">
+                      Swipe → next concept
+                    </p>
+                  </div>
                 </div>
+                <p className="mt-4 text-xs text-center text-slate-500 italic">
+                  "It's like TikTok, but every swipe teaches me something."
+                </p>
               </div>
-            </div>
-
-            <div className="absolute -left-4 bottom-8 neu-card p-4 rounded-2xl shadow-xl animate-float hidden md:block" style={{animationDelay: '1s'}}>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg">
-                  <span className="text-2xl">⭐</span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Mastered</p>
-                  <p className="text-2xl font-bold text-gray-900">142</p>
-                </div>
+              <div className="text-center space-y-1">
+                <p className="text-sm text-slate-600 font-semibold">
+                  Privacy-first. No ads. No manipulation.
+                </p>
+                <p className="text-xs text-slate-500">
+                  Designed to reduce doom-scrolling
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Features Section - How It Works */}
-      <div id="how-it-works" className="relative max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center mb-16 animate-reveal">
-          <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            It hits different ✨
+      {/* How It Works */}
+      <div id="how-it-works" className="relative max-w-6xl mx-auto px-6 py-20">
+        <div className="text-center mb-14 animate-reveal">
+          <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
+            How Ariel works
           </h3>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Three simple steps to go from zero to hero
-          </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-10">
           {/* Step 1 */}
-          <div className="neu-card p-8 hover-glow animate-reveal text-center" style={{animationDelay: '0.1s'}}>
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-6 shadow-xl">
-              <span className="text-4xl">📝</span>
+          <div className="text-center animate-reveal" style={{animationDelay: '0.1s'}}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-5 shadow-lg">
+              <span className="text-3xl">📝</span>
             </div>
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              1
-            </div>
-            <h4 className="text-2xl font-bold text-gray-900 mb-3">Drop your content</h4>
-            <p className="text-gray-600 leading-relaxed">
-              Paste notes, upload PDFs, or share links. Ariel handles the rest like a pro.
+            <h4 className="text-xl font-bold text-gray-900 mb-2">Drop your notes</h4>
+            <p className="text-gray-600">
+              Paste notes, upload files, or share links.
             </p>
           </div>
 
           {/* Step 2 */}
-          <div className="neu-card p-8 hover-glow animate-reveal text-center" style={{animationDelay: '0.2s'}}>
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-6 shadow-xl">
-              <span className="text-4xl">🤖</span>
+          <div className="text-center animate-reveal" style={{animationDelay: '0.2s'}}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-5 shadow-lg">
+              <span className="text-3xl">✨</span>
             </div>
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              2
-            </div>
-            <h4 className="text-2xl font-bold text-gray-900 mb-3">AI does its thing</h4>
-            <p className="text-gray-600 leading-relaxed">
-              Watch Ariel create perfect flashcards in seconds. It's literally magic.
+            <h4 className="text-xl font-bold text-gray-900 mb-2">Ariel turns them into 20-second explainers</h4>
+            <p className="text-gray-600">
+              One clear concept at a time.
             </p>
           </div>
 
           {/* Step 3 */}
-          <div className="neu-card p-8 hover-glow animate-reveal text-center" style={{animationDelay: '0.3s'}}>
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center mx-auto mb-6 shadow-xl">
-              <span className="text-4xl">🚀</span>
+          <div className="text-center animate-reveal" style={{animationDelay: '0.3s'}}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mx-auto mb-5 shadow-lg">
+              <span className="text-3xl">🧠</span>
             </div>
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold text-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              3
-            </div>
-            <h4 className="text-2xl font-bold text-gray-900 mb-3">Slay your studies</h4>
-            <p className="text-gray-600 leading-relaxed">
-              Study on your phone, track streaks, compete with friends. Main character vibes only.
+            <h4 className="text-xl font-bold text-gray-900 mb-2">Learn fast, remember longer</h4>
+            <p className="text-gray-600">
+              Built with spaced repetition science.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Social Proof / Stats */}
+      {/* Social Proof (qualitative, honest) */}
       <div className="relative max-w-7xl mx-auto px-6 py-16">
         <div className="glass-card rounded-3xl p-12 text-center animate-reveal shadow-2xl">
-          <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12">
-            The receipts speak for themselves 📈
+          <h3 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Built for real life (and real focus)
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div>
-              <p className="text-4xl md:text-5xl font-bold gradient-text mb-2">10K+</p>
-              <p className="text-gray-600 font-semibold">Students vibing</p>
+          <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
+            Built for students. Trusted by parents. Safe for schools.
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 mt-10 text-left">
+            <div className="rounded-2xl bg-white/70 border border-slate-200 p-6 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500">Students</p>
+              <p className="text-lg font-bold text-slate-900 mt-2">Learn one thing per swipe</p>
+              <p className="text-sm text-slate-600 mt-2">
+                20s explainers + flashcards that help you remember, not just scroll.
+              </p>
             </div>
-            <div>
-              <p className="text-4xl md:text-5xl font-bold gradient-text mb-2">1M+</p>
-              <p className="text-gray-600 font-semibold">Cards created</p>
+            <div className="rounded-2xl bg-white/70 border border-slate-200 p-6 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500">Parents</p>
+              <p className="text-lg font-bold text-slate-900 mt-2">A feed you can trust</p>
+              <p className="text-sm text-slate-600 mt-2">
+                Designed to feel calm and safe—no ragebait, no weird recommendations.
+              </p>
             </div>
-            <div>
-              <p className="text-4xl md:text-5xl font-bold gradient-text mb-2">95%</p>
-              <p className="text-gray-600 font-semibold">Better grades</p>
-            </div>
-            <div>
-              <p className="text-4xl md:text-5xl font-bold gradient-text mb-2">24/7</p>
-              <p className="text-gray-600 font-semibold">Always available</p>
+            <div className="rounded-2xl bg-white/70 border border-slate-200 p-6 shadow-sm">
+              <p className="text-xs font-semibold text-slate-500">Schools</p>
+              <p className="text-lg font-bold text-slate-900 mt-2">Share decks, lift outcomes</p>
+              <p className="text-sm text-slate-600 mt-2">
+                Teachers can share learning clips and decks students actually use.
+              </p>
             </div>
           </div>
+          <p className="text-xs text-slate-500 mt-8">
+            No ads. No doomscroll dopamine traps. Just understanding.
+          </p>
         </div>
       </div>
 
       {/* Final CTA */}
       <div className="relative max-w-4xl mx-auto px-6 py-20 text-center">
-        <div className="animate-reveal">
-          <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Ready to level up? 🎮
+        <div className="animate-reveal space-y-6">
+          <h3 className="text-4xl md:text-5xl font-bold text-gray-900">
+            Ready to learn something right now?
           </h3>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Join thousands of students who are already winning. It's free to start!
+          <p className="text-xl text-gray-600 max-w-xl mx-auto">
+            Get a 20-second explainer instantly.
           </p>
-          <button
-            onClick={() => setShowAuthModal(true)}
-            className="magnetic-btn px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-bold rounded-2xl shadow-2xl hover-glow text-xl"
-          >
-            Let's Go! 🚀
-          </button>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => router.push('/reels')}
+              className="magnetic-btn px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 text-white font-bold rounded-2xl shadow-2xl hover-glow text-xl"
+            >
+              ▶ Start learning now
+            </button>
+            <p className="mt-3 text-sm text-slate-500">
+              No account required
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Advanced AI - tucked away for power users */}
+      <div id="byo-ai" className="relative max-w-5xl mx-auto px-6 pb-16">
+        <div className="bg-white/70 backdrop-blur rounded-3xl shadow-lg border border-slate-200/70 p-6 md:p-7">
+          <div className="flex items-start md:items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Power users (optional)</p>
+              <p className="text-base font-bold text-slate-900 mt-1">Bring your own AI keys</p>
+              <p className="text-sm text-slate-600 max-w-xl mt-2">
+                Ariel works out of the box. Only plug in your own OpenAI or Claude key if you want extra control.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAdvancedAI((v) => !v)}
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-sm font-semibold transition flex items-center gap-2"
+            >
+              {showAdvancedAI ? '− Hide settings' : '+ Show advanced settings'}
+            </button>
+          </div>
+          {showAdvancedAI && (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 mt-4">
+              <AIProviderSettings />
+            </div>
+          )}
         </div>
       </div>
 

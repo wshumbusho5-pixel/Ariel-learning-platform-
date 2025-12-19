@@ -1,6 +1,8 @@
 import axios from 'axios';
+import { loadLocalAICredentials } from './aiCredentials';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Use env var when provided; default to 8003 since backend runs there by default in this setup
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -8,6 +10,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000, // avoid hanging forever when API is down
 });
 
 // Add auth token to requests
@@ -15,6 +18,14 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Attach BYO AI provider headers when available locally
+  const aiPrefs = loadLocalAICredentials();
+  if (aiPrefs?.apiKey) {
+    config.headers['X-AI-Provider'] = aiPrefs.provider;
+    config.headers['X-AI-Key'] = aiPrefs.apiKey;
+    if (aiPrefs.model) config.headers['X-AI-Model'] = aiPrefs.model;
   }
   return config;
 });
@@ -275,6 +286,18 @@ export const aiChatAPI = {
   sendMessage: async (message: string, context?: string) => {
     const response = await api.post('/api/ai/chat', { message, context });
     return response.data as { reply: string; cards?: { question: string; answer: string; explanation?: string }[] };
+  },
+};
+
+// AI Credentials (BYO keys)
+export const aiCredentialsAPI = {
+  get: async () => {
+    const response = await api.get('/api/ai/credentials');
+    return response.data as { provider?: string; model?: string; has_api_key: boolean; updated_at?: string };
+  },
+  save: async (payload: { provider?: string; api_key?: string; model?: string; remove_key?: boolean }) => {
+    const response = await api.put('/api/ai/credentials', payload);
+    return response.data as { provider?: string; model?: string; has_api_key: boolean; updated_at?: string };
   },
 };
 

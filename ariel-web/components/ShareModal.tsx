@@ -86,7 +86,7 @@ export default function ShareModal({ isOpen, onClose, title, url, type }: ShareM
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
           {/* Native Share Button (Mobile) */}
-          {typeof navigator !== 'undefined' && navigator.share && (
+          {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
             <button
               onClick={handleNativeShare}
               className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-gray-50 transition-colors mb-3"

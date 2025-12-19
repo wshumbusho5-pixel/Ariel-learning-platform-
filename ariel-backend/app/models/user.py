@@ -1,7 +1,17 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+
+
+class UserAISettings(BaseModel):
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    encrypted_api_key: Optional[str] = Field(default=None, exclude=True)
+    has_api_key: bool = False
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(extra="ignore")
 
 class AuthProvider(str, Enum):
     EMAIL = "email"
@@ -60,9 +70,11 @@ class User(BaseModel):
     is_teacher: bool = False  # Teacher verification status
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: Optional[datetime] = None
+    ai_settings: Optional[UserAISettings] = None
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        extra="ignore",
+        json_schema_extra={
             "example": {
                 "email": "student@example.com",
                 "username": "student123",
@@ -70,6 +82,7 @@ class User(BaseModel):
                 "auth_provider": "email"
             }
         }
+    )
 
 class UserCreate(BaseModel):
     email: EmailStr

@@ -1,8 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime
 from app.services.ai_service import AIService
 from app.core.config import settings
+from app.api.auth import get_current_user_dependency, get_optional_user_dependency
+from app.services.user_repository import UserRepository
+from app.utils.crypto import encrypt_value
+from app.utils.ai_credentials import resolve_ai_credentials, ResolvedAICredentials
 
 router = APIRouter()
 
@@ -15,6 +20,7 @@ class ChatRequest(BaseModel):
     message: str
     context: Optional[str] = None
     provider: Optional[str] = None
+    model: Optional[str] = None
 
 class ChatCard(BaseModel):
     question: str
@@ -24,6 +30,20 @@ class ChatCard(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     cards: Optional[List[ChatCard]] = None
+
+
+class AICredentialResponse(BaseModel):
+    provider: Optional[str] = None
+    model: Optional[str] = None
+    has_api_key: bool = False
+    updated_at: Optional[datetime] = None
+
+
+class AICredentialUpdate(BaseModel):
+    provider: Optional[str] = None
+    api_key: Optional[str] = None
+    model: Optional[str] = None
+    remove_key: bool = False
 
 @router.get("/providers")
 async def get_available_providers():
@@ -56,13 +76,23 @@ async def get_available_providers():
     }
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    raw_request: Request,
+    current_user = Depends(get_optional_user_dependency)
+):
     """
     Lightweight chat endpoint for Ariel Assistant.
     Uses configured AI provider (defaults to settings.DEFAULT_AI_PROVIDER).
     """
     try:
-        ai = AIService(provider=request.provider or settings.DEFAULT_AI_PROVIDER)
+        creds: ResolvedAICredentials = resolve_ai_credentials(raw_request, current_user)
+        if request.provider:
+            creds.provider = request.provider
+        if request.model:
+            creds.model = request.model
+
+        ai = AIService(provider=creds.provider or settings.DEFAULT_AI_PROVIDER, api_key=creds.api_key, model=creds.model)
         # Keep response concise and encouraging
         system_context = (
             "You are Ariel, a friendly, concise study tutor. "
@@ -112,3 +142,54 @@ async def chat(request: ChatRequest):
         return ChatResponse(reply=reply, cards=cards)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
+
+
+@router.get("/credentials", response_model=AICredentialResponse)
+async def get_ai_credentials(current_user=Depends(get_current_user_dependency)):
+    """Return saved AI provider settings for the authenticated user (without the raw key)."""
+    ai_settings = getattr(current_user, "ai_settings", None)
+    return {
+        "provider": getattr(ai_settings, "provider", None) if ai_settings else None,
+        "model": getattr(ai_settings, "model", None) if ai_settings else None,
+        "has_api_key": bool(getattr(ai_settings, "encrypted_api_key", None)) if ai_settings else False,
+        "updated_at": getattr(ai_settings, "updated_at", None) if ai_settings else None
+    }
+
+
+@router.put("/credentials", response_model=AICredentialResponse)
+async def save_ai_credentials(
+    update: AICredentialUpdate,
+    current_user=Depends(get_current_user_dependency)
+):
+    """Save AI provider settings with encrypted API key."""
+    try:
+        provider = update.provider or (current_user.ai_settings.provider if current_user.ai_settings else None)
+        model = update.model or (current_user.ai_settings.model if current_user.ai_settings else None)
+
+        encrypted_api_key = None
+        if update.remove_key:
+            encrypted_api_key = None
+        elif update.api_key:
+            encrypted_api_key = encrypt_value(update.api_key)
+
+        user = await UserRepository.set_ai_settings(
+            current_user.id,
+            provider=provider,
+            model=model,
+            encrypted_api_key=encrypted_api_key
+        )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        ai_settings = getattr(user, "ai_settings", None)
+        return {
+            "provider": getattr(ai_settings, "provider", None) if ai_settings else provider,
+            "model": getattr(ai_settings, "model", None) if ai_settings else model,
+            "has_api_key": bool(getattr(ai_settings, "encrypted_api_key", None)) if ai_settings else bool(encrypted_api_key),
+            "updated_at": getattr(ai_settings, "updated_at", None) if ai_settings else datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save AI credentials: {str(e)}")

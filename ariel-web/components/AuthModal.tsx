@@ -82,6 +82,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       // Clean up technical error messages
       let errorMessage = err.response?.data?.detail || 'Authentication failed';
 
+      // Network/timeout hints
+      if (err.code === 'ECONNABORTED' || err.message?.toLowerCase().includes('timeout')) {
+        errorMessage = 'Cannot reach the server. Is the backend running on port 8003?';
+      }
+      if (err.message?.includes('Network Error')) {
+        errorMessage = 'Network error while contacting the server. Check API URL and backend.';
+      }
+
       // Replace technical bcrypt error with user-friendly message
       if (errorMessage.includes('72 bytes') || errorMessage.includes('truncate')) {
         errorMessage = 'Password is too long. Please use a shorter password (maximum 72 characters).';

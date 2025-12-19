@@ -9,6 +9,19 @@ class UserRepository:
     collection_name = "users"
 
     @staticmethod
+    def _hydrate_user(user_doc: dict) -> User:
+        """Convert Mongo document to User model with normalized AI settings."""
+        user_doc["id"] = str(user_doc["_id"])
+        del user_doc["_id"]
+
+        ai_settings = user_doc.get("ai_settings")
+        if isinstance(ai_settings, dict):
+            ai_settings["has_api_key"] = bool(ai_settings.get("encrypted_api_key"))
+            user_doc["ai_settings"] = ai_settings
+
+        return User(**user_doc)
+
+    @staticmethod
     async def create_user(user_data: UserCreate) -> User:
         """Create a new user with email/password"""
         db = db_service.get_db()
@@ -77,9 +90,7 @@ class UserRepository:
                     }
                 }
             )
-            existing["id"] = str(existing["_id"])
-            del existing["_id"]
-            return User(**existing)
+            return UserRepository._hydrate_user(existing)
 
         # Create new OAuth user
         user_dict = {
@@ -111,26 +122,29 @@ class UserRepository:
     async def get_user_by_email(email: str) -> Optional[User]:
         """Get user by email"""
         db = db_service.get_db()
-        user_doc = await db[UserRepository.collection_name].find_one({"email": email})
+        try:
+            user_doc = await db[UserRepository.collection_name].find_one({"email": email})
+        except Exception as e:
+            # Surface connection issues quickly
+            raise RuntimeError(f"Database unavailable: {e}")
 
         if user_doc:
-            user_doc["id"] = str(user_doc["_id"])
-            del user_doc["_id"]
-            return User(**user_doc)
+            return UserRepository._hydrate_user(user_doc)
         return None
 
     @staticmethod
     async def get_user_by_id(user_id: str) -> Optional[User]:
         """Get user by ID"""
         db = db_service.get_db()
-        user_doc = await db[UserRepository.collection_name].find_one(
-            {"_id": ObjectId(user_id)}
-        )
+        try:
+            user_doc = await db[UserRepository.collection_name].find_one(
+                {"_id": ObjectId(user_id)}
+            )
+        except Exception as e:
+            raise RuntimeError(f"Database unavailable: {e}")
 
         if user_doc:
-            user_doc["id"] = str(user_doc["_id"])
-            del user_doc["_id"]
-            return User(**user_doc)
+            return UserRepository._hydrate_user(user_doc)
         return None
 
     @staticmethod
@@ -165,3 +179,39 @@ class UserRepository:
         user.last_login = datetime.utcnow()
 
         return user
+
+    @staticmethod
+    async def set_ai_settings(
+        user_id: str,
+        provider: Optional[str],
+        model: Optional[str],
+        encrypted_api_key: Optional[str]
+    ) -> Optional[User]:
+        """Store AI provider settings (encrypted key)."""
+        db = db_service.get_db()
+        ai_settings = {
+            "provider": provider,
+            "model": model,
+            "encrypted_api_key": encrypted_api_key,
+            "has_api_key": bool(encrypted_api_key),
+            "updated_at": datetime.utcnow()
+        }
+        await db[UserRepository.collection_name].update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"ai_settings": ai_settings}}
+        )
+        return await UserRepository.get_user_by_id(user_id)
+
+    @staticmethod
+    async def get_ai_settings(user_id: str) -> Optional[dict]:
+        """Get AI settings for a user."""
+        db = db_service.get_db()
+        user_doc = await db[UserRepository.collection_name].find_one(
+            {"_id": ObjectId(user_id)},
+            {"ai_settings": 1}
+        )
+        ai_settings = user_doc.get("ai_settings") if user_doc else None
+        if isinstance(ai_settings, dict):
+            ai_settings["has_api_key"] = bool(ai_settings.get("encrypted_api_key"))
+            return ai_settings
+        return None

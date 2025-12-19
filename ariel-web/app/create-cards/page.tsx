@@ -6,6 +6,7 @@ import InputMethods from '@/components/InputMethods';
 import QuestionResults from '@/components/QuestionResults';
 import ArielAssistant from '@/components/ArielAssistant';
 import AuthModal from '@/components/AuthModal';
+import AIProviderSettings from '@/components/AIProviderSettings';
 import { useAuth } from '@/lib/useAuth';
 
 interface Question {
@@ -27,7 +28,14 @@ export default function CreateCardsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main
+      className="min-h-screen text-white"
+      style={{
+        backgroundColor: '#0b1220',
+        backgroundImage:
+          'radial-gradient(circle at 15% 20%, rgba(99,102,241,0.08), transparent 35%), radial-gradient(circle at 80% 0%, rgba(236,72,153,0.07), transparent 30%)',
+      }}
+    >
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -38,17 +46,17 @@ export default function CreateCardsPage() {
         }}
       />
 
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-gray-200">
+      <header className="sticky top-0 z-30 bg-[#0b1220]/90 backdrop-blur border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Ariel AI</p>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent">
+            <p className="text-xs uppercase tracking-wide text-white/60 font-semibold">Ariel AI</p>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-500 via-pink-500 to-sky-400 bg-clip-text text-transparent">
               Create Flashcards Instantly
             </h1>
           </div>
           <button
             onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition"
+            className="px-4 py-2 rounded-xl border border-white/15 text-sm font-semibold text-white hover:bg-white/10 transition"
           >
             ← Back to dashboard
           </button>
@@ -56,15 +64,17 @@ export default function CreateCardsPage() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-        <section className="bg-white rounded-3xl shadow-lg p-6 md:p-8">
+        <AIProviderSettings />
+
+        <section className="bg-white/[0.05] border border-white/10 rounded-3xl shadow-lg p-6 md:p-8 backdrop-blur">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>
-              <p className="text-sm text-gray-600 font-semibold">Sources</p>
-              <h2 className="text-2xl font-bold text-gray-900">Paste URLs, upload PDFs, images, or bulk text</h2>
-              <p className="text-sm text-gray-600 mt-1">Ariel extracts questions and answers with Ollama under the hood.</p>
+              <p className="text-sm text-white/60 font-semibold">Sources</p>
+              <h2 className="text-2xl font-bold text-white">Paste URLs, upload PDFs, images, or bulk text</h2>
+              <p className="text-sm text-white/70 mt-1">Ariel extracts questions and answers using your chosen AI provider (OpenAI, Claude, or Ollama fallback).</p>
             </div>
-            <div className="flex items-center gap-2 text-green-600 font-semibold">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
               Live
             </div>
           </div>
@@ -73,7 +83,7 @@ export default function CreateCardsPage() {
         </section>
 
         {questions.length > 0 && (
-          <section className="bg-white rounded-3xl shadow-lg p-6 md:p-8">
+          <section className="bg-white/[0.05] border border-white/10 rounded-3xl shadow-lg p-6 md:p-8 backdrop-blur">
             <QuestionResults
               questions={questions}
               onRequireAuth={() => setShowAuthModal(true)}

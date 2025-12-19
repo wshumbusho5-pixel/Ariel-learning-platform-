@@ -11,6 +11,8 @@ interface User {
   total_points: number;
   level: number;
   current_streak: number;
+  onboarding_completed?: boolean;
+  subjects?: string[];
 }
 
 interface AuthState {

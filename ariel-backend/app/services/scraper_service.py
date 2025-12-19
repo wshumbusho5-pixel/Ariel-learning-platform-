@@ -9,11 +9,12 @@ class ScraperService:
     def __init__(self):
         self.ai_service = AIService()
 
-    async def scrape_url(self, url: str) -> Dict:
+    async def scrape_url(self, url: str, ai_service: Optional[AIService] = None) -> Dict:
         """
         Scrape questions from a URL.
         Returns extracted questions and metadata.
         """
+        ai_client = ai_service or self.ai_service
         try:
             # Fetch the page
             async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
@@ -55,7 +56,7 @@ class ScraperService:
             text_content = soup.get_text(separator='\n', strip=True)
 
             # Extract questions using AI
-            questions = await self._extract_questions_with_ai(text_content, url)
+            questions = await self._extract_questions_with_ai(text_content, url, ai_client)
 
             return {
                 "url": url,
@@ -69,7 +70,7 @@ class ScraperService:
         except Exception as e:
             raise Exception(f"Scraping error: {str(e)}")
 
-    async def _extract_questions_with_ai(self, content: str, source_url: str) -> List[str]:
+    async def _extract_questions_with_ai(self, content: str, source_url: str, ai_client: AIService) -> List[str]:
         """
         Use AI to intelligently extract questions from scraped content.
         This is smarter than regex - it understands context.
@@ -104,7 +105,7 @@ If no questions are found, return {{"questions": []}}
 """
 
         try:
-            ai_questions = await self._extract_questions_with_provider(prompt)
+            ai_questions = await self._extract_questions_with_provider(prompt, ai_client)
             if ai_questions:
                 return ai_questions
         except Exception as e:
@@ -115,21 +116,21 @@ If no questions are found, return {{"questions": []}}
         if len(pattern_questions) == 0:
             raise Exception("No questions found on this page. The page might not contain educational questions, or they may be in an unrecognized format. Try the 'Bulk Questions' tab to paste questions directly.")
 
-    async def _extract_questions_with_provider(self, prompt: str) -> Optional[List[str]]:
+    async def _extract_questions_with_provider(self, prompt: str, ai_client: AIService) -> Optional[List[str]]:
         """
         Call AI extraction using the configured provider first, then fallbacks.
         Honors DEFAULT_AI_PROVIDER so Ollama works when chosen.
         """
-        preferred = self._get_provider_priority()
+        preferred = self._get_provider_priority(ai_client)
 
         for provider in preferred:
             try:
                 if provider == "ollama":
-                    response = await self.ai_service._ollama_generate(prompt)
-                elif provider == "anthropic" and hasattr(self.ai_service, "anthropic_client"):
-                    response = await self.ai_service._anthropic_generate(prompt)
-                elif provider == "openai" and settings.OPENAI_API_KEY:
-                    response = await self.ai_service._openai_generate(prompt)
+                    response = await ai_client._ollama_generate(prompt)
+                elif provider == "anthropic" and hasattr(ai_client, "anthropic_client"):
+                    response = await ai_client._anthropic_generate(prompt)
+                elif provider == "openai" and ai_client.api_key:
+                    response = await ai_client._openai_generate(prompt)
                 else:
                     continue
 
@@ -142,11 +143,11 @@ If no questions are found, return {{"questions": []}}
 
         return None
 
-    def _get_provider_priority(self) -> List[str]:
+    def _get_provider_priority(self, ai_client: AIService) -> List[str]:
         """Order providers so we try the configured default first, with sensible fallbacks."""
         base_order = ["ollama", "anthropic", "openai"]
-        if self.ai_service.provider in base_order:
-            first = self.ai_service.provider
+        if ai_client.provider in base_order:
+            first = ai_client.provider
             return [first] + [p for p in base_order if p != first]
         return base_order
 

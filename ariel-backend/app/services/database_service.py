@@ -9,7 +9,13 @@ class DatabaseService:
     @classmethod
     async def connect_db(cls):
         """Connect to MongoDB"""
-        cls.client = AsyncIOMotorClient(settings.MONGODB_URL)
+        # Use short timeouts so the app fails fast if Mongo is unavailable
+        cls.client = AsyncIOMotorClient(
+            settings.MONGODB_URL,
+            serverSelectionTimeoutMS=2000,
+            connectTimeoutMS=2000,
+            socketTimeoutMS=2000,
+        )
         cls.db = cls.client[settings.DATABASE_NAME]
         print(f"Connected to MongoDB: {settings.DATABASE_NAME}")
 

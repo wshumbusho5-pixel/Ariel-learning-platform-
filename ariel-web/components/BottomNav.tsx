@@ -6,7 +6,12 @@ export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const navItems = [
+  const navItems: {
+    name: string;
+    path: string;
+    icon: (active: boolean) => JSX.Element;
+    special?: boolean;
+  }[] = [
     {
       name: 'Home',
       path: '/dashboard',

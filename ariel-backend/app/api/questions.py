@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 from typing import Optional
 from app.services.ai_service import AIService
+from app.api.auth import get_optional_user_dependency
+from app.utils.ai_credentials import resolve_ai_credentials
 
 router = APIRouter()
-ai_service = AIService()
 
 class SingleQuestionRequest(BaseModel):
     question: str
@@ -18,11 +19,17 @@ class AnswerResponse(BaseModel):
     detailed_explanation: Optional[str] = None
 
 @router.post("/answer", response_model=AnswerResponse)
-async def get_answer(request: SingleQuestionRequest):
+async def get_answer(
+    request: SingleQuestionRequest,
+    raw_request: Request,
+    current_user=Depends(get_optional_user_dependency)
+):
     """
     Get answer for a single question
     """
     try:
+        creds = resolve_ai_credentials(raw_request, current_user)
+        ai_service = AIService(provider=creds.provider, api_key=creds.api_key, model=creds.model)
         result = await ai_service.generate_answer(
             question=request.question,
             context=request.context,

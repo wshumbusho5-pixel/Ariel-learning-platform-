@@ -16,7 +16,7 @@
     overscroll-behavior: none;
   }
 
-  /* Custom scrollbar */
+  /* Custom scrollbar - Natural tones */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -27,12 +27,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #9333EA 0%, #DB2777 100%);
+    background: linear-gradient(180deg, #0A4D68 0%, #2C5F2D 100%);
     border-radius: 10px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #7C3AED 0%, #BE185D 100%);
+    background: linear-gradient(180deg, #144272 0%, #3D7E3F 100%);
   }
 }
 
@@ -84,13 +84,13 @@
 
   .gradient-mesh {
     background:
-      radial-gradient(at 27% 37%, hsla(215, 98%, 61%, 0.15) 0px, transparent 50%),
-      radial-gradient(at 97% 21%, hsla(125, 98%, 72%, 0.10) 0px, transparent 50%),
-      radial-gradient(at 52% 99%, hsla(354, 98%, 61%, 0.10) 0px, transparent 50%),
-      radial-gradient(at 10% 29%, hsla(256, 96%, 67%, 0.15) 0px, transparent 50%),
-      radial-gradient(at 97% 96%, hsla(38, 60%, 74%, 0.10) 0px, transparent 50%),
-      radial-gradient(at 33% 50%, hsla(222, 67%, 73%, 0.15) 0px, transparent 50%),
-      radial-gradient(at 79% 53%, hsla(343, 68%, 79%, 0.10) 0px, transparent 50%);
+      radial-gradient(at 27% 37%, hsla(200, 85%, 25%, 0.12) 0px, transparent 50%),
+      radial-gradient(at 97% 21%, hsla(130, 45%, 45%, 0.08) 0px, transparent 50%),
+      radial-gradient(at 52% 99%, hsla(25, 85%, 55%, 0.08) 0px, transparent 50%),
+      radial-gradient(at 10% 29%, hsla(195, 75%, 30%, 0.12) 0px, transparent 50%),
+      radial-gradient(at 97% 96%, hsla(140, 40%, 50%, 0.08) 0px, transparent 50%),
+      radial-gradient(at 33% 50%, hsla(205, 70%, 35%, 0.10) 0px, transparent 50%),
+      radial-gradient(at 79% 53%, hsla(135, 35%, 55%, 0.08) 0px, transparent 50%);
   }
 
   .animate-float {
@@ -171,21 +171,21 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  /* Modern Gen-Z Gradients */
-  .gradient-purple-pink {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* Natural Professional Gradients */
+  .gradient-ocean-forest {
+    background: linear-gradient(135deg, #0A4D68 0%, #2C5F2D 100%);
   }
 
-  .gradient-blue-teal {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  .gradient-ocean-teal {
+    background: linear-gradient(135deg, #0F4C75 0%, #3282B8 100%);
   }
 
-  .gradient-orange-red {
-    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  .gradient-warm-earth {
+    background: linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%);
   }
 
-  .gradient-green-blue {
-    background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
+  .gradient-forest-lime {
+    background: linear-gradient(135deg, #2C5F2D 0%, #65B741 100%);
   }
 
   /* Neumorphism */
@@ -211,22 +211,22 @@
     backdrop-filter: blur(30px) saturate(180%);
     -webkit-backdrop-filter: blur(30px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    box-shadow: 0 8px 32px 0 rgba(10, 77, 104, 0.15);
   }
 
-  /* Hover glow effect */
+  /* Hover glow effect - Natural tone */
   .hover-glow {
     transition: all 0.3s ease;
   }
 
   .hover-glow:hover {
-    box-shadow: 0 0 30px rgba(147, 51, 234, 0.5);
+    box-shadow: 0 0 30px rgba(10, 77, 104, 0.4);
     transform: translateY(-2px);
   }
 
-  /* Animated gradient text */
+  /* Animated gradient text - Natural */
   .gradient-text {
-    background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #4facfe);
+    background: linear-gradient(90deg, #0A4D68, #2C5F2D, #0F4C75, #65B741);
     background-size: 300% 300%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

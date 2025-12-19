@@ -6,7 +6,7 @@ import { aiChatAPI } from '@/lib/api';
 export default function ArielAssistant() {
   const [isMinimized, setIsMinimized] = useState(true);
   const [messages, setMessages] = useState([
-    { text: "Hey! I'm Ariel, your AI study buddy! 👋 Need help with anything?", isBot: true }
+    { text: "Hey! I'm Ariel—ask me to explain, quiz, or plan your next study sprint. 👋", isBot: true }
   ]);
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -153,7 +153,7 @@ export default function ArielAssistant() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask me anything..."
+                placeholder="Ask Ariel to explain, quiz, or plan."
                 className="flex-1 px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-600 focus:outline-none text-sm"
                 disabled={isSending}
               />

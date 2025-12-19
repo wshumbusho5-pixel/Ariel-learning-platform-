@@ -51,14 +51,14 @@ export default function InputMethods({ onQuestionsLoaded }: InputMethodsProps) {
         if (!block) continue;
 
         // Check if block has numbered list items (1., 2., Q1:, etc.)
-        const numberedPattern = /^(\d+[\.)]\s*|Q\d+[:.)]\s*)/gm;
+        const numberedPattern = /^(\d+[.)]\s*|Q\d+[:.)]\s*)/gm;
         const hasNumbers = numberedPattern.test(block);
 
         if (hasNumbers) {
           // Split by numbered items
-          const items = block.split(/(?=\d+[\.)]\s*|Q\d+[:.)]\s*)/);
+          const items = block.split(/(?=\d+[.)]\s*|Q\d+[:.)]\s*)/);
           for (let item of items) {
-            item = item.trim().replace(/^\d+[\.)]\s*|^Q\d+[:.)]\s*/, '');
+            item = item.trim().replace(/^\d+[.)]\s*|^Q\d+[:.)]\s*/, '');
             if (item.length > 5) questions.push(item);
           }
         } else {

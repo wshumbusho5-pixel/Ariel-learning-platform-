@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
 
 // Mock data
 const mockUser = {
@@ -107,6 +107,16 @@ export const handlers = [
       return HttpResponse.json(
         { detail: 'Not authenticated' },
         { status: 403 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    // Reject invalid or specific error-triggering tokens
+    if (token === 'invalid-token' || token === 'will-cause-error') {
+      return HttpResponse.json(
+        { detail: 'Invalid token' },
+        { status: 401 }
       );
     }
 
@@ -253,8 +263,8 @@ export const handlers = [
     const body = await request.json() as any;
 
     return HttpResponse.json({
-      response: `This is a mock AI response to: ${body.message}`,
-      conversation_id: 'mock-conv-123',
+      reply: `This is a mock AI response to: ${body.message}`,
+      cards: [],
     });
   }),
 
