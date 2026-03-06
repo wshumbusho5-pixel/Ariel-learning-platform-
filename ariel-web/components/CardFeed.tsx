@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { cardsAPI } from '@/lib/api';
+import { useComments } from '@/lib/commentsContext';
 
 interface Card {
   id: string;
@@ -28,6 +29,7 @@ interface CardFeedProps {
 
 export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubject = false, snapScroll = false }: CardFeedProps) {
   const router = useRouter();
+  const { openComments } = useComments();
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -121,7 +123,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
 
   const handleDiscuss = (cardId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/cards/${cardId}/discuss`);
+    openComments(cardId);
   };
 
   const handleShare = async (cardId: string, e: React.MouseEvent) => {

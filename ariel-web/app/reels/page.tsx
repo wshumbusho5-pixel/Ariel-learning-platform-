@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from 'next/navigation';
 import api, { socialAPI } from '@/lib/api';
 import { useAuth } from '@/lib/useAuth';
+import { useComments } from '@/lib/commentsContext';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 
@@ -53,6 +54,7 @@ function reelMatchesSubject(reel: Reel, subjectKey: string): boolean {
 export default function ReelsPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { openComments } = useComments();
   const [reels, setReels] = useState<Reel[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -156,7 +158,7 @@ export default function ReelsPage() {
   };
 
   const handleDiscuss = (reelId: string) => {
-    router.push(`/reels/${reelId}/discuss`);
+    openComments(reelId);
   };
 
   const handleShare = async (reelId: string) => {
