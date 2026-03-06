@@ -55,10 +55,10 @@ export default function ArielAssistant() {
           className="group relative"
         >
           {/* Glow effect */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 blur-xl opacity-60 group-hover:opacity-100 transition-opacity animate-pulse"></div>
+          <div className=""></div>
 
           {/* Main button */}
-          <div className="relative w-16 h-16 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center shadow-2xl hover:scale-110 transition-all cursor-pointer animate-float">
+          <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors cursor-pointer">
             <span className="text-3xl">✨</span>
           </div>
 
@@ -73,9 +73,9 @@ export default function ArielAssistant() {
           </div>
         </button>
       ) : (
-        <div className="glass-card rounded-3xl w-96 shadow-2xl animate-scaleIn overflow-hidden">
+        <div className="bg-white rounded-xl w-96 shadow-lg border border-gray-200 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 p-4">
+          <div className="bg-blue-600 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center">
@@ -107,7 +107,7 @@ export default function ArielAssistant() {
                 <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   msg.isBot
                     ? 'bg-white shadow-sm'
-                    : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                    : 'bg-blue-600 text-white'
                 }`}>
                   <p className={`text-sm ${msg.isBot ? 'text-gray-800' : 'text-white'}`}>
                     {msg.text}
@@ -160,7 +160,7 @@ export default function ArielAssistant() {
               <button
                 onClick={handleSend}
                 disabled={isSending}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

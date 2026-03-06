@@ -179,7 +179,7 @@ export default function AIProviderSettings() {
             <div className="font-semibold text-gray-900">Use Ariel built-in (Ollama)</div>
             {mode === 'built-in' && <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded-full">Selected</span>}
           </div>
-          <p className="text-sm text-gray-600 mt-2">No setup needed. We’ll run with Ollama/local models as the default.</p>
+          <p className="text-sm text-gray-600 mt-2">No setup needed. We'll run with Ollama/local models as the default.</p>
         </button>
         <button
           onClick={() => setMode('bring-your-own')}
@@ -319,7 +319,7 @@ export default function AIProviderSettings() {
 
       {mode === 'built-in' && (
         <div className="mt-4 p-4 rounded-lg bg-blue-50 border border-blue-100 text-sm text-blue-800">
-          Using Ariel built-in AI (Ollama). Switch to “Bring my own” if you want to use your OpenAI/Claude key.
+          Using Ariel built-in AI (Ollama). Switch to "Bring my own" if you want to use your OpenAI/Claude key.
         </div>
       )}
 

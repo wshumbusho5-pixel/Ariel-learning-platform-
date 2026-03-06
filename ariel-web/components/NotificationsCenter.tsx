@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { notificationsAPI } from '@/lib/api';
 
 interface Notification {
   id: string;
@@ -42,17 +43,8 @@ export default function NotificationsCenter({ isOpen, onClose }: NotificationsCe
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:8003/api/notifications', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data);
-      }
+      const data = await notificationsAPI.getNotifications(50, 0, filter === 'unread');
+      setNotifications(data?.notifications || data || []);
     } catch (error) {
       console.error('Failed to load notifications:', error);
     } finally {
@@ -60,16 +52,13 @@ export default function NotificationsCenter({ isOpen, onClose }: NotificationsCe
     }
   };
 
+  useEffect(() => {
+    if (isOpen) loadNotifications();
+  }, [filter]);
+
   const markAsRead = async (notificationId: string) => {
     try {
-      const token = localStorage.getItem('auth_token');
-      await fetch(`http://localhost:8003/api/notifications/${notificationId}/read`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
+      await notificationsAPI.markAsRead(notificationId);
       setNotifications(notifications.map(notif =>
         notif.id === notificationId ? { ...notif, is_read: true } : notif
       ));
@@ -80,14 +69,7 @@ export default function NotificationsCenter({ isOpen, onClose }: NotificationsCe
 
   const markAllAsRead = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      await fetch('http://localhost:8003/api/notifications/read-all', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
+      await notificationsAPI.markAllAsRead();
       setNotifications(notifications.map(notif => ({ ...notif, is_read: true })));
     } catch (error) {
       console.error('Failed to mark all as read:', error);
@@ -97,47 +79,40 @@ export default function NotificationsCenter({ isOpen, onClose }: NotificationsCe
   const handleNotificationClick = (notification: Notification) => {
     markAsRead(notification.id);
 
-    // Use action_url if provided, otherwise navigate based on type
     if (notification.action_url) {
       router.push(notification.action_url);
-    } else {
-      // Navigate based on notification type
-      switch (notification.notification_type) {
-        case 'like':
-        case 'comment':
-          if (notification.metadata?.card_id) {
-            router.push(`/explore?card=${notification.metadata.card_id}`);
-          }
-          break;
-        case 'follow':
-          if (notification.user_id) {
-            router.push(`/profile/${notification.user_id}`);
-          }
-          break;
-        case 'streak':
-          router.push('/dashboard');
-          break;
-        case 'achievement':
-          router.push('/profile');
-          break;
-        case 'challenge':
-          router.push('/challenges');
-          break;
-      }
+      onClose();
+      return;
     }
 
+    switch (notification.notification_type) {
+      case 'card_liked':
+      case 'card_saved':
+        if (notification.metadata?.card_id) {
+          router.push(`/cards/${notification.metadata.card_id}`);
+        }
+        break;
+      case 'new_follower':
+        if (notification.user_id) {
+          router.push(`/profile/${notification.user_id}`);
+        }
+        break;
+      default:
+        break;
+    }
     onClose();
   };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'like': return 'd';
-      case 'comment': return '=�';
-      case 'follow': return '=d';
-      case 'streak': return '=%';
-      case 'achievement': return '<�';
-      case 'challenge': return '<�';
-      default: return '=�';
+      case 'card_liked': return '❤️';
+      case 'card_saved': return '🔖';
+      case 'new_follower': return '👥';
+      case 'achievement_unlocked': return '🏆';
+      case 'streak_milestone': return '🔥';
+      case 'level_up': return '⭐';
+      case 'comment_posted': return '💬';
+      default: return '🔔';
     }
   };
 
@@ -148,160 +123,97 @@ export default function NotificationsCenter({ isOpen, onClose }: NotificationsCe
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-    const weeks = Math.floor(days / 7);
 
     if (minutes < 1) return 'now';
     if (minutes < 60) return `${minutes}m`;
     if (hours < 24) return `${hours}h`;
-    if (days < 7) return `${days}d`;
-    return `${weeks}w`;
+    return `${days}d`;
   };
-
-  const filteredNotifications = filter === 'unread'
-    ? notifications.filter(n => !n.is_read)
-    : notifications;
-
-  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   if (!isOpen) return null;
 
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end md:items-start md:justify-end">
-      {/* Notifications Panel - Instagram Style */}
-      <div className="bg-white w-full md:w-96 md:h-screen md:shadow-2xl flex flex-col animate-slideUp md:animate-slideLeft">
+    <div className="fixed inset-0 z-50 flex items-start justify-end pt-16 pr-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[80vh] flex flex-col border border-gray-200 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 z-10">
-          <div className="flex items-center justify-between p-4">
-            <h2 className="text-xl font-bold text-gray-900">Notifications</h2>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-900">Notifications</h3>
+            {unreadCount > 0 && (
+              <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllAsRead}
+                className="text-xs text-blue-500 font-semibold hover:text-blue-600"
+              >
+                Mark all read
+              </button>
+            )}
+            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100">
+              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
+        </div>
 
-          {/* Filter Tabs */}
-          <div className="flex border-b border-gray-200">
+        {/* Filter Tabs */}
+        <div className="flex border-b border-gray-100">
+          {(['all', 'unread'] as const).map((tab) => (
             <button
-              onClick={() => setFilter('all')}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
-                filter === 'all'
-                  ? 'text-gray-900'
-                  : 'text-gray-500'
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`flex-1 py-2 text-xs font-semibold capitalize transition-colors ${
+                filter === tab ? 'text-gray-900 border-b-2 border-gray-900' : 'text-gray-500'
               }`}
             >
-              All
-              {filter === 'all' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
-              )}
+              {tab}
             </button>
-            <button
-              onClick={() => setFilter('unread')}
-              className={`flex-1 py-3 text-sm font-semibold transition-colors relative ${
-                filter === 'unread'
-                  ? 'text-gray-900'
-                  : 'text-gray-500'
-              }`}
-            >
-              Unread {unreadCount > 0 && `(${unreadCount})`}
-              {filter === 'unread' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900"></div>
-              )}
-            </button>
-          </div>
+          ))}
         </div>
 
         {/* Notifications List */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-3 border-gray-300 border-t-black rounded-full animate-spin"></div>
+            <div className="flex items-center justify-center py-10">
+              <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin"></div>
             </div>
-          ) : filteredNotifications.length === 0 ? (
-            <div className="text-center py-12 px-4">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </div>
-              <h3 className="text-base font-semibold text-gray-900 mb-2">
-                {filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
-              </h3>
-              <p className="text-sm text-gray-600">
-                {filter === 'unread'
-                  ? "You've read all your notifications"
-                  : 'Notifications will appear here'
-                }
-              </p>
+          ) : notifications.length === 0 ? (
+            <div className="text-center py-10 px-4">
+              <p className="text-sm text-gray-500">No notifications yet</p>
             </div>
           ) : (
-            <div>
-              {unreadCount > 0 && filter === 'all' && (
-                <div className="px-4 py-3 border-b border-gray-200">
-                  <button
-                    onClick={markAllAsRead}
-                    className="text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
-                  >
-                    Mark all as read
-                  </button>
-                </div>
-              )}
-              {filteredNotifications.map((notification) => (
-                <button
-                  key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`w-full px-4 py-4 flex gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100 ${
-                    !notification.is_read ? 'bg-blue-50' : ''
-                  }`}
-                >
-                  {/* Icon/Avatar */}
-                  <div className="flex-shrink-0">
-                    {notification.actor_profile_picture || notification.actor_username ? (
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-                        {notification.actor_profile_picture ? (
-                          <img
-                            src={notification.actor_profile_picture}
-                            alt={notification.actor_username}
-                            className="w-full h-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-white font-semibold">
-                            {notification.actor_username?.[0]?.toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center">
-                        <span className="text-2xl">{getNotificationIcon(notification.notification_type)}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 text-left min-w-0">
-                    <p className="text-sm text-gray-900 leading-relaxed">
-                      {notification.actor_username && (
-                        <span className="font-semibold">{notification.actor_username} </span>
-                      )}
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {formatTimestamp(notification.created_at)}
-                    </p>
-                  </div>
-
-                  {/* Unread Indicator */}
-                  {!notification.is_read && (
-                    <div className="flex-shrink-0">
-                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    </div>
+            notifications.map((notif) => (
+              <button
+                key={notif.id}
+                onClick={() => handleNotificationClick(notif)}
+                className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left ${
+                  !notif.is_read ? 'bg-blue-50/50' : ''
+                }`}
+              >
+                <span className="text-xl flex-shrink-0 mt-0.5">{getNotificationIcon(notif.notification_type)}</span>
+                <div className="flex-1 min-w-0">
+                  {notif.title && (
+                    <p className="text-sm font-semibold text-gray-900 truncate">{notif.title}</p>
                   )}
-                </button>
-              ))}
-            </div>
+                  <p className="text-sm text-gray-600 line-clamp-2">{notif.message}</p>
+                  <p className="text-xs text-gray-400 mt-1">{formatTimestamp(notif.created_at)}</p>
+                </div>
+                {!notif.is_read && (
+                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                )}
+              </button>
+            ))
           )}
         </div>
       </div>

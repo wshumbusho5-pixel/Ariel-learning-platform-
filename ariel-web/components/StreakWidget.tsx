@@ -141,7 +141,7 @@ export default function StreakWidget() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden animate-scaleIn">
             {/* Header */}
-            <div className="bg-gradient-to-br from-orange-500 via-red-500 to-pink-600 p-8 text-center relative">
+            <div className="bg-gradient-to-br bg-blue-600 p-8 text-center relative">
               <button
                 onClick={() => setShowModal(false)}
                 className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"

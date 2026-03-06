@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/useAuth';
+import api from '@/lib/api';
 
 interface Comment {
   id: string;
@@ -37,17 +38,8 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
   const loadComments = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:8003/api/cards/${cardId}/comments`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setComments(data);
-      }
+      const response = await api.get(`/api/cards/${cardId}/comments`);
+      setComments(response.data);
     } catch (error) {
       console.error('Failed to load comments:', error);
     } finally {
@@ -61,20 +53,9 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:8003/api/cards/${cardId}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ text: newComment.trim() }),
-      });
-
-      if (response.ok) {
-        setNewComment('');
-        loadComments();
-      }
+      await api.post(`/api/cards/${cardId}/comments`, { text: newComment.trim() });
+      setNewComment('');
+      loadComments();
     } catch (error) {
       console.error('Failed to post comment:', error);
     } finally {
@@ -84,25 +65,16 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
 
   const handleLikeComment = async (commentId: string) => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:8003/api/comments/${commentId}/like`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        setComments(comments.map(comment =>
-          comment.id === commentId
-            ? {
-                ...comment,
-                likes: comment.liked_by_current_user ? comment.likes - 1 : comment.likes + 1,
-                liked_by_current_user: !comment.liked_by_current_user
-              }
-            : comment
-        ));
-      }
+      await api.post(`/api/comments/${commentId}/like`);
+      setComments(comments.map(comment =>
+        comment.id === commentId
+          ? {
+              ...comment,
+              likes: comment.liked_by_current_user ? comment.likes - 1 : comment.likes + 1,
+              liked_by_current_user: !comment.liked_by_current_user,
+            }
+          : comment
+      ));
     } catch (error) {
       console.error('Failed to like comment:', error);
     }
@@ -128,7 +100,6 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center">
-      {/* Modal Container - Instagram/TikTok Style */}
       <div className="bg-white w-full md:max-w-lg md:rounded-t-3xl rounded-t-3xl max-h-[85vh] flex flex-col shadow-2xl animate-slideUp">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -149,7 +120,7 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
         <div className="flex-1 overflow-y-auto px-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-3 border-gray-300 border-t-black rounded-full animate-spin"></div>
+              <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin"></div>
             </div>
           ) : comments.length === 0 ? (
             <div className="text-center py-12">
@@ -165,9 +136,8 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
             <div className="py-4 space-y-4">
               {comments.map((comment) => (
                 <div key={comment.id} className="flex gap-3">
-                  {/* Profile Picture */}
                   <div className="flex-shrink-0">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
                       {comment.profile_picture ? (
                         <img
                           src={comment.profile_picture}
@@ -182,7 +152,6 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
                     </div>
                   </div>
 
-                  {/* Comment Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
@@ -192,7 +161,6 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
                         </div>
                         <p className="text-sm text-gray-900 leading-relaxed">{comment.text}</p>
 
-                        {/* Action Buttons */}
                         <div className="flex items-center gap-4 mt-2">
                           <button
                             onClick={() => handleLikeComment(comment.id)}
@@ -215,7 +183,6 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
                         </div>
                       </div>
 
-                      {/* Like Heart Icon */}
                       <button
                         onClick={() => handleLikeComment(comment.id)}
                         className="flex-shrink-0"
@@ -241,19 +208,17 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
           )}
         </div>
 
-        {/* Comment Input - Instagram Style */}
+        {/* Comment Input */}
         <div className="border-t border-gray-200 p-3">
           <form onSubmit={handleSubmitComment} className="flex items-center gap-3">
-            {/* Profile Picture */}
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center">
                 <span className="text-white font-semibold text-xs">
                   {user?.username?.[0]?.toUpperCase() || 'U'}
                 </span>
               </div>
             </div>
 
-            {/* Input */}
             <input
               type="text"
               value={newComment}
@@ -263,7 +228,6 @@ export default function CardComments({ cardId, isOpen, onClose }: CardCommentsPr
               maxLength={500}
             />
 
-            {/* Post Button */}
             <button
               type="submit"
               disabled={!newComment.trim() || submitting}

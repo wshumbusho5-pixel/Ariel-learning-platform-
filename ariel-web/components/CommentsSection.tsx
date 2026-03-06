@@ -168,7 +168,7 @@ export default function CommentsSection({ deckId }: CommentsSectionProps) {
       <div className="flex gap-3">
         {/* Avatar */}
         <Link href={`/profile/${comment.user_id}`} className="flex-shrink-0">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
+          <div className="w-10 h-10 rounded-full bg-zinc-400 flex items-center justify-center text-white font-bold">
             {comment.author_profile_picture ? (
               <img
                 src={comment.author_profile_picture}

@@ -25,7 +25,7 @@ interface AchievementCardProps {
 const rarityColors = {
   common: 'from-gray-400 to-gray-500',
   rare: 'from-blue-400 to-blue-600',
-  epic: 'from-purple-500 to-pink-500',
+  epic: 'from-zinc-500 to-zinc-600',
   legendary: 'from-yellow-400 to-orange-500',
 };
 
@@ -95,7 +95,7 @@ export default function AchievementCard({ achievement, onShare }: AchievementCar
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-full transition-all duration-500"
+              className="bg-blue-600 h-full transition-all duration-300"
               style={{ width: `${achievement.percentage}%` }}
             />
           </div>

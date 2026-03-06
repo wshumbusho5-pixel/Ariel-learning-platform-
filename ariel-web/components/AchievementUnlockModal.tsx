@@ -19,7 +19,7 @@ interface AchievementUnlockModalProps {
 const rarityColors = {
   common: 'from-gray-400 to-gray-500',
   rare: 'from-blue-400 to-blue-600',
-  epic: 'from-purple-500 to-pink-500',
+  epic: 'from-zinc-500 to-zinc-600',
   legendary: 'from-yellow-400 to-orange-500',
 };
 

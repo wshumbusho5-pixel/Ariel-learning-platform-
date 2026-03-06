@@ -85,12 +85,12 @@ export default function StoryCarousel() {
             <div className="relative">
               <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
                 myStories.length > 0
-                  ? 'bg-gradient-to-br from-blue-400 to-purple-500 p-0.5'
+                  ? 'ring-2 ring-blue-600'
                   : 'bg-gray-200'
               }`}>
                 <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
                   {myStories.length > 0 ? (
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl">
+                    <div className="w-14 h-14 rounded-full bg-zinc-500 flex items-center justify-center text-white font-bold text-xl">
                       You
                     </div>
                   ) : (
@@ -122,11 +122,11 @@ export default function StoryCarousel() {
             >
               <div className={`w-16 h-16 rounded-full p-0.5 ${
                 group.unviewed_count > 0
-                  ? 'bg-gradient-to-tr from-yellow-400 via-red-500 to-pink-500'
+                  ? 'ring-2 ring-blue-500'
                   : 'bg-gray-300'
               }`}>
                 <div className="w-full h-full rounded-full bg-white p-0.5">
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
+                  <div className="w-full h-full rounded-full bg-zinc-500 flex items-center justify-center text-white font-bold">
                     {group.profile_picture ? (
                       <img
                         src={group.profile_picture}

@@ -129,7 +129,7 @@ export default function StoryViewer({ storyGroup, onClose, onNext, onPrevious }:
       {/* Header */}
       <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-4 z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-zinc-500 flex items-center justify-center text-white font-bold flex-shrink-0">
             {currentStory.author_profile_picture ? (
               <img
                 src={currentStory.author_profile_picture}

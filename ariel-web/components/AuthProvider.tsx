@@ -7,7 +7,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const checkAuth = useAuth((state) => state.checkAuth);
 
   useEffect(() => {
-    console.log('🔑 AuthProvider: Checking authentication...');
     checkAuth();
   }, [checkAuth]);
 

@@ -44,7 +44,7 @@ export default function UserCard({ user, onFollowChange }: UserCardProps) {
       {/* Left: Avatar + Info */}
       <div className="flex items-center gap-3 flex-1">
         {/* Avatar */}
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+        <div className="w-12 h-12 rounded-full bg-zinc-400 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
           {user.profile_picture ? (
             <img
               src={user.profile_picture}
@@ -68,7 +68,7 @@ export default function UserCard({ user, onFollowChange }: UserCardProps) {
               </svg>
             )}
             {user.is_teacher && (
-              <span className="px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
+              <span className="px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-600 rounded-full flex-shrink-0">
                 Teacher
               </span>
             )}
