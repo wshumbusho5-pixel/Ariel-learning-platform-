@@ -56,7 +56,7 @@ export default function LeaderboardPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen lg:pl-56 bg-zinc-950">
+      <div className="min-h-screen lg:pl-[72px] bg-zinc-950">
         <div className="bg-zinc-950 border-b border-zinc-800">
           <div className="max-w-4xl mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold text-white">Streak Leaderboard</h1>

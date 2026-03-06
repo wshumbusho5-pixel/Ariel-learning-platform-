@@ -152,7 +152,7 @@ Be specific, reference actual numbers. Return only valid JSON.`;
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 lg:pl-56 pb-20">
+      <div className="min-h-screen bg-zinc-950 lg:pl-[72px] pb-20">
         <header className="sticky top-0 bg-zinc-950 border-b border-zinc-800 z-30">
           <div className="max-w-2xl mx-auto px-4 py-4">
             <h1 className="text-xl font-bold text-white">Weekly Brain Report</h1>

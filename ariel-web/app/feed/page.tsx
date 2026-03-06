@@ -126,7 +126,7 @@ export default function ActivityFeedPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen lg:pl-56 bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen lg:pl-[72px] bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-zinc-800 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-sm text-zinc-500 font-medium">Loading...</p>
@@ -138,7 +138,7 @@ export default function ActivityFeedPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 pb-20 lg:pl-56">
+      <div className="min-h-screen bg-zinc-950 pb-20 lg:pl-[72px]">
         <header className="sticky top-0 bg-zinc-950 border-b border-zinc-800 z-30">
           <div className="max-w-2xl mx-auto px-4 py-3">
             <h1 className="text-2xl font-bold text-white">Activity</h1>

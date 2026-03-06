@@ -112,7 +112,7 @@ export default function ChallengesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen lg:pl-56 bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen lg:pl-[72px] bg-zinc-950 flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-gray-500">Loading...</p>
@@ -124,7 +124,7 @@ export default function ChallengesPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 pb-24 lg:pl-56">
+      <div className="min-h-screen bg-zinc-950 pb-24 lg:pl-[72px]">
 
       {/* Header */}
       <div className="sticky top-0 z-40 bg-zinc-950 border-b border-zinc-800">

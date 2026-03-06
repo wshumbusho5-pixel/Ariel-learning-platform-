@@ -160,7 +160,7 @@ export default function ReelsPage() {
     return (
       <>
         <SideNav />
-        <div className="fixed inset-0 bg-zinc-950 flex items-center justify-center lg:pl-56">
+        <div className="fixed inset-0 bg-zinc-950 flex items-center justify-center lg:pl-[72px]">
           <div className="w-10 h-10 border-2 border-zinc-700 border-t-blue-500 rounded-full animate-spin" />
         </div>
         <div className="lg:hidden"><BottomNav /></div>
@@ -171,7 +171,7 @@ export default function ReelsPage() {
   return (
     <>
       <SideNav />
-      <div className="fixed inset-0 bg-zinc-950 overflow-hidden lg:pl-56">
+      <div className="fixed inset-0 bg-zinc-950 overflow-hidden lg:pl-[72px]">
         {/* Header */}
         <header className="fixed top-0 left-0 lg:left-56 right-0 z-40 pointer-events-none">
           <div className="flex items-center justify-between px-4 pt-4">

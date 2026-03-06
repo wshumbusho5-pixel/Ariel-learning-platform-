@@ -31,7 +31,7 @@ export default function CreateCardsPage() {
   return (
     <>
       <SideNav />
-      <main className="min-h-screen bg-zinc-950 lg:pl-56">
+      <main className="min-h-screen bg-zinc-950 lg:pl-[72px]">
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}

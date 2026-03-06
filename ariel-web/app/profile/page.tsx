@@ -46,7 +46,7 @@ export default function ProfilePage() {
 
   if (!isAuthenticated && !isLoading) {
     return (
-      <div className="min-h-screen lg:pl-56 bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen lg:pl-[72px] bg-zinc-950 flex items-center justify-center">
         <div className="text-center space-y-3">
           <p className="text-lg font-semibold text-white">Sign in to view your profile</p>
           <button
@@ -84,7 +84,7 @@ export default function ProfilePage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen pb-20 bg-zinc-950 lg:pl-56">
+      <div className="min-h-screen pb-20 bg-zinc-950 lg:pl-[72px]">
         <div className="sticky top-0 z-50 bg-zinc-950 border-b border-zinc-800">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => router.push('/dashboard')}>

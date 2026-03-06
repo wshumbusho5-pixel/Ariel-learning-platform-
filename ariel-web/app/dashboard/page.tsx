@@ -111,7 +111,7 @@ export default function Dashboard() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 lg:pl-56">
+      <div className="min-h-screen bg-zinc-950 lg:pl-[72px]">
 
         {/* Header */}
         <header className="sticky top-0 z-40 bg-zinc-950 border-b border-zinc-800/60">

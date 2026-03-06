@@ -63,7 +63,7 @@ export default function AchievementsPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen lg:pl-56 bg-zinc-950">
+      <div className="min-h-screen lg:pl-[72px] bg-zinc-950">
         <div className="bg-zinc-950 border-b border-zinc-800 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <h1 className="text-2xl font-bold text-white">Achievements</h1>
