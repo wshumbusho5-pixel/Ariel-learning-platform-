@@ -70,7 +70,7 @@ Create a focused cram plan as a JSON object with this exact shape:
 Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 6 blocks. Include 5-min breaks between blocks. Return only valid JSON.`;
 
     try {
-      const res = await aiChatAPI.sendMessage(prompt);
+      const res = await aiChatAPI.complete(prompt);
       const raw = typeof res?.reply === 'string' ? res.reply : JSON.stringify(res?.reply ?? '');
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error('No JSON found');

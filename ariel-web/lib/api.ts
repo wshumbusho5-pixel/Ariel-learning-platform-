@@ -286,6 +286,10 @@ export const aiChatAPI = {
     const response = await api.post('/api/ai/chat', { message, context });
     return response.data as { reply: string; cards?: { question: string; answer: string; explanation?: string }[] };
   },
+  complete: async (prompt: string) => {
+    const response = await api.post('/api/ai/complete', { prompt });
+    return response.data as { reply: string };
+  },
 };
 
 // AI Credentials (BYO keys)

@@ -86,8 +86,12 @@ export default function SwipeCardReview({ initialCards, onComplete, onExit }: Sw
 
 Question: ${currentCard.question}
 Correct answer: ${currentCard.answer}`;
-      const res = await aiChatAPI.sendMessage(prompt);
-      const text = typeof res?.reply === 'string' ? res.reply : JSON.stringify(res?.reply ?? '');
+      const res = await aiChatAPI.complete(prompt);
+      let text = typeof res?.reply === 'string' ? res.reply : '';
+      try {
+        const parsed = JSON.parse(text);
+        text = parsed.answer || parsed.explanation || parsed.reply || parsed.message || text;
+      } catch {}
       setExplanation(text);
     } catch {
       setExplanation('Could not load explanation. Check your AI provider settings.');

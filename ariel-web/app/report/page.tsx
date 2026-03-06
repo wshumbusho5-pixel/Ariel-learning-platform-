@@ -115,7 +115,7 @@ Return a JSON object with exactly this shape:
 Be specific, reference actual numbers. Return only valid JSON.`;
 
     try {
-      const res = await aiChatAPI.sendMessage(prompt);
+      const res = await aiChatAPI.complete(prompt);
       const raw = typeof res?.reply === 'string' ? res.reply : JSON.stringify(res?.reply ?? '');
       const match = raw.match(/\{[\s\S]*\}/);
       if (!match) throw new Error('No JSON');

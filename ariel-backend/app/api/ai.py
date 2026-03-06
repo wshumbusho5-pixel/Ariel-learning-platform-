@@ -75,6 +75,42 @@ async def get_available_providers():
         "default": settings.DEFAULT_AI_PROVIDER
     }
 
+class CompleteRequest(BaseModel):
+    prompt: str
+    provider: Optional[str] = None
+    model: Optional[str] = None
+
+
+@router.post("/complete")
+async def complete(
+    request: CompleteRequest,
+    raw_request: Request,
+    current_user=Depends(get_optional_user_dependency)
+):
+    """
+    Raw completion endpoint for structured JSON outputs (cram plans, reports, etc.).
+    Passes the prompt directly to the model without chat framing.
+    """
+    try:
+        creds: ResolvedAICredentials = resolve_ai_credentials(raw_request, current_user)
+        provider = request.provider or creds.provider or settings.DEFAULT_AI_PROVIDER
+        model = request.model or creds.model
+
+        ai = AIService(provider=provider, api_key=creds.api_key, model=model)
+        result = await ai._ollama_generate(request.prompt)
+
+        reply = ""
+        if isinstance(result, dict):
+            import json
+            reply = json.dumps(result)
+        else:
+            reply = str(result)
+
+        return {"reply": reply}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
