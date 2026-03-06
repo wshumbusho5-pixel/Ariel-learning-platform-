@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { loadLocalAICredentials } from './aiCredentials';
 
-// Use env var when provided; default to 8003 since backend runs there by default in this setup
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Create axios instance with default config
 const api = axios.create({
