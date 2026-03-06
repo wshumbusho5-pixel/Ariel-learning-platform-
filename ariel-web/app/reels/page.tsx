@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from 'next/navigation';
 import api, { socialAPI } from '@/lib/api';
+import { useAuth } from '@/lib/useAuth';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 
@@ -24,14 +25,39 @@ interface Reel {
 }
 
 
+// Subject keywords map — same logic as dashboard
+const SUBJECT_KEYWORDS: Record<string, string[]> = {
+  gospel:      ['bible', 'gospel', 'faith', 'theology', 'scripture', 'church', 'religion'],
+  business:    ['business', 'marketing', 'finance', 'management', 'accounting', 'sales', 'entrepreneurship'],
+  economics:   ['economics', 'gdp', 'inflation', 'trade', 'monetary', 'fiscal', 'economy', 'micro', 'macro'],
+  technology:  ['programming', 'software', 'coding', 'javascript', 'python', 'ai', 'data', 'tech', 'computer'],
+  health:      ['health', 'medicine', 'anatomy', 'nutrition', 'fitness', 'psychology', 'pharma', 'biology'],
+  mathematics: ['mathematics', 'calculus', 'algebra', 'geometry', 'statistics', 'math', 'maths'],
+  sciences:    ['biology', 'chemistry', 'physics', 'science', 'lab', 'ecology', 'genetics'],
+  history:     ['history', 'historical', 'civilization', 'war', 'ancient', 'medieval'],
+  literature:  ['literature', 'english', 'writing', 'poetry', 'novel', 'essay'],
+  languages:   ['language', 'french', 'spanish', 'swahili', 'grammar', 'vocabulary', 'kinyarwanda'],
+  law:         ['law', 'legal', 'constitution', 'rights', 'court', 'criminal', 'contract'],
+  arts:        ['art', 'music', 'design', 'creative', 'paint', 'film', 'photography'],
+  psychology:  ['psychology', 'mental', 'behavior', 'cognitive', 'therapy', 'neuroscience'],
+  engineering: ['engineering', 'mechanical', 'electrical', 'civil', 'structure', 'circuit', 'thermodynamics'],
+  geography:   ['geography', 'map', 'climate', 'continent', 'country', 'geopolitics'],
+};
+
+function reelMatchesSubject(reel: Reel, subjectKey: string): boolean {
+  const keywords = SUBJECT_KEYWORDS[subjectKey] ?? [];
+  const hay = `${reel.title} ${reel.description ?? ''} ${reel.category ?? ''}`.toLowerCase();
+  return keywords.some((kw) => hay.includes(kw));
+}
+
 export default function ReelsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [reels, setReels] = useState<Reel[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [videoReady, setVideoReady] = useState<Record<string, boolean>>({});
   const [videoFailed, setVideoFailed] = useState<Record<string, boolean>>({});
-  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [tab, setTab] = useState<'foryou' | 'following'>('foryou');
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -58,11 +84,22 @@ export default function ReelsPage() {
       const endpoint = tab === 'foryou' ? '/api/reels/feed' : '/api/reels/following';
       const response = await api.get(endpoint);
       const data: Reel[] = response.data;
-      const normalized = data.map((item) => ({
-        ...item,
-        saved_to_deck: item.saved_to_deck ?? false,
-      }));
-      setReels(normalized);
+
+      // Keep only video reels
+      const videoOnly = data
+        .filter((item) => item.video_url && item.kind !== 'card')
+        .map((item) => ({ ...item, saved_to_deck: item.saved_to_deck ?? false }));
+
+      // Sort: user's subjects first, then everything else
+      const userSubjects: string[] = user?.subjects ?? [];
+      const prioritized = videoOnly.filter((r) =>
+        userSubjects.some((s) => reelMatchesSubject(r, s))
+      );
+      const rest = videoOnly.filter(
+        (r) => !userSubjects.some((s) => reelMatchesSubject(r, s))
+      );
+
+      setReels([...prioritized, ...rest]);
     } catch (error) {
       console.error('Failed to load reels:', error);
       setReels([]);
@@ -152,10 +189,6 @@ export default function ReelsPage() {
     }
   };
 
-  const toggleReveal = (reelId: string) => {
-    setRevealed((prev) => ({ ...prev, [reelId]: !prev[reelId] }));
-  };
-
   if (loading) {
     return (
       <>
@@ -173,15 +206,31 @@ export default function ReelsPage() {
       <SideNav />
       <div className="fixed inset-0 bg-zinc-950 overflow-hidden lg:pl-[72px]">
         {/* Header */}
-        <header className="fixed top-0 left-0 lg:left-56 right-0 z-40 pointer-events-none">
-          <div className="flex items-center justify-between px-4 pt-4">
-            <span className="text-xs font-medium text-white/50 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              Reels
-            </span>
+        <header className="fixed top-0 left-0 lg:left-[72px] right-0 z-40 pointer-events-none">
+          <div className="flex items-center justify-between px-4 pt-4 pointer-events-auto">
+            {/* Tab switcher */}
+            <div className="flex gap-1 bg-black/40 backdrop-blur-sm border border-white/10 rounded-full p-0.5">
+              <button
+                onClick={() => setTab('foryou')}
+                className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                  tab === 'foryou' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'
+                }`}
+              >
+                For You
+              </button>
+              <button
+                onClick={() => setTab('following')}
+                className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                  tab === 'following' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'
+                }`}
+              >
+                Following
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => router.push('/reels/upload')}
-              className="pointer-events-auto text-xs font-semibold text-white/70 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full hover:text-white transition-colors"
+              className="text-xs font-semibold text-white/70 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full hover:text-white transition-colors border border-white/10"
             >
               + Upload
             </button>
@@ -225,71 +274,20 @@ export default function ReelsPage() {
               className="relative w-full snap-start snap-always"
               style={{ height: '100dvh' } as React.CSSProperties}
             >
-              <div className="absolute inset-0 bg-zinc-950" />
+              <div className="absolute inset-0 bg-black" />
 
-              {reel.kind !== 'card' && reel.video_url ? (
-                <video
-                  ref={(el) => {
-                    videoRefs.current[index] = el;
-                  }}
-                  src={reel.video_url}
-                  className="absolute inset-0 w-full h-full object-contain bg-black"
-                  loop
-                  playsInline
-                  muted
-                  poster={reel.thumbnail_url}
-                  onLoadedData={() => setVideoReady((prev) => ({ ...prev, [reel.id]: true }))}
-                  onError={() => setVideoFailed((prev) => ({ ...prev, [reel.id]: true }))}
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => toggleReveal(reel.id)}
-                  className="absolute inset-0 w-full h-full flex items-center justify-center px-6 focus:outline-none"
-                  aria-label={revealed[reel.id] ? 'Hide answer' : 'Reveal answer'}
-                >
-                  <div className="max-w-md w-full rounded-xl border border-zinc-700 bg-zinc-900 p-6">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold bg-white/10 px-3 py-1 rounded-full border border-white/10 text-white">
-                        {reel.category || 'Card'}
-                      </span>
-                      <span className="text-xs text-white/70">{revealed[reel.id] ? 'Tap to reset' : 'Tap to reveal'}</span>
-                    </div>
-
-                    <div className="mt-5">
-                      <p className="text-white text-2xl font-bold leading-tight">{reel.title}</p>
-                      {reel.description && (
-                        <p className="text-white/80 text-sm mt-2">{reel.description}</p>
-                      )}
-                    </div>
-
-                    <div className="mt-6 rounded-2xl bg-black/25 border border-white/10 p-4 text-left">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-xl">🧠</div>
-                          <div className="min-w-0">
-                            <p className="text-white font-semibold">Question</p>
-                            <p className="text-white/70 text-sm truncate">{reel.title}</p>
-                          </div>
-                        </div>
-                        {revealed[reel.id] ? (
-                          <div className="rounded-xl bg-white/10 border border-white/10 p-3">
-                            <p className="text-emerald-100 font-semibold text-sm">Answer</p>
-                            <p className="text-white text-sm mt-1">{reel.description}</p>
-                          </div>
-                        ) : (
-                          <div className="h-12 rounded-xl bg-white/5 border border-white/10 shimmer" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-5 flex items-center justify-between text-xs text-white/70">
-                      <span>Swipe for the next concept</span>
-                      <span className="font-semibold text-white/80">Card</span>
-                    </div>
-                  </div>
-                </button>
-              )}
+              {/* Video */}
+              <video
+                ref={(el) => { videoRefs.current[index] = el; }}
+                src={reel.video_url}
+                className="absolute inset-0 w-full h-full object-contain bg-black"
+                loop
+                playsInline
+                muted
+                poster={reel.thumbnail_url}
+                onLoadedData={() => setVideoReady((prev) => ({ ...prev, [reel.id]: true }))}
+                onError={() => setVideoFailed((prev) => ({ ...prev, [reel.id]: true }))}
+              />
 
               {/* Contrast overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
@@ -302,13 +300,24 @@ export default function ReelsPage() {
               )}
 
               {/* Subject / badge */}
-              <div className="absolute top-14 left-0 right-0 px-4 z-30 pointer-events-none">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold bg-white/15 px-3 py-1 rounded-full border border-white/10">
-                    {reel.category || 'General'}
-                  </span>
+              <div className="absolute top-16 left-0 right-0 px-4 z-30 pointer-events-none">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {reel.category && (
+                    <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${
+                      (user?.subjects ?? []).some((s) => reelMatchesSubject(reel, s))
+                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+                        : 'bg-white/15 border-white/10 text-white'
+                    }`}>
+                      {reel.category}
+                    </span>
+                  )}
+                  {(user?.subjects ?? []).some((s) => reelMatchesSubject(reel, s)) && (
+                    <span className="text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
+                      Your topic
+                    </span>
+                  )}
                   {reel.creator_verified && (
-                    <span className="text-xs bg-white/15 px-2 py-1 rounded-full border border-white/10">
+                    <span className="text-xs bg-white/15 px-2 py-1 rounded-full border border-white/10 text-white">
                       {getBadgeIcon(reel.creator_badge_type)} Educator
                     </span>
                   )}
