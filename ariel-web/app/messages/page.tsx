@@ -174,7 +174,7 @@ export default function MessagesPage() {
             >
               <div className="flex gap-3">
                 {/* Avatar */}
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-zinc-600 flex items-center justify-center text-white font-bold flex-shrink-0">
                   {conversation.other_user_profile_picture ? (
                     <img
                       src={conversation.other_user_profile_picture}
@@ -231,7 +231,7 @@ export default function MessagesPage() {
           <div className="bg-white border-b border-gray-200 px-6 py-4">
             <div className="flex items-center gap-3">
               <Link href={`/profile/${selectedConversation.other_user_id}`} className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">
+                <div className="w-10 h-10 rounded-full bg-zinc-600 flex items-center justify-center text-white font-bold">
                   {selectedConversation.other_user_profile_picture ? (
                     <img
                       src={selectedConversation.other_user_profile_picture}
@@ -283,7 +283,7 @@ export default function MessagesPage() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type a message..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-600 focus:border-transparent"
               />
               <button
                 type="submit"

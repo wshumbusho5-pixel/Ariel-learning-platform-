@@ -3,8 +3,8 @@ import "./globals.css";
 import AuthProvider from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
-  title: "Ariel - Revolutionary Revision Platform",
-  description: "Learn with pure, positive reinforcement. No distractors, just correct answers.",
+  title: "Ariel — Learn smarter",
+  description: "Flashcards, reels, and spaced repetition — built for focused learning.",
 };
 
 export default function RootLayout({

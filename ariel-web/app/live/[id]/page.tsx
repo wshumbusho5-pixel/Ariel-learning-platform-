@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import api from '@/lib/api';
 
 interface StreamComment {
   id: string;
@@ -58,17 +59,8 @@ export default function LiveStreamPage() {
 
   const loadStream = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:8003/api/livestream/${streamId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setStream(data);
-      }
+      const response = await api.get(`/api/livestream/${streamId}`);
+      setStream(response.data);
     } catch (error) {
       console.error('Failed to load stream:', error);
     } finally {
@@ -77,7 +69,9 @@ export default function LiveStreamPage() {
   };
 
   const connectWebSocket = () => {
-    const ws = new WebSocket(`ws://localhost:8003/api/livestream/${streamId}/ws`);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const wsUrl = apiUrl.replace(/^http/, 'ws');
+    const ws = new WebSocket(`${wsUrl}/api/livestream/${streamId}/ws`);
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -149,13 +143,7 @@ export default function LiveStreamPage() {
 
   const handleLike = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      await fetch(`http://localhost:8003/api/livestream/${streamId}/like`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      await api.post(`/api/livestream/${streamId}/like`);
 
       setStream(prev => prev ? {
         ...prev,
@@ -254,7 +242,7 @@ export default function LiveStreamPage() {
           <h1 className="font-bold text-gray-900 text-lg mb-2">{stream.title}</h1>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-zinc-600 flex items-center justify-center">
                 {stream.streamer_profile_picture ? (
                   <img
                     src={stream.streamer_profile_picture}

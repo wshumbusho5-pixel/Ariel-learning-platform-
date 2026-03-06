@@ -130,7 +130,7 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex items-start gap-6">
             {/* Avatar */}
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-3xl flex-shrink-0">
+            <div className="w-24 h-24 rounded-full bg-zinc-400 flex items-center justify-center text-white font-bold text-3xl flex-shrink-0">
               {profile.profile_picture ? (
                 <img
                   src={profile.profile_picture}
@@ -154,7 +154,7 @@ export default function ProfilePage() {
                   </svg>
                 )}
                 {profile.is_teacher && (
-                  <span className="px-3 py-1 text-sm font-medium bg-purple-100 text-purple-700 rounded-full">
+                  <span className="px-3 py-1 text-sm font-medium bg-blue-50 text-blue-600 rounded-full">
                     Teacher
                   </span>
                 )}
