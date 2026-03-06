@@ -65,7 +65,8 @@ export default function Dashboard() {
   const [feedDecks, setFeedDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [activeSubject, setActiveSubject] = useState<string>('');
+  const [activeSubject, setActiveSubject] = useState<string | null>(null);
+  const [showSubjectPicker, setShowSubjectPicker] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push('/');
@@ -86,12 +87,7 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, user]);
 
-  // Set default active subject when user loads
-  useEffect(() => {
-    if (user?.subjects?.length && !activeSubject) {
-      setActiveSubject(user.subjects[0]);
-    }
-  }, [user]);
+  // No default — user must tap a card to see content
 
   if (showOnboarding) {
     return (
@@ -132,20 +128,31 @@ export default function Dashboard() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-  // User's chosen subjects — fall back to a default set if none saved yet
-  const userSubjects = user?.subjects?.length
-    ? user.subjects
-    : ['gospel', 'business', 'economics'];
+  const userSubjects: string[] = user?.subjects?.length ? user.subjects : ['gospel', 'business', 'economics'];
+  const allSubjectKeys = Object.keys(SUBJECT_META).filter(k => k !== 'other');
 
-  const current = activeSubject || userSubjects[0];
-  const meta = SUBJECT_META[current] || SUBJECT_META.other;
+  const meta = activeSubject ? (SUBJECT_META[activeSubject] || SUBJECT_META.other) : null;
+  const displayDecks = activeSubject
+    ? (() => {
+        const m = SUBJECT_META[activeSubject] || SUBJECT_META.other;
+        const matched = feedDecks.filter(d => {
+          const hay = `${d.subject} ${d.title} ${d.topic} ${d.description}`.toLowerCase();
+          return m.keywords.some(kw => hay.includes(kw));
+        });
+        return matched.length > 0 ? matched.slice(0, 6) : (FALLBACK_DECKS[activeSubject] || FALLBACK_DECKS.other);
+      })()
+    : [];
 
-  // Try to match feed decks to the active subject by keywords, else use fallback
-  const matchedDecks = feedDecks.filter(d => {
-    const hay = `${d.subject} ${d.title} ${d.topic} ${d.description}`.toLowerCase();
-    return meta.keywords.some(kw => hay.includes(kw));
-  });
-  const displayDecks = matchedDecks.length > 0 ? matchedDecks.slice(0, 6) : (FALLBACK_DECKS[current] || FALLBACK_DECKS.other);
+  const addSubject = async (key: string) => {
+    if (userSubjects.includes(key)) return;
+    const updated = [...userSubjects, key];
+    try {
+      const { authAPI } = await import('@/lib/api');
+      await authAPI.updateProfile({ subjects: updated });
+      await checkAuth();
+    } catch {}
+    setShowSubjectPicker(false);
+  };
 
   return (
     <>
@@ -188,74 +195,129 @@ export default function Dashboard() {
             </h2>
           </div>
 
-          {/* Subject cards — one scrolling row */}
-          <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {/* Subject cards — one scrolling row, pentagon shaped */}
+          <div className="flex gap-5 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
             {userSubjects.map((subjectKey: string) => {
               const m = SUBJECT_META[subjectKey] || SUBJECT_META.other;
-              const isActive = current === subjectKey;
+              const isActive = activeSubject === subjectKey;
               return (
                 <button
                   key={subjectKey}
-                  onClick={() => setActiveSubject(subjectKey)}
-                  className={`flex-shrink-0 w-28 h-32 rounded-2xl bg-gradient-to-br ${m.gradient} flex flex-col items-start justify-end p-3.5 transition-all ${
-                    isActive ? 'ring-2 ring-white/50 scale-[1.04]' : 'opacity-60 hover:opacity-85 hover:scale-[1.02]'
-                  }`}
+                  onClick={() => setActiveSubject(isActive ? null : subjectKey)}
+                  className="flex-shrink-0 flex flex-col items-center gap-2 group"
                 >
-                  <span className="text-xl mb-1">{m.icon}</span>
-                  <p className="text-xs font-bold text-white leading-tight">{m.label}</p>
+                  {/* Pentagon cover */}
+                  <div
+                    className={`w-32 h-36 bg-gradient-to-br ${m.gradient} flex flex-col items-center justify-center gap-2 transition-all duration-200 ${
+                      isActive ? 'scale-110 brightness-110' : 'opacity-75 group-hover:opacity-95 group-hover:scale-105'
+                    }`}
+                    style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
+                  >
+                    <span className="text-3xl">{m.icon}</span>
+                  </div>
+                  {/* Label below */}
+                  <p className={`text-xs font-semibold text-center leading-tight max-w-[90px] transition-colors ${
+                    isActive ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'
+                  }`}>
+                    {m.label}
+                  </p>
                 </button>
               );
             })}
 
-            {/* Add more subjects */}
+            {/* Add subject */}
             <button
-              onClick={() => router.push('/profile')}
-              className="flex-shrink-0 w-28 h-32 rounded-2xl border-2 border-dashed border-zinc-700 hover:border-zinc-500 flex flex-col items-center justify-center gap-1.5 transition-colors"
+              onClick={() => setShowSubjectPicker(true)}
+              className="flex-shrink-0 flex flex-col items-center gap-2 group"
             >
-              <svg className="w-5 h-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              <p className="text-[10px] text-zinc-600 font-medium">Add subject</p>
+              <div
+                className="w-32 h-36 bg-zinc-900 border-2 border-dashed border-zinc-700 group-hover:border-zinc-500 flex items-center justify-center transition-colors"
+                style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }}
+              >
+                <svg className="w-6 h-6 text-zinc-600 group-hover:text-zinc-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <p className="text-xs font-semibold text-zinc-600 group-hover:text-zinc-400 transition-colors">Add</p>
             </button>
           </div>
 
-          {/* Topics for selected subject */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span>{meta.icon}</span>
-                <p className="text-base font-bold text-white">{meta.label}</p>
-              </div>
-              <button
-                onClick={() => router.push('/create-cards')}
-                className="text-xs text-emerald-400 font-semibold hover:text-emerald-300 transition-colors"
-              >
-                + Add cards
-              </button>
-            </div>
-            <div className="divide-y divide-zinc-800/60">
-              {displayDecks.map((deck) => (
+          {/* Topics — only visible after tapping a card */}
+          {activeSubject && meta && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span>{meta.icon}</span>
+                  <p className="text-base font-bold text-white">{meta.label}</p>
+                </div>
                 <button
-                  key={deck.id}
-                  onClick={() => router.push('/explore')}
-                  className="w-full px-5 py-4 flex items-center gap-4 hover:bg-zinc-800/40 transition-colors text-left"
+                  onClick={() => router.push('/create-cards')}
+                  className="text-xs text-emerald-400 font-semibold hover:text-emerald-300 transition-colors"
                 >
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center font-bold text-white text-sm flex-shrink-0`}>
-                    {(deck.subject || deck.title || '?').charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{deck.subject || deck.title}</p>
-                    <p className="text-xs text-zinc-500 mt-0.5">
-                      {deck.author_username ? `@${deck.author_username} · ` : ''}{deck.card_count ?? 0} cards
-                    </p>
-                  </div>
-                  <svg className="w-4 h-4 text-zinc-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
+                  + Add cards
                 </button>
-              ))}
+              </div>
+              <div className="divide-y divide-zinc-800/60">
+                {displayDecks.map((deck) => (
+                  <button
+                    key={deck.id}
+                    onClick={() => router.push('/explore')}
+                    className="w-full px-5 py-4 flex items-center gap-4 hover:bg-zinc-800/40 transition-colors text-left"
+                  >
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center font-bold text-white text-sm flex-shrink-0`}>
+                      {(deck.subject || deck.title || '?').charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{deck.subject || deck.title}</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        {deck.author_username ? `@${deck.author_username} · ` : ''}{deck.card_count ?? 0} cards
+                      </p>
+                    </div>
+                    <svg className="w-4 h-4 text-zinc-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Subject picker modal */}
+          {showSubjectPicker && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSubjectPicker(false)} />
+              <div className="relative bg-zinc-900 border border-zinc-800 rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[75vh] flex flex-col">
+                <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between flex-shrink-0">
+                  <p className="text-base font-bold text-white">Add a subject</p>
+                  <button onClick={() => setShowSubjectPicker(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="overflow-y-auto p-5">
+                  <div className="grid grid-cols-2 gap-3">
+                    {allSubjectKeys.filter(k => !userSubjects.includes(k)).map(key => {
+                      const m = SUBJECT_META[key];
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => addSubject(key)}
+                          className="flex items-center gap-3 p-4 rounded-2xl border border-zinc-800 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left"
+                        >
+                          <span className="text-2xl">{m.icon}</span>
+                          <p className="text-sm font-semibold text-zinc-300">{m.label}</p>
+                        </button>
+                      );
+                    })}
+                    {allSubjectKeys.filter(k => !userSubjects.includes(k)).length === 0 && (
+                      <p className="col-span-2 text-sm text-zinc-600 text-center py-6">You've added all available subjects.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Ask Ariel */}
           <ArielSpotlight />
