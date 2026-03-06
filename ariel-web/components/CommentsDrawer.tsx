@@ -10,9 +10,9 @@ interface Comment {
   user_id: string;
   username: string;
   profile_picture?: string;
-  content: string;
+  text: string;
   likes: number;
-  liked_by_me?: boolean;
+  liked_by_current_user?: boolean;
   created_at: string;
   replies?: Comment[];
 }
@@ -75,7 +75,11 @@ export default function CommentsDrawer() {
         api.get(`/api/cards/${id}/comments`).catch(() => null),
       ]);
       if (cardRes) setCard(cardRes.data);
-      if (commentsRes) setComments(commentsRes.data ?? []);
+      if (commentsRes) {
+        const data: Comment[] = commentsRes.data ?? [];
+        setComments(data);
+        setLikedComments(new Set(data.filter((c) => c.liked_by_current_user).map((c) => c.id)));
+      }
     } catch {}
     finally { setLoading(false); }
   };
@@ -84,7 +88,7 @@ export default function CommentsDrawer() {
     if (!input.trim() || !cardId || submitting) return;
     setSubmitting(true);
     try {
-      await api.post(`/api/cards/${cardId}/comments`, { content: input.trim() });
+      await api.post(`/api/cards/${cardId}/comments`, { text: input.trim() });
       setInput('');
       setReplyingTo(null);
       await load(cardId);
@@ -98,7 +102,7 @@ export default function CommentsDrawer() {
 
   const handleLike = async (commentId: string) => {
     try {
-      await api.post(`/api/comments/${commentId}/like`);
+      await api.post(`/api/cards/comments/${commentId}/like`);
       setLikedComments((prev) => {
         const next = new Set(prev);
         const wasLiked = next.has(commentId);
@@ -212,7 +216,7 @@ export default function CommentsDrawer() {
                       <span className="text-sm font-semibold text-white">{comment.username}</span>
                       <span className="text-xs text-zinc-600">{timeAgo(comment.created_at)}</span>
                     </div>
-                    <p className="text-sm text-zinc-300 mt-0.5 leading-relaxed">{comment.content}</p>
+                    <p className="text-sm text-zinc-300 mt-0.5 leading-relaxed">{comment.text}</p>
 
                     {/* Actions */}
                     <div className="flex items-center gap-4 mt-1.5">
@@ -237,7 +241,7 @@ export default function CommentsDrawer() {
                             <div>
                               <span className="text-xs font-semibold text-white">{reply.username}</span>
                               <span className="text-[10px] text-zinc-600 ml-1.5">{timeAgo(reply.created_at)}</span>
-                              <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">{reply.content}</p>
+                              <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">{reply.text}</p>
                             </div>
                           </div>
                         ))}
@@ -260,7 +264,7 @@ export default function CommentsDrawer() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                     {(comment.likes > 0 || isLiked) && (
-                      <span className="text-[10px] text-zinc-600">{comment.likes + (isLiked && !comment.liked_by_me ? 1 : 0)}</span>
+                      <span className="text-[10px] text-zinc-600">{comment.likes + (isLiked && !comment.liked_by_current_user ? 1 : 0)}</span>
                     )}
                   </button>
                 </div>
