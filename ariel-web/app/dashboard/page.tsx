@@ -15,118 +15,108 @@ interface Deck {
   title?: string;
   card_count?: number;
   author_username?: string;
-  description?: string;
-  topic?: string;
 }
 
 const CATEGORIES = [
   {
     key: 'gospel',
     label: 'Gospel',
-    keywords: ['bible', 'gospel', 'faith', 'christianity', 'theology', 'scripture', 'church', 'religion', 'spiritual'],
-    gradient: 'from-amber-900 to-amber-700',
-    accent: 'bg-amber-500',
-    text: 'text-amber-300',
-    fallback: [
+    emoji: '✝️',
+    gradient: 'from-amber-800 to-yellow-700',
+    keywords: ['bible', 'gospel', 'faith', 'christianity', 'theology', 'scripture', 'religion', 'spiritual'],
+    decks: [
       { id: 'g1', subject: 'Bible Stories', card_count: 42, author_username: 'faithlearn' },
       { id: 'g2', subject: 'New Testament', card_count: 38, author_username: 'bibletutor' },
       { id: 'g3', subject: 'Psalms & Proverbs', card_count: 55, author_username: 'divineword' },
       { id: 'g4', subject: 'Theology Basics', card_count: 29, author_username: 'seminary101' },
       { id: 'g5', subject: 'Church History', card_count: 33, author_username: 'faithlearn' },
+      { id: 'g6', subject: 'Acts of the Apostles', card_count: 41, author_username: 'bibletutor' },
     ],
   },
   {
     key: 'business',
     label: 'Business',
+    emoji: '💼',
+    gradient: 'from-sky-800 to-blue-700',
     keywords: ['business', 'marketing', 'finance', 'management', 'entrepreneurship', 'accounting', 'strategy', 'sales'],
-    gradient: 'from-sky-900 to-sky-700',
-    accent: 'bg-sky-500',
-    text: 'text-sky-300',
-    fallback: [
+    decks: [
       { id: 'b1', subject: 'Marketing 101', card_count: 60, author_username: 'bizpro' },
       { id: 'b2', subject: 'Financial Accounting', card_count: 48, author_username: 'cpatutor' },
       { id: 'b3', subject: 'Entrepreneurship', card_count: 35, author_username: 'startuplab' },
       { id: 'b4', subject: 'Business Strategy', card_count: 44, author_username: 'mbaguide' },
       { id: 'b5', subject: 'Sales Fundamentals', card_count: 27, author_username: 'salescoach' },
+      { id: 'b6', subject: 'Leadership Skills', card_count: 39, author_username: 'bizpro' },
     ],
   },
   {
     key: 'education',
     label: 'Education',
-    keywords: ['biology', 'chemistry', 'physics', 'mathematics', 'history', 'literature', 'science', 'algebra', 'calculus', 'geography'],
-    gradient: 'from-emerald-900 to-emerald-700',
-    accent: 'bg-emerald-500',
-    text: 'text-emerald-300',
-    fallback: [
+    emoji: '📚',
+    gradient: 'from-emerald-800 to-green-700',
+    keywords: ['biology', 'chemistry', 'physics', 'mathematics', 'history', 'literature', 'science', 'algebra'],
+    decks: [
       { id: 'e1', subject: 'Biology', card_count: 80, author_username: 'sciencepro' },
       { id: 'e2', subject: 'Calculus', card_count: 65, author_username: 'mathtutor' },
       { id: 'e3', subject: 'World History', card_count: 72, author_username: 'historylab' },
       { id: 'e4', subject: 'Chemistry', card_count: 58, author_username: 'chemwiz' },
       { id: 'e5', subject: 'Literature', card_count: 43, author_username: 'readingroom' },
+      { id: 'e6', subject: 'Physics', card_count: 51, author_username: 'sciencepro' },
     ],
   },
   {
     key: 'economy',
     label: 'Economy',
-    keywords: ['economics', 'macroeconomics', 'microeconomics', 'economy', 'gdp', 'inflation', 'trade', 'monetary', 'fiscal'],
-    gradient: 'from-violet-900 to-violet-700',
-    accent: 'bg-violet-500',
-    text: 'text-violet-300',
-    fallback: [
+    emoji: '📈',
+    gradient: 'from-violet-800 to-purple-700',
+    keywords: ['economics', 'gdp', 'inflation', 'trade', 'monetary', 'fiscal', 'economy'],
+    decks: [
       { id: 'ec1', subject: 'Macroeconomics', card_count: 54, author_username: 'econprof' },
       { id: 'ec2', subject: 'Microeconomics', card_count: 49, author_username: 'econprof' },
       { id: 'ec3', subject: 'Global Trade', card_count: 38, author_username: 'tradedesk' },
       { id: 'ec4', subject: 'Monetary Policy', card_count: 31, author_username: 'fedwatch' },
       { id: 'ec5', subject: 'Development Economics', card_count: 44, author_username: 'deveconomy' },
+      { id: 'ec6', subject: 'Stock Market Basics', card_count: 36, author_username: 'investlearn' },
     ],
   },
   {
     key: 'technology',
     label: 'Technology',
-    keywords: ['programming', 'computer', 'software', 'coding', 'javascript', 'python', 'ai', 'machine learning', 'data', 'cybersecurity'],
-    gradient: 'from-zinc-800 to-zinc-600',
-    accent: 'bg-zinc-400',
-    text: 'text-zinc-300',
-    fallback: [
+    emoji: '💻',
+    gradient: 'from-zinc-700 to-zinc-600',
+    keywords: ['programming', 'software', 'coding', 'javascript', 'python', 'ai', 'data', 'cybersecurity'],
+    decks: [
       { id: 't1', subject: 'Python Basics', card_count: 70, author_username: 'codelab' },
       { id: 't2', subject: 'Data Structures', card_count: 55, author_username: 'cstutor' },
       { id: 't3', subject: 'Web Development', card_count: 63, author_username: 'devacademy' },
       { id: 't4', subject: 'Machine Learning', card_count: 48, author_username: 'ailearn' },
       { id: 't5', subject: 'Cybersecurity', card_count: 39, author_username: 'securelab' },
+      { id: 't6', subject: 'SQL & Databases', card_count: 45, author_username: 'datatutor' },
+    ],
+  },
+  {
+    key: 'health',
+    label: 'Health',
+    emoji: '🧬',
+    gradient: 'from-rose-800 to-pink-700',
+    keywords: ['health', 'medicine', 'anatomy', 'nutrition', 'fitness', 'psychology', 'mental'],
+    decks: [
+      { id: 'h1', subject: 'Human Anatomy', card_count: 90, author_username: 'medschool' },
+      { id: 'h2', subject: 'Nutrition Science', card_count: 47, author_username: 'healthpro' },
+      { id: 'h3', subject: 'Mental Health', card_count: 52, author_username: 'psychlearn' },
+      { id: 'h4', subject: 'Pharmacology', card_count: 68, author_username: 'medschool' },
+      { id: 'h5', subject: 'First Aid', card_count: 34, author_username: 'healthpro' },
+      { id: 'h6', subject: 'Exercise Science', card_count: 41, author_username: 'fitnesstu' },
     ],
   },
 ];
-
-function DeckCard({ deck, gradient, onClick }: { deck: Deck; gradient: string; onClick: () => void }) {
-  const initial = (deck.subject || deck.title || '?').charAt(0).toUpperCase();
-  return (
-    <button
-      onClick={onClick}
-      className="flex-shrink-0 w-36 rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-all hover:scale-[1.02] text-left"
-    >
-      {/* Cover */}
-      <div className={`w-full h-44 bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-        <span className="text-5xl font-black text-white/20 select-none">{initial}</span>
-      </div>
-      {/* Info */}
-      <div className="p-3">
-        <p className="text-xs font-bold text-white leading-tight line-clamp-2">{deck.subject || deck.title}</p>
-        <p className="text-[10px] text-zinc-500 mt-1">{deck.card_count ?? 0} cards</p>
-        {deck.author_username && (
-          <p className="text-[10px] text-zinc-600 mt-0.5 truncate">@{deck.author_username}</p>
-        )}
-      </div>
-    </button>
-  );
-}
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, checkAuth } = useAuth();
   const [gamification, setGamification] = useState<any>(null);
-  const [categoryDecks, setCategoryDecks] = useState<Record<string, Deck[]>>({});
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].key);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push('/');
@@ -134,7 +124,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      loadData();
+      gamificationAPI.getStats().then(setGamification).catch(() => null).finally(() => setLoading(false));
       if (user && !user.onboarding_completed) setShowOnboarding(true);
       const t = setTimeout(() => setLoading(false), 5000);
       return () => clearTimeout(t);
@@ -142,43 +132,6 @@ export default function Dashboard() {
       setLoading(false);
     }
   }, [isAuthenticated, isLoading, user]);
-
-  const loadData = async () => {
-    try {
-      const [gamStats, feedDecks] = await Promise.all([
-        gamificationAPI.getStats().catch(() => null),
-        socialAPI.getPersonalizedFeed(50).catch(() => []),
-      ]);
-      setGamification(gamStats || {});
-
-      // Bucket feed decks into categories by keyword match
-      const buckets: Record<string, Deck[]> = {};
-      CATEGORIES.forEach(cat => { buckets[cat.key] = []; });
-
-      (feedDecks as Deck[]).forEach((deck) => {
-        const haystack = `${deck.subject} ${deck.title} ${deck.topic} ${deck.description}`.toLowerCase();
-        for (const cat of CATEGORIES) {
-          if (cat.keywords.some(kw => haystack.includes(kw))) {
-            if (buckets[cat.key].length < 10) buckets[cat.key].push(deck);
-            break;
-          }
-        }
-      });
-
-      // Fill empty buckets with fallback data
-      CATEGORIES.forEach(cat => {
-        if (buckets[cat.key].length === 0) buckets[cat.key] = cat.fallback as Deck[];
-      });
-
-      setCategoryDecks(buckets);
-    } catch {
-      const fallbacks: Record<string, Deck[]> = {};
-      CATEGORIES.forEach(cat => { fallbacks[cat.key] = cat.fallback as Deck[]; });
-      setCategoryDecks(fallbacks);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (showOnboarding) {
     return (
@@ -219,10 +172,12 @@ export default function Dashboard() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
+  const selected = CATEGORIES.find(c => c.key === activeCategory) || CATEGORIES[0];
+
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 lg:pl-[72px] pb-24">
+      <div className="min-h-screen bg-zinc-950 lg:pl-[72px] pb-24 flex flex-col">
 
         {/* Header */}
         <header className="sticky top-0 z-40 bg-zinc-950 border-b border-zinc-800/60">
@@ -250,64 +205,79 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="py-6 space-y-8">
+        <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full px-5 py-6 gap-6">
 
           {/* Greeting */}
-          <div className="px-5 max-w-6xl mx-auto">
+          <div>
             <p className="text-sm text-zinc-500">{greeting}</p>
             <h2 className="text-3xl font-bold text-white mt-0.5">
               {firstName ? `${firstName}.` : 'Welcome back.'}
             </h2>
           </div>
 
-          {/* Category shelves */}
-          {CATEGORIES.map((cat) => {
-            const decks = categoryDecks[cat.key] || cat.fallback as Deck[];
-            return (
-              <div key={cat.key}>
-                {/* Row header */}
-                <div className="px-5 max-w-6xl mx-auto flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${cat.accent}`} />
-                    <p className="text-base font-bold text-white">{cat.label}</p>
-                  </div>
-                  <button
-                    onClick={() => router.push('/explore')}
-                    className={`text-xs font-semibold ${cat.text} hover:opacity-70 transition-opacity`}
-                  >
-                    See all →
-                  </button>
-                </div>
+          {/* Category cards — one scrolling row */}
+          <div
+            className="flex gap-3 overflow-x-auto pb-1"
+            style={{ scrollbarWidth: 'none' }}
+          >
+            {CATEGORIES.map((cat) => {
+              const isActive = activeCategory === cat.key;
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => setActiveCategory(cat.key)}
+                  className={`flex-shrink-0 w-32 h-36 rounded-2xl bg-gradient-to-br ${cat.gradient} flex flex-col items-start justify-end p-4 transition-all ${
+                    isActive
+                      ? 'ring-2 ring-white/40 scale-[1.03]'
+                      : 'opacity-70 hover:opacity-90 hover:scale-[1.02]'
+                  }`}
+                >
+                  <span className="text-2xl mb-1">{cat.emoji}</span>
+                  <p className="text-sm font-bold text-white leading-tight">{cat.label}</p>
+                  <p className="text-[10px] text-white/60 mt-0.5">{cat.decks.length} topics</p>
+                </button>
+              );
+            })}
+          </div>
 
-                {/* Horizontal scroll */}
-                <div className="flex gap-3 overflow-x-auto px-5 pb-1 scrollbar-none" style={{ scrollbarWidth: 'none' }}>
-                  {decks.map((deck) => (
-                    <DeckCard
-                      key={deck.id}
-                      deck={deck}
-                      gradient={cat.gradient}
-                      onClick={() => router.push('/explore')}
-                    />
-                  ))}
-                  {/* See more card */}
-                  <button
-                    onClick={() => router.push('/explore')}
-                    className="flex-shrink-0 w-36 rounded-2xl border border-zinc-800 border-dashed hover:border-zinc-600 transition-colors flex flex-col items-center justify-center gap-2 h-[232px]"
-                  >
-                    <svg className="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    <span className="text-xs text-zinc-600 font-medium">See more</span>
-                  </button>
-                </div>
+          {/* Selected category content */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{selected.emoji}</span>
+                <p className="text-base font-bold text-white">{selected.label}</p>
               </div>
-            );
-          })}
+              <button
+                onClick={() => router.push('/explore')}
+                className="text-xs text-emerald-400 font-semibold hover:text-emerald-300 transition-colors"
+              >
+                Browse all →
+              </button>
+            </div>
+            <div className="divide-y divide-zinc-800/60">
+              {selected.decks.map((deck) => (
+                <button
+                  key={deck.id}
+                  onClick={() => router.push('/explore')}
+                  className="w-full px-5 py-4 flex items-center gap-4 hover:bg-zinc-800/40 transition-colors text-left"
+                >
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${selected.gradient} flex items-center justify-center font-bold text-white text-base flex-shrink-0`}>
+                    {deck.subject.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{deck.subject}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">@{deck.author_username} · {deck.card_count} cards</p>
+                  </div>
+                  <svg className="w-4 h-4 text-zinc-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Ask Ariel */}
-          <div className="px-5 max-w-6xl mx-auto">
-            <ArielSpotlight />
-          </div>
+          <ArielSpotlight />
 
         </div>
       </div>
