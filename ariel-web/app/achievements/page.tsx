@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { achievementsAPI } from '@/lib/api';
 import AchievementCard from '@/components/AchievementCard';
 import StreakWidget from '@/components/StreakWidget';
+import SideNav from '@/components/SideNav';
+import BottomNav from '@/components/BottomNav';
 
 interface Achievement {
   achievement_id: string;
@@ -33,11 +35,7 @@ export default function AchievementsPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({
-    total: 0,
-    unlocked: 0,
-    totalPoints: 0,
-  });
+  const [stats, setStats] = useState({ total: 0, unlocked: 0, totalPoints: 0 });
 
   useEffect(() => {
     loadAchievements();
@@ -50,17 +48,11 @@ export default function AchievementsPage() {
       const data = await achievementsAPI.getAchievementsList(category);
       setAchievements(data);
 
-      // Calculate stats
       const unlocked = data.filter((a: Achievement) => a.is_unlocked).length;
       const totalPoints = data
         .filter((a: Achievement) => a.is_unlocked)
         .reduce((sum: number, a: Achievement) => sum + a.points_reward, 0);
-
-      setStats({
-        total: data.length,
-        unlocked: unlocked,
-        totalPoints: totalPoints,
-      });
+      setStats({ total: data.length, unlocked, totalPoints });
     } catch (error) {
       console.error('Error loading achievements:', error);
     } finally {
@@ -69,94 +61,91 @@ export default function AchievementsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Achievements</h1>
-          <p className="text-gray-600 text-sm mt-1">Track your progress and unlock rewards</p>
+    <>
+      <SideNav />
+      <div className="min-h-screen lg:pl-56 bg-zinc-950">
+        <div className="bg-zinc-950 border-b border-zinc-800 sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-bold text-white">Achievements</h1>
+            <p className="text-zinc-500 text-sm mt-1">Track your progress and unlock rewards</p>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3">
-              <p className="text-xs text-gray-600">Unlocked</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {stats.unlocked}/{stats.total}
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3">
-              <p className="text-xs text-gray-600">Completion</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {stats.total > 0 ? Math.round((stats.unlocked / stats.total) * 100) : 0}%
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-3">
-              <p className="text-xs text-gray-600">Points</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.totalPoints}</p>
+            <div className="grid grid-cols-3 gap-4 mt-4">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+                <p className="text-xs text-zinc-500">Unlocked</p>
+                <p className="text-2xl font-bold text-emerald-400">
+                  {stats.unlocked}/{stats.total}
+                </p>
+              </div>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+                <p className="text-xs text-zinc-500">Completion</p>
+                <p className="text-2xl font-bold text-emerald-400">
+                  {stats.total > 0 ? Math.round((stats.unlocked / stats.total) * 100) : 0}%
+                </p>
+              </div>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+                <p className="text-xs text-zinc-500">Points</p>
+                <p className="text-2xl font-bold text-white">{stats.totalPoints}</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Streak Widget */}
-        <div className="mb-6">
-          <StreakWidget />
-        </div>
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="mb-6">
+            <StreakWidget />
+          </div>
 
-        {/* Category Filter */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-6">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition-colors ${
-                selectedCategory === cat.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span className="mr-2">{cat.icon}</span>
-              {cat.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-gray-200 rounded-xl h-64 animate-pulse" />
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-6">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition-colors ${
+                  selectedCategory === cat.id
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
+                }`}
+              >
+                <span className="mr-2">{cat.icon}</span>
+                {cat.name}
+              </button>
             ))}
           </div>
-        )}
 
-        {/* Achievements Grid */}
-        {!isLoading && achievements.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {achievements.map((achievement) => (
-              <AchievementCard
-                key={achievement.achievement_id}
-                achievement={achievement}
-                onShare={loadAchievements}
-              />
-            ))}
-          </div>
-        )}
+          {isLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="bg-zinc-900 rounded-xl h-64 animate-pulse" />
+              ))}
+            </div>
+          )}
 
-        {/* Empty State */}
-        {!isLoading && achievements.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🏆</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No achievements found</h3>
-            <p className="text-gray-600">
-              {selectedCategory === 'all'
-                ? 'Start studying to unlock achievements!'
-                : `No ${selectedCategory} achievements available.`}
-            </p>
-          </div>
-        )}
+          {!isLoading && achievements.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {achievements.map((achievement) => (
+                <AchievementCard
+                  key={achievement.achievement_id}
+                  achievement={achievement}
+                  onShare={loadAchievements}
+                />
+              ))}
+            </div>
+          )}
+
+          {!isLoading && achievements.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🏆</div>
+              <h3 className="text-xl font-semibold text-white mb-2">No achievements found</h3>
+              <p className="text-zinc-500">
+                {selectedCategory === 'all'
+                  ? 'Start studying to unlock achievements!'
+                  : `No ${selectedCategory} achievements available.`}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+      <BottomNav />
+    </>
   );
 }

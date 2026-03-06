@@ -51,18 +51,18 @@ export default function ReviewPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white" style={{ backgroundColor: '#0b1220' }}>
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="text-center">
-          <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-10 h-10 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-20 h-20 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-white mb-2">Sign in to review cards</h2>
-          <p className="text-white/70 mb-6">Create an account to start your review session</p>
+          <p className="text-zinc-500 mb-6">Create an account to start your review session</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors border border-white/15"
+            className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors border border-gray-200"
           >
             Go to Home
           </button>
@@ -73,10 +73,10 @@ export default function ReviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white" style={{ backgroundColor: '#0b1220' }}>
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-white/20 border-t-indigo-400 mx-auto"></div>
-          <p className="text-white/70 mt-4">Loading your cards...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-emerald-500 mx-auto"></div>
+          <p className="text-gray-500 mt-4">Loading your cards...</p>
         </div>
       </div>
     );
@@ -84,23 +84,23 @@ export default function ReviewPage() {
 
   if (showComplete) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white" style={{ backgroundColor: '#0b1220' }}>
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="text-center px-4">
-          <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-            <svg className="w-12 h-12 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 ">
+            <svg className="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <h2 className="text-3xl font-bold text-white mb-3">
             Review Complete!
           </h2>
-          <p className="text-white/70 mb-8 max-w-md mx-auto">
+          <p className="text-gray-500 mb-8 max-w-md mx-auto">
             You've reviewed all {cards.length} cards. Your brain has encoded all the correct answers using spaced repetition.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => router.push('/deck')}
-              className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+              className="px-8 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-lg transition-colors"
             >
               Back to Deck
             </button>
@@ -109,7 +109,7 @@ export default function ReviewPage() {
                 setShowComplete(false);
                 loadDueCards();
               }}
-              className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors border border-white/15"
+              className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-colors border border-gray-200"
             >
               Review More
             </button>
@@ -121,29 +121,29 @@ export default function ReviewPage() {
 
   if (cards.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white" style={{ backgroundColor: '#0b1220' }}>
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="text-center px-4">
-          <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-10 h-10 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-20 h-20 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">
             No cards due for review
           </h2>
-          <p className="text-white/70 mb-6 max-w-md mx-auto">
+          <p className="text-gray-500 mb-6 max-w-md mx-auto">
             Great job! You're all caught up. Come back later when more cards are due, or explore trending cards to learn something new.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => router.push('/deck')}
-              className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-lg transition-colors"
+              className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-medium rounded-lg transition-colors"
             >
               View My Deck
             </button>
             <button
               onClick={() => router.push('/explore')}
-              className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors border border-white/15"
+              className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors border border-gray-200"
             >
               Explore Cards
             </button>

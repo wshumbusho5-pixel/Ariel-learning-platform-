@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import BottomNav from '@/components/BottomNav';
-import ArielAssistant from '@/components/ArielAssistant';
+import api from '@/lib/api';
+import SideNav from '@/components/SideNav';
 
 interface StudyRoom {
   id: string;
@@ -35,17 +36,8 @@ export default function StudyRoomsPage() {
   const loadRooms = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8003/api/study-rooms/active', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setRooms(data);
-      }
+      const response = await api.get('/api/study-rooms/active');
+      setRooms(response.data);
     } catch (error) {
       console.error('Failed to load rooms:', error);
     } finally {
@@ -55,21 +47,10 @@ export default function StudyRoomsPage() {
 
   const createRoom = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8003/api/study-rooms/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(newRoom),
-      });
-
-      if (response.ok) {
-        setShowCreateModal(false);
-        setNewRoom({ title: '', description: '', subject: '', max_participants: 10 });
-        loadRooms();
-      }
+      await api.post('/api/study-rooms/create', newRoom);
+      setShowCreateModal(false);
+      setNewRoom({ title: '', description: '', subject: '', max_participants: 10 });
+      loadRooms();
     } catch (error) {
       console.error('Failed to create room:', error);
     }
@@ -77,17 +58,8 @@ export default function StudyRoomsPage() {
 
   const joinRoom = async (roomId: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8003/api/study-rooms/${roomId}/join`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        loadRooms();
-      }
+      await api.post(`/api/study-rooms/${roomId}/join`);
+      loadRooms();
     } catch (error) {
       console.error('Failed to join room:', error);
     }
@@ -95,17 +67,8 @@ export default function StudyRoomsPage() {
 
   const leaveRoom = async (roomId: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:8003/api/study-rooms/${roomId}/leave`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        loadRooms();
-      }
+      await api.post(`/api/study-rooms/${roomId}/leave`);
+      loadRooms();
     } catch (error) {
       console.error('Failed to leave room:', error);
     }
@@ -125,45 +88,38 @@ export default function StudyRoomsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen lg:pl-56 bg-zinc-950 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="relative w-24 h-24 mx-auto">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 animate-spin" style={{ clipPath: 'inset(0 50% 0 0)' }}></div>
-            <div className="absolute inset-2 rounded-full bg-white"></div>
-          </div>
-          <p className="text-lg font-semibold text-gray-700 animate-pulse">Loading study rooms...</p>
+          <div className="w-8 h-8 border-2 border-zinc-800 border-t-emerald-500 rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm font-medium text-zinc-500">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 pb-24">
-      {/* Animated background blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float"></div>
-        <div className="absolute top-40 right-10 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-20 left-1/2 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{animationDelay: '2s'}}></div>
-      </div>
+    <>
+      <SideNav />
+      <div className="min-h-screen bg-zinc-950 pb-24 lg:pl-56">
 
       {/* Header */}
-      <div className="sticky top-0 z-40 backdrop-blur-2xl bg-white/80 border-b border-gray-200/50">
+      <div className="sticky top-0 z-40 bg-zinc-950 border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between animate-reveal">
+          <div className="flex items-center justify-between ">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center shadow-xl">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-600 flex items-center justify-center">
                 <span className="text-3xl">🏠</span>
               </div>
               <div>
-                <h1 className="text-3xl font-bold gradient-text">
+                <h1 className="text-3xl font-bold text-white">
                   Study Rooms
                 </h1>
-                <p className="text-sm text-gray-600 font-semibold">Study together, learn faster</p>
+                <p className="text-sm text-zinc-500 font-semibold">Study together, learn faster</p>
               </div>
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="magnetic-btn px-6 py-3 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 text-white rounded-2xl font-bold shadow-xl hover-glow"
+              className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
             >
               + Create Room
             </button>
@@ -174,15 +130,15 @@ export default function StudyRoomsPage() {
       {/* Rooms Grid */}
       <div className="relative max-w-7xl mx-auto px-6 py-8">
         {rooms.length === 0 ? (
-          <div className="text-center py-20 animate-reveal">
-            <div className="w-32 h-32 rounded-3xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center mx-auto mb-8 shadow-2xl animate-float">
+          <div className="text-center py-20 ">
+            <div className="w-32 h-32 rounded-3xl bg-zinc-800 flex items-center justify-center mx-auto mb-4">
               <span className="text-6xl">🏠</span>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">No active study rooms</h3>
-            <p className="text-gray-600 mb-8">Create one to start studying with others!</p>
+            <h3 className="text-2xl font-bold text-white mb-4">No active study rooms</h3>
+            <p className="text-zinc-500 mb-8">Create one to start studying with others!</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="magnetic-btn px-8 py-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 text-white rounded-2xl font-bold shadow-xl hover-glow"
+              className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
             >
               Create Your First Room
             </button>
@@ -192,20 +148,20 @@ export default function StudyRoomsPage() {
             {rooms.map((room, idx) => (
               <div
                 key={room.id}
-                className="neu-card p-6 hover-glow transition-all animate-reveal"
+                className="border border-zinc-800 bg-zinc-900 rounded-xl p-6 hover:border-zinc-600 transition-colors "
                 style={{animationDelay: `${idx * 0.1}s`}}
               >
                 {/* Room Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg">
+                    <div className="w-12 h-12 rounded-2xl bg-zinc-600 flex items-center justify-center shadow-lg">
                       <span className="text-white font-bold text-lg">
                         {room.subject ? room.subject[0].toUpperCase() : '📖'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 text-lg">{room.title}</h3>
-                      <p className="text-sm text-gray-600">by {room.host_name}</p>
+                      <h3 className="font-bold text-white text-lg">{room.title}</h3>
+                      <p className="text-sm text-zinc-500">by {room.host_name}</p>
                     </div>
                   </div>
                   {room.status === 'active' && (
@@ -217,11 +173,11 @@ export default function StudyRoomsPage() {
 
                 {/* Description */}
                 {room.description && (
-                  <p className="text-gray-700 text-sm mb-4 line-clamp-2">{room.description}</p>
+                  <p className="text-zinc-400 text-sm mb-4 line-clamp-2">{room.description}</p>
                 )}
 
                 {/* Room Info */}
-                <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
+                <div className="flex items-center gap-4 mb-4 text-sm text-zinc-400">
                   <div className="flex items-center gap-1">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
@@ -239,7 +195,7 @@ export default function StudyRoomsPage() {
                 {/* Action Button */}
                 <button
                   onClick={() => joinRoom(room.id)}
-                  className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-2xl font-bold shadow-lg hover-glow transition-all magnetic-btn"
+                  className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
                 >
                   Join Room
                 </button>
@@ -252,50 +208,50 @@ export default function StudyRoomsPage() {
       {/* Create Room Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="glass-card rounded-3xl p-8 max-w-md w-full shadow-2xl animate-scaleIn">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Study Room</h2>
+          <div className="bg-zinc-900 rounded-xl p-6 max-w-md w-full border border-zinc-700">
+            <h2 className="text-2xl font-bold text-white mb-6">Create Study Room</h2>
 
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Room Title</label>
+                <label className="block text-sm font-bold text-white mb-2">Room Title</label>
                 <input
                   type="text"
                   value={newRoom.title}
                   onChange={(e) => setNewRoom({ ...newRoom, title: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-600 focus:outline-none"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-emerald-500 focus:outline-none placeholder:text-zinc-600"
                   placeholder="e.g., Physics Study Session"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Subject</label>
+                <label className="block text-sm font-bold text-white mb-2">Subject</label>
                 <input
                   type="text"
                   value={newRoom.subject}
                   onChange={(e) => setNewRoom({ ...newRoom, subject: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-600 focus:outline-none"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-emerald-500 focus:outline-none placeholder:text-zinc-600"
                   placeholder="e.g., Physics"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-bold text-white mb-2">Description</label>
                 <textarea
                   value={newRoom.description}
                   onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-600 focus:outline-none"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-emerald-500 focus:outline-none placeholder:text-zinc-600"
                   rows={3}
                   placeholder="What are you studying?"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Max Participants</label>
+                <label className="block text-sm font-bold text-white mb-2">Max Participants</label>
                 <input
                   type="number"
                   value={newRoom.max_participants}
                   onChange={(e) => setNewRoom({ ...newRoom, max_participants: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-600 focus:outline-none"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-emerald-500 focus:outline-none placeholder:text-zinc-600"
                   min="2"
                   max="50"
                 />
@@ -305,13 +261,13 @@ export default function StudyRoomsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-300 transition-all"
+                className="flex-1 py-3 bg-zinc-800 text-zinc-300 rounded-2xl font-bold hover:bg-zinc-700 transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={createRoom}
-                className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-2xl font-bold shadow-lg hover-glow transition-all magnetic-btn"
+                className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
               >
                 Create
               </button>
@@ -321,7 +277,8 @@ export default function StudyRoomsPage() {
       )}
 
       <BottomNav />
-      <ArielAssistant />
+
     </div>
+    </>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api';
 
 export default function ReelUploadPage() {
   const router = useRouter();
@@ -61,7 +62,6 @@ export default function ReelUploadPage() {
     setUploadProgress(0);
 
     try {
-      const token = localStorage.getItem('auth_token');
       const formData = new FormData();
       formData.append('video', selectedFile);
       formData.append('title', title.trim());
@@ -83,29 +83,20 @@ export default function ReelUploadPage() {
         });
       }, 200);
 
-      const response = await fetch('http://localhost:8003/api/reels/upload', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
+      await api.post('/api/reels/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      if (response.ok) {
-        setTimeout(() => {
-          router.push('/reels');
-        }, 500);
-      } else {
-        const error = await response.json();
-        alert(`Upload failed: ${error.detail || 'Unknown error'}`);
-        setUploading(false);
-      }
-    } catch (error) {
+      setTimeout(() => {
+        router.push('/reels');
+      }, 500);
+    } catch (error: any) {
       console.error('Upload failed:', error);
-      alert('Upload failed. Please try again.');
+      const message = error?.response?.data?.detail || 'Upload failed. Please try again.';
+      alert(message);
       setUploading(false);
     }
   };
@@ -129,7 +120,7 @@ export default function ReelUploadPage() {
             disabled={!selectedFile || !title.trim() || uploading}
             className={`px-6 py-2 rounded-lg font-semibold transition-all ${
               selectedFile && title.trim() && !uploading
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700'
+                ? 'bg-emerald-600 hover:bg-emerald-500'
                 : 'bg-gray-800 text-gray-500 cursor-not-allowed'
             }`}
           >
@@ -145,9 +136,9 @@ export default function ReelUploadPage() {
           {!videoPreview ? (
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-dashed border-gray-700 hover:border-purple-500 transition-colors flex flex-col items-center justify-center gap-4"
+              className="w-full aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-dashed border-gray-700 hover:border-emerald-500 transition-colors flex flex-col items-center justify-center gap-4"
             >
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center">
+              <div className="w-20 h-20 bg-zinc-600 rounded-full flex items-center justify-center">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
@@ -196,7 +187,7 @@ export default function ReelUploadPage() {
             </div>
             <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all duration-300"
+                className="h-full bg-emerald-500 transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -216,7 +207,7 @@ export default function ReelUploadPage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What's this reel about?"
               maxLength={100}
-              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors"
             />
             <p className="text-xs text-gray-500 mt-1">{title.length}/100</p>
           </div>
@@ -232,7 +223,7 @@ export default function ReelUploadPage() {
               placeholder="Tell viewers more about your reel..."
               maxLength={500}
               rows={4}
-              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors resize-none"
+              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-600 transition-colors resize-none"
             />
             <p className="text-xs text-gray-500 mt-1">{description.length}/500</p>
           </div>
@@ -245,7 +236,7 @@ export default function ReelUploadPage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors"
             >
               <option value="">Select a category</option>
               {categories.map(cat => (
@@ -264,36 +255,36 @@ export default function ReelUploadPage() {
               value={hashtags}
               onChange={(e) => setHashtags(e.target.value)}
               placeholder="#physics #experiment #cool"
-              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors"
             />
             <p className="text-xs text-gray-500 mt-1">Separate hashtags with # (e.g., #math #tutorial)</p>
           </div>
 
           {/* Tips */}
-          <div className="bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-700/50 rounded-2xl p-5">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
             <h3 className="font-bold text-white mb-3 flex items-center gap-2">
               <span className="text-xl">💡</span>
               Tips for Great Reels
             </h3>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-start gap-2">
-                <span className="text-purple-400">•</span>
+                <span className="text-blue-500">•</span>
                 <span>Keep it short and engaging (15-60 seconds)</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-purple-400">•</span>
+                <span className="text-blue-500">•</span>
                 <span>Start with a hook to grab attention</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-purple-400">•</span>
+                <span className="text-blue-500">•</span>
                 <span>Use clear audio and good lighting</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-purple-400">•</span>
+                <span className="text-blue-500">•</span>
                 <span>Add relevant hashtags to reach more people</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-purple-400">•</span>
+                <span className="text-blue-500">•</span>
                 <span>Break down complex topics into simple steps</span>
               </li>
             </ul>

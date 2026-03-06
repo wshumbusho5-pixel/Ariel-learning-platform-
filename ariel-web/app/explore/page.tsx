@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { cardsAPI } from '@/lib/api';
-import ArielAssistant from '@/components/ArielAssistant';
+import { cardsAPI, socialAPI } from '@/lib/api';
 
 interface Card {
   id: string;
@@ -14,8 +13,10 @@ interface Card {
   tags: string[];
   likes: number;
   saves: number;
+  comments_count?: number;
   visibility: string;
   created_by?: {
+    id?: string;
     username: string;
     profile_picture?: string;
   };
@@ -28,6 +29,7 @@ export default function ExplorePage() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
   const [savedCards, setSavedCards] = useState<Set<string>>(new Set());
+  const [followingCreators, setFollowingCreators] = useState<Set<string>>(new Set());
   const [feedMode, setFeedMode] = useState<'personalized' | 'trending'>('personalized');
   const [showComments, setShowComments] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -59,23 +61,67 @@ export default function ExplorePage() {
   };
 
   const handleLike = async (cardId: string) => {
+    const isCurrentlyLiked = likedCards.has(cardId);
+
     try {
       await cardsAPI.likeCard(cardId);
-      setLikedCards(prev => new Set([...prev, cardId]));
+
+      // Toggle like state
+      const newLikedCards = new Set(likedCards);
+      if (isCurrentlyLiked) {
+        newLikedCards.delete(cardId);
+      } else {
+        newLikedCards.add(cardId);
+      }
+      setLikedCards(newLikedCards);
+
+      // Update like count
       setCards(cards.map(card =>
-        card.id === cardId ? { ...card, likes: card.likes + 1 } : card
+        card.id === cardId
+          ? { ...card, likes: isCurrentlyLiked ? Math.max(0, card.likes - 1) : card.likes + 1 }
+          : card
       ));
     } catch (error) {
       console.error('Failed to like card:', error);
     }
   };
 
+  const handleFollow = async (userId?: string) => {
+    if (!userId) return;
+    const isFollowing = followingCreators.has(userId);
+    try {
+      if (isFollowing) {
+        await socialAPI.unfollowUser(userId);
+        setFollowingCreators((prev) => { const next = new Set(prev); next.delete(userId); return next; });
+      } else {
+        await socialAPI.followUser(userId);
+        setFollowingCreators((prev) => new Set(prev).add(userId));
+      }
+    } catch (error) {
+      console.error('Failed to follow/unfollow:', error);
+    }
+  };
+
   const handleSave = async (cardId: string) => {
+    const isCurrentlySaved = savedCards.has(cardId);
+
     try {
       await cardsAPI.saveCardToDeck(cardId);
-      setSavedCards(prev => new Set([...prev, cardId]));
+
+      // Toggle save state
+      const newSavedCards = new Set(savedCards);
+      if (isCurrentlySaved) {
+        newSavedCards.delete(cardId);
+      } else {
+        newSavedCards.add(cardId);
+      }
+      setSavedCards(newSavedCards);
+
+      // Update save count
       setCards(cards.map(card =>
-        card.id === cardId ? { ...card, saves: card.saves + 1 } : card
+        card.id === cardId
+          ? { ...card, saves: isCurrentlySaved ? Math.max(0, card.saves - 1) : card.saves + 1 }
+          : card
       ));
     } catch (error) {
       console.error('Failed to save card:', error);
@@ -143,8 +189,10 @@ export default function ExplorePage() {
     return (
       <div className="h-screen bg-black flex items-center justify-center p-6">
         <div className="text-center">
-          <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
-            <span className="text-5xl">📚</span>
+          <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-zinc-800 flex items-center justify-center">
+            <svg className="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
           </div>
           <h3 className="text-2xl font-bold text-white mb-3">No cards yet</h3>
           <p className="text-gray-400">Check back soon for new content!</p>
@@ -200,7 +248,7 @@ export default function ExplorePage() {
           onClick={() => setShowAnswer(!showAnswer)}
         >
           {/* Background gradient based on subject */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/40 via-black to-blue-900/40 rounded-3xl"></div>
+          <div className="absolute inset-0 bg-zinc-950 rounded-2xl"></div>
 
           {/* Content */}
           <div className="relative h-full flex flex-col p-8">
@@ -211,8 +259,8 @@ export default function ExplorePage() {
                   <p className="text-white text-sm font-semibold">{currentCard.subject}</p>
                 </div>
               )}
-              <div className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full">
-                <p className="text-white text-xs font-bold">LEARN</p>
+              <div className="px-3 py-1 bg-zinc-700 rounded-full">
+                <p className="text-white text-xs font-semibold">Card</p>
               </div>
             </div>
 
@@ -220,9 +268,9 @@ export default function ExplorePage() {
             <div className="flex-1 flex items-center justify-center">
               {!showAnswer ? (
                 <div className="text-center space-y-6 animate-fadeIn">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mb-4">
-                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <div className="w-16 h-16 mx-auto rounded-xl bg-zinc-800 flex items-center justify-center mb-4">
+                    <svg className="w-8 h-8 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight px-4">
@@ -238,13 +286,13 @@ export default function ExplorePage() {
                   {/* Answer Card */}
                   <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-zinc-700 flex items-center justify-center flex-shrink-0">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs font-bold text-green-400 mb-2 uppercase tracking-wide">Answer</p>
+                        <p className="text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wide">Answer</p>
                         <p className="text-white text-lg leading-relaxed font-semibold">
                           {currentCard.answer}
                         </p>
@@ -255,7 +303,7 @@ export default function ExplorePage() {
                   {/* Explanation */}
                   {currentCard.explanation && (
                     <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
-                      <p className="text-xs font-bold text-purple-400 mb-2 uppercase tracking-wide">Why?</p>
+                      <p className="text-xs font-semibold text-zinc-400 mb-2 uppercase tracking-wide">Explanation</p>
                       <p className="text-white/90 text-base leading-relaxed">
                         {currentCard.explanation}
                       </p>
@@ -282,7 +330,7 @@ export default function ExplorePage() {
             {/* Creator Info - Bottom */}
             {currentCard.created_by && (
               <div className="flex items-center gap-3 mt-6">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center">
                   {currentCard.created_by.profile_picture ? (
                     <img
                       src={currentCard.created_by.profile_picture}
@@ -301,8 +349,15 @@ export default function ExplorePage() {
                     <p className="text-gray-400 text-xs">{currentCard.topic}</p>
                   )}
                 </div>
-                <button className="ml-auto px-4 py-1.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full">
-                  Follow
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleFollow(currentCard.created_by?.id); }}
+                  className={`ml-auto px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${
+                    currentCard.created_by?.id && followingCreators.has(currentCard.created_by.id)
+                      ? 'bg-zinc-700 text-white'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                  }`}
+                >
+                  {currentCard.created_by?.id && followingCreators.has(currentCard.created_by.id) ? 'Following' : 'Follow'}
                 </button>
               </div>
             )}
@@ -377,12 +432,20 @@ export default function ExplorePage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
-          <span className="text-white text-xs font-bold">234</span>
+          <span className="text-white text-xs font-bold">{currentCard.comments_count ?? 0}</span>
         </button>
 
         {/* Share Button */}
         <button
-          onClick={(e) => e.stopPropagation()}
+          onClick={async (e) => {
+            e.stopPropagation();
+            const shareUrl = `${window.location.origin}/cards/${currentCard.id}`;
+            if (navigator.share) {
+              try { await navigator.share({ title: currentCard.question, url: shareUrl }); } catch {}
+            } else {
+              await navigator.clipboard.writeText(shareUrl).catch(() => {});
+            }
+          }}
           className="flex flex-col items-center gap-1"
         >
           <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center">
@@ -410,7 +473,7 @@ export default function ExplorePage() {
         </div>
       )}
 
-      <ArielAssistant />
+
     </div>
   );
 }
