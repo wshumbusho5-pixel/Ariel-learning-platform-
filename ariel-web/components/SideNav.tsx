@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useAriel } from '@/lib/arielContext';
 
 type NavItem = {
   name: string;
@@ -198,6 +199,7 @@ const expandedGroups: NavGroup[] = [
 export default function SideNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { openAriel } = useAriel();
   const [expanded, setExpanded] = useState(false);
 
   const isActive = (item: NavItem) => {
@@ -249,7 +251,10 @@ export default function SideNav() {
             return (
               <button
                 key={item.name}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  if (isCreate) { openAriel(); setExpanded(false); }
+                  else navigate(item.path);
+                }}
                 title={!expanded ? item.name : undefined}
                 className={`flex items-center rounded-xl transition-colors ${
                   expanded ? 'gap-3.5 px-3 py-2.5' : 'justify-center w-12 h-12 mx-auto'

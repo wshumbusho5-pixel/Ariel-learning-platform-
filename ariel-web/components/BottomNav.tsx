@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { useAriel } from '@/lib/arielContext';
 
 const navItems = [
   {
@@ -49,6 +50,7 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { openAriel } = useAriel();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-zinc-950 border-t border-zinc-800">
@@ -58,7 +60,7 @@ export default function BottomNav() {
             return (
               <button
                 key="create"
-                onClick={() => router.push('/create-cards')}
+                onClick={openAriel}
                 className="flex-1 flex flex-col items-center justify-center"
               >
                 <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 -mt-4">
