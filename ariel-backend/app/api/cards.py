@@ -1,5 +1,8 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 from app.models.card import Card, CardCreate, CardUpdate, DeckStats, BulkCardCreate, CardReview
 from app.models.user import User
 from app.models.activity import ActivityType
@@ -298,7 +301,7 @@ async def get_card_comments(
         return comments
 
     except Exception as e:
-        print(f"Error getting card comments: {e}")
+        logger.error(f"Error getting card comments: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get comments: {str(e)}"
@@ -353,7 +356,7 @@ async def create_card_comment(
         }
 
     except Exception as e:
-        print(f"Error creating card comment: {e}")
+        logger.error(f"Error creating card comment: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create comment: {str(e)}"
@@ -399,7 +402,7 @@ async def like_comment(
         return {"success": True}
 
     except Exception as e:
-        print(f"Error liking comment: {e}")
+        logger.error(f"Error liking comment: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to like comment: {str(e)}"

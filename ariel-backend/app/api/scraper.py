@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Depends
 from pydantic import BaseModel, HttpUrl
 from typing import List
@@ -6,6 +7,7 @@ from app.services.ai_service import AIService
 from app.api.auth import get_optional_user_dependency
 from app.utils.ai_credentials import resolve_ai_credentials
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 scraper_service = ScraperService()
 
@@ -30,11 +32,11 @@ async def scrape_url(
     Student pastes a link to past paper/questions → AI extracts all questions
     """
     try:
-        print(f"Scraping URL: {request.url}")
+        logger.info(f"Scraping URL: {request.url}")
         creds = resolve_ai_credentials(raw_request, current_user)
         ai_service = AIService(provider=creds.provider, api_key=creds.api_key, model=creds.model)
         result = await scraper_service.scrape_url(str(request.url), ai_service=ai_service)
-        print(f"Found {len(result['questions'])} questions")
+        logger.info(f"Found {len(result['questions'])} questions")
 
         # Now get answers for all questions
         questions = result["questions"]
@@ -57,9 +59,7 @@ async def scrape_url(
             ]
         }
     except Exception as e:
-        print(f"Scraper error: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        logger.exception(f"Scraper error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/upload-pdf")

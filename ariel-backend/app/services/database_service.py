@@ -1,6 +1,9 @@
+import logging
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from app.core.config import settings
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 class DatabaseService:
     client: Optional[AsyncIOMotorClient] = None
@@ -17,14 +20,14 @@ class DatabaseService:
             socketTimeoutMS=2000,
         )
         cls.db = cls.client[settings.DATABASE_NAME]
-        print(f"Connected to MongoDB: {settings.DATABASE_NAME}")
+        logger.info(f"Connected to MongoDB: {settings.DATABASE_NAME}")
 
     @classmethod
     async def close_db(cls):
         """Close MongoDB connection"""
         if cls.client:
             cls.client.close()
-            print("Closed MongoDB connection")
+            logger.info("Closed MongoDB connection")
 
     @classmethod
     def get_db(cls) -> AsyncIOMotorDatabase:

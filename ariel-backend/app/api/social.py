@@ -662,8 +662,8 @@ async def update_deck(
         author_profile_picture=current_user.profile_picture,
         author_is_teacher=current_user.is_teacher,
         author_is_verified=current_user.is_verified,
-        is_liked=False,  # TODO: Check if current user liked this
-        is_saved=False,  # TODO: Check if current user saved this
+        is_liked=str(current_user.id) in updated_deck.get("liked_by", []),
+        is_saved=str(current_user.id) in updated_deck.get("saved_by", []),
         created_at=updated_deck["created_at"],
         published_at=updated_deck.get("published_at")
     )
@@ -761,8 +761,8 @@ async def get_deck(
         author_profile_picture=author.get("profile_picture"),
         author_is_teacher=author.get("is_teacher", False),
         author_is_verified=author.get("is_verified", False),
-        is_liked=False,  # TODO: Check if current user liked this
-        is_saved=False,  # TODO: Check if current user saved this
+        is_liked=str(current_user.id) in deck.get("liked_by", []),
+        is_saved=str(current_user.id) in deck.get("saved_by", []),
         created_at=deck["created_at"],
         published_at=deck.get("published_at")
     )
@@ -801,26 +801,29 @@ async def like_deck(
     deck_id: str,
     current_user: User = Depends(get_current_user_dependency)
 ):
-    """
-    Like/unlike a deck
-    """
+    """Like/unlike a deck"""
+    db = db_service.get_db()
     deck = await db.decks.find_one({"_id": deck_id})
     if not deck:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Deck not found"
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Deck not found")
+
+    current_user_id = str(current_user.id)
+    liked_by = deck.get("liked_by", [])
+
+    if current_user_id in liked_by:
+        # Unlike
+        await db.decks.update_one(
+            {"_id": deck_id},
+            {"$pull": {"liked_by": current_user_id}, "$inc": {"likes": -1}}
         )
-
-    # Check if already liked
-    # TODO: Implement likes collection for tracking who liked what
-
-    # For now, just increment
-    await db.decks.update_one(
-        {"_id": deck_id},
-        {"$inc": {"likes": 1}}
-    )
-
-    return {"success": True, "liked": True}
+        return {"success": True, "liked": False}
+    else:
+        # Like
+        await db.decks.update_one(
+            {"_id": deck_id},
+            {"$addToSet": {"liked_by": current_user_id}, "$inc": {"likes": 1}}
+        )
+        return {"success": True, "liked": True}
 
 
 @router.post("/decks/{deck_id}/save")
@@ -871,7 +874,7 @@ async def save_deck(
     # Increment save count on original
     await db.decks.update_one(
         {"_id": deck_id},
-        {"$inc": {"saves": 1}}
+        {"$inc": {"saves": 1}, "$addToSet": {"saved_by": str(current_user.id)}}
     )
 
     return {

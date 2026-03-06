@@ -1,9 +1,12 @@
+import logging
 import httpx
 from bs4 import BeautifulSoup
 from typing import List, Dict, Optional
 import re
 from app.services.ai_service import AIService
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 class ScraperService:
     def __init__(self):
@@ -109,8 +112,7 @@ If no questions are found, return {{"questions": []}}
             if ai_questions:
                 return ai_questions
         except Exception as e:
-            print(f"AI extraction failed: {str(e)}")
-            pass
+            logger.error(f"AI extraction failed: {str(e)}")
 
         # If everything fails, return empty list with helpful message
         if len(pattern_questions) == 0:
@@ -138,7 +140,7 @@ If no questions are found, return {{"questions": []}}
                 if questions:
                     return questions
             except Exception as e:
-                print(f"AI extraction failed with {provider}: {e}")
+                logger.error(f"AI extraction failed with {provider}: {e}")
                 continue
 
         return None
@@ -262,7 +264,7 @@ If no questions are found, return {{"questions": []}}
                 text += page.extract_text() + "\n"
 
             # Use AI to extract questions
-            questions = await self._extract_questions_with_ai(text, "pdf")
+            questions = await self._extract_questions_with_ai(text, "pdf", self.ai_service)
 
             return questions
 
@@ -283,7 +285,7 @@ If no questions are found, return {{"questions": []}}
             text = pytesseract.image_to_string(image)
 
             # Extract questions
-            questions = await self._extract_questions_with_ai(text, "image")
+            questions = await self._extract_questions_with_ai(text, "image", self.ai_service)
 
             return questions
 

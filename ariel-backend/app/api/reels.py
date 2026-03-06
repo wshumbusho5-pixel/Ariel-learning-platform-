@@ -1,6 +1,7 @@
 """
 Reels API - TikTok-style educational video shorts
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from typing import List, Optional
 from datetime import datetime
@@ -14,7 +15,9 @@ from pathlib import Path
 from app.services.database_service import db_service
 from app.api.auth import get_current_user_dependency
 from app.models.user import User
+from app.core.config import settings
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/reels", tags=["reels"])
 
 
@@ -202,7 +205,7 @@ async def get_reels_feed(
         return reels
 
     except Exception as e:
-        print(f"Error loading reels feed: {e}")
+        logger.error(f"Error loading reels feed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to load reels feed: {str(e)}"
@@ -317,7 +320,7 @@ async def get_following_reels(
         return reels
 
     except Exception as e:
-        print(f"Error loading following reels: {e}")
+        logger.error(f"Error loading following reels: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to load following reels: {str(e)}"
@@ -361,11 +364,10 @@ async def upload_reel(
             await f.write(content)
 
         # Generate accessible URL (served by FastAPI static files)
-        video_url = f"http://localhost:8003/uploads/reels/{unique_filename}"
+        video_url = f"{settings.BASE_URL}/uploads/reels/{unique_filename}"
 
-        # For thumbnail, use a placeholder for now
-        # TODO: Generate actual thumbnail from video
-        thumbnail_url = f"http://localhost:8003/uploads/reels/{unique_filename}"
+        # Thumbnail defaults to the video file itself until server-side generation is implemented
+        thumbnail_url = f"{settings.BASE_URL}/uploads/reels/{unique_filename}"
 
         # Create reel document
         reel_doc = {
@@ -410,7 +412,7 @@ async def upload_reel(
         }
 
     except Exception as e:
-        print(f"Error uploading reel: {e}")
+        logger.error(f"Error uploading reel: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to upload reel: {str(e)}"
@@ -474,7 +476,7 @@ async def like_reel(
             return {"success": True, "liked": True}
 
     except Exception as e:
-        print(f"Error liking reel: {e}")
+        logger.error(f"Error liking reel: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to like reel: {str(e)}"
@@ -596,7 +598,7 @@ async def get_reel(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error getting reel: {e}")
+        logger.error(f"Error getting reel: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get reel: {str(e)}"

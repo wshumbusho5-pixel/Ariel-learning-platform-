@@ -308,8 +308,8 @@ async def enrich_deck_with_author(db, deck: Dict, current_user_id: str) -> Dict:
         "author_is_verified": author.get("is_verified", False) if author else False,
 
         # Social context
-        "is_liked": False,  # TODO: Check likes collection
-        "is_saved": False,  # TODO: Check if user saved this
+        "is_liked": current_user_id in deck.get("liked_by", []) if current_user_id else False,
+        "is_saved": current_user_id in deck.get("saved_by", []) if current_user_id else False,
 
         # Metadata
         "created_at": deck["created_at"],

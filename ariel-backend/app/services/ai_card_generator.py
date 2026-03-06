@@ -1,3 +1,4 @@
+import logging
 from typing import List, Dict, Optional
 from app.models.user import User, EducationLevel
 from app.models.card import Card, CardCreate, CardVisibility
@@ -5,6 +6,8 @@ from app.services.card_repository import CardRepository
 import openai
 import os
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 class AICardGenerator:
     """
@@ -154,7 +157,7 @@ Generate the flashcards now:"""
             return cards
 
         except Exception as e:
-            print(f"Error generating cards: {str(e)}")
+            logger.error(f"Error generating cards: {str(e)}")
             raise
 
     async def generate_daily_cards(self, user: User, cards_per_subject: int = 5) -> Dict[str, List[Card]]:
@@ -183,7 +186,7 @@ Generate the flashcards now:"""
                 )
                 results[subject] = cards
             except Exception as e:
-                print(f"Failed to generate cards for {subject}: {str(e)}")
+                logger.error(f"Failed to generate cards for {subject}: {str(e)}")
                 results[subject] = []
 
         return results
@@ -277,7 +280,7 @@ Make these cards challenging and exam-focused. Generate now:"""
             return cards
 
         except Exception as e:
-            print(f"Error generating exam prep cards: {str(e)}")
+            logger.error(f"Error generating exam prep cards: {str(e)}")
             raise
 
 # Global instance

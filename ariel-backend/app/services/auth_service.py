@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -5,6 +6,8 @@ import bcrypt
 from app.core.config import settings
 from app.models.user import User, TokenData
 import httpx
+
+logger = logging.getLogger(__name__)
 
 # JWT Settings
 SECRET_KEY = settings.SECRET_KEY
@@ -69,7 +72,7 @@ class AuthService:
                         "is_verified": user_info.get("verified_email", False)
                     }
         except Exception as e:
-            print(f"Google OAuth error: {e}")
+            logger.error(f"Google OAuth error: {e}")
             return None
 
     @staticmethod
@@ -112,7 +115,7 @@ class AuthService:
                         "is_verified": True
                     }
         except Exception as e:
-            print(f"GitHub OAuth error: {e}")
+            logger.error(f"GitHub OAuth error: {e}")
             return None
 
     @staticmethod

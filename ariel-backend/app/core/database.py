@@ -1,8 +1,11 @@
 """
 Database connection and utilities
 """
+import logging
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 # MongoDB client
 client = None
@@ -14,7 +17,7 @@ async def connect_to_mongo():
     global client, database
     client = AsyncIOMotorClient(settings.MONGODB_URL)
     database = client[settings.DATABASE_NAME]
-    print(f"Connected to MongoDB: {settings.DATABASE_NAME}")
+    logger.info(f"Connected to MongoDB: {settings.DATABASE_NAME}")
 
 
 async def close_mongo_connection():
@@ -22,7 +25,7 @@ async def close_mongo_connection():
     global client
     if client:
         client.close()
-        print("MongoDB connection closed")
+        logger.info("MongoDB connection closed")
 
 
 def get_database():
