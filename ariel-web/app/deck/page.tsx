@@ -67,98 +67,60 @@ export default function DeckPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 pb-20 lg:pl-[72px]">
-        <header className="sticky top-0 bg-zinc-950 border-b border-zinc-800 z-30">
-          <div className="max-w-2xl mx-auto px-4 py-3">
-            <h1 className="text-2xl font-bold text-white">My Deck</h1>
-          </div>
-        </header>
 
-        {!loading && stats && (
-          <div className="max-w-2xl mx-auto px-4 py-4">
-            <div className="flex gap-3 overflow-x-auto pb-3 mb-4">
-              <div className="flex-shrink-0 w-28">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-white">{stats.total_cards}</div>
-                  <div className="text-xs text-zinc-500 mt-1">Total</div>
-                </div>
-              </div>
-              <div className="flex-shrink-0 w-28">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-emerald-400">{stats.new_cards}</div>
-                  <div className="text-xs text-zinc-500 mt-1">New</div>
-                </div>
-              </div>
-              <div className="flex-shrink-0 w-28">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-orange-400">{stats.due_today}</div>
-                  <div className="text-xs text-zinc-500 mt-1">Due Today</div>
-                </div>
-              </div>
-              <div className="flex-shrink-0 w-28">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
-                  <div className="text-2xl font-bold text-emerald-400">{stats.mastered}</div>
-                  <div className="text-xs text-zinc-500 mt-1">Mastered</div>
-                </div>
-              </div>
-            </div>
+      {/* Snap-scroll card feed — full screen */}
+      <CardFeed type="my-deck" subjectFilter={subjectFilter} snapScroll />
 
-            {subjects.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold text-white mb-2">Subjects</h3>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setSubjectFilter('all')}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                      subjectFilter === 'all'
-                        ? 'bg-emerald-500 text-white border-emerald-500'
-                        : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-zinc-500'
-                    }`}
-                  >
-                    All ({stats.total_cards})
-                  </button>
-                  {Object.entries(stats.by_subject).map(([subject, count]) => (
-                    <button
-                      key={subject}
-                      onClick={() => setSubjectFilter(subject)}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                        subjectFilter === subject
-                          ? 'bg-emerald-500 text-white border-emerald-500'
-                          : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-zinc-500'
-                      }`}
-                    >
-                      {subject} ({count})
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {stats.due_today > 0 && (
+      {/* Overlay header — floats above the feed */}
+      <div className="fixed top-0 left-0 right-0 lg:left-[72px] z-40 pointer-events-none">
+        <div className="bg-gradient-to-b from-black/70 via-black/30 to-transparent px-4 pt-3 pb-6">
+          <div className="flex items-center justify-between mb-2 pointer-events-auto">
+            <h1 className="text-lg font-bold text-white drop-shadow">My Deck</h1>
+            {stats && stats.due_today > 0 && (
               <button
                 onClick={() => router.push('/review')}
-                className="w-full mb-4 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-full transition-colors shadow-lg"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span>Review {stats.due_today} cards</span>
+                Review {stats.due_today}
               </button>
             )}
-
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-semibold text-white">All Cards</h2>
-              <span className="text-sm text-zinc-500">{stats.total_cards} total</span>
-            </div>
           </div>
-        )}
 
-        <div className="max-w-2xl mx-auto px-4">
-          <CardFeed type="my-deck" subjectFilter={subjectFilter} groupBySubject />
+          {/* Subject filter pills */}
+          {subjects.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 pointer-events-auto" style={{ scrollbarWidth: 'none' }}>
+              <button
+                onClick={() => setSubjectFilter('all')}
+                className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                  subjectFilter === 'all'
+                    ? 'bg-emerald-500 text-white border-emerald-500'
+                    : 'bg-black/40 backdrop-blur-sm text-white border-white/20 hover:border-white/40'
+                }`}
+              >
+                All
+              </button>
+              {subjects.map((subject) => (
+                <button
+                  key={subject}
+                  onClick={() => setSubjectFilter(subject)}
+                  className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                    subjectFilter === subject
+                      ? 'bg-emerald-500 text-white border-emerald-500'
+                      : 'bg-black/40 backdrop-blur-sm text-white border-white/20 hover:border-white/40'
+                  }`}
+                >
+                  {subject}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-
-        <BottomNav />
       </div>
+
+      <BottomNav />
     </>
   );
 }

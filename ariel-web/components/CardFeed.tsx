@@ -23,9 +23,10 @@ interface CardFeedProps {
   onCardClick?: (card: Card) => void;
   subjectFilter?: string | null;
   groupBySubject?: boolean;
+  snapScroll?: boolean;
 }
 
-export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubject = false }: CardFeedProps) {
+export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubject = false, snapScroll = false }: CardFeedProps) {
   const router = useRouter();
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,23 +145,23 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 border-t-[#0F4C75]"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-zinc-800 border-t-emerald-500"></div>
       </div>
     );
   }
 
   if (cards.length === 0) {
     return (
-      <div className="text-center py-20 animate-slideUp">
-        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="text-center py-20">
+        <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
           </svg>
         </div>
-        <h3 className="text-2xl font-bold text-gray-900 mb-3">
+        <h3 className="text-xl font-bold text-white mb-2">
           {type === 'trending' ? 'No trending cards yet' : 'No cards in your deck'}
         </h3>
-        <p className="text-gray-600 max-w-md mx-auto">
+        <p className="text-zinc-500 text-sm max-w-xs mx-auto">
           {type === 'trending'
             ? 'Be the first to create and share cards!'
             : 'Start creating cards to build your deck'}
@@ -175,7 +176,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
       : cards;
 
   const grouped =
-    groupBySubject && (!subjectFilter || subjectFilter === 'all')
+    groupBySubject && !snapScroll && (!subjectFilter || subjectFilter === 'all')
       ? filteredCards.reduce<Record<string, Card[]>>((acc, card) => {
           const key = card.subject || 'General';
           acc[key] = acc[key] || [];
@@ -184,6 +185,141 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
         }, {})
       : null;
 
+  // ── Snap-scroll (Instagram / TikTok style) ─────────────────────────────────
+  const renderSnapCard = (card: Card) => {
+    const isExpanded = expandedCards.has(card.id);
+    const isLiked = likedCards.has(card.id);
+    const isSaved = savedCards.has(card.id);
+
+    return (
+      <div
+        key={card.id}
+        className="relative flex-shrink-0 w-full"
+        style={{ height: '100svh', scrollSnapAlign: 'start' }}
+      >
+        {/* Background */}
+        <div className="absolute inset-0 bg-zinc-950" />
+
+        {/* Top info */}
+        <div className="absolute top-0 left-0 right-0 z-10 px-4 pt-4 pb-6 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+          {card.subject && (
+            <span className="inline-block px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold rounded-full">
+              {card.subject}
+            </span>
+          )}
+          {card.topic && (
+            <p className="text-zinc-400 text-xs mt-1">{card.topic}</p>
+          )}
+        </div>
+
+        {/* Main card area — tap to flip */}
+        <div
+          className="absolute inset-0 flex items-center justify-center px-6 cursor-pointer"
+          onClick={() => toggleExpanded(card.id)}
+        >
+          <div className="w-full max-w-sm">
+            {!isExpanded ? (
+              <div className="space-y-5 text-center">
+                <div className="bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-3xl p-7 shadow-2xl">
+                  <p className="text-white text-xl font-semibold leading-snug">
+                    {card.question}
+                  </p>
+                </div>
+                <p className="text-zinc-500 text-sm flex items-center justify-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Tap to reveal answer
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-3xl p-5">
+                  <p className="text-zinc-400 text-sm mb-3">{card.question}</p>
+                  <div className="h-px bg-zinc-800 mb-3" />
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <p className="text-white text-base font-medium leading-relaxed">{card.answer}</p>
+                  </div>
+                  {card.explanation && (
+                    <div className="mt-4 pt-3 border-t border-zinc-800">
+                      <p className="text-zinc-500 text-xs font-semibold uppercase tracking-wider mb-1.5">Explanation</p>
+                      <p className="text-zinc-300 text-sm leading-relaxed">{card.explanation}</p>
+                    </div>
+                  )}
+                </div>
+                <p className="text-zinc-600 text-xs text-center">Tap again to see question</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right action bar */}
+        <div className="absolute right-4 bottom-28 flex flex-col items-center gap-6 z-10">
+          {/* Like */}
+          <button onClick={(e) => handleLike(card.id, e)} className="flex flex-col items-center gap-1">
+            <div className="w-11 h-11 rounded-full bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 flex items-center justify-center">
+              <svg
+                className={`w-5 h-5 ${isLiked ? 'text-red-500' : 'text-white'}`}
+                fill={isLiked ? 'currentColor' : 'none'}
+                stroke={isLiked ? 'none' : 'currentColor'}
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <span className="text-white text-xs font-medium">{card.likes > 0 ? card.likes : ''}</span>
+          </button>
+
+          {/* Save */}
+          <button onClick={(e) => handleSave(card.id, e)} className="flex flex-col items-center gap-1">
+            <div className="w-11 h-11 rounded-full bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 flex items-center justify-center">
+              <svg
+                className={`w-5 h-5 ${isSaved ? 'text-emerald-400' : 'text-white'}`}
+                fill={isSaved ? 'currentColor' : 'none'}
+                stroke={isSaved ? 'none' : 'currentColor'}
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </div>
+            <span className="text-white text-xs font-medium">{card.saves > 0 ? card.saves : ''}</span>
+          </button>
+
+          {/* Share */}
+          <button onClick={(e) => handleShare(card.id, e)} className="flex flex-col items-center gap-1">
+            <div className="w-11 h-11 rounded-full bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </div>
+          </button>
+        </div>
+
+        {/* Bottom left info */}
+        <div className="absolute left-4 bottom-24 z-10 pointer-events-none">
+          {card.tags && card.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 max-w-[220px]">
+              {card.tags.slice(0, 3).map((tag, idx) => (
+                <span key={idx} className="px-2 py-0.5 bg-zinc-900/70 backdrop-blur-sm border border-zinc-700 text-zinc-400 text-xs rounded-full">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Regular list card ───────────────────────────────────────────────────────
   const renderCard = (card: Card, index: number) => {
     const isExpanded = expandedCards.has(card.id);
     const isLiked = likedCards.has(card.id);
@@ -192,188 +328,115 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
     return (
       <div
         key={card.id}
-        className="bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 hover:shadow-2xl transition-all duration-300 animate-slideUp"
+        className="bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800"
         style={{ animationDelay: `${index * 0.05}s` }}
       >
-            {/* Card Header - Instagram style */}
-            <div className="p-4 flex items-center justify-between border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-zinc-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">
-                    {card.subject ? card.subject[0].toUpperCase() : 'A'}
-                  </span>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm">
-                    {card.subject || 'Study Card'}
-                  </p>
-                  {card.topic && (
-                    <p className="text-xs text-gray-500">{card.topic}</p>
-                  )}
-                </div>
-              </div>
-              <button className="text-gray-400 hover:text-gray-600">
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="5" r="1.5"/>
-                  <circle cx="12" cy="12" r="1.5"/>
-                  <circle cx="12" cy="19" r="1.5"/>
-                </svg>
-              </button>
+        {/* Header */}
+        <div className="p-4 flex items-center justify-between border-b border-zinc-800">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+              <span className="text-emerald-400 font-bold text-sm">
+                {card.subject ? card.subject[0].toUpperCase() : 'A'}
+              </span>
             </div>
-
-            {/* Card Image/Content Area - Click to reveal */}
-            <div
-              className="relative bg-gray-50 p-8 cursor-pointer min-h-[280px] flex items-center justify-center"
-              onClick={() => toggleExpanded(card.id)}
-            >
-              {!isExpanded ? (
-                <div className="text-center space-y-4">
-                  <div className="inline-block p-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg">
-                    <svg className="w-12 h-12 text-blue-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 className="text-xl font-bold text-gray-900 leading-relaxed max-w-lg">
-                      {card.question}
-                    </h3>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span>Tap to reveal answer</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full space-y-6 animate-scaleIn">
-                  <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 border border-gray-200 shadow-xl">
-                    <div className="flex items-start gap-3 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-700 mb-1">Answer</p>
-                        <p className="text-gray-900 text-base leading-relaxed font-medium">
-                          {card.answer}
-                        </p>
-                      </div>
-                    </div>
-                    {card.explanation && (
-                      <div className="mt-4 pt-4 border-t border-gray-100">
-                        <p className="text-sm font-semibold text-gray-700 mb-2">Explanation</p>
-                        <p className="text-gray-700 text-sm leading-relaxed">
-                          {card.explanation}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Tags floating */}
-              {card.tags && card.tags.length > 0 && (
-                <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
-                  {card.tags.slice(0, 3).map((tag, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-white/90 backdrop-blur-sm text-blue-600 text-xs font-medium rounded-full shadow-sm"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Action Bar - Instagram style */}
-            <div className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {/* Like */}
-                  <button
-                    onClick={(e) => handleLike(card.id, e)}
-                    className="flex items-center gap-2 group"
-                  >
-                    <div className={`transform transition-transform group-hover:scale-110 ${isLiked ? 'animate-scaleIn' : ''}`}>
-                      <svg
-                        className={`w-7 h-7 ${isLiked ? 'text-red-500 fill-current' : 'text-gray-700'}`}
-                        fill={isLiked ? 'currentColor' : 'none'}
-                        stroke="currentColor"
-                        strokeWidth={isLiked ? 0 : 2}
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                        />
-                      </svg>
-                    </div>
-                  </button>
-
-                  {/* Comment */}
-                  <button onClick={(e) => handleDiscuss(card.id, e)} className="group">
-                    <svg className="w-7 h-7 text-gray-700 transform transition-transform group-hover:scale-110" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                  </button>
-
-                  {/* Share */}
-                  <button onClick={(e) => handleShare(card.id, e)} className="group">
-                    <svg className="w-7 h-7 text-gray-700 transform transition-transform group-hover:scale-110" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Save/Bookmark */}
-                {type === 'trending' && (
-                  <button
-                    onClick={(e) => handleSave(card.id, e)}
-                    className="group"
-                  >
-                    <svg
-                      className={`w-7 h-7 transform transition-transform group-hover:scale-110 ${isSaved ? 'text-blue-600 fill-current' : 'text-gray-700'}`}
-                      fill={isSaved ? 'currentColor' : 'none'}
-                      stroke="currentColor"
-                      strokeWidth={isSaved ? 0 : 2}
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-
-              {/* Likes count */}
-              <div className="space-y-1">
-                <p className="font-semibold text-sm text-gray-900">
-                  {card.likes.toLocaleString()} {card.likes === 1 ? 'like' : 'likes'}
-                </p>
-                <p className="text-sm text-gray-900">
-                  <span className="font-semibold">{card.subject || 'Study Card'}</span>{' '}
-                  <span className="text-gray-700">Question card</span>
-                </p>
-              </div>
-
-              {/* Time */}
-              {card.created_at && (
-                <p className="text-xs text-gray-500 uppercase tracking-wide">
-                  {(() => {
-                    const s = Math.floor((Date.now() - new Date(card.created_at).getTime()) / 1000);
-                    if (s < 60) return 'just now';
-                    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-                    if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-                    return `${Math.floor(s / 86400)}d ago`;
-                  })()}
-                </p>
-              )}
+            <div>
+              <p className="font-semibold text-white text-sm">{card.subject || 'Study Card'}</p>
+              {card.topic && <p className="text-xs text-zinc-500">{card.topic}</p>}
             </div>
           </div>
-      );
-    };
+        </div>
+
+        {/* Content */}
+        <div
+          className="relative p-6 cursor-pointer min-h-[200px] flex items-center justify-center"
+          onClick={() => toggleExpanded(card.id)}
+        >
+          {!isExpanded ? (
+            <div className="text-center space-y-3">
+              <p className="text-white text-lg font-semibold leading-snug">{card.question}</p>
+              <p className="text-zinc-500 text-sm flex items-center justify-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Tap to reveal
+              </p>
+            </div>
+          ) : (
+            <div className="w-full space-y-4">
+              <p className="text-zinc-400 text-sm">{card.question}</p>
+              <div className="h-px bg-zinc-800" />
+              <div className="flex items-start gap-2">
+                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-white text-base font-medium leading-relaxed">{card.answer}</p>
+              </div>
+              {card.explanation && (
+                <div className="pt-3 border-t border-zinc-800">
+                  <p className="text-zinc-500 text-xs font-semibold uppercase tracking-wider mb-1">Explanation</p>
+                  <p className="text-zinc-300 text-sm leading-relaxed">{card.explanation}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="px-4 pb-4 flex items-center gap-4">
+          <button onClick={(e) => handleLike(card.id, e)} className="flex items-center gap-1.5 group">
+            <svg
+              className={`w-5 h-5 ${isLiked ? 'text-red-500' : 'text-zinc-500 group-hover:text-white'}`}
+              fill={isLiked ? 'currentColor' : 'none'}
+              stroke={isLiked ? 'none' : 'currentColor'}
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            {card.likes > 0 && <span className="text-xs text-zinc-500">{card.likes}</span>}
+          </button>
+          <button onClick={(e) => handleDiscuss(card.id, e)} className="text-zinc-500 hover:text-white">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </button>
+          <button onClick={(e) => handleShare(card.id, e)} className="text-zinc-500 hover:text-white">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          </button>
+          {type === 'trending' && (
+            <button onClick={(e) => handleSave(card.id, e)} className="ml-auto text-zinc-500 hover:text-white">
+              <svg
+                className={`w-5 h-5 ${isSaved ? 'text-emerald-400' : ''}`}
+                fill={isSaved ? 'currentColor' : 'none'}
+                stroke={isSaved ? 'none' : 'currentColor'}
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Snap-scroll container ───────────────────────────────────────────────────
+  if (snapScroll) {
+    return (
+      <div
+        className="fixed inset-0 lg:left-[72px] overflow-y-scroll"
+        style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
+      >
+        {filteredCards.map((card) => renderSnapCard(card))}
+      </div>
+    );
+  }
 
   if (grouped) {
     return (
@@ -381,9 +444,9 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
         {Object.entries(grouped).map(([subject, subjectCards]) => (
           <div key={subject} className="space-y-3">
             <div className="px-2">
-              <h3 className="text-sm font-semibold text-gray-700">{subject} · {subjectCards.length} cards</h3>
+              <h3 className="text-sm font-semibold text-zinc-500">{subject} · {subjectCards.length} cards</h3>
             </div>
-            <div className="space-y-6">
+            <div className="space-y-4">
               {subjectCards.map((card, idx) => renderCard(card, idx))}
             </div>
           </div>
@@ -393,7 +456,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
   }
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-4 pb-24">
       {filteredCards.map((card, index) => renderCard(card, index))}
     </div>
   );
