@@ -27,6 +27,24 @@ const navGroups: NavGroup[] = [
           </svg>
         ),
       },
+      {
+        name: 'My Deck',
+        path: '/deck',
+        icon: (active) => (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        ),
+      },
+      {
+        name: 'Create cards',
+        path: '/create-cards',
+        icon: (active) => (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+        ),
+      },
     ],
   },
   {
@@ -74,15 +92,6 @@ const navGroups: NavGroup[] = [
     label: 'Study',
     items: [
       {
-        name: 'My Deck',
-        path: '/deck',
-        icon: (active) => (
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-        ),
-      },
-      {
         name: 'Review',
         path: '/review',
         icon: (active) => (
@@ -115,15 +124,6 @@ const navGroups: NavGroup[] = [
         icon: (active) => (
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        ),
-      },
-      {
-        name: 'Create cards',
-        path: '/create-cards',
-        icon: (active) => (
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
         ),
       },
@@ -236,12 +236,14 @@ export default function SideNav() {
                     key={item.name}
                     onClick={() => router.push(item.path)}
                     className={`w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-[15px] font-semibold transition-colors ${
-                      active
+                      item.path === '/create-cards'
+                        ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                        : active
                         ? 'text-emerald-400'
                         : 'text-zinc-500 hover:text-zinc-100'
                     }`}
                   >
-                    <span className={active ? 'text-emerald-400' : 'text-zinc-600'}>
+                    <span className={item.path === '/create-cards' ? 'text-white' : active ? 'text-emerald-400' : 'text-zinc-600'}>
                       {item.icon(active)}
                     </span>
                     <span>{item.name}</span>
