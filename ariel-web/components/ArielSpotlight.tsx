@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { aiChatAPI, cardsAPI } from '@/lib/api';
+import { aiChatAPI, cardsAPI, scraperAPI } from '@/lib/api';
 import { useAuth } from '@/lib/useAuth';
 import AuthModal from './AuthModal';
 import { useEffect } from 'react';
@@ -30,13 +30,16 @@ export default function ArielSpotlight() {
   const [topic, setTopic] = useState('');
   const { isAuthenticated, login, checkAuth } = useAuth();
   const [history, setHistory] = useState<{ sender: 'user' | 'bot'; text: string }[]>([]);
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
   const formatReply = (raw: any) => {
-    if (!raw) return 'I’m here to help! Try another prompt.';
+    if (!raw) return "I'm here to help! Try another prompt.";
 
     const stringifyCards = (cards: any[]) => {
       return cards
@@ -90,7 +93,7 @@ export default function ArielSpotlight() {
       }
       setHistory((prev) => [...prev, { sender: 'bot', text: formatReply(res?.reply) }]);
     } catch (error) {
-      setReply('I’m having trouble reaching the server. Try again in a moment.');
+      setReply("I'm having trouble reaching the server. Try again in a moment.");
     } finally {
       setLoading(false);
     }
@@ -121,8 +124,58 @@ export default function ArielSpotlight() {
     }
   };
 
+  const handleUrlSubmit = async () => {
+    if (!urlInput.trim()) return;
+    setUploading(true);
+    setGeneratedCards([]);
+    try {
+      const res = await scraperAPI.scrapeUrl(urlInput);
+      if (res?.question_set && Array.isArray(res.question_set)) {
+        const cards = res.question_set.map((q: any) => ({
+          question: q.question,
+          answer: q.answer,
+          explanation: q.explanation,
+        }));
+        setGeneratedCards(cards);
+        setReply(`Generated ${cards.length} flashcards from the URL!`);
+      } else {
+        setReply('Successfully scraped URL, but no cards were generated.');
+      }
+      setUrlInput('');
+      setShowUploadOptions(false);
+    } catch (error: any) {
+      setReply(error?.response?.data?.detail || 'Failed to scrape URL. Try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileUpload = async (file: File, type: 'pdf' | 'image') => {
+    setUploading(true);
+    setGeneratedCards([]);
+    try {
+      const res = type === 'pdf' ? await scraperAPI.uploadPdf(file) : await scraperAPI.uploadImage(file);
+      if (res?.question_set && Array.isArray(res.question_set)) {
+        const cards = res.question_set.map((q: any) => ({
+          question: q.question,
+          answer: q.answer,
+          explanation: q.explanation,
+        }));
+        setGeneratedCards(cards);
+        setReply(`Generated ${cards.length} flashcards from your ${type}!`);
+      } else {
+        setReply(`Successfully uploaded ${type}, but no cards were generated.`);
+      }
+      setShowUploadOptions(false);
+    } catch (error: any) {
+      setReply(error?.response?.data?.detail || `Failed to upload ${type}. Try again.`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
-    <div className="bg-gradient-to-r from-[#0A4D68] via-[#0F4C75] to-[#2C5F2D] text-white rounded-3xl shadow-2xl overflow-hidden">
+    <div className="bg-zinc-900 border border-zinc-700 text-white rounded-2xl overflow-hidden">
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -135,14 +188,13 @@ export default function ArielSpotlight() {
       <div className="p-6 md:p-8 flex flex-col gap-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-white/80 font-semibold">Ariel AI</p>
-            <h2 className="text-2xl md:text-3xl font-bold">Your study copilot</h2>
-            <p className="text-sm text-white/85 mt-2">Instant answers, flashcards, and plans tailored to you.</p>
+            <h2 className="text-xl md:text-2xl font-bold">Ask Ariel</h2>
+            <p className="text-sm text-white/85 mt-1">Generate flashcards, get explanations, build study plans.</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl">✨</div>
         </div>
 
-        <div className="bg-white/15 rounded-2xl p-4 space-y-3">
+        <div className="bg-zinc-800 rounded-2xl p-4 space-y-3">
           <p className="text-sm text-white/90 whitespace-pre-wrap">
             {loading ? 'Typing…' : reply}
           </p>
@@ -150,7 +202,7 @@ export default function ArielSpotlight() {
           {generatedCards.length > 0 && (
             <div className="space-y-3">
               {generatedCards.slice(0, 5).map((c, idx) => (
-                <div key={idx} className="bg-white/10 rounded-xl px-3 py-2 text-white/95">
+                <div key={idx} className="bg-zinc-700 rounded-xl px-3 py-2 text-white">
                   <p className="text-sm font-semibold">{idx + 1}. {c.question}</p>
                   <p className="text-sm mt-1">Answer: {c.answer}</p>
                   {c.explanation && <p className="text-xs mt-1 text-white/80">Why: {c.explanation}</p>}
@@ -180,7 +232,7 @@ export default function ArielSpotlight() {
                 <button
                   onClick={handleSaveCards}
                   disabled={saving}
-                  className="px-4 py-2 bg-white text-[#0A4D68] rounded-xl font-semibold text-sm shadow-md disabled:opacity-70"
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-semibold text-sm disabled:opacity-70"
                 >
                   {saving ? 'Saving…' : 'Save to deck'}
                 </button>
@@ -195,43 +247,118 @@ export default function ArielSpotlight() {
               key={p.label}
               onClick={() => sendPrompt(p.prompt)}
               disabled={loading}
-              className="bg-white/15 hover:bg-white/25 rounded-2xl px-3 py-3 text-left transition flex items-start gap-2 text-sm font-semibold"
+              className="bg-zinc-800 hover:bg-zinc-700 rounded-2xl px-3 py-3 text-left transition flex flex-col items-center justify-center gap-1 min-h-[80px]"
             >
-              <span className="text-lg">{p.icon}</span>
-              <span>{p.label}</span>
+              <span className="text-2xl">{p.icon}</span>
+              <span className="text-xs font-semibold text-center leading-tight">{p.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="bg-white/15 rounded-2xl p-3 flex items-center gap-3">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
+        <div className="space-y-2">
+          <div className="bg-zinc-800 rounded-2xl p-3 flex items-center gap-3">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (input.trim()) {
+                    sendPrompt(input);
+                    setInput('');
+                  }
+                }
+              }}
+              placeholder="Type your question..."
+              className="flex-1 bg-transparent text-white placeholder:text-white/60 focus:outline-none text-sm"
+              disabled={loading || uploading}
+            />
+            <button
+              onClick={() => setShowUploadOptions(!showUploadOptions)}
+              className="p-2 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition text-lg"
+              title="Upload files or paste URL"
+            >
+              📎
+            </button>
+            <button
+              onClick={() => {
                 if (input.trim()) {
                   sendPrompt(input);
                   setInput('');
                 }
-              }
-            }}
-            placeholder="Type your question..."
-            className="flex-1 bg-transparent text-white placeholder:text-white/60 focus:outline-none text-sm"
-            disabled={loading}
-          />
-          <button
-            onClick={() => {
-              if (input.trim()) {
-                sendPrompt(input);
-                setInput('');
-              }
-            }}
-            disabled={loading}
-            className="px-4 py-2 bg-white text-[#0A4D68] rounded-xl font-semibold text-sm shadow-md disabled:opacity-70"
-          >
-            Send
-          </button>
+              }}
+              disabled={loading || uploading}
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl font-semibold text-sm disabled:opacity-70"
+            >
+              Send
+            </button>
+          </div>
+
+          {showUploadOptions && (
+            <div className="bg-zinc-800 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleUrlSubmit();
+                    }
+                  }}
+                  placeholder="Paste URL to generate flashcards..."
+                  className="flex-1 bg-white/10 text-white placeholder:text-white/60 px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                  disabled={uploading}
+                />
+                <button
+                  onClick={handleUrlSubmit}
+                  disabled={uploading || !urlInput.trim()}
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold text-sm disabled:opacity-50"
+                >
+                  🔗 Scrape
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, 'pdf');
+                    }}
+                    disabled={uploading}
+                  />
+                  <div className="bg-zinc-700 hover:bg-zinc-600 rounded-lg px-4 py-3 text-center text-sm font-semibold transition">
+                    📄 Upload PDF
+                  </div>
+                </label>
+
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, 'image');
+                    }}
+                    disabled={uploading}
+                  />
+                  <div className="bg-zinc-700 hover:bg-zinc-600 rounded-lg px-4 py-3 text-center text-sm font-semibold transition">
+                    📸 Upload Image
+                  </div>
+                </label>
+              </div>
+
+              {uploading && (
+                <p className="text-xs text-white/70 text-center">Processing your upload...</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
