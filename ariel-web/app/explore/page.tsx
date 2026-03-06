@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { cardsAPI, socialAPI } from '@/lib/api';
 
 interface Card {
@@ -23,6 +24,10 @@ interface Card {
 }
 
 export default function ExplorePage() {
+  const searchParams = useSearchParams();
+  const subjectFilter = searchParams.get('subject');
+  const topicFilter = searchParams.get('topic');
+
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -38,15 +43,28 @@ export default function ExplorePage() {
 
   useEffect(() => {
     loadCards();
-  }, [feedMode]);
+  }, [feedMode, subjectFilter, topicFilter]);
 
   const loadCards = async () => {
     setLoading(true);
     try {
       const data = feedMode === 'personalized'
-        ? await cardsAPI.getPersonalizedFeed(50)
-        : await cardsAPI.getTrendingCards(50);
-      setCards(data);
+        ? await cardsAPI.getPersonalizedFeed(100)
+        : await cardsAPI.getTrendingCards(100);
+
+      // Filter by subject/topic if coming from dashboard
+      const filter = topicFilter || subjectFilter;
+      if (filter) {
+        const keyword = filter.toLowerCase();
+        const filtered = data.filter((c: Card) =>
+          (c.subject || '').toLowerCase().includes(keyword) ||
+          (c.topic || '').toLowerCase().includes(keyword) ||
+          (c.tags || []).some((t: string) => t.toLowerCase().includes(keyword))
+        );
+        setCards(filtered.length > 0 ? filtered : data);
+      } else {
+        setCards(data);
+      }
     } catch (error) {
       console.error('Failed to load cards:', error);
       try {
@@ -215,6 +233,15 @@ export default function ExplorePage() {
     >
       {/* Top Bar - TikTok Style */}
       <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/50 to-transparent pt-safe">
+        {(subjectFilter || topicFilter) && (
+          <div className="flex items-center justify-center pt-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full border border-white/10">
+              <span className="text-white/60 text-xs">Filtered:</span>
+              <span className="text-white text-xs font-semibold">{topicFilter || subjectFilter}</span>
+              <a href="/explore" className="text-white/40 hover:text-white/80 text-xs ml-1 transition-colors">✕</a>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-center gap-6 px-4 py-4">
           <button
             onClick={() => setFeedMode('personalized')}

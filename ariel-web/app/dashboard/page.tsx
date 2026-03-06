@@ -261,7 +261,10 @@ export default function Dashboard() {
                 {displayDecks.map((deck) => (
                   <button
                     key={deck.id}
-                    onClick={() => router.push('/explore')}
+                    onClick={() => {
+                      const topic = encodeURIComponent(deck.subject || deck.title || '');
+                      router.push(`/explore?topic=${topic}`);
+                    }}
                     className="w-full px-5 py-4 flex items-center gap-4 hover:bg-zinc-800/40 transition-colors text-left"
                   >
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center font-bold text-white text-sm flex-shrink-0`}>
