@@ -15,108 +15,57 @@ interface Deck {
   title?: string;
   card_count?: number;
   author_username?: string;
+  topic?: string;
+  description?: string;
 }
 
-const CATEGORIES = [
-  {
-    key: 'gospel',
-    label: 'Gospel',
-    emoji: '✝️',
-    gradient: 'from-amber-800 to-yellow-700',
-    keywords: ['bible', 'gospel', 'faith', 'christianity', 'theology', 'scripture', 'religion', 'spiritual'],
-    decks: [
-      { id: 'g1', subject: 'Bible Stories', card_count: 42, author_username: 'faithlearn' },
-      { id: 'g2', subject: 'New Testament', card_count: 38, author_username: 'bibletutor' },
-      { id: 'g3', subject: 'Psalms & Proverbs', card_count: 55, author_username: 'divineword' },
-      { id: 'g4', subject: 'Theology Basics', card_count: 29, author_username: 'seminary101' },
-      { id: 'g5', subject: 'Church History', card_count: 33, author_username: 'faithlearn' },
-      { id: 'g6', subject: 'Acts of the Apostles', card_count: 41, author_username: 'bibletutor' },
-    ],
-  },
-  {
-    key: 'business',
-    label: 'Business',
-    emoji: '💼',
-    gradient: 'from-sky-800 to-blue-700',
-    keywords: ['business', 'marketing', 'finance', 'management', 'entrepreneurship', 'accounting', 'strategy', 'sales'],
-    decks: [
-      { id: 'b1', subject: 'Marketing 101', card_count: 60, author_username: 'bizpro' },
-      { id: 'b2', subject: 'Financial Accounting', card_count: 48, author_username: 'cpatutor' },
-      { id: 'b3', subject: 'Entrepreneurship', card_count: 35, author_username: 'startuplab' },
-      { id: 'b4', subject: 'Business Strategy', card_count: 44, author_username: 'mbaguide' },
-      { id: 'b5', subject: 'Sales Fundamentals', card_count: 27, author_username: 'salescoach' },
-      { id: 'b6', subject: 'Leadership Skills', card_count: 39, author_username: 'bizpro' },
-    ],
-  },
-  {
-    key: 'education',
-    label: 'Education',
-    emoji: '📚',
-    gradient: 'from-emerald-800 to-green-700',
-    keywords: ['biology', 'chemistry', 'physics', 'mathematics', 'history', 'literature', 'science', 'algebra'],
-    decks: [
-      { id: 'e1', subject: 'Biology', card_count: 80, author_username: 'sciencepro' },
-      { id: 'e2', subject: 'Calculus', card_count: 65, author_username: 'mathtutor' },
-      { id: 'e3', subject: 'World History', card_count: 72, author_username: 'historylab' },
-      { id: 'e4', subject: 'Chemistry', card_count: 58, author_username: 'chemwiz' },
-      { id: 'e5', subject: 'Literature', card_count: 43, author_username: 'readingroom' },
-      { id: 'e6', subject: 'Physics', card_count: 51, author_username: 'sciencepro' },
-    ],
-  },
-  {
-    key: 'economy',
-    label: 'Economy',
-    emoji: '📈',
-    gradient: 'from-violet-800 to-purple-700',
-    keywords: ['economics', 'gdp', 'inflation', 'trade', 'monetary', 'fiscal', 'economy'],
-    decks: [
-      { id: 'ec1', subject: 'Macroeconomics', card_count: 54, author_username: 'econprof' },
-      { id: 'ec2', subject: 'Microeconomics', card_count: 49, author_username: 'econprof' },
-      { id: 'ec3', subject: 'Global Trade', card_count: 38, author_username: 'tradedesk' },
-      { id: 'ec4', subject: 'Monetary Policy', card_count: 31, author_username: 'fedwatch' },
-      { id: 'ec5', subject: 'Development Economics', card_count: 44, author_username: 'deveconomy' },
-      { id: 'ec6', subject: 'Stock Market Basics', card_count: 36, author_username: 'investlearn' },
-    ],
-  },
-  {
-    key: 'technology',
-    label: 'Technology',
-    emoji: '💻',
-    gradient: 'from-zinc-700 to-zinc-600',
-    keywords: ['programming', 'software', 'coding', 'javascript', 'python', 'ai', 'data', 'cybersecurity'],
-    decks: [
-      { id: 't1', subject: 'Python Basics', card_count: 70, author_username: 'codelab' },
-      { id: 't2', subject: 'Data Structures', card_count: 55, author_username: 'cstutor' },
-      { id: 't3', subject: 'Web Development', card_count: 63, author_username: 'devacademy' },
-      { id: 't4', subject: 'Machine Learning', card_count: 48, author_username: 'ailearn' },
-      { id: 't5', subject: 'Cybersecurity', card_count: 39, author_username: 'securelab' },
-      { id: 't6', subject: 'SQL & Databases', card_count: 45, author_username: 'datatutor' },
-    ],
-  },
-  {
-    key: 'health',
-    label: 'Health',
-    emoji: '🧬',
-    gradient: 'from-rose-800 to-pink-700',
-    keywords: ['health', 'medicine', 'anatomy', 'nutrition', 'fitness', 'psychology', 'mental'],
-    decks: [
-      { id: 'h1', subject: 'Human Anatomy', card_count: 90, author_username: 'medschool' },
-      { id: 'h2', subject: 'Nutrition Science', card_count: 47, author_username: 'healthpro' },
-      { id: 'h3', subject: 'Mental Health', card_count: 52, author_username: 'psychlearn' },
-      { id: 'h4', subject: 'Pharmacology', card_count: 68, author_username: 'medschool' },
-      { id: 'h5', subject: 'First Aid', card_count: 34, author_username: 'healthpro' },
-      { id: 'h6', subject: 'Exercise Science', card_count: 41, author_username: 'fitnesstu' },
-    ],
-  },
-];
+const SUBJECT_META: Record<string, { label: string; icon: string; gradient: string; keywords: string[] }> = {
+  gospel:      { label: 'Gospel & Faith',   icon: '✝️',  gradient: 'from-amber-800 to-yellow-700',   keywords: ['bible', 'gospel', 'faith', 'theology', 'scripture', 'church', 'religion'] },
+  business:    { label: 'Business',          icon: '💼',  gradient: 'from-sky-800 to-blue-700',        keywords: ['business', 'marketing', 'finance', 'management', 'accounting', 'sales'] },
+  economics:   { label: 'Economics',         icon: '📈',  gradient: 'from-violet-800 to-purple-700',   keywords: ['economics', 'gdp', 'inflation', 'trade', 'monetary', 'fiscal', 'economy'] },
+  technology:  { label: 'Technology',        icon: '💻',  gradient: 'from-zinc-700 to-zinc-600',       keywords: ['programming', 'software', 'coding', 'javascript', 'python', 'ai', 'data'] },
+  health:      { label: 'Health & Medicine', icon: '🧬',  gradient: 'from-rose-800 to-pink-700',       keywords: ['health', 'medicine', 'anatomy', 'nutrition', 'fitness', 'psychology'] },
+  mathematics: { label: 'Mathematics',       icon: '📐',  gradient: 'from-indigo-800 to-indigo-600',   keywords: ['mathematics', 'calculus', 'algebra', 'geometry', 'statistics', 'math'] },
+  sciences:    { label: 'Sciences',          icon: '🔬',  gradient: 'from-emerald-800 to-green-700',   keywords: ['biology', 'chemistry', 'physics', 'science', 'lab'] },
+  history:     { label: 'History',           icon: '🏛️',  gradient: 'from-stone-700 to-stone-600',     keywords: ['history', 'historical', 'civilization', 'war', 'ancient'] },
+  literature:  { label: 'Literature',        icon: '📚',  gradient: 'from-orange-800 to-orange-700',   keywords: ['literature', 'english', 'writing', 'poetry', 'novel'] },
+  languages:   { label: 'Languages',         icon: '🌍',  gradient: 'from-teal-800 to-teal-600',       keywords: ['language', 'french', 'spanish', 'swahili', 'grammar', 'vocabulary'] },
+  law:         { label: 'Law',               icon: '⚖️',  gradient: 'from-gray-800 to-gray-600',       keywords: ['law', 'legal', 'constitution', 'rights', 'court'] },
+  arts:        { label: 'Arts & Music',      icon: '🎨',  gradient: 'from-fuchsia-800 to-pink-700',    keywords: ['art', 'music', 'design', 'creative', 'paint'] },
+  psychology:  { label: 'Psychology',        icon: '🧠',  gradient: 'from-cyan-800 to-cyan-600',       keywords: ['psychology', 'mental', 'behavior', 'cognitive', 'therapy'] },
+  engineering: { label: 'Engineering',       icon: '⚙️',  gradient: 'from-yellow-800 to-yellow-700',   keywords: ['engineering', 'mechanical', 'electrical', 'civil', 'structure'] },
+  geography:   { label: 'Geography',         icon: '🗺️',  gradient: 'from-lime-800 to-lime-600',       keywords: ['geography', 'map', 'climate', 'continent', 'country'] },
+  other:       { label: 'General',           icon: '✨',  gradient: 'from-zinc-800 to-zinc-700',       keywords: [] },
+};
+
+// Fallback topic decks per subject
+const FALLBACK_DECKS: Record<string, Deck[]> = {
+  gospel:      [{ id: 'g1', subject: 'Bible Stories', card_count: 42 }, { id: 'g2', subject: 'New Testament', card_count: 38 }, { id: 'g3', subject: 'Psalms & Proverbs', card_count: 55 }, { id: 'g4', subject: 'Theology Basics', card_count: 29 }, { id: 'g5', subject: 'Church History', card_count: 33 }],
+  business:    [{ id: 'b1', subject: 'Marketing 101', card_count: 60 }, { id: 'b2', subject: 'Financial Accounting', card_count: 48 }, { id: 'b3', subject: 'Entrepreneurship', card_count: 35 }, { id: 'b4', subject: 'Business Strategy', card_count: 44 }, { id: 'b5', subject: 'Sales Fundamentals', card_count: 27 }],
+  economics:   [{ id: 'ec1', subject: 'Macroeconomics', card_count: 54 }, { id: 'ec2', subject: 'Microeconomics', card_count: 49 }, { id: 'ec3', subject: 'Global Trade', card_count: 38 }, { id: 'ec4', subject: 'Monetary Policy', card_count: 31 }, { id: 'ec5', subject: 'Stock Market Basics', card_count: 36 }],
+  technology:  [{ id: 't1', subject: 'Python Basics', card_count: 70 }, { id: 't2', subject: 'Data Structures', card_count: 55 }, { id: 't3', subject: 'Web Development', card_count: 63 }, { id: 't4', subject: 'Machine Learning', card_count: 48 }, { id: 't5', subject: 'Cybersecurity', card_count: 39 }],
+  health:      [{ id: 'h1', subject: 'Human Anatomy', card_count: 90 }, { id: 'h2', subject: 'Nutrition Science', card_count: 47 }, { id: 'h3', subject: 'Mental Health', card_count: 52 }, { id: 'h4', subject: 'Pharmacology', card_count: 68 }, { id: 'h5', subject: 'First Aid', card_count: 34 }],
+  mathematics: [{ id: 'm1', subject: 'Calculus', card_count: 65 }, { id: 'm2', subject: 'Algebra', card_count: 58 }, { id: 'm3', subject: 'Statistics', card_count: 44 }, { id: 'm4', subject: 'Geometry', card_count: 37 }, { id: 'm5', subject: 'Linear Algebra', card_count: 51 }],
+  sciences:    [{ id: 's1', subject: 'Biology', card_count: 80 }, { id: 's2', subject: 'Chemistry', card_count: 58 }, { id: 's3', subject: 'Physics', card_count: 51 }, { id: 's4', subject: 'Ecology', card_count: 33 }, { id: 's5', subject: 'Genetics', card_count: 45 }],
+  history:     [{ id: 'hi1', subject: 'World War II', card_count: 72 }, { id: 'hi2', subject: 'Ancient Rome', card_count: 61 }, { id: 'hi3', subject: 'African History', card_count: 48 }, { id: 'hi4', subject: 'Cold War', card_count: 39 }, { id: 'hi5', subject: 'Medieval Europe', card_count: 44 }],
+  literature:  [{ id: 'l1', subject: 'Shakespeare', card_count: 43 }, { id: 'l2', subject: 'Poetry Analysis', card_count: 36 }, { id: 'l3', subject: 'African Literature', card_count: 29 }, { id: 'l4', subject: 'Essay Writing', card_count: 32 }, { id: 'l5', subject: 'Grammar Mastery', card_count: 55 }],
+  languages:   [{ id: 'la1', subject: 'French Basics', card_count: 80 }, { id: 'la2', subject: 'Spanish A1', card_count: 75 }, { id: 'la3', subject: 'Swahili Vocab', card_count: 60 }, { id: 'la4', subject: 'Kinyarwanda', card_count: 50 }, { id: 'la5', subject: 'Mandarin Intro', card_count: 45 }],
+  law:         [{ id: 'lw1', subject: 'Constitutional Law', card_count: 58 }, { id: 'lw2', subject: 'Contract Law', card_count: 46 }, { id: 'lw3', subject: 'Criminal Law', card_count: 52 }, { id: 'lw4', subject: 'Human Rights', card_count: 39 }, { id: 'lw5', subject: 'International Law', card_count: 43 }],
+  arts:        [{ id: 'a1', subject: 'Music Theory', card_count: 48 }, { id: 'a2', subject: 'Art History', card_count: 55 }, { id: 'a3', subject: 'Design Principles', card_count: 37 }, { id: 'a4', subject: 'Photography', card_count: 29 }, { id: 'a5', subject: 'Film Studies', card_count: 33 }],
+  psychology:  [{ id: 'p1', subject: 'Cognitive Psychology', card_count: 62 }, { id: 'p2', subject: 'Developmental Psych', card_count: 54 }, { id: 'p3', subject: 'Abnormal Psychology', card_count: 47 }, { id: 'p4', subject: 'Social Psychology', card_count: 59 }, { id: 'p5', subject: 'Neuroscience', card_count: 43 }],
+  engineering: [{ id: 'en1', subject: 'Mechanics', card_count: 67 }, { id: 'en2', subject: 'Thermodynamics', card_count: 54 }, { id: 'en3', subject: 'Circuit Analysis', card_count: 48 }, { id: 'en4', subject: 'Structural Engineering', card_count: 41 }, { id: 'en5', subject: 'Materials Science', card_count: 36 }],
+  geography:   [{ id: 'ge1', subject: 'Physical Geography', card_count: 52 }, { id: 'ge2', subject: 'Human Geography', card_count: 45 }, { id: 'ge3', subject: 'Climate & Weather', card_count: 38 }, { id: 'ge4', subject: 'Countries & Capitals', card_count: 196 }, { id: 'ge5', subject: 'Geopolitics', card_count: 33 }],
+  other:       [{ id: 'o1', subject: 'General Knowledge', card_count: 100 }, { id: 'o2', subject: 'Critical Thinking', card_count: 45 }, { id: 'o3', subject: 'Study Skills', card_count: 30 }],
+};
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, checkAuth } = useAuth();
   const [gamification, setGamification] = useState<any>(null);
+  const [feedDecks, setFeedDecks] = useState<Deck[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].key);
+  const [activeSubject, setActiveSubject] = useState<string>('');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push('/');
@@ -124,14 +73,25 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      gamificationAPI.getStats().then(setGamification).catch(() => null).finally(() => setLoading(false));
       if (user && !user.onboarding_completed) setShowOnboarding(true);
-      const t = setTimeout(() => setLoading(false), 5000);
-      return () => clearTimeout(t);
+      Promise.all([
+        gamificationAPI.getStats().catch(() => null),
+        socialAPI.getPersonalizedFeed(50).catch(() => []),
+      ]).then(([gam, feed]) => {
+        setGamification(gam || {});
+        setFeedDecks((feed as Deck[]) || []);
+      }).finally(() => setLoading(false));
     } else if (!isLoading) {
       setLoading(false);
     }
   }, [isAuthenticated, isLoading, user]);
+
+  // Set default active subject when user loads
+  useEffect(() => {
+    if (user?.subjects?.length && !activeSubject) {
+      setActiveSubject(user.subjects[0]);
+    }
+  }, [user]);
 
   if (showOnboarding) {
     return (
@@ -139,7 +99,7 @@ export default function Dashboard() {
         onComplete={async () => {
           setShowOnboarding(false);
           await checkAuth();
-          router.push('/explore');
+          router.push('/dashboard');
         }}
       />
     );
@@ -172,7 +132,20 @@ export default function Dashboard() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-  const selected = CATEGORIES.find(c => c.key === activeCategory) || CATEGORIES[0];
+  // User's chosen subjects — fall back to a default set if none saved yet
+  const userSubjects = user?.subjects?.length
+    ? user.subjects
+    : ['gospel', 'business', 'economics'];
+
+  const current = activeSubject || userSubjects[0];
+  const meta = SUBJECT_META[current] || SUBJECT_META.other;
+
+  // Try to match feed decks to the active subject by keywords, else use fallback
+  const matchedDecks = feedDecks.filter(d => {
+    const hay = `${d.subject} ${d.title} ${d.topic} ${d.description}`.toLowerCase();
+    return meta.keywords.some(kw => hay.includes(kw));
+  });
+  const displayDecks = matchedDecks.length > 0 ? matchedDecks.slice(0, 6) : (FALLBACK_DECKS[current] || FALLBACK_DECKS.other);
 
   return (
     <>
@@ -215,58 +188,66 @@ export default function Dashboard() {
             </h2>
           </div>
 
-          {/* Category cards — one scrolling row */}
-          <div
-            className="flex gap-3 overflow-x-auto pb-1"
-            style={{ scrollbarWidth: 'none' }}
-          >
-            {CATEGORIES.map((cat) => {
-              const isActive = activeCategory === cat.key;
+          {/* Subject cards — one scrolling row */}
+          <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {userSubjects.map((subjectKey: string) => {
+              const m = SUBJECT_META[subjectKey] || SUBJECT_META.other;
+              const isActive = current === subjectKey;
               return (
                 <button
-                  key={cat.key}
-                  onClick={() => setActiveCategory(cat.key)}
-                  className={`flex-shrink-0 w-32 h-36 rounded-2xl bg-gradient-to-br ${cat.gradient} flex flex-col items-start justify-end p-4 transition-all ${
-                    isActive
-                      ? 'ring-2 ring-white/40 scale-[1.03]'
-                      : 'opacity-70 hover:opacity-90 hover:scale-[1.02]'
+                  key={subjectKey}
+                  onClick={() => setActiveSubject(subjectKey)}
+                  className={`flex-shrink-0 w-28 h-32 rounded-2xl bg-gradient-to-br ${m.gradient} flex flex-col items-start justify-end p-3.5 transition-all ${
+                    isActive ? 'ring-2 ring-white/50 scale-[1.04]' : 'opacity-60 hover:opacity-85 hover:scale-[1.02]'
                   }`}
                 >
-                  <span className="text-2xl mb-1">{cat.emoji}</span>
-                  <p className="text-sm font-bold text-white leading-tight">{cat.label}</p>
-                  <p className="text-[10px] text-white/60 mt-0.5">{cat.decks.length} topics</p>
+                  <span className="text-xl mb-1">{m.icon}</span>
+                  <p className="text-xs font-bold text-white leading-tight">{m.label}</p>
                 </button>
               );
             })}
+
+            {/* Add more subjects */}
+            <button
+              onClick={() => router.push('/profile')}
+              className="flex-shrink-0 w-28 h-32 rounded-2xl border-2 border-dashed border-zinc-700 hover:border-zinc-500 flex flex-col items-center justify-center gap-1.5 transition-colors"
+            >
+              <svg className="w-5 h-5 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <p className="text-[10px] text-zinc-600 font-medium">Add subject</p>
+            </button>
           </div>
 
-          {/* Selected category content */}
+          {/* Topics for selected subject */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg">{selected.emoji}</span>
-                <p className="text-base font-bold text-white">{selected.label}</p>
+                <span>{meta.icon}</span>
+                <p className="text-base font-bold text-white">{meta.label}</p>
               </div>
               <button
-                onClick={() => router.push('/explore')}
+                onClick={() => router.push('/create-cards')}
                 className="text-xs text-emerald-400 font-semibold hover:text-emerald-300 transition-colors"
               >
-                Browse all →
+                + Add cards
               </button>
             </div>
             <div className="divide-y divide-zinc-800/60">
-              {selected.decks.map((deck) => (
+              {displayDecks.map((deck) => (
                 <button
                   key={deck.id}
                   onClick={() => router.push('/explore')}
                   className="w-full px-5 py-4 flex items-center gap-4 hover:bg-zinc-800/40 transition-colors text-left"
                 >
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${selected.gradient} flex items-center justify-center font-bold text-white text-base flex-shrink-0`}>
-                    {deck.subject.charAt(0)}
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center font-bold text-white text-sm flex-shrink-0`}>
+                    {(deck.subject || deck.title || '?').charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{deck.subject}</p>
-                    <p className="text-xs text-zinc-500 mt-0.5">@{deck.author_username} · {deck.card_count} cards</p>
+                    <p className="text-sm font-semibold text-white truncate">{deck.subject || deck.title}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      {deck.author_username ? `@${deck.author_username} · ` : ''}{deck.card_count ?? 0} cards
+                    </p>
                   </div>
                   <svg className="w-4 h-4 text-zinc-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
