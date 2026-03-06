@@ -92,61 +92,11 @@ export default function Dashboard() {
     );
   }
 
-  const streakDays = stats?.current_streak ?? 0;
   const level = gamification?.level_info?.current_level ?? 1;
-  const retention = stats?.retention_rate ?? 0;
-  const mastered = stats?.cards_mastered ?? 0;
-  const cardsDue = stats?.cards_due_today ?? 0;
+  const streakDays = stats?.current_streak ?? 0;
   const firstName = user?.full_name?.split(' ')[0] || user?.username || '';
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-
-  const features = [
-    {
-      name: 'Cram Mode',
-      desc: 'Exam in a few hours?',
-      path: '/cram',
-      color: 'bg-red-500/10 border-red-800/40 text-red-400',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-    },
-    {
-      name: 'Study Duels',
-      desc: 'Challenge a bot',
-      path: '/duels',
-      color: 'bg-sky-500/10 border-sky-800/40 text-sky-400',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-    },
-    {
-      name: 'Knowledge Map',
-      desc: 'See your mastery',
-      path: '/map',
-      color: 'bg-emerald-500/10 border-emerald-800/40 text-emerald-400',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 9m0 8V9m0 0L9 7" />
-        </svg>
-      ),
-    },
-    {
-      name: 'Brain Report',
-      desc: 'Weekly AI analysis',
-      path: '/report',
-      color: 'bg-orange-500/10 border-orange-800/40 text-orange-400',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
-    },
-  ];
 
   return (
     <>
@@ -181,7 +131,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="max-w-5xl mx-auto px-5 py-7 space-y-7">
+        <div className="max-w-5xl mx-auto px-5 py-7 space-y-5">
 
           {/* Greeting */}
           <div>
@@ -191,101 +141,45 @@ export default function Dashboard() {
             </h2>
           </div>
 
-          {/* Hero action */}
-          {cardsDue > 0 ? (
-            <div className="rounded-2xl bg-emerald-500 p-5 flex items-center justify-between">
-              <div>
-                <p className="text-lg font-bold text-white">{cardsDue} card{cardsDue !== 1 ? 's' : ''} due</p>
-                <p className="text-sm text-emerald-100 mt-0.5">Keep your streak alive — review now</p>
-              </div>
-              <button
-                onClick={() => router.push('/review')}
-                className="px-5 py-2.5 bg-white text-emerald-700 text-sm font-bold rounded-xl hover:bg-emerald-50 transition-colors flex-shrink-0"
-              >
-                Start review
-              </button>
-            </div>
-          ) : (
-            <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-5 flex items-center justify-between">
-              <div>
-                <p className="text-base font-bold text-white">You're all caught up</p>
-                <p className="text-sm text-zinc-500 mt-0.5">No cards due — add more or explore</p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <button
-                  onClick={() => router.push('/create-cards')}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-xl transition-colors"
-                >
-                  Create cards
-                </button>
-                <button
-                  onClick={() => router.push('/explore')}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-semibold rounded-xl transition-colors"
-                >
-                  Explore
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-              <p className={`text-2xl font-black ${streakDays > 0 ? 'text-orange-400' : 'text-zinc-700'}`}>
-                {streakDays > 0 ? `${streakDays}d` : '—'}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1.5">Streak</p>
-            </div>
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-              <p className={`text-2xl font-black ${mastered > 0 ? 'text-emerald-400' : 'text-zinc-700'}`}>
-                {mastered > 0 ? mastered : '—'}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1.5">Mastered</p>
-            </div>
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-              <p className={`text-2xl font-black ${retention > 0 ? 'text-sky-400' : 'text-zinc-700'}`}>
-                {retention > 0 ? `${retention}%` : '—'}
-              </p>
-              <p className="text-xs text-zinc-500 mt-1.5">Retention</p>
-            </div>
-          </div>
-
-          {/* Main layout */}
+          {/* Two column: Subjects + Ask Ariel */}
           <div className="grid lg:grid-cols-5 gap-5">
 
-            {/* Left: My Decks */}
+            {/* Subjects */}
             <div className="lg:col-span-3">
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden h-full">
                 <div className="px-5 py-4 flex items-center justify-between border-b border-zinc-800">
-                  <p className="text-base font-bold text-white">My decks</p>
+                  <p className="text-base font-bold text-white">Your subjects</p>
                   <button
-                    onClick={() => router.push('/deck')}
-                    className="text-sm text-emerald-400 font-semibold hover:text-emerald-300 transition-colors"
+                    onClick={() => router.push('/create-cards')}
+                    className="flex items-center gap-1.5 text-sm text-emerald-400 font-semibold hover:text-emerald-300 transition-colors"
                   >
-                    View all →
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add cards
                   </button>
                 </div>
 
                 {decks.length > 0 ? (
                   <div className="divide-y divide-zinc-800/60">
-                    {decks.slice(0, 5).map((deck) => {
+                    {decks.slice(0, 6).map((deck) => {
                       const pct = deck.card_count ? Math.round((deck.mastered / deck.card_count) * 100) : 0;
                       return (
                         <button
                           key={deck.subject}
                           onClick={() => router.push('/deck')}
-                          className="w-full px-5 py-3.5 flex items-center gap-3.5 hover:bg-zinc-800/40 transition-colors text-left"
+                          className="w-full px-5 py-4 flex items-center gap-4 hover:bg-zinc-800/40 transition-colors text-left"
                         >
-                          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center font-bold text-emerald-400 text-sm flex-shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center font-bold text-emerald-400 text-base flex-shrink-0">
                             {deck.subject.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <p className="text-sm font-semibold text-zinc-100 truncate">{deck.subject}</p>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <p className="text-sm font-semibold text-white truncate">{deck.subject}</p>
                               <span className="text-xs text-zinc-500 ml-2 flex-shrink-0">{pct}%</span>
                             </div>
                             <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
-                              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+                              <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
                             </div>
                             <p className="text-xs text-zinc-600 mt-1">{deck.card_count} cards</p>
                           </div>
@@ -294,8 +188,16 @@ export default function Dashboard() {
                     })}
                   </div>
                 ) : (
-                  <div className="px-5 py-10 text-center space-y-3">
-                    <p className="text-sm text-zinc-600">No decks yet. Start by creating your first cards.</p>
+                  <div className="flex flex-col items-center justify-center py-16 px-5 text-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center">
+                      <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-400">No subjects yet</p>
+                      <p className="text-xs text-zinc-600 mt-1">Create your first flashcards to get started</p>
+                    </div>
                     <button
                       onClick={() => router.push('/create-cards')}
                       className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-xl transition-colors"
@@ -307,27 +209,9 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Right: Ask Ariel */}
+            {/* Ask Ariel */}
             <div className="lg:col-span-2">
               <ArielSpotlight />
-            </div>
-          </div>
-
-          {/* Feature strip */}
-          <div>
-            <p className="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-3">Study tools</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {features.map((f) => (
-                <button
-                  key={f.name}
-                  onClick={() => router.push(f.path)}
-                  className={`border rounded-xl p-4 text-left transition-colors hover:opacity-80 ${f.color}`}
-                >
-                  <div className="mb-2.5">{f.icon}</div>
-                  <p className="text-sm font-bold text-white">{f.name}</p>
-                  <p className="text-xs mt-0.5 opacity-70">{f.desc}</p>
-                </button>
-              ))}
             </div>
           </div>
 
