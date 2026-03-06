@@ -38,7 +38,86 @@ const SUBJECT_META: Record<string, { label: string; icon: string; gradient: stri
   other:       { label: 'General',           icon: '✨',  gradient: 'from-zinc-800 to-zinc-700',       keywords: [] },
 };
 
-// Fallback topic decks per subject
+// Topics per subject (by education level where relevant)
+const TOPICS_BY_SUBJECT: Record<string, Record<string, string[]>> = {
+  gospel: {
+    default: ['Bible Stories', 'New Testament', 'Psalms & Proverbs', 'Theology Basics', 'Church History', 'The Life of Jesus', 'Parables Explained'],
+  },
+  business: {
+    'high-school': ['Entrepreneurship', 'Personal Finance', 'Business Ethics', 'Marketing Basics', 'Supply & Demand'],
+    university: ['Financial Accounting', 'Business Strategy', 'Marketing 101', 'Operations Management', 'Corporate Finance', 'Sales Fundamentals'],
+    professional: ['Leadership', 'Strategic Management', 'Corporate Finance', 'Business Analytics', 'Negotiation'],
+    default: ['Marketing 101', 'Financial Accounting', 'Entrepreneurship', 'Business Strategy', 'Sales Fundamentals'],
+  },
+  economics: {
+    'high-school': ['Supply & Demand', 'GDP Basics', 'Personal Finance', 'Trade & Markets'],
+    university: ['Macroeconomics', 'Microeconomics', 'Global Trade', 'Monetary Policy', 'Stock Market Basics', 'Game Theory'],
+    professional: ['Monetary Policy', 'Fiscal Policy', 'Investment Theory', 'Economic Modelling'],
+    default: ['Macroeconomics', 'Microeconomics', 'Global Trade', 'Monetary Policy', 'Stock Market Basics'],
+  },
+  technology: {
+    'high-school': ['Python Basics', 'Web Development', 'Digital Literacy', 'Cybersecurity Basics'],
+    university: ['Data Structures', 'Algorithms', 'Machine Learning', 'Web Development', 'Database Systems', 'Cybersecurity', 'Python Basics'],
+    professional: ['System Design', 'Machine Learning', 'Cloud Computing', 'DevOps', 'Cybersecurity'],
+    default: ['Python Basics', 'Data Structures', 'Web Development', 'Machine Learning', 'Cybersecurity'],
+  },
+  health: {
+    'high-school': ['Human Anatomy', 'Nutrition Science', 'First Aid', 'Mental Health'],
+    university: ['Human Anatomy', 'Pharmacology', 'Nutrition Science', 'Mental Health', 'Physiology', 'Pathology'],
+    professional: ['Pharmacology', 'Clinical Skills', 'Medical Ethics', 'Pathology', 'Surgery Basics'],
+    default: ['Human Anatomy', 'Nutrition Science', 'Mental Health', 'Pharmacology', 'First Aid'],
+  },
+  mathematics: {
+    'high-school': ['Algebra', 'Geometry', 'Trigonometry', 'Statistics', 'Calculus Intro'],
+    university: ['Calculus', 'Linear Algebra', 'Statistics', 'Differential Equations', 'Discrete Math', 'Real Analysis'],
+    professional: ['Statistics', 'Linear Algebra', 'Optimization', 'Probability Theory'],
+    default: ['Calculus', 'Algebra', 'Statistics', 'Geometry', 'Linear Algebra'],
+  },
+  sciences: {
+    'high-school': ['Biology Basics', 'Chemistry Basics', 'Physics Basics', 'Ecology', 'Scientific Method'],
+    university: ['Biology', 'Chemistry', 'Physics', 'Genetics', 'Ecology', 'Organic Chemistry', 'Quantum Mechanics'],
+    professional: ['Research Methods', 'Data Analysis', 'Genetics', 'Biochemistry'],
+    default: ['Biology', 'Chemistry', 'Physics', 'Ecology', 'Genetics'],
+  },
+  history: {
+    default: ['World War II', 'Ancient Rome', 'African History', 'Cold War', 'Medieval Europe', 'The French Revolution', 'Colonial Africa'],
+  },
+  literature: {
+    default: ['Shakespeare', 'Poetry Analysis', 'African Literature', 'Essay Writing', 'Grammar Mastery', 'Literary Devices', 'Short Story Analysis'],
+  },
+  languages: {
+    default: ['French Basics', 'Spanish A1', 'Swahili Vocab', 'Kinyarwanda', 'Mandarin Intro', 'English Grammar'],
+  },
+  law: {
+    'high-school': ['Human Rights', 'Constitutional Law Basics', 'Civic Education'],
+    university: ['Constitutional Law', 'Contract Law', 'Criminal Law', 'Human Rights', 'International Law', 'Tort Law'],
+    professional: ['Corporate Law', 'Litigation', 'Constitutional Law', 'International Law'],
+    default: ['Constitutional Law', 'Contract Law', 'Criminal Law', 'Human Rights', 'International Law'],
+  },
+  arts: {
+    default: ['Music Theory', 'Art History', 'Design Principles', 'Photography', 'Film Studies', 'Colour Theory', 'African Art'],
+  },
+  psychology: {
+    'high-school': ['Intro to Psychology', 'Emotional Intelligence', 'Behavioural Science'],
+    university: ['Cognitive Psychology', 'Developmental Psychology', 'Abnormal Psychology', 'Social Psychology', 'Neuroscience'],
+    professional: ['Organisational Psychology', 'Cognitive Behaviour', 'Neuroscience', 'Therapy Models'],
+    default: ['Cognitive Psychology', 'Developmental Psychology', 'Abnormal Psychology', 'Social Psychology', 'Neuroscience'],
+  },
+  engineering: {
+    'high-school': ['Engineering Basics', 'Simple Machines', 'Introduction to Physics'],
+    university: ['Mechanics', 'Thermodynamics', 'Circuit Analysis', 'Structural Engineering', 'Materials Science', 'Fluid Dynamics'],
+    professional: ['Structural Engineering', 'Systems Design', 'Thermodynamics', 'Project Management'],
+    default: ['Mechanics', 'Thermodynamics', 'Circuit Analysis', 'Structural Engineering', 'Materials Science'],
+  },
+  geography: {
+    default: ['Physical Geography', 'Human Geography', 'Climate & Weather', 'Countries & Capitals', 'Geopolitics', 'Map Reading'],
+  },
+  other: {
+    default: ['General Knowledge', 'Critical Thinking', 'Study Skills'],
+  },
+};
+
+// Fallback topic decks per subject (keep for feed-matching logic)
 const FALLBACK_DECKS: Record<string, Deck[]> = {
   gospel:      [{ id: 'g1', subject: 'Bible Stories', card_count: 42 }, { id: 'g2', subject: 'New Testament', card_count: 38 }, { id: 'g3', subject: 'Psalms & Proverbs', card_count: 55 }, { id: 'g4', subject: 'Theology Basics', card_count: 29 }, { id: 'g5', subject: 'Church History', card_count: 33 }],
   business:    [{ id: 'b1', subject: 'Marketing 101', card_count: 60 }, { id: 'b2', subject: 'Financial Accounting', card_count: 48 }, { id: 'b3', subject: 'Entrepreneurship', card_count: 35 }, { id: 'b4', subject: 'Business Strategy', card_count: 44 }, { id: 'b5', subject: 'Sales Fundamentals', card_count: 27 }],
@@ -132,6 +211,14 @@ export default function Dashboard() {
   const allSubjectKeys = Object.keys(SUBJECT_META).filter(k => k !== 'other');
 
   const meta = activeSubject ? (SUBJECT_META[activeSubject] || SUBJECT_META.other) : null;
+
+  // Get level-appropriate topics for active subject
+  const getTopicsForSubject = (subjectKey: string): string[] => {
+    const bySubject = TOPICS_BY_SUBJECT[subjectKey] || TOPICS_BY_SUBJECT.other;
+    const level = user?.education_level ?? 'default';
+    return bySubject[level] ?? bySubject.default ?? [];
+  };
+
   const displayDecks = activeSubject
     ? (() => {
         const m = SUBJECT_META[activeSubject] || SUBJECT_META.other;
@@ -242,39 +329,46 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Topics — only visible after tapping a card */}
+          {/* Topics — only visible after tapping a subject card */}
           {activeSubject && meta && (
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+              {/* Panel header */}
               <div className="px-5 py-4 border-b border-zinc-800 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span>{meta.icon}</span>
-                  <p className="text-base font-bold text-white">{meta.label}</p>
+                  <div>
+                    <p className="text-base font-bold text-white">{meta.label}</p>
+                    {user?.education_level && (
+                      <p className="text-xs text-zinc-600 capitalize">{user.education_level.replace('-', ' ')} level</p>
+                    )}
+                  </div>
                 </div>
                 <button
-                  onClick={() => router.push('/create-cards')}
+                  onClick={() => router.push(`/create-cards?subject=${encodeURIComponent(meta.label)}`)}
                   className="text-xs text-emerald-400 font-semibold hover:text-emerald-300 transition-colors"
                 >
-                  + Add cards
+                  + Create
                 </button>
               </div>
+
+              {/* Topics list */}
               <div className="divide-y divide-zinc-800/60">
-                {displayDecks.map((deck) => (
+                {getTopicsForSubject(activeSubject).map((topicName, idx) => (
                   <button
-                    key={deck.id}
+                    key={idx}
                     onClick={() => {
-                      const topic = encodeURIComponent(deck.subject || deck.title || '');
-                      router.push(`/explore?topic=${topic}`);
+                      router.push(
+                        `/topic/${encodeURIComponent(topicName)}?subject=${encodeURIComponent(meta.label)}`
+                      );
                     }}
                     className="w-full px-5 py-4 flex items-center gap-4 hover:bg-zinc-800/40 transition-colors text-left"
                   >
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center font-bold text-white text-sm flex-shrink-0`}>
-                      {(deck.subject || deck.title || '?').charAt(0)}
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${meta.gradient} flex items-center justify-center font-bold text-white text-sm flex-shrink-0`}>
+                      {topicName.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{deck.subject || deck.title}</p>
-                      <p className="text-xs text-zinc-500 mt-0.5">
-                        {deck.author_username ? `@${deck.author_username} · ` : ''}{deck.card_count ?? 0} cards
-                      </p>
+                      <p className="text-sm font-semibold text-white truncate">{topicName}</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">Cards + AI intro · Tap to explore</p>
                     </div>
                     <svg className="w-4 h-4 text-zinc-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
