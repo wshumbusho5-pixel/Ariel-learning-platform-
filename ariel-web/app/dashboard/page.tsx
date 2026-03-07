@@ -102,7 +102,6 @@ function timeAgo(d?: string) {
 // ─── Card Tile (square, 1:1) ─────────────────────────────────────────────────
 
 function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string) => void }) {
-  const router = useRouter();
   const [flipped, setFlipped] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(card.likes ?? 0);
@@ -126,94 +125,111 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
   };
 
   return (
-    <div className="flex flex-col">
-      {/* 3D flip container */}
+    <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900">
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
+        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center flex-shrink-0`}>
+          <span className="text-sm">{meta.icon}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold text-white truncate">
+              {card.author_username ? `@${card.author_username}` : meta.short}
+            </span>
+            {card.subject && (
+              <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] font-semibold flex-shrink-0">
+                {card.subject}{card.topic ? ` · ${card.topic}` : ''}
+              </span>
+            )}
+          </div>
+          {card.created_at && (
+            <p className="text-[11px] text-zinc-600 mt-0.5">{timeAgo(card.created_at)}</p>
+          )}
+        </div>
+        {/* Q / A indicator */}
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${flipped ? 'bg-sky-500' : 'bg-zinc-800'}`}>
+          <span className="text-[11px] font-black text-white">{flipped ? 'A' : 'Q'}</span>
+        </div>
+      </div>
+
+      {/* 3D flip area — full width, fixed height */}
       <div
-        className="relative w-full cursor-pointer"
-        style={{ aspectRatio: '3/4', perspective: '700px' }}
+        className="mx-4 mb-3 cursor-pointer"
+        style={{ perspective: '900px' }}
         onClick={() => setFlipped(f => !f)}
       >
         <div
           style={{
             position: 'relative',
-            width: '100%',
-            height: '100%',
+            minHeight: '140px',
             transformStyle: 'preserve-3d',
             transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             transition: 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          {/* Front face — Question */}
+          {/* Front — Question */}
           <div
-            className="absolute inset-0 bg-white rounded-3xl overflow-hidden"
-            style={{ backfaceVisibility: 'hidden' }}
+            className="absolute inset-0 bg-white rounded-2xl flex flex-col items-center justify-center p-5"
+            style={{ backfaceVisibility: 'hidden', minHeight: '140px', position: 'relative' }}
           >
-            {card.subject && (
-              <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-zinc-900">
-                <span className="text-zinc-400 text-[10px] font-semibold">{card.subject}</span>
-              </div>
-            )}
-            <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center">
-              <span className="text-[9px] font-black text-white">Q</span>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center p-5">
-              <p className="text-zinc-900 font-semibold text-base text-center leading-snug line-clamp-6">
-                {card.question}
-              </p>
-            </div>
-            <div className="absolute bottom-2.5 inset-x-0 flex justify-center">
-              <span className="text-[9px] text-zinc-300 font-medium">tap for answer</span>
-            </div>
+            <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
+              {card.question}
+            </p>
+            <span className="absolute bottom-3 text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              tap to flip
+            </span>
           </div>
 
-          {/* Back face — Answer */}
+          {/* Back — Answer */}
           <div
-            className="absolute inset-0 bg-white rounded-3xl overflow-hidden"
-            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+            className="absolute inset-0 bg-sky-50 rounded-2xl flex flex-col items-center justify-center p-5"
+            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', minHeight: '140px' }}
           >
-            <div className="absolute inset-0 bg-sky-50" />
-            <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center">
-              <span className="text-[9px] font-black text-white">A</span>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center p-5">
-              <p className="text-zinc-900 font-semibold text-base text-center leading-snug line-clamp-6">
-                {card.answer || 'No answer provided.'}
-              </p>
-            </div>
-            <div className="absolute bottom-2.5 inset-x-0 flex justify-center">
-              <span className="text-[9px] text-zinc-300 font-medium">tap for question</span>
-            </div>
+            <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
+              {card.answer || 'No answer provided.'}
+            </p>
+            <span className="absolute bottom-3 text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              tap to flip
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Action row */}
-      <div className="mt-2 px-0.5 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <div className="w-4 h-4 rounded-full bg-zinc-700 flex-shrink-0" />
-          <p className="text-[11px] text-zinc-500 truncate">
-            {card.author_username ? `@${card.author_username}` : meta.short}
-            {card.created_at ? ` · ${timeAgo(card.created_at)}` : ''}
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5 flex-shrink-0">
-          <button onClick={handleLike} className="flex items-center gap-1">
-            <svg className={`w-4 h-4 transition-colors ${liked ? 'text-red-500' : 'text-zinc-600'}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-            {likeCount > 0 && <span className="text-[10px] text-zinc-600">{likeCount}</span>}
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); onComment(card.id); }}>
-            <svg className="w-4 h-4 text-zinc-600 hover:text-zinc-400 transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </button>
-          <button onClick={handleSave}>
-            <svg className={`w-4 h-4 transition-colors ${saved ? 'text-sky-400' : 'text-zinc-600 hover:text-zinc-400'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-          </button>
-        </div>
+      {/* Action bar */}
+      <div className="flex items-center gap-1 px-3 pb-3 border-t border-zinc-800 pt-2.5">
+        <button
+          onClick={handleLike}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${liked ? 'text-red-400 bg-red-500/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+        >
+          <svg className="w-4 h-4" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          {likeCount > 0 ? likeCount : 'Like'}
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onComment(card.id); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors flex-1 justify-center"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          Comment
+        </button>
+        <button
+          onClick={handleSave}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${saved ? 'text-sky-400 bg-sky-500/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+        >
+          <svg className="w-4 h-4" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+          </svg>
+          {saved ? 'Saved' : 'Save'}
+        </button>
       </div>
     </div>
   );
@@ -230,7 +246,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
   const hasReal = reels.length > 0;
 
   return (
-    <div className="col-span-2 sm:col-span-3 -mx-4">
+    <div className="-mx-4">
       {/* Wrapped section */}
       <div className="bg-zinc-900 py-4 my-2">
         {/* Header — inside padding */}
@@ -314,11 +330,22 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
 
 function CardSkeleton() {
   return (
-    <div className="flex flex-col animate-pulse">
-      <div className="w-full rounded-3xl bg-zinc-800" style={{ aspectRatio: '1/1' }} />
-      <div className="mt-2 space-y-1.5 px-0.5">
-        <div className="h-2.5 bg-zinc-800 rounded-full w-4/5" />
-        <div className="h-2.5 bg-zinc-800 rounded-full w-3/5" />
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden animate-pulse">
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
+        <div className="w-8 h-8 rounded-full bg-zinc-800 flex-shrink-0" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3 bg-zinc-800 rounded-full w-2/5" />
+          <div className="h-2.5 bg-zinc-800 rounded-full w-1/4" />
+        </div>
+      </div>
+      {/* Card body */}
+      <div className="mx-4 mb-3 h-[140px] rounded-2xl bg-zinc-800" />
+      {/* Action bar */}
+      <div className="flex gap-2 px-3 pb-3 pt-2 border-t border-zinc-800">
+        <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
+        <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
+        <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
       </div>
     </div>
   );
@@ -661,15 +688,15 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Card grid — max 6 cards, clips after first 2, then due + cram CTA */}
+          {/* Card feed — full-width posts */}
           {dataLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           ) : displayCards.length > 0 ? (
             <>
               {/* First 2 cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-7 mb-2">
+              <div className="space-y-3 mb-3">
                 {displayCards.slice(0, 2).map(card => (
                   <CardTile key={card.id} card={card} onComment={openComments} />
                 ))}
@@ -682,7 +709,7 @@ export default function Dashboard() {
 
               {/* Next 4 cards */}
               {displayCards.length > 2 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-7 mt-2">
+                <div className="space-y-3 mt-3">
                   {displayCards.slice(2, 6).map(card => (
                     <CardTile key={card.id} card={card} onComment={openComments} />
                   ))}
