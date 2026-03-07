@@ -56,8 +56,8 @@ export default function LeaderboardPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen lg:pl-[72px] bg-zinc-950">
-        <div className="bg-zinc-950 border-b border-zinc-800">
+      <div className="min-h-screen lg:pl-[72px] bg-black">
+        <div className="bg-black border-b border-zinc-800">
           <div className="max-w-4xl mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold text-white">Streak Leaderboard</h1>
             <p className="text-zinc-500 text-sm mt-1">Top students by current study streak</p>

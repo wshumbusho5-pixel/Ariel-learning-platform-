@@ -146,8 +146,8 @@ export default function DuelsPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 lg:pl-[72px] pb-20">
-        <header className="sticky top-0 bg-zinc-950 border-b border-zinc-800 z-30">
+      <div className="min-h-screen bg-black lg:pl-[72px] pb-20">
+        <header className="sticky top-0 bg-black border-b border-zinc-800 z-30">
           <div className="max-w-2xl mx-auto px-4 py-4">
             <h1 className="text-xl font-bold text-white">Study Duels</h1>
             <p className="text-xs text-zinc-500 mt-0.5">Head-to-head flashcard battles</p>

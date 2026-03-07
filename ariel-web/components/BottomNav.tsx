@@ -127,7 +127,7 @@ export default function BottomNav() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           {/* Sheet */}
           <div
-            className="absolute bottom-0 left-0 right-0 bg-zinc-950 border-t border-zinc-800 rounded-t-3xl pb-8"
+            className="absolute bottom-0 left-0 right-0 bg-black border-t border-zinc-800 rounded-t-3xl pb-8"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Handle */}
@@ -157,7 +157,7 @@ export default function BottomNav() {
       )}
 
       {/* Bottom nav bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-zinc-950 border-t border-zinc-800">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-black border-t border-zinc-800">
         <div className="flex items-stretch h-16 max-w-screen-sm mx-auto">
           {mainNav.map((item) => {
             const isActive = item.exact

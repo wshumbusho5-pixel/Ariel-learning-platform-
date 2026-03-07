@@ -192,7 +192,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
         style={{ height: '100svh', scrollSnapAlign: 'start' }}
       >
         {/* Background */}
-        <div className="absolute inset-0 bg-zinc-950" />
+        <div className="absolute inset-0 bg-black" />
 
         {/* Top info */}
         <div className="absolute top-0 left-0 right-0 z-10 px-4 pt-4 pb-6 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">

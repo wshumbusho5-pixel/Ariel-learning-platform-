@@ -275,7 +275,7 @@ export default function ExplorePage() {
           onClick={() => setShowAnswer(!showAnswer)}
         >
           {/* Background gradient based on subject */}
-          <div className="absolute inset-0 bg-zinc-950 rounded-2xl"></div>
+          <div className="absolute inset-0 bg-black rounded-2xl"></div>
 
           {/* Content */}
           <div className="relative h-full flex flex-col p-8">

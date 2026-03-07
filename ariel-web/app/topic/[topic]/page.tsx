@@ -130,10 +130,10 @@ function TopicPageInner() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 lg:pl-[72px] pb-24">
+      <div className="min-h-screen bg-black lg:pl-[72px] pb-24">
 
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
+        <header className="sticky top-0 z-30 bg-black/95 backdrop-blur border-b border-zinc-800">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button
               onClick={() => router.back()}
@@ -343,7 +343,7 @@ function TopicPageInner() {
 export default function TopicPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-zinc-700 border-t-sky-500 rounded-full animate-spin" />
       </div>
     }>

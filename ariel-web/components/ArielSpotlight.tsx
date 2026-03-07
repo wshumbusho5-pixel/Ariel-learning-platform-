@@ -371,7 +371,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
       )}
 
       {/* Input bar */}
-      <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-800/60 bg-zinc-950">
+      <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-800/60 bg-black">
         <div className="flex items-end gap-2">
           <button
             onClick={() => setShowUpload(v => !v)}

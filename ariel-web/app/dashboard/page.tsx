@@ -390,12 +390,12 @@ export default function Dashboard() {
   }
 
   if (isLoading) {
-    return <div className="min-h-screen bg-zinc-950 flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-700 border-t-sky-500 rounded-full animate-spin" /></div>;
+    return <div className="min-h-screen bg-black flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-700 border-t-sky-500 rounded-full animate-spin" /></div>;
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-3">
           <p className="text-base font-semibold text-white">Sign in to continue</p>
           <button onClick={() => router.push('/')} className="px-4 py-2 rounded-lg bg-zinc-800 text-sm font-semibold text-zinc-200">Go to login</button>
@@ -468,10 +468,10 @@ export default function Dashboard() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 lg:pl-[72px] pb-24">
+      <div className="min-h-screen bg-black lg:pl-[72px] pb-24">
 
         {/* ── Sticky header: brand + search only ───────────────────────────── */}
-        <header className="sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/60">
+        <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-zinc-800/60">
           {/* Row 1: brand | icons */}
           <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
             <span className="text-lg font-black text-white tracking-tight">ariel</span>

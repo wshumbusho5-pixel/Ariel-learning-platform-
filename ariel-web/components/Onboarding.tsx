@@ -72,7 +72,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Progress */}
       <div className="h-0.5 bg-zinc-800">
         <div className="h-full bg-sky-500 transition-all duration-500" style={{ width: `${(step / 2) * 100}%` }} />

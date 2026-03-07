@@ -312,10 +312,10 @@ export default function MessagesPage() {
     const lastSentId = lastSentIdx >= 0 ? [...messages].reverse()[lastSentIdx].id : null;
 
     return (
-      <div className="flex-1 flex flex-col min-h-0 bg-zinc-950">
+      <div className="flex-1 flex flex-col min-h-0 bg-black">
 
         {/* iMessage-style header: back | avatar+name centered | video+call */}
-        <div className="flex-shrink-0 flex items-center px-3 py-3 border-b border-zinc-800/60 bg-zinc-950/95 backdrop-blur-sm">
+        <div className="flex-shrink-0 flex items-center px-3 py-3 border-b border-zinc-800/60 bg-black/95 backdrop-blur-sm">
           {/* Back (mobile) */}
           <button
             onClick={() => { setMobileView('list'); setActiveConvo(null); }}
@@ -424,7 +424,7 @@ export default function MessagesPage() {
         </div>
 
         {/* iMessage-style input bar */}
-        <div className="flex-shrink-0 px-3 py-2.5 pb-safe border-t border-zinc-800/60 bg-zinc-950">
+        <div className="flex-shrink-0 px-3 py-2.5 pb-safe border-t border-zinc-800/60 bg-black">
           <div className="flex items-end gap-2">
             {/* + button */}
             <button className="w-8 h-8 flex-shrink-0 mb-0.5 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors">
@@ -474,7 +474,7 @@ export default function MessagesPage() {
   return (
     <>
       <SideNav />
-      <div className="fixed inset-0 lg:left-[72px] bg-zinc-950 flex flex-col">
+      <div className="fixed inset-0 lg:left-[72px] bg-black flex flex-col">
 
         {/* ── Two-panel layout ─────────────────────────────────────────────── */}
         <div className="flex-1 flex overflow-hidden">

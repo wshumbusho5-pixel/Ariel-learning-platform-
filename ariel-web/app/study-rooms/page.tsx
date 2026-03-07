@@ -88,7 +88,7 @@ export default function StudyRoomsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen lg:pl-[72px] bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen lg:pl-[72px] bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-8 h-8 border-2 border-zinc-800 border-t-sky-500 rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-zinc-500">Loading...</p>
@@ -100,10 +100,10 @@ export default function StudyRoomsPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 pb-24 lg:pl-[72px]">
+      <div className="min-h-screen bg-black pb-24 lg:pl-[72px]">
 
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-zinc-950 border-b border-zinc-800">
+      <div className="sticky top-0 z-40 bg-black border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between ">
             <div className="flex items-center gap-4">

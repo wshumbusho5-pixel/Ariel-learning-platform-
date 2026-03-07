@@ -31,7 +31,7 @@ export default function CreateCardsPage() {
   return (
     <>
       <SideNav />
-      <main className="min-h-screen bg-zinc-950 lg:pl-[72px]">
+      <main className="min-h-screen bg-black lg:pl-[72px]">
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -42,7 +42,7 @@ export default function CreateCardsPage() {
         }}
       />
 
-      <header className="sticky top-0 z-30 bg-zinc-950 border-b border-zinc-800">
+      <header className="sticky top-0 z-30 bg-black border-b border-zinc-800">
         <div className="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between">
           <h1 className="text-lg font-bold text-white">Create flashcards</h1>
           <button

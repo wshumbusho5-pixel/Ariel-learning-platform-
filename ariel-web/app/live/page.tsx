@@ -104,7 +104,7 @@ export default function LivePage() {
     return (
       <div className="flex w-full">
         <SideNav />
-        <div className="min-h-screen bg-zinc-950 flex items-center justify-center lg:pl-[72px] w-full">
+        <div className="min-h-screen bg-black flex items-center justify-center lg:pl-[72px] w-full">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-zinc-800 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-sm text-zinc-500 font-medium">Loading streams...</p>
@@ -117,9 +117,9 @@ export default function LivePage() {
   return (
     <div className="flex w-full">
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 pb-20 lg:pl-[72px] w-full">
+      <div className="min-h-screen bg-black pb-20 lg:pl-[72px] w-full">
         {/* Header */}
-        <header className="sticky top-0 bg-zinc-950 border-b border-zinc-800 z-30">
+        <header className="sticky top-0 bg-black border-b border-zinc-800 z-30">
         <div className="max-w-2xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-2xl font-bold text-white">Live</h1>

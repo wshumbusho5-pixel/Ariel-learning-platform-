@@ -186,7 +186,7 @@ export default function ReelsPage() {
     return (
       <>
         <SideNav />
-        <div className="fixed inset-0 bg-zinc-950 flex items-center justify-center lg:pl-[72px]">
+        <div className="fixed inset-0 bg-black flex items-center justify-center lg:pl-[72px]">
           <div className="w-8 h-8 border-2 border-zinc-700 border-t-sky-500 rounded-full animate-spin" />
         </div>
         <div className="lg:hidden"><BottomNav /></div>

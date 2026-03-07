@@ -137,7 +137,7 @@ export default function CommentsDrawer() {
 
       {/* Drawer */}
       <div
-        className="relative w-full bg-zinc-950 border-t border-zinc-800 rounded-t-3xl flex flex-col"
+        className="relative w-full bg-black border-t border-zinc-800 rounded-t-3xl flex flex-col"
         style={{ maxHeight: '85dvh' }}
         onClick={(e) => e.stopPropagation()}
       >

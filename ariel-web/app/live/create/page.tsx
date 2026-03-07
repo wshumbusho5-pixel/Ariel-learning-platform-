@@ -46,7 +46,7 @@ export default function CreateStreamPage() {
   return (
     <div className="flex w-full">
       <SideNav />
-      <div className="min-h-screen bg-zinc-950 lg:pl-[72px] w-full">
+      <div className="min-h-screen bg-black lg:pl-[72px] w-full">
         <div className="max-w-2xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4 mb-8">
             <button
