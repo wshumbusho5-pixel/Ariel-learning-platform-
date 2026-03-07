@@ -205,7 +205,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
       <div className="flex items-center gap-1 px-3 pb-3 border-t border-zinc-800 pt-2.5">
         <button
           onClick={handleLike}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${liked ? 'text-red-400 bg-red-500/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${liked ? 'text-red-400 bg-red-500/10' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
         >
           <svg className="w-4 h-4" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -214,7 +214,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); onComment(card.id); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors flex-1 justify-center"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors flex-1 justify-center"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -223,7 +223,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
         </button>
         <button
           onClick={handleSave}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${saved ? 'text-sky-400 bg-sky-500/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${saved ? 'text-sky-400 bg-sky-500/10' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
         >
           <svg className="w-4 h-4" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
