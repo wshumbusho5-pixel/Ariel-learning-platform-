@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
 from app.core.config import settings
-from app.api import questions, scraper, ai, auth, progress, gamification, admin, cards, ai_generator, social, stories, achievements, notifications, comments, messages, activity_feed, study_rooms, challenges, reels, livestream
+from app.api import questions, scraper, ai, auth, progress, gamification, admin, cards, ai_generator, social, stories, achievements, notifications, comments, messages, activity_feed, study_rooms, challenges, reels, livestream, duels
 from app.services.database_service import db_service
 
 @asynccontextmanager
@@ -52,6 +52,7 @@ app.include_router(study_rooms.router)
 app.include_router(challenges.router)
 app.include_router(reels.router)
 app.include_router(livestream.router)
+app.include_router(duels.router)
 
 # Create uploads directory if it doesn't exist
 uploads_dir = Path("uploads")

@@ -587,6 +587,29 @@ export const commentsAPI = {
   },
 };
 
+// Duels API - Multiplayer flashcard battles
+export const duelsAPI = {
+  quickMatch: async () => {
+    const response = await api.post('/api/duels/quick-match');
+    return response.data;
+  },
+
+  challenge: async (username: string) => {
+    const response = await api.post(`/api/duels/challenge/${username}`);
+    return response.data;
+  },
+
+  joinRoom: async (roomId: string) => {
+    const response = await api.post(`/api/duels/${roomId}/join`);
+    return response.data;
+  },
+
+  getRoom: async (roomId: string) => {
+    const response = await api.get(`/api/duels/${roomId}`);
+    return response.data;
+  },
+};
+
 // Messages API - Direct messaging
 export const messagesAPI = {
   // Conversations
