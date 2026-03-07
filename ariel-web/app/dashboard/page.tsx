@@ -161,7 +161,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
         <div
           style={{
             position: 'relative',
-            minHeight: '140px',
+            minHeight: '210px',
             transformStyle: 'preserve-3d',
             transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             transition: 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -170,7 +170,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
           {/* Front — Question */}
           <div
             className="absolute inset-0 bg-white flex flex-col items-center justify-center p-5"
-            style={{ backfaceVisibility: 'hidden', minHeight: '140px', position: 'relative' }}
+            style={{ backfaceVisibility: 'hidden', minHeight: '210px', position: 'relative' }}
           >
             <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
               {card.question}
@@ -186,7 +186,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
           {/* Back — Answer */}
           <div
             className="absolute inset-0 bg-sky-50 flex flex-col items-center justify-center p-5"
-            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', minHeight: '140px' }}
+            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', minHeight: '210px' }}
           >
             <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
               {card.answer || 'No answer provided.'}
@@ -340,7 +340,7 @@ function CardSkeleton() {
         </div>
       </div>
       {/* Card body */}
-      <div className="h-[140px] bg-zinc-800" />
+      <div className="h-[210px] bg-zinc-800" />
       {/* Action bar */}
       <div className="flex gap-2 px-3 pb-3 pt-2 border-t border-zinc-800">
         <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
