@@ -545,8 +545,10 @@ export default function Dashboard() {
                   const isActive = activeSubject === key;
                   return (
                     <button key={key} onClick={() => handleStoryTap(key)} className="flex-shrink-0 flex flex-col items-center gap-1.5">
-                      <div className={`w-[54px] h-[54px] rounded-full flex items-center justify-center text-xl transition-all duration-200 ring-2 ring-offset-[3px] ring-offset-zinc-950 ${isActive ? 'bg-gradient-to-br from-sky-600 to-indigo-600 ring-sky-400 scale-105' : 'bg-zinc-800 ring-zinc-700 opacity-80 hover:opacity-100'}`}>
-                        {m.icon}
+                      <div className={`p-[2.5px] rounded-full transition-all duration-200 ${isActive ? 'bg-gradient-to-br from-sky-400 via-indigo-500 to-sky-400 scale-105' : 'bg-zinc-800'}`}>
+                        <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center text-xl ${isActive ? 'bg-black' : 'bg-zinc-800'}`}>
+                          {m.icon}
+                        </div>
                       </div>
                       <span className={`text-[10px] font-semibold transition-colors truncate w-[54px] text-center ${isActive ? 'text-white' : 'text-zinc-600'}`}>{m.short}</span>
                     </button>

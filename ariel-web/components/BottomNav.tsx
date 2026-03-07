@@ -159,11 +159,11 @@ export default function BottomNav() {
       {/* Bottom nav bar */}
       <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-black border-t border-zinc-800">
         <div className="flex items-stretch h-16 max-w-screen-sm mx-auto">
-          {mainNav.map((item) => {
+          {/* Today, Deck */}
+          {mainNav.slice(0, 2).map((item) => {
             const isActive = item.exact
               ? pathname === item.path
               : pathname === item.path || pathname?.startsWith(item.path + '/');
-
             return (
               <button
                 key={item.name}
@@ -189,6 +189,25 @@ export default function BottomNav() {
               </svg>
             </div>
           </button>
+
+          {/* Cram */}
+          {mainNav.slice(2).map((item) => {
+            const isActive = item.exact
+              ? pathname === item.path
+              : pathname === item.path || pathname?.startsWith(item.path + '/');
+            return (
+              <button
+                key={item.name}
+                onClick={() => router.push(item.path)}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
+                  isActive ? 'text-sky-500' : 'text-zinc-600 hover:text-zinc-300'
+                }`}
+              >
+                {item.icon(isActive)}
+                <span className="text-[10px] font-medium">{item.name}</span>
+              </button>
+            );
+          })}
 
           {/* Hamburger */}
           <button
