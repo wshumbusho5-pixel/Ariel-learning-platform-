@@ -136,14 +136,14 @@ Be specific, reference actual numbers. Return only valid JSON.`;
   const maxCards = Math.max(...weekStats.map((d) => d.cards), 1);
 
   const accuracyColor = (pct: number) => {
-    if (pct >= 80) return 'text-emerald-400';
+    if (pct >= 80) return 'text-sky-400';
     if (pct >= 60) return 'text-sky-400';
     if (pct >= 40) return 'text-orange-400';
     return 'text-red-400';
   };
 
   const accuracyBar = (pct: number) => {
-    if (pct >= 80) return 'bg-emerald-500';
+    if (pct >= 80) return 'bg-sky-500';
     if (pct >= 60) return 'bg-sky-500';
     if (pct >= 40) return 'bg-orange-500';
     return 'bg-red-500';
@@ -163,7 +163,7 @@ Be specific, reference actual numbers. Return only valid JSON.`;
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
           {loadingData ? (
             <div className="flex items-center justify-center min-h-[50vh]">
-              <div className="w-12 h-12 border-2 border-zinc-800 border-t-emerald-500 rounded-full animate-spin" />
+              <div className="w-12 h-12 border-2 border-zinc-800 border-t-sky-500 rounded-full animate-spin" />
             </div>
           ) : (
             <>
@@ -172,7 +172,7 @@ Be specific, reference actual numbers. Return only valid JSON.`;
                 {[
                   { label: 'Cards reviewed', value: totalCards, color: 'text-white' },
                   { label: 'Minutes studied', value: totalMinutes, color: 'text-sky-400' },
-                  { label: 'Day streak', value: streak, color: 'text-emerald-400' },
+                  { label: 'Day streak', value: streak, color: 'text-sky-400' },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
                     <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
@@ -191,7 +191,7 @@ Be specific, reference actual numbers. Return only valid JSON.`;
                       <div key={day.label} className="flex-1 flex flex-col items-center gap-1.5">
                         <div className="w-full flex items-end justify-center" style={{ height: '80px' }}>
                           <div
-                            className="w-full bg-emerald-500 rounded-t-md transition-all"
+                            className="w-full bg-sky-500 rounded-t-md transition-all"
                             style={{ height: `${heightPct}%`, minHeight: '4px' }}
                           />
                         </div>
@@ -233,7 +233,7 @@ Be specific, reference actual numbers. Return only valid JSON.`;
                 <button
                   onClick={generateReport}
                   disabled={loadingReport}
-                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   {loadingReport ? (
                     <>
@@ -253,15 +253,15 @@ Be specific, reference actual numbers. Return only valid JSON.`;
                 <div className="space-y-3">
                   <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                      <div className="w-2 h-2 bg-sky-500 rounded-full" />
                       <p className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">Ariel's analysis</p>
                     </div>
                     <p className="text-sm text-zinc-300 leading-relaxed">{report.summary}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-emerald-900/20 border border-emerald-800/40 rounded-xl p-4">
-                      <p className="text-xs font-semibold text-emerald-500 uppercase tracking-widest mb-2">Strength</p>
+                    <div className="bg-sky-900/20 border border-sky-800/40 rounded-xl p-4">
+                      <p className="text-xs font-semibold text-sky-500 uppercase tracking-widest mb-2">Strength</p>
                       <p className="text-sm text-zinc-300 leading-relaxed">{report.strength}</p>
                     </div>
                     <div className="bg-orange-900/20 border border-orange-800/40 rounded-xl p-4">

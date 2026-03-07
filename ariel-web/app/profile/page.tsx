@@ -65,7 +65,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-zinc-800 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-4 border-zinc-800 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-sm text-zinc-500 font-medium">Loading...</p>
         </div>
       </div>
@@ -182,25 +182,25 @@ export default function ProfilePage() {
 
             <div className="flex gap-4 overflow-x-auto pb-2">
               <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-emerald-500 transition-colors">
+                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-sky-500 transition-colors">
                   <span className="text-lg">🔥</span>
                 </div>
                 <p className="text-xs text-zinc-400 font-medium">{streakDays}d streak</p>
               </button>
               <button onClick={() => router.push('/achievements')} className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-emerald-500 transition-colors">
+                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-sky-500 transition-colors">
                   <span className="text-lg">⭐</span>
                 </div>
                 <p className="text-xs text-zinc-400 font-medium">Level {level}</p>
               </button>
               <button onClick={() => router.push('/achievements')} className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-emerald-500 transition-colors">
+                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-sky-500 transition-colors">
                   <span className="text-lg">🏆</span>
                 </div>
                 <p className="text-xs text-zinc-400 font-medium">Trophies</p>
               </button>
               <button onClick={() => router.push('/deck')} className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-emerald-500 transition-colors">
+                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-sky-500 transition-colors">
                   <span className="text-lg">📚</span>
                 </div>
                 <p className="text-xs text-zinc-400 font-medium">{totalCards} cards</p>
@@ -221,11 +221,11 @@ export default function ProfilePage() {
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`flex-1 py-3 border-t-2 transition-colors ${
-                      activeTab === tab ? 'border-emerald-500' : 'border-transparent'
+                      activeTab === tab ? 'border-sky-500' : 'border-transparent'
                     }`}
                   >
                     <svg
-                      className={`w-6 h-6 mx-auto ${activeTab === tab ? 'text-emerald-500' : 'text-zinc-600'}`}
+                      className={`w-6 h-6 mx-auto ${activeTab === tab ? 'text-sky-500' : 'text-zinc-600'}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -280,7 +280,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden mb-2">
                     <div
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
+                      className="h-full bg-sky-500 rounded-full transition-all duration-1000"
                       style={{ width: `${progress}%` }}
                     ></div>
                   </div>

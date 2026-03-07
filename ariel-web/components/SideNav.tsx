@@ -105,6 +105,15 @@ const expandedGroups: NavGroup[] = [
           </svg>
         ),
       },
+      {
+        name: 'Messages',
+        path: '/messages',
+        icon: (active) => (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+        ),
+      },
     ],
   },
   {
@@ -235,7 +244,7 @@ export default function SideNav() {
           </button>
           {expanded && (
             <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 bg-sky-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-xs">A</span>
               </div>
               <span className="text-white font-bold text-lg tracking-tight">Ariel</span>
@@ -260,13 +269,13 @@ export default function SideNav() {
                   expanded ? 'gap-3.5 px-3 py-2.5' : 'justify-center w-12 h-12 mx-auto'
                 } ${
                   isCreate
-                    ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
+                    ? 'bg-sky-500 hover:bg-sky-400 text-white'
                     : active
-                    ? 'text-emerald-400 bg-zinc-800/60'
+                    ? 'text-sky-400 bg-zinc-800/60'
                     : 'text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60'
                 }`}
               >
-                <span className={`flex-shrink-0 ${isCreate ? 'text-white' : active ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                <span className={`flex-shrink-0 ${isCreate ? 'text-white' : active ? 'text-sky-400' : 'text-zinc-500'}`}>
                   {item.icon(active)}
                 </span>
                 {expanded && (
@@ -298,10 +307,10 @@ export default function SideNav() {
                         key={item.name}
                         onClick={() => navigate(item.path)}
                         className={`w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-[14px] font-semibold transition-colors ${
-                          active ? 'text-emerald-400 bg-zinc-800/60' : 'text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60'
+                          active ? 'text-sky-400 bg-zinc-800/60' : 'text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/60'
                         }`}
                       >
-                        <span className={`flex-shrink-0 ${active ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                        <span className={`flex-shrink-0 ${active ? 'text-sky-400' : 'text-zinc-600'}`}>
                           {item.icon(active)}
                         </span>
                         <span>{item.name}</span>

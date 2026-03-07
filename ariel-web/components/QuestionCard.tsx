@@ -74,7 +74,7 @@ export default function QuestionCard({
         ) : (
           <div className="space-y-4 animate-fadeIn">
             {/* The Answer - Clean and prominent */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-6 rounded-lg">
+            <div className="bg-gradient-to-r from-green-50 to-sky-50 border-l-4 border-green-500 p-6 rounded-lg">
               <p className="text-xl font-semibold text-green-900">
                 {answer}
               </p>

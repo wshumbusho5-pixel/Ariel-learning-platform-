@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
                   key={entry.user_id}
                   href={`/profile/${entry.user_id}`}
                   className={`block bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-600 transition-colors ${
-                    entry.is_current_user ? 'ring-2 ring-emerald-500' : ''
+                    entry.is_current_user ? 'ring-2 ring-sky-500' : ''
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -120,12 +120,12 @@ export default function LeaderboardPage() {
                           {entry.full_name || entry.username || 'User'}
                         </p>
                         {entry.is_verified && (
-                          <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="w-4 h-4 text-sky-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
                         )}
                         {entry.is_current_user && (
-                          <span className="px-2 py-0.5 bg-emerald-900/40 text-emerald-400 text-xs font-medium rounded-full">
+                          <span className="px-2 py-0.5 bg-sky-900/40 text-sky-400 text-xs font-medium rounded-full">
                             You
                           </span>
                         )}
@@ -162,7 +162,7 @@ export default function LeaderboardPage() {
           <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
             <div className="flex gap-3">
               <div>
-                <h3 className="font-semibold text-emerald-400 mb-1">How to climb the leaderboard</h3>
+                <h3 className="font-semibold text-sky-400 mb-1">How to climb the leaderboard</h3>
                 <ul className="text-sm text-zinc-400 space-y-1">
                   <li>· Review cards every single day to build your streak</li>
                   <li>· Use freeze cards to protect your streak on busy days</li>

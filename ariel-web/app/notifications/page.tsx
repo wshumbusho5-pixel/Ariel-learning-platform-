@@ -123,7 +123,7 @@ export default function NotificationsPage() {
                 onClick={() => setFilter('all')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   filter === 'all'
-                    ? 'bg-emerald-500 text-white'
+                    ? 'bg-sky-500 text-white'
                     : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                 }`}
               >
@@ -133,7 +133,7 @@ export default function NotificationsPage() {
                 onClick={() => setFilter('unread')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   filter === 'unread'
-                    ? 'bg-emerald-500 text-white'
+                    ? 'bg-sky-500 text-white'
                     : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                 }`}
               >
@@ -146,7 +146,7 @@ export default function NotificationsPage() {
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllRead}
-                    className="text-sm text-emerald-400 hover:text-emerald-300 font-medium"
+                    className="text-sm text-sky-400 hover:text-sky-300 font-medium"
                   >
                     Mark all as read
                   </button>
@@ -185,7 +185,7 @@ export default function NotificationsPage() {
                 <div
                   key={notification.id}
                   className={`bg-zinc-900 border rounded-xl p-4 transition-colors ${
-                    !notification.is_read ? 'border-emerald-800/60 ring-1 ring-emerald-800/40' : 'border-zinc-800'
+                    !notification.is_read ? 'border-sky-800/60 ring-1 ring-sky-800/40' : 'border-zinc-800'
                   }`}
                 >
                   <div className="flex gap-4">
@@ -222,7 +222,7 @@ export default function NotificationsPage() {
                           className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
                           title="Mark as read"
                         >
-                          <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         </button>
@@ -242,7 +242,7 @@ export default function NotificationsPage() {
                   {notification.action_url && (
                     <Link
                       href={notification.action_url}
-                      className="mt-3 block w-full py-2 text-center bg-zinc-800 hover:bg-zinc-700 text-emerald-400 rounded-lg font-medium transition-colors"
+                      className="mt-3 block w-full py-2 text-center bg-zinc-800 hover:bg-zinc-700 text-sky-400 rounded-lg font-medium transition-colors"
                     >
                       View
                     </Link>

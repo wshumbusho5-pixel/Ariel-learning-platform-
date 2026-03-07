@@ -149,7 +149,7 @@ function TopicPageInner() {
             </div>
             <button
               onClick={() => router.push(createUrl)}
-              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-full transition-colors"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold rounded-full transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -164,7 +164,7 @@ function TopicPageInner() {
           {/* Ariel pre-tuit intro */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-5 h-5 rounded-full bg-sky-500 flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-[10px]">A</span>
               </div>
               <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
@@ -189,10 +189,10 @@ function TopicPageInner() {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => router.push(createUrl)}
-              className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 hover:border-emerald-500/50 hover:bg-emerald-500/5 rounded-2xl transition-all text-left"
+              className="flex items-center gap-3 p-4 bg-zinc-900 border border-zinc-800 hover:border-sky-500/50 hover:bg-sky-500/5 rounded-2xl transition-all text-left"
             >
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
               </div>
@@ -240,7 +240,7 @@ function TopicPageInner() {
                 <p className="text-zinc-500 text-sm mb-4">No community cards yet for "{topic}".</p>
                 <button
                   onClick={() => router.push(createUrl)}
-                  className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-xl transition-colors"
+                  className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold rounded-xl transition-colors"
                 >
                   Be the first to create one
                 </button>
@@ -274,7 +274,7 @@ function TopicPageInner() {
                             <p className="text-zinc-400 text-xs leading-snug">{card.question}</p>
                             <div className="h-px bg-zinc-800" />
                             <div className="flex items-start gap-2">
-                              <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <div className="w-4 h-4 rounded-full bg-sky-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                 </svg>
@@ -314,7 +314,7 @@ function TopicPageInner() {
                           className="flex items-center gap-1.5 pt-2.5 group ml-auto"
                         >
                           <svg
-                            className={`w-4 h-4 transition-colors ${isSaved ? 'text-emerald-400' : 'text-zinc-600 group-hover:text-white'}`}
+                            className={`w-4 h-4 transition-colors ${isSaved ? 'text-sky-400' : 'text-zinc-600 group-hover:text-white'}`}
                             fill={isSaved ? 'currentColor' : 'none'}
                             stroke={isSaved ? 'none' : 'currentColor'}
                             strokeWidth={2}
@@ -322,7 +322,7 @@ function TopicPageInner() {
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                           </svg>
-                          <span className={`text-xs ${isSaved ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                          <span className={`text-xs ${isSaved ? 'text-sky-400' : 'text-zinc-600'}`}>
                             {isSaved ? 'Saved' : 'Save'}
                           </span>
                         </button>
@@ -344,7 +344,7 @@ export default function TopicPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-zinc-700 border-t-sky-500 rounded-full animate-spin" />
       </div>
     }>
       <TopicPageInner />

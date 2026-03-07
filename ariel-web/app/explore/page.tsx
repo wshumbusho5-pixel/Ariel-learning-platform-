@@ -381,7 +381,7 @@ export default function ExplorePage() {
                   className={`ml-auto px-4 py-1.5 text-sm font-semibold rounded-full transition-colors ${
                     currentCard.created_by?.id && followingCreators.has(currentCard.created_by.id)
                       ? 'bg-zinc-700 text-white'
-                      : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                      : 'bg-sky-600 text-white hover:bg-sky-500'
                   }`}
                 >
                   {currentCard.created_by?.id && followingCreators.has(currentCard.created_by.id) ? 'Following' : 'Follow'}

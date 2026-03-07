@@ -166,7 +166,7 @@ export default function CommentsDrawer() {
           <div className="px-5 py-3 border-b border-zinc-800/60 flex-shrink-0">
             <div className="flex items-center gap-2">
               {card.subject && (
-                <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-semibold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full">
                   {card.subject}
                 </span>
               )}
@@ -186,7 +186,7 @@ export default function CommentsDrawer() {
         >
           {loading ? (
             <div className="flex justify-center py-8">
-              <div className="w-6 h-6 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-zinc-700 border-t-sky-500 rounded-full animate-spin" />
             </div>
           ) : comments.length === 0 ? (
             <div className="text-center py-10">
@@ -204,8 +204,8 @@ export default function CommentsDrawer() {
               return (
                 <div key={comment.id} className="flex items-start gap-3">
                   {/* Avatar */}
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-                    <span className="text-emerald-400 text-xs font-bold">
+                  <div className="w-8 h-8 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sky-400 text-xs font-bold">
                       {comment.username?.[0]?.toUpperCase() ?? '?'}
                     </span>
                   </div>
@@ -290,8 +290,8 @@ export default function CommentsDrawer() {
           )}
           <div className="flex items-center gap-3">
             {/* User avatar */}
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
-              <span className="text-emerald-400 text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
+              <span className="text-sky-400 text-xs font-bold">
                 {user?.username?.[0]?.toUpperCase() ?? user?.full_name?.[0]?.toUpperCase() ?? 'Y'}
               </span>
             </div>
@@ -314,10 +314,10 @@ export default function CommentsDrawer() {
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="text-emerald-400 hover:text-emerald-300 font-semibold text-sm disabled:opacity-50 transition-colors flex-shrink-0"
+                  className="text-sky-400 hover:text-sky-300 font-semibold text-sm disabled:opacity-50 transition-colors flex-shrink-0"
                 >
                   {submitting ? (
-                    <div className="w-4 h-4 border-2 border-emerald-500/30 border-t-emerald-400 rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-sky-500/30 border-t-sky-400 rounded-full animate-spin" />
                   ) : 'Post'}
                 </button>
               )}

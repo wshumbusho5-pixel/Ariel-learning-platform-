@@ -53,7 +53,7 @@ export default function DeckPage() {
           <p className="text-sm text-zinc-500 mb-6 max-w-xs mx-auto">Create an account to save and review your flashcards</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold rounded-lg transition-colors"
+            className="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold rounded-lg transition-colors"
           >
             Go to Home
           </button>
@@ -79,7 +79,7 @@ export default function DeckPage() {
             {stats && stats.due_today > 0 && (
               <button
                 onClick={() => router.push('/review')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold rounded-full transition-colors shadow-lg"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold rounded-full transition-colors shadow-lg"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -96,7 +96,7 @@ export default function DeckPage() {
                 onClick={() => setSubjectFilter('all')}
                 className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
                   subjectFilter === 'all'
-                    ? 'bg-emerald-500 text-white border-emerald-500'
+                    ? 'bg-sky-500 text-white border-sky-500'
                     : 'bg-black/40 backdrop-blur-sm text-white border-white/20 hover:border-white/40'
                 }`}
               >
@@ -108,7 +108,7 @@ export default function DeckPage() {
                   onClick={() => setSubjectFilter(subject)}
                   className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
                     subjectFilter === subject
-                      ? 'bg-emerald-500 text-white border-emerald-500'
+                      ? 'bg-sky-500 text-white border-sky-500'
                       : 'bg-black/40 backdrop-blur-sm text-white border-white/20 hover:border-white/40'
                   }`}
                 >

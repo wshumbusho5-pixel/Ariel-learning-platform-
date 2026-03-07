@@ -26,12 +26,12 @@ const navItems = [
   },
   { name: 'create', path: '/create-cards', exact: false, icon: () => null },
   {
-    name: 'Explore',
-    path: '/explore',
+    name: 'Messages',
+    path: '/messages',
     exact: false,
     icon: (active: boolean) => (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
       </svg>
     ),
   },
@@ -63,7 +63,7 @@ export default function BottomNav() {
                 onClick={openAriel}
                 className="flex-1 flex flex-col items-center justify-center"
               >
-                <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 -mt-4">
+                <div className="w-12 h-12 bg-sky-500 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/30 -mt-4">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
@@ -81,7 +81,7 @@ export default function BottomNav() {
               key={item.name}
               onClick={() => router.push(item.path)}
               className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
-                isActive ? 'text-emerald-500' : 'text-zinc-600 hover:text-zinc-300'
+                isActive ? 'text-sky-500' : 'text-zinc-600 hover:text-zinc-300'
               }`}
             >
               {item.icon(isActive)}

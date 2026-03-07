@@ -25,8 +25,8 @@ export default function AICardGenerator() {
   const subjectIcons: Record<string, { icon: string; color: string }> = {
     mathematics: { icon: '➗', color: 'from-blue-500 to-cyan-500' },
     physics: { icon: '⚛️', color: 'from-zinc-500 to-zinc-600' },
-    chemistry: { icon: '🧪', color: 'from-green-500 to-emerald-500' },
-    biology: { icon: '🧬', color: 'from-emerald-500 to-teal-500' },
+    chemistry: { icon: '🧪', color: 'from-green-500 to-sky-500' },
+    biology: { icon: '🧬', color: 'from-sky-500 to-teal-500' },
     'computer-science': { icon: '💻', color: 'from-cyan-500 to-blue-500' },
     english: { icon: '📖', color: 'from-zinc-400 to-zinc-500' },
     history: { icon: '🏛️', color: 'from-orange-500 to-amber-500' },

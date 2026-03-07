@@ -160,7 +160,7 @@ Correct answer: ${currentCard.answer}`;
             </div>
           )}
           {swipeDirection === 'right' && (
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg z-20">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-sky-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg z-20">
               EASY
             </div>
           )}
@@ -202,9 +202,9 @@ Correct answer: ${currentCard.answer}`;
 
                     {/* Explain My Mistake */}
                     {explanation ? (
-                      <div className="bg-emerald-900/30 border border-emerald-700/40 rounded-2xl p-5">
-                        <p className="text-xs font-semibold text-emerald-400 uppercase tracking-widest mb-2">Why you got this wrong</p>
-                        <p className="text-sm text-emerald-100 leading-relaxed">{explanation}</p>
+                      <div className="bg-sky-900/30 border border-sky-700/40 rounded-2xl p-5">
+                        <p className="text-xs font-semibold text-sky-400 uppercase tracking-widest mb-2">Why you got this wrong</p>
+                        <p className="text-sm text-sky-100 leading-relaxed">{explanation}</p>
                       </div>
                     ) : (
                       <button
@@ -278,7 +278,7 @@ Correct answer: ${currentCard.answer}`;
               <button onClick={() => handleRating(0)} className="bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors">Again</button>
               <button onClick={() => handleRating(2)} className="bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors">Hard</button>
               <button onClick={() => handleRating(4)} className="bg-sky-500 hover:bg-sky-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors">Good</button>
-              <button onClick={() => handleRating(5)} className="bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors">Easy</button>
+              <button onClick={() => handleRating(5)} className="bg-sky-500 hover:bg-sky-600 text-white py-3 rounded-xl font-semibold text-sm transition-colors">Easy</button>
             </div>
             <p className="text-white/30 text-center text-xs mt-3">or swipe left · right</p>
           </div>

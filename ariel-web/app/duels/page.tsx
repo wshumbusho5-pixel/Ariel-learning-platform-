@@ -162,8 +162,8 @@ export default function DuelsPage() {
               <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
                 <div className="flex items-center justify-center gap-8 mb-6">
                   <div className="text-center">
-                    <div className="w-16 h-16 rounded-full bg-emerald-900/40 border-2 border-emerald-600 flex items-center justify-center mx-auto mb-2">
-                      <span className="text-2xl font-bold text-emerald-400">Y</span>
+                    <div className="w-16 h-16 rounded-full bg-sky-900/40 border-2 border-sky-600 flex items-center justify-center mx-auto mb-2">
+                      <span className="text-2xl font-bold text-sky-400">Y</span>
                     </div>
                     <p className="text-sm font-semibold text-white">You</p>
                   </div>
@@ -191,7 +191,7 @@ export default function DuelsPage() {
                 <button
                   onClick={startDuel}
                   disabled={loadingCards}
-                  className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   {loadingCards ? (
                     <>
@@ -230,7 +230,7 @@ export default function DuelsPage() {
               <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-4">
                 <div className="flex-1 text-center">
                   <p className="text-xs text-zinc-500 mb-1">You</p>
-                  <p className="text-2xl font-black text-emerald-400">{userScore}</p>
+                  <p className="text-2xl font-black text-sky-400">{userScore}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs text-zinc-500 mb-1">Round</p>
@@ -247,7 +247,7 @@ export default function DuelsPage() {
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-1000 ${timeLeft > 8 ? 'bg-emerald-500' : timeLeft > 4 ? 'bg-orange-500' : 'bg-red-500'}`}
+                      className={`h-full rounded-full transition-all duration-1000 ${timeLeft > 8 ? 'bg-sky-500' : timeLeft > 4 ? 'bg-orange-500' : 'bg-red-500'}`}
                       style={{ width: `${(timeLeft / 15) * 100}%` }}
                     />
                   </div>
@@ -283,12 +283,12 @@ export default function DuelsPage() {
                     placeholder="Type your answer..."
                     disabled={userAnswered}
                     autoFocus
-                    className="flex-1 px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-emerald-500 placeholder:text-zinc-600 disabled:opacity-50"
+                    className="flex-1 px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-sky-500 placeholder:text-zinc-600 disabled:opacity-50"
                   />
                   <button
                     onClick={handleSubmit}
                     disabled={!userAnswer.trim() || userAnswered}
-                    className="px-5 py-3 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors"
+                    className="px-5 py-3 bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors"
                   >
                     Go
                   </button>
@@ -298,12 +298,12 @@ export default function DuelsPage() {
               {/* Round result */}
               {phase === 'reveal' && roundResult && (
                 <div className={`rounded-xl p-5 border text-center ${
-                  roundResult === 'win' ? 'bg-emerald-900/20 border-emerald-700/40' :
+                  roundResult === 'win' ? 'bg-sky-900/20 border-sky-700/40' :
                   roundResult === 'lose' ? 'bg-red-900/20 border-red-800/40' :
                   'bg-zinc-800/40 border-zinc-700'
                 }`}>
                   <p className={`text-lg font-black mb-1 ${
-                    roundResult === 'win' ? 'text-emerald-400' :
+                    roundResult === 'win' ? 'text-sky-400' :
                     roundResult === 'lose' ? 'text-red-400' :
                     'text-zinc-300'
                   }`}>
@@ -319,7 +319,7 @@ export default function DuelsPage() {
           {phase === 'complete' && (
             <div className="space-y-4">
               <div className={`rounded-xl p-8 border text-center ${
-                finalResult === 'win' ? 'bg-emerald-900/20 border-emerald-700/40' :
+                finalResult === 'win' ? 'bg-sky-900/20 border-sky-700/40' :
                 finalResult === 'lose' ? 'bg-red-900/20 border-red-800/40' :
                 'bg-zinc-900 border-zinc-800'
               }`}>
@@ -327,7 +327,7 @@ export default function DuelsPage() {
                   {finalResult === 'win' ? 'You won' : finalResult === 'lose' ? 'You lost' : 'Draw'}
                 </p>
                 <p className={`text-lg font-bold mb-6 ${
-                  finalResult === 'win' ? 'text-emerald-400' :
+                  finalResult === 'win' ? 'text-sky-400' :
                   finalResult === 'lose' ? 'text-red-400' :
                   'text-zinc-400'
                 }`}>
@@ -342,7 +342,7 @@ export default function DuelsPage() {
                   </button>
                   <button
                     onClick={() => router.push('/leaderboard')}
-                    className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-colors"
+                    className="flex-1 py-3 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-xl transition-colors"
                   >
                     Leaderboard
                   </button>

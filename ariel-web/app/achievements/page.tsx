@@ -72,13 +72,13 @@ export default function AchievementsPage() {
             <div className="grid grid-cols-3 gap-4 mt-4">
               <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
                 <p className="text-xs text-zinc-500">Unlocked</p>
-                <p className="text-2xl font-bold text-emerald-400">
+                <p className="text-2xl font-bold text-sky-400">
                   {stats.unlocked}/{stats.total}
                 </p>
               </div>
               <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
                 <p className="text-xs text-zinc-500">Completion</p>
-                <p className="text-2xl font-bold text-emerald-400">
+                <p className="text-2xl font-bold text-sky-400">
                   {stats.total > 0 ? Math.round((stats.unlocked / stats.total) * 100) : 0}%
                 </p>
               </div>
@@ -102,7 +102,7 @@ export default function AchievementsPage() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition-colors ${
                   selectedCategory === cat.id
-                    ? 'bg-emerald-500 text-white'
+                    ? 'bg-sky-500 text-white'
                     : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
                 }`}
               >

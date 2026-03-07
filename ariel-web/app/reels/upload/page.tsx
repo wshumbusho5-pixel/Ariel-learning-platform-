@@ -120,7 +120,7 @@ export default function ReelUploadPage() {
             disabled={!selectedFile || !title.trim() || uploading}
             className={`px-6 py-2 rounded-lg font-semibold transition-all ${
               selectedFile && title.trim() && !uploading
-                ? 'bg-emerald-600 hover:bg-emerald-500'
+                ? 'bg-sky-600 hover:bg-sky-500'
                 : 'bg-gray-800 text-gray-500 cursor-not-allowed'
             }`}
           >
@@ -136,7 +136,7 @@ export default function ReelUploadPage() {
           {!videoPreview ? (
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-dashed border-gray-700 hover:border-emerald-500 transition-colors flex flex-col items-center justify-center gap-4"
+              className="w-full aspect-[9/16] bg-gray-900 rounded-2xl border-2 border-dashed border-gray-700 hover:border-sky-500 transition-colors flex flex-col items-center justify-center gap-4"
             >
               <div className="w-20 h-20 bg-zinc-600 rounded-full flex items-center justify-center">
                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -187,7 +187,7 @@ export default function ReelUploadPage() {
             </div>
             <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-emerald-500 transition-all duration-300"
+                className="h-full bg-sky-500 transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -207,7 +207,7 @@ export default function ReelUploadPage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="What's this reel about?"
               maxLength={100}
-              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition-colors"
             />
             <p className="text-xs text-gray-500 mt-1">{title.length}/100</p>
           </div>
@@ -236,7 +236,7 @@ export default function ReelUploadPage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition-colors"
             >
               <option value="">Select a category</option>
               {categories.map(cat => (
@@ -255,7 +255,7 @@ export default function ReelUploadPage() {
               value={hashtags}
               onChange={(e) => setHashtags(e.target.value)}
               placeholder="#physics #experiment #cool"
-              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-gray-900 text-white border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition-colors"
             />
             <p className="text-xs text-gray-500 mt-1">Separate hashtags with # (e.g., #math #tutorial)</p>
           </div>

@@ -147,7 +147,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-zinc-800 border-t-emerald-500"></div>
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-zinc-800 border-t-sky-500"></div>
       </div>
     );
   }
@@ -205,7 +205,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
         {/* Top info */}
         <div className="absolute top-0 left-0 right-0 z-10 px-4 pt-4 pb-6 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
           {card.subject && (
-            <span className="inline-block px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold rounded-full">
+            <span className="inline-block px-3 py-1 bg-sky-500/20 border border-sky-500/40 text-sky-400 text-xs font-semibold rounded-full">
               {card.subject}
             </span>
           )}
@@ -241,7 +241,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
                   <p className="text-zinc-400 text-sm mb-3">{card.question}</p>
                   <div className="h-px bg-zinc-800 mb-3" />
                   <div className="flex items-start gap-2">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-5 h-5 rounded-full bg-sky-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                       </svg>
@@ -283,7 +283,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
           <button onClick={(e) => handleSave(card.id, e)} className="flex flex-col items-center gap-1">
             <div className="w-11 h-11 rounded-full bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 flex items-center justify-center">
               <svg
-                className={`w-5 h-5 ${isSaved ? 'text-emerald-400' : 'text-white'}`}
+                className={`w-5 h-5 ${isSaved ? 'text-sky-400' : 'text-white'}`}
                 fill={isSaved ? 'currentColor' : 'none'}
                 stroke={isSaved ? 'none' : 'currentColor'}
                 strokeWidth={2}
@@ -336,8 +336,8 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
         {/* Header */}
         <div className="p-4 flex items-center justify-between border-b border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-              <span className="text-emerald-400 font-bold text-sm">
+            <div className="w-9 h-9 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center">
+              <span className="text-sky-400 font-bold text-sm">
                 {card.subject ? card.subject[0].toUpperCase() : 'A'}
               </span>
             </div>
@@ -369,7 +369,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
               <p className="text-zinc-400 text-sm">{card.question}</p>
               <div className="h-px bg-zinc-800" />
               <div className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-sky-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
@@ -413,7 +413,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
           {type === 'trending' && (
             <button onClick={(e) => handleSave(card.id, e)} className="ml-auto text-zinc-500 hover:text-white">
               <svg
-                className={`w-5 h-5 ${isSaved ? 'text-emerald-400' : ''}`}
+                className={`w-5 h-5 ${isSaved ? 'text-sky-400' : ''}`}
                 fill={isSaved ? 'currentColor' : 'none'}
                 stroke={isSaved ? 'none' : 'currentColor'}
                 strokeWidth={2}

@@ -63,14 +63,14 @@ export default function CreateStreamPage() {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-white mb-2">
-                Title <span className="text-emerald-500">*</span>
+                Title <span className="text-sky-500">*</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., Chemistry Exam Prep Session"
-                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-zinc-600"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent placeholder:text-zinc-600"
                 maxLength={100}
               />
               <p className="text-xs text-zinc-600 mt-1">{title.length}/100 characters</p>
@@ -84,7 +84,7 @@ export default function CreateStreamPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Tell viewers what your stream is about..."
-                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none placeholder:text-zinc-600"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent resize-none placeholder:text-zinc-600"
                 rows={4}
                 maxLength={500}
               />
@@ -93,12 +93,12 @@ export default function CreateStreamPage() {
 
             <div>
               <label className="block text-sm font-semibold text-white mb-2">
-                Category <span className="text-emerald-500">*</span>
+                Category <span className="text-sky-500">*</span>
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
               >
                 <option value="study_session">📚 Study Session</option>
                 <option value="lecture">🎓 Lecture</option>
@@ -119,13 +119,13 @@ export default function CreateStreamPage() {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="e.g., Chemistry, Mathematics, Physics"
-                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-zinc-600"
+                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent placeholder:text-zinc-600"
               />
             </div>
 
             <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
               <div className="flex gap-3">
-                <svg className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 text-sky-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
                 <div className="flex-1">
@@ -151,7 +151,7 @@ export default function CreateStreamPage() {
               <button
                 onClick={handleCreateAndGoLive}
                 disabled={loading || !title.trim()}
-                className="flex-1 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-6 py-3 bg-sky-500 hover:bg-sky-400 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

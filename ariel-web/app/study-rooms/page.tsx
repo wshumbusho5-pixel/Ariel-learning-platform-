@@ -90,7 +90,7 @@ export default function StudyRoomsPage() {
     return (
       <div className="min-h-screen lg:pl-[72px] bg-zinc-950 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-2 border-zinc-800 border-t-emerald-500 rounded-full animate-spin mx-auto"></div>
+          <div className="w-8 h-8 border-2 border-zinc-800 border-t-sky-500 rounded-full animate-spin mx-auto"></div>
           <p className="text-sm font-medium text-zinc-500">Loading...</p>
         </div>
       </div>
@@ -107,7 +107,7 @@ export default function StudyRoomsPage() {
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between ">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-600 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-sky-600 flex items-center justify-center">
                 <span className="text-3xl">🏠</span>
               </div>
               <div>
@@ -119,7 +119,7 @@ export default function StudyRoomsPage() {
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
+              className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-lg font-semibold transition-colors"
             >
               + Create Room
             </button>
@@ -138,7 +138,7 @@ export default function StudyRoomsPage() {
             <p className="text-zinc-500 mb-8">Create one to start studying with others!</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
+              className="px-6 py-3 bg-sky-500 hover:bg-sky-400 text-white rounded-lg font-semibold transition-colors"
             >
               Create Your First Room
             </button>
@@ -195,7 +195,7 @@ export default function StudyRoomsPage() {
                 {/* Action Button */}
                 <button
                   onClick={() => joinRoom(room.id)}
-                  className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
+                  className="w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-lg font-semibold transition-colors"
                 >
                   Join Room
                 </button>
@@ -218,7 +218,7 @@ export default function StudyRoomsPage() {
                   type="text"
                   value={newRoom.title}
                   onChange={(e) => setNewRoom({ ...newRoom, title: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-emerald-500 focus:outline-none placeholder:text-zinc-600"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-sky-500 focus:outline-none placeholder:text-zinc-600"
                   placeholder="e.g., Physics Study Session"
                 />
               </div>
@@ -229,7 +229,7 @@ export default function StudyRoomsPage() {
                   type="text"
                   value={newRoom.subject}
                   onChange={(e) => setNewRoom({ ...newRoom, subject: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-emerald-500 focus:outline-none placeholder:text-zinc-600"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-sky-500 focus:outline-none placeholder:text-zinc-600"
                   placeholder="e.g., Physics"
                 />
               </div>
@@ -239,7 +239,7 @@ export default function StudyRoomsPage() {
                 <textarea
                   value={newRoom.description}
                   onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-emerald-500 focus:outline-none placeholder:text-zinc-600"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-sky-500 focus:outline-none placeholder:text-zinc-600"
                   rows={3}
                   placeholder="What are you studying?"
                 />
@@ -251,7 +251,7 @@ export default function StudyRoomsPage() {
                   type="number"
                   value={newRoom.max_participants}
                   onChange={(e) => setNewRoom({ ...newRoom, max_participants: parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-emerald-500 focus:outline-none placeholder:text-zinc-600"
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-zinc-700 bg-zinc-800 text-white focus:border-sky-500 focus:outline-none placeholder:text-zinc-600"
                   min="2"
                   max="50"
                 />
@@ -267,7 +267,7 @@ export default function StudyRoomsPage() {
               </button>
               <button
                 onClick={createRoom}
-                className="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-semibold transition-colors"
+                className="flex-1 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-lg font-semibold transition-colors"
               >
                 Create
               </button>
