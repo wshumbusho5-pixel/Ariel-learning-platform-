@@ -6,14 +6,17 @@ from pathlib import Path
 from app.core.config import settings
 from app.api import questions, scraper, ai, auth, progress, gamification, admin, cards, ai_generator, social, stories, achievements, notifications, comments, messages, activity_feed, study_rooms, challenges, reels, livestream, duels
 from app.services.database_service import db_service
+from app.core.database import connect_to_mongo, close_mongo_connection
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     await db_service.connect_db()
+    await connect_to_mongo()
     yield
     # Shutdown
     await db_service.close_db()
+    await close_mongo_connection()
 
 app = FastAPI(
     title="Ariel API",

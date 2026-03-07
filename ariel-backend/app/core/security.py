@@ -45,32 +45,24 @@ async def get_current_user(
     db = Depends(get_database)
 ):
     """Get current user from JWT token"""
+    from app.services.auth_service import AuthService
+    from app.services.user_repository import UserRepository
+    from app.models.user import User
+
     token = credentials.credentials
+    token_data = AuthService.verify_token(token)
 
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        user_id: str = payload.get("sub")
-
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials"
-            )
-    except JWTError:
+    if not token_data or not token_data.user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials"
         )
 
-    # Get user from database
-    user = await db.users.find_one({"_id": user_id})
-
+    user = await UserRepository.get_user_by_id(token_data.user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
 
-    # Convert to User model (simplified)
-    from app.models.user import User
-    return User(**user)
+    return user
