@@ -123,26 +123,26 @@ export default function ProfilePage() {
               </div>
 
               <div className="flex-1">
-                <div className="flex items-center justify-around mb-4">
+                <div className="grid grid-cols-5 mb-4">
                   <div className="text-center">
-                    <p className="text-xl font-bold text-zinc-900">{totalCards}</p>
-                    <p className="text-sm text-zinc-500">cards</p>
+                    <p className="text-lg font-bold text-zinc-900">{totalCards}</p>
+                    <p className="text-[11px] text-zinc-500">cards</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-zinc-900">{cardsReviewed}</p>
-                    <p className="text-sm text-zinc-500">reviews</p>
+                    <p className="text-lg font-bold text-zinc-900">{cardsReviewed}</p>
+                    <p className="text-[11px] text-zinc-500">reviews</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-zinc-900">{cardsMastered}</p>
-                    <p className="text-sm text-zinc-500">mastered</p>
+                    <p className="text-lg font-bold text-zinc-900">{cardsMastered}</p>
+                    <p className="text-[11px] text-zinc-500">mastered</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-zinc-900">{followers}</p>
-                    <p className="text-sm text-zinc-500">followers</p>
+                    <p className="text-lg font-bold text-zinc-900">{followers}</p>
+                    <p className="text-[11px] text-zinc-500">followers</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-zinc-900">{following}</p>
-                    <p className="text-sm text-zinc-500">following</p>
+                    <p className="text-lg font-bold text-zinc-900">{following}</p>
+                    <p className="text-[11px] text-zinc-500">following</p>
                   </div>
                 </div>
 

@@ -35,6 +35,12 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
   const [savedCards, setSavedCards] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2000);
+  };
 
   useEffect(() => {
     loadCards();
@@ -60,54 +66,38 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
   const handleLike = async (cardId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const isCurrentlyLiked = likedCards.has(cardId);
-
+    // Optimistic
+    const next = new Set(likedCards);
+    if (isCurrentlyLiked) next.delete(cardId); else next.add(cardId);
+    setLikedCards(next);
+    setCards(prev => prev.map(c => c.id === cardId ? { ...c, likes: isCurrentlyLiked ? Math.max(0, c.likes - 1) : c.likes + 1 } : c));
     try {
       await cardsAPI.likeCard(cardId);
-
-      // Toggle like state
-      const newLikedCards = new Set(likedCards);
-      if (isCurrentlyLiked) {
-        newLikedCards.delete(cardId);
-      } else {
-        newLikedCards.add(cardId);
-      }
-      setLikedCards(newLikedCards);
-
-      // Update like count
-      setCards(cards.map(card =>
-        card.id === cardId
-          ? { ...card, likes: isCurrentlyLiked ? Math.max(0, card.likes - 1) : card.likes + 1 }
-          : card
-      ));
-    } catch (error) {
-      console.error('Failed to like card:', error);
+    } catch {
+      // Revert
+      const rev = new Set(likedCards);
+      setLikedCards(rev);
+      setCards(prev => prev.map(c => c.id === cardId ? { ...c, likes: isCurrentlyLiked ? c.likes + 1 : Math.max(0, c.likes - 1) } : c));
+      showToast('Failed to like');
     }
   };
 
   const handleSave = async (cardId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const isCurrentlySaved = savedCards.has(cardId);
-
+    // Optimistic
+    const next = new Set(savedCards);
+    if (isCurrentlySaved) next.delete(cardId); else next.add(cardId);
+    setSavedCards(next);
+    setCards(prev => prev.map(c => c.id === cardId ? { ...c, saves: isCurrentlySaved ? Math.max(0, c.saves - 1) : c.saves + 1 } : c));
     try {
       await cardsAPI.saveCardToDeck(cardId);
-
-      // Toggle save state
-      const newSavedCards = new Set(savedCards);
-      if (isCurrentlySaved) {
-        newSavedCards.delete(cardId);
-      } else {
-        newSavedCards.add(cardId);
-      }
-      setSavedCards(newSavedCards);
-
-      // Update save count
-      setCards(cards.map(card =>
-        card.id === cardId
-          ? { ...card, saves: isCurrentlySaved ? Math.max(0, card.saves - 1) : card.saves + 1 }
-          : card
-      ));
-    } catch (error) {
-      console.error('Failed to save card:', error);
+      showToast(isCurrentlySaved ? 'Removed from deck' : 'Saved to deck');
+    } catch {
+      const rev = new Set(savedCards);
+      setSavedCards(rev);
+      setCards(prev => prev.map(c => c.id === cardId ? { ...c, saves: isCurrentlySaved ? c.saves + 1 : Math.max(0, c.saves - 1) } : c));
+      showToast('Failed to save');
     }
   };
 
@@ -128,19 +118,21 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
 
   const handleShare = async (cardId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    const shareUrl = `${window.location.origin}/cards/${cardId}`;
     try {
-      const shareUrl = `${window.location.origin}/cards/${cardId}`;
       if (navigator.share) {
-        await navigator.share({
-          title: 'Check out this card on Ariel',
-          url: shareUrl,
-        });
+        await navigator.share({ title: 'Check out this card on Ariel', url: shareUrl });
       } else {
         await navigator.clipboard.writeText(shareUrl);
-        alert('Link copied to clipboard!');
+        showToast('Link copied');
       }
-    } catch (error) {
-      console.error('Failed to share:', error);
+    } catch {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('Link copied');
+      } catch {
+        showToast('Could not share');
+      }
     }
   };
 
@@ -299,7 +291,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
           <button onClick={(e) => handleShare(card.id, e)} className="flex flex-col items-center gap-1">
             <div className="w-11 h-11 rounded-full bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
               </svg>
             </div>
           </button>
@@ -407,7 +399,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
           </button>
           <button onClick={(e) => handleShare(card.id, e)} className="text-zinc-500 hover:text-white">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
             </svg>
           </button>
           {type === 'trending' && (
@@ -431,18 +423,31 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
   // ── Snap-scroll container ───────────────────────────────────────────────────
   if (snapScroll) {
     return (
-      <div
-        className="fixed inset-0 lg:left-[72px] overflow-y-scroll"
-        style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
-      >
-        {filteredCards.map((card) => renderSnapCard(card))}
-      </div>
+      <>
+        {toast && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] px-4 py-2 bg-zinc-800/90 backdrop-blur-sm text-white text-sm font-semibold rounded-full shadow-lg pointer-events-none">
+            {toast}
+          </div>
+        )}
+        <div
+          className="fixed inset-0 lg:left-[72px] overflow-y-scroll"
+          style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
+        >
+          {filteredCards.map((card) => renderSnapCard(card))}
+        </div>
+      </>
     );
   }
 
   if (grouped) {
     return (
-      <div className="space-y-8 pb-24">
+      <>
+        {toast && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] px-4 py-2 bg-zinc-800/90 backdrop-blur-sm text-white text-sm font-semibold rounded-full shadow-lg pointer-events-none">
+            {toast}
+          </div>
+        )}
+        <div className="space-y-8 pb-24">
         {Object.entries(grouped).map(([subject, subjectCards]) => (
           <div key={subject} className="space-y-3">
             <div className="px-2">
@@ -453,13 +458,21 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="space-y-4 pb-24">
-      {filteredCards.map((card, index) => renderCard(card, index))}
-    </div>
+    <>
+      {toast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] px-4 py-2 bg-zinc-800/90 backdrop-blur-sm text-white text-sm font-semibold rounded-full shadow-lg pointer-events-none">
+          {toast}
+        </div>
+      )}
+      <div className="space-y-4 pb-24">
+        {filteredCards.map((card, index) => renderCard(card, index))}
+      </div>
+    </>
   );
 }

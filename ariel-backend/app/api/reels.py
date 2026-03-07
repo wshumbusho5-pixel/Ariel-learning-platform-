@@ -483,6 +483,33 @@ async def like_reel(
         )
 
 
+@router.post("/{reel_id}/save")
+async def save_reel(
+    reel_id: str,
+    current_user: User = Depends(get_current_user_dependency)
+):
+    """Save or unsave a reel"""
+    db = db_service.get_db()
+    try:
+        existing = await db["reel_saves"].find_one({
+            "reel_id": reel_id,
+            "user_id": current_user.id
+        })
+        if existing:
+            await db["reel_saves"].delete_one({"_id": existing["_id"]})
+            return {"success": True, "saved": False}
+        else:
+            await db["reel_saves"].insert_one({
+                "reel_id": reel_id,
+                "user_id": current_user.id,
+                "created_at": datetime.utcnow()
+            })
+            return {"success": True, "saved": True}
+    except Exception as e:
+        logger.error(f"Error saving reel: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save reel: {str(e)}")
+
+
 @router.get("/{reel_id}", response_model=ReelResponse)
 async def get_reel(
     reel_id: str,

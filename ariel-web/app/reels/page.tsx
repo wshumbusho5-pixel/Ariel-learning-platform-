@@ -72,8 +72,15 @@ export default function ReelsPage() {
   const [videoReady, setVideoReady] = useState<Record<string, boolean>>({});
   const [videoFailed, setVideoFailed] = useState<Record<string, boolean>>({});
   const [tab, setTab] = useState<'foryou' | 'following'>('foryou');
+  const [muted, setMuted] = useState(true);
+  const [toast, setToast] = useState<string | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2000);
+  };
 
   useEffect(() => { loadReels(); }, [tab]);
 
@@ -84,6 +91,12 @@ export default function ReelsPage() {
       else video.pause();
     });
   }, [currentIndex]);
+
+  useEffect(() => {
+    videoRefs.current.forEach(video => {
+      if (video) video.muted = muted;
+    });
+  }, [muted]);
 
   const loadReels = async () => {
     setLoading(true);
@@ -116,27 +129,57 @@ export default function ReelsPage() {
   };
 
   const handleSaveToDeck = async (reelId: string) => {
+    const reel = reels.find(r => r.id === reelId);
+    // Optimistic update
+    setReels(prev => prev.map(r => r.id === reelId ? { ...r, saved_to_deck: !r.saved_to_deck } : r));
     try {
-      await api.post(`/api/reels/${reelId}/save`);
-      setReels(prev => prev.map(r => r.id === reelId ? { ...r, saved_to_deck: !r.saved_to_deck } : r));
-    } catch {}
+      const res = await api.post(`/api/reels/${reelId}/save`);
+      showToast(res.data.saved ? 'Saved to deck' : 'Removed from deck');
+    } catch {
+      // Revert on failure
+      setReels(prev => prev.map(r => r.id === reelId ? { ...r, saved_to_deck: reel?.saved_to_deck } : r));
+      showToast('Failed to save');
+    }
   };
 
   const handleFollow = async (creatorId: string) => {
+    if (!creatorId) return;
     const reel = reels.find(r => r.creator_id === creatorId);
+    const isFollowing = reel?.following_creator;
+    // Optimistic update
+    setReels(prev => prev.map(r => r.creator_id === creatorId ? { ...r, following_creator: !isFollowing } : r));
     try {
-      if (reel?.following_creator) await socialAPI.unfollowUser(creatorId);
-      else await socialAPI.followUser(creatorId);
-      setReels(prev => prev.map(r => r.creator_id === creatorId ? { ...r, following_creator: !r.following_creator } : r));
-    } catch {}
+      if (isFollowing) {
+        await socialAPI.unfollowUser(creatorId);
+        showToast('Unfollowed');
+      } else {
+        await socialAPI.followUser(creatorId);
+        showToast(`Following @${reel?.creator_username}`);
+      }
+    } catch {
+      // Revert on failure
+      setReels(prev => prev.map(r => r.creator_id === creatorId ? { ...r, following_creator: isFollowing } : r));
+      showToast('Something went wrong');
+    }
   };
 
   const handleShare = async (reelId: string) => {
     const url = `${window.location.origin}/reels/${reelId}`;
     try {
-      if (navigator.share) await navigator.share({ title: 'Check out this reel on Ariel', url });
-      else { await navigator.clipboard.writeText(url); }
-    } catch {}
+      if (navigator.share) {
+        await navigator.share({ title: 'Check out this clip on Ariel', url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        showToast('Link copied');
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('Link copied');
+      } catch {
+        showToast('Could not share');
+      }
+    }
   };
 
   if (loading) {
@@ -156,6 +199,13 @@ export default function ReelsPage() {
   return (
     <>
       <SideNav />
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] px-4 py-2 bg-zinc-800/90 backdrop-blur-sm text-white text-sm font-semibold rounded-full shadow-lg pointer-events-none">
+          {toast}
+        </div>
+      )}
 
       {/* Full-page black container */}
       <div className="fixed inset-0 lg:left-[72px] bg-black overflow-hidden flex flex-col">
@@ -241,7 +291,7 @@ export default function ReelsPage() {
                         className="absolute inset-0 w-full h-full object-contain bg-black"
                         loop
                         playsInline
-                        muted
+                        muted={muted}
                         poster={proxyUrl(reel.thumbnail_url)}
                         onLoadedData={() => setVideoReady(prev => ({ ...prev, [reel.id]: true }))}
                         onError={() => setVideoFailed(prev => ({ ...prev, [reel.id]: true }))}
@@ -277,34 +327,71 @@ export default function ReelsPage() {
 
                       {/* Mobile: bottom info + right actions */}
                       <div className="lg:hidden">
-                        {/* Right-side action buttons */}
-                        <div className="absolute bottom-32 right-3 z-30 flex flex-col gap-4">
-                          <ActionBtn icon="save" active={reel.saved_to_deck} label="Save" onClick={() => handleSaveToDeck(reel.id)} />
-                          <ActionBtn icon="remix" label="Remix" onClick={() => router.push(`/create-cards?from_reel=${reel.id}`)} />
-                          <ActionBtn icon="comment" label="Discuss" onClick={() => openComments(reel.id)} />
-                          <ActionBtn icon="share" label="Share" onClick={() => handleShare(reel.id)} />
-                          <ActionBtn icon={reel.following_creator ? 'following' : 'follow'} label={reel.following_creator ? 'Following' : 'Follow'} onClick={() => handleFollow(reel.creator_id)} />
+
+                        {/* Mute toggle — top right */}
+                        <button
+                          onClick={() => setMuted(m => !m)}
+                          className="absolute top-14 right-4 z-40 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center"
+                        >
+                          {muted ? (
+                            <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6L5.586 9H4a1 1 0 00-1 1v4a1 1 0 001 1h1.586L12 18V6z" />
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Right-side: 3 clean icon buttons */}
+                        <div className="absolute bottom-[160px] right-4 z-30 flex flex-col gap-6">
+                          {/* Save / bookmark */}
+                          <button onClick={() => handleSaveToDeck(reel.id)} className="flex flex-col items-center gap-1">
+                            <svg
+                              className={`w-7 h-7 drop-shadow-lg transition-colors ${reel.saved_to_deck ? 'text-sky-400' : 'text-white'}`}
+                              fill={reel.saved_to_deck ? 'currentColor' : 'none'}
+                              stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                            </svg>
+                          </button>
+                          {/* Comment */}
+                          <button onClick={() => openComments(reel.id)} className="flex flex-col items-center gap-1">
+                            <svg className="w-7 h-7 text-white drop-shadow-lg" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                          </button>
+                          {/* Share */}
+                          <button onClick={() => handleShare(reel.id)} className="flex flex-col items-center gap-1">
+                            <svg className="w-7 h-7 text-white drop-shadow-lg" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+                            </svg>
+                          </button>
                         </div>
 
-                        {/* Bottom bar */}
-                        <div className="absolute bottom-6 left-4 right-4 z-30">
-                          <div className="flex items-center gap-2 mb-2">
+                        {/* Bottom bar — sits just above BottomNav */}
+                        <div className="absolute bottom-[76px] left-4 right-16 z-30">
+                          <div className="flex items-center gap-2.5 mb-2">
                             <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                               {reel.creator_username[0]?.toUpperCase()}
                             </div>
-                            <p className="text-white text-sm font-semibold">@{reel.creator_username}</p>
-                            {reel.creator_verified && <span className="text-[10px] text-sky-400 font-semibold">Educator</span>}
+                            <p className="text-white text-sm font-semibold flex-1 truncate">@{reel.creator_username}</p>
+                            <button
+                              onClick={() => handleFollow(reel.creator_id)}
+                              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
+                                reel.following_creator
+                                  ? 'border-white/30 text-white/60'
+                                  : 'border-white text-white'
+                              }`}
+                            >
+                              {reel.following_creator ? 'Following' : 'Follow'}
+                            </button>
                           </div>
-                          <p className="text-white font-semibold text-sm line-clamp-2">{reel.title}</p>
-                          {reel.description && <p className="text-white/60 text-xs mt-0.5 line-clamp-1">{reel.description}</p>}
-                          <button
-                            onClick={() => handleSaveToDeck(reel.id)}
-                            className={`mt-3 w-full py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                              reel.saved_to_deck ? 'bg-zinc-700 text-white' : 'bg-sky-600 hover:bg-sky-500 text-white'
-                            }`}
-                          >
-                            {reel.saved_to_deck ? 'Saved to deck' : 'Save to deck'}
-                          </button>
+                          <p className="text-white font-semibold text-sm leading-snug line-clamp-2">{reel.title}</p>
+                          {reel.description && (
+                            <p className="text-white/50 text-xs mt-0.5 line-clamp-1">{reel.description}</p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -437,17 +524,7 @@ export default function ReelsPage() {
         </div>
       </div>
 
-      {/* Upload FAB — mobile only */}
-      <button
-        onClick={() => router.push('/reels/upload')}
-        className="fixed bottom-20 right-4 lg:hidden w-12 h-12 bg-sky-600 rounded-xl flex items-center justify-center shadow-lg z-40 hover:bg-sky-500 transition-colors"
-      >
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
-
-      <div className="lg:hidden"><BottomNav /></div>
+<div className="lg:hidden"><BottomNav /></div>
 
       <style jsx global>{`
         div::-webkit-scrollbar { display: none; }
@@ -456,28 +533,3 @@ export default function ReelsPage() {
   );
 }
 
-// ─── Reusable mobile action button ───────────────────────────────────────────
-
-function ActionBtn({ icon, label, active, onClick }: {
-  icon: string; label: string; active?: boolean; onClick: () => void;
-}) {
-  const icons: Record<string, React.ReactNode> = {
-    save: <svg className="w-5 h-5" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>,
-    remix: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
-    comment: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
-    share: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>,
-    follow: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>,
-    following: <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
-  };
-
-  return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1 text-white/80 hover:text-white transition-colors">
-      <div className={`w-11 h-11 rounded-full flex items-center justify-center backdrop-blur-sm border transition-colors ${
-        active ? 'bg-sky-500/20 border-sky-500/40' : 'bg-white/10 border-white/10'
-      }`}>
-        {icons[icon]}
-      </div>
-      <span className="text-[10px] font-semibold">{label}</span>
-    </button>
-  );
-}
