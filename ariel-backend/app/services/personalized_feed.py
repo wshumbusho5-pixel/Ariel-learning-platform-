@@ -89,6 +89,14 @@ class PersonalizedFeedService:
                 seen_ids.add(card.id)
                 unique_cards.append(card)
 
+        # If feed is sparse (new user / no subjects), fill with trending public cards
+        if len(unique_cards) < limit // 2:
+            trending_fill = await CardRepository.get_trending_cards(limit * 2)
+            for card in trending_fill:
+                if card.id not in seen_ids:
+                    seen_ids.add(card.id)
+                    unique_cards.append(card)
+
         # Shuffle to mix different sources
         random.shuffle(unique_cards)
 

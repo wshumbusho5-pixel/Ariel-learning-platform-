@@ -165,7 +165,12 @@ class CardRepository:
         async for card_doc in cursor:
             card_doc["id"] = str(card_doc["_id"])
             del card_doc["_id"]
-            cards.append(Card(**card_doc))
+            # Seed/system cards may have no user_id
+            card_doc.setdefault("user_id", card_doc.get("created_by") or "system")
+            try:
+                cards.append(Card(**card_doc))
+            except Exception:
+                pass
 
         return cards
 

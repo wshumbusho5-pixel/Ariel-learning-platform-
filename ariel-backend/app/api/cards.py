@@ -135,7 +135,11 @@ async def search_cards(
         cards = []
         for doc in docs:
             doc["id"] = str(doc.pop("_id"))
-            cards.append(Card(**doc))
+            doc.setdefault("user_id", doc.get("created_by") or "system")
+            try:
+                cards.append(Card(**doc))
+            except Exception:
+                pass
         return cards
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
