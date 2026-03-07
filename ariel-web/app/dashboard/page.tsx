@@ -643,32 +643,35 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Ariel entry card */}
+          {/* Ariel entry — pinned first feed post */}
           {!searchQuery && (
             <button
               onClick={openAriel}
-              className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-sky-500/30 active:scale-[0.98] transition-all text-left mb-4"
+              className="-mx-4 w-[calc(100%+2rem)] flex items-center gap-3 px-4 py-3.5 border-b border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60 active:bg-zinc-800 transition-colors text-left"
             >
               <div className="relative flex-shrink-0">
-                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-sky-500/20">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-sky-500/20">
                   A
                 </div>
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-zinc-900" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
                   <p className="text-sm font-bold text-white">Ariel</p>
-                  <span className="text-[10px] text-zinc-600 flex-shrink-0">now</span>
+                  <span className="text-[10px] text-zinc-600">now</span>
+                  {dueCards.length > 0 && (
+                    <span className="ml-auto flex-shrink-0 px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 text-[10px] font-bold">
+                      {dueCards.length} due
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-zinc-500 truncate mt-0.5">
-                  Hey {firstName}! What are we studying today? 👋
+                  Hey {firstName}! What are we studying today?
                 </p>
               </div>
-              {dueCards.length > 0 && (
-                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-sky-500 flex items-center justify-center">
-                  <span className="text-[9px] font-black text-white">{dueCards.length}</span>
-                </div>
-              )}
+              <svg className="w-4 h-4 text-zinc-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           )}
 
