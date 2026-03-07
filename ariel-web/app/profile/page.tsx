@@ -46,13 +46,13 @@ export default function ProfilePage() {
 
   if (!isAuthenticated && !isLoading) {
     return (
-      <div className="min-h-screen lg:pl-[72px] bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen lg:pl-[72px] bg-stone-50 flex items-center justify-center">
         <div className="text-center space-y-3">
-          <p className="text-lg font-semibold text-white">Sign in to view your profile</p>
+          <p className="text-lg font-semibold text-zinc-900">Sign in to view your profile</p>
           <button
             type="button"
             onClick={() => router.push('/')}
-            className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-700 text-sm font-semibold text-white hover:bg-zinc-800"
+            className="px-4 py-2 rounded-lg bg-white border border-stone-200 text-sm font-semibold text-zinc-700 hover:bg-stone-100"
           >
             Go to login
           </button>
@@ -63,10 +63,10 @@ export default function ProfilePage() {
 
   if (isLoading || loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-zinc-800 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm text-zinc-500 font-medium">Loading...</p>
+          <div className="w-16 h-16 border-4 border-stone-200 border-t-sky-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm text-zinc-400 font-medium">Loading...</p>
         </div>
       </div>
     );
@@ -84,15 +84,15 @@ export default function ProfilePage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen pb-20 bg-zinc-950 lg:pl-[72px]">
-        <div className="sticky top-0 z-50 bg-zinc-950 border-b border-zinc-800">
+      <div className="min-h-screen pb-20 bg-stone-50 lg:pl-[72px]">
+        <div className="sticky top-0 z-50 bg-stone-50/95 backdrop-blur-md border-b border-stone-200">
           <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <button onClick={() => router.push('/dashboard')}>
               <svg className="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-xl font-semibold text-white">{user?.username || 'Profile'}</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">{user?.username || 'Profile'}</h1>
             <button onClick={handleLogout}>
               <svg className="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -105,7 +105,7 @@ export default function ProfilePage() {
           <div className="px-4 pt-4 pb-3">
             <div className="flex items-start gap-6 mb-4">
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 rounded-full bg-zinc-700 ring-4 ring-zinc-800">
+                <div className="w-24 h-24 rounded-full ring-4 ring-stone-200">
                   {user?.profile_picture ? (
                     <img
                       src={user.profile_picture}
@@ -113,7 +113,7 @@ export default function ProfilePage() {
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-zinc-700 flex items-center justify-center">
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center">
                       <span className="text-white font-bold text-3xl">
                         {user?.username?.[0]?.toUpperCase() || 'U'}
                       </span>
@@ -125,23 +125,23 @@ export default function ProfilePage() {
               <div className="flex-1">
                 <div className="flex items-center justify-around mb-4">
                   <div className="text-center">
-                    <p className="text-xl font-bold text-white">{totalCards}</p>
+                    <p className="text-xl font-bold text-zinc-900">{totalCards}</p>
                     <p className="text-sm text-zinc-500">cards</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-white">{cardsReviewed}</p>
+                    <p className="text-xl font-bold text-zinc-900">{cardsReviewed}</p>
                     <p className="text-sm text-zinc-500">reviews</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-white">{cardsMastered}</p>
+                    <p className="text-xl font-bold text-zinc-900">{cardsMastered}</p>
                     <p className="text-sm text-zinc-500">mastered</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-white">{followers}</p>
+                    <p className="text-xl font-bold text-zinc-900">{followers}</p>
                     <p className="text-sm text-zinc-500">followers</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-white">{following}</p>
+                    <p className="text-xl font-bold text-zinc-900">{following}</p>
                     <p className="text-sm text-zinc-500">following</p>
                   </div>
                 </div>
@@ -149,13 +149,13 @@ export default function ProfilePage() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleLogout}
-                    className="flex-1 py-1 px-4 bg-zinc-900 text-white hover:bg-zinc-800 text-sm font-semibold rounded-lg transition-colors border border-zinc-700"
+                    className="flex-1 py-1 px-4 bg-zinc-900 text-white hover:bg-zinc-800 text-sm font-semibold rounded-lg transition-colors"
                   >
                     Log out
                   </button>
                   <button
                     onClick={() => router.push('/achievements')}
-                    className="py-1 px-4 bg-zinc-900 hover:bg-zinc-800 text-sm font-semibold text-zinc-300 rounded-lg transition-colors border border-zinc-700"
+                    className="py-1 px-4 bg-white hover:bg-stone-100 text-sm font-semibold text-zinc-700 rounded-lg transition-colors border border-stone-200"
                   >
                     Achievements
                   </button>
@@ -164,14 +164,14 @@ export default function ProfilePage() {
             </div>
 
             <div className="mb-4">
-              <p className="font-bold text-white text-sm mb-0.5">
+              <p className="font-bold text-zinc-900 text-sm mb-0.5">
                 {user?.full_name || user?.username}
               </p>
-              <p className="text-sm text-zinc-400">
-                Level {level} · {streakDays > 0 ? `${streakDays} day streak 🔥` : 'Start your streak'}
+              <p className="text-sm text-zinc-500">
+                Level {level} · {streakDays > 0 ? `${streakDays} day streak` : 'Start your streak'}
               </p>
               {(user as any)?.bio && (
-                <p className="text-sm text-zinc-400 mt-2">{(user as any).bio}</p>
+                <p className="text-sm text-zinc-600 mt-2">{(user as any).bio}</p>
               )}
               {user?.subjects && user.subjects.length > 0 && (
                 <p className="text-sm text-zinc-500 mt-1">
@@ -182,33 +182,33 @@ export default function ProfilePage() {
 
             <div className="flex gap-4 overflow-x-auto pb-2">
               <button onClick={() => router.push('/leaderboard')} className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-sky-500 transition-colors">
+                <div className="w-12 h-12 rounded-full border-2 border-stone-200 bg-white flex items-center justify-center hover:border-sky-400 transition-colors">
                   <span className="text-lg">🔥</span>
                 </div>
-                <p className="text-xs text-zinc-400 font-medium">{streakDays}d streak</p>
+                <p className="text-xs text-zinc-500 font-medium">{streakDays}d streak</p>
               </button>
               <button onClick={() => router.push('/achievements')} className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-sky-500 transition-colors">
+                <div className="w-12 h-12 rounded-full border-2 border-stone-200 bg-white flex items-center justify-center hover:border-sky-400 transition-colors">
                   <span className="text-lg">⭐</span>
                 </div>
-                <p className="text-xs text-zinc-400 font-medium">Level {level}</p>
+                <p className="text-xs text-zinc-500 font-medium">Level {level}</p>
               </button>
               <button onClick={() => router.push('/achievements')} className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-sky-500 transition-colors">
+                <div className="w-12 h-12 rounded-full border-2 border-stone-200 bg-white flex items-center justify-center hover:border-sky-400 transition-colors">
                   <span className="text-lg">🏆</span>
                 </div>
-                <p className="text-xs text-zinc-400 font-medium">Trophies</p>
+                <p className="text-xs text-zinc-500 font-medium">Trophies</p>
               </button>
               <button onClick={() => router.push('/deck')} className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className="w-12 h-12 rounded-full border-2 border-zinc-700 bg-zinc-900 flex items-center justify-center hover:border-sky-500 transition-colors">
+                <div className="w-12 h-12 rounded-full border-2 border-stone-200 bg-white flex items-center justify-center hover:border-sky-400 transition-colors">
                   <span className="text-lg">📚</span>
                 </div>
-                <p className="text-xs text-zinc-400 font-medium">{totalCards} cards</p>
+                <p className="text-xs text-zinc-500 font-medium">{totalCards} cards</p>
               </button>
             </div>
           </div>
 
-          <div className="border-t border-zinc-800">
+          <div className="border-t border-stone-200">
             <div className="flex">
               {(['grid', 'stats', 'achievements'] as const).map((tab) => {
                 const icons: Record<string, string> = {
@@ -225,7 +225,7 @@ export default function ProfilePage() {
                     }`}
                   >
                     <svg
-                      className={`w-6 h-6 mx-auto ${activeTab === tab ? 'text-sky-500' : 'text-zinc-600'}`}
+                      className={`w-6 h-6 mx-auto ${activeTab === tab ? 'text-sky-500' : 'text-stone-400'}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -241,17 +241,17 @@ export default function ProfilePage() {
           <div className="px-4 py-4">
             {activeTab === 'grid' && (
               <div className="grid grid-cols-3 gap-1">
-                <div className="aspect-square bg-zinc-900 border border-dashed border-zinc-700 flex items-center justify-center">
+                <div className="aspect-square bg-stone-100 border border-dashed border-stone-300 flex items-center justify-center">
                   <div className="text-center px-2">
-                    <p className="text-sm font-semibold text-zinc-400">Create your first study post</p>
-                    <p className="text-xs text-zinc-600 mt-1">Pinned decks and posts will show here.</p>
+                    <p className="text-sm font-semibold text-zinc-500">Create your first study post</p>
+                    <p className="text-xs text-zinc-400 mt-1">Pinned decks and posts will show here.</p>
                   </div>
                 </div>
                 {gamification?.achievements?.filter((a: any) => a.unlocked).length > 0 ? (
                   gamification?.achievements?.filter((a: any) => a.unlocked).map((achievement: any) => (
                     <div
                       key={achievement.id}
-                      className="aspect-square bg-zinc-900 border border-zinc-800 flex items-center justify-center"
+                      className="aspect-square bg-white border border-stone-200 flex items-center justify-center"
                     >
                       <span className="text-4xl">{achievement.icon || '🏆'}</span>
                     </div>
@@ -260,9 +260,9 @@ export default function ProfilePage() {
                   [...Array(8)].map((_, idx) => (
                     <div
                       key={idx}
-                      className="aspect-square bg-zinc-900 border border-zinc-800 flex items-center justify-center"
+                      className="aspect-square bg-stone-100 border border-stone-200 flex items-center justify-center"
                     >
-                      <svg className="w-12 h-12 text-zinc-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-12 h-12 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
@@ -273,12 +273,12 @@ export default function ProfilePage() {
 
             {activeTab === 'stats' && (
               <div className="space-y-4">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+                <div className="bg-white border border-stone-200 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-white">Level Progress</h3>
-                    <span className="text-xs font-semibold text-zinc-500">{progress}%</span>
+                    <h3 className="text-sm font-semibold text-zinc-900">Level Progress</h3>
+                    <span className="text-xs font-semibold text-zinc-400">{progress}%</span>
                   </div>
-                  <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden mb-2">
+                  <div className="w-full h-2 bg-stone-200 rounded-full overflow-hidden mb-2">
                     <div
                       className="h-full bg-sky-500 rounded-full transition-all duration-1000"
                       style={{ width: `${progress}%` }}
@@ -296,23 +296,23 @@ export default function ProfilePage() {
                     { label: 'Mastered', value: cardsMastered },
                     { label: 'Accuracy', value: `${stats?.retention_rate || 0}%` },
                   ].map((stat) => (
-                    <div key={stat.label} className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                      <p className="text-2xl font-bold text-white">{stat.value}</p>
+                    <div key={stat.label} className="bg-white border border-stone-200 rounded-xl p-4">
+                      <p className="text-2xl font-bold text-zinc-900">{stat.value}</p>
                       <p className="text-xs text-zinc-500 mt-1">{stat.label}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-white mb-3">Study Streak</h3>
+                <div className="bg-white border border-stone-200 rounded-xl p-4">
+                  <h3 className="text-sm font-semibold text-zinc-900 mb-3">Study Streak</h3>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-zinc-500">Current Streak</p>
-                      <p className="text-2xl font-bold text-white">{streakDays} days 🔥</p>
+                      <p className="text-2xl font-bold text-zinc-900">{streakDays} days</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-zinc-500">Best Streak</p>
-                      <p className="text-2xl font-bold text-white">{stats?.longest_streak || 0} days</p>
+                      <p className="text-2xl font-bold text-zinc-900">{stats?.longest_streak || 0} days</p>
                     </div>
                   </div>
                 </div>
@@ -325,16 +325,16 @@ export default function ProfilePage() {
                   gamification?.achievements?.filter((a: any) => a.unlocked).map((achievement: any) => (
                     <div
                       key={achievement.id}
-                      className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 flex items-start gap-4"
+                      className="bg-white border border-stone-200 rounded-xl p-4 flex items-start gap-4"
                     >
-                      <div className="w-14 h-14 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                      <div className="w-14 h-14 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
                         <span className="text-3xl">{achievement.icon || '🏆'}</span>
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-white text-sm mb-1">{achievement.name}</h4>
+                        <h4 className="font-semibold text-zinc-900 text-sm mb-1">{achievement.name}</h4>
                         <p className="text-xs text-zinc-500 mb-1">{achievement.description}</p>
                         {achievement.unlocked_at && (
-                          <p className="text-xs text-zinc-600">
+                          <p className="text-xs text-zinc-400">
                             {new Date(achievement.unlocked_at).toLocaleDateString()}
                           </p>
                         )}
@@ -342,11 +342,11 @@ export default function ProfilePage() {
                     </div>
                   ))
                 ) : (
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-12 text-center">
-                    <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-4">
-                      <span className="text-5xl opacity-70">🏆</span>
+                  <div className="bg-white border border-stone-200 rounded-xl p-12 text-center">
+                    <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4">
+                      <span className="text-5xl opacity-50">🏆</span>
                     </div>
-                    <h3 className="text-base font-semibold text-white mb-2">No achievements yet</h3>
+                    <h3 className="text-base font-semibold text-zinc-900 mb-2">No achievements yet</h3>
                     <p className="text-sm text-zinc-500">Keep studying to unlock achievements!</p>
                   </div>
                 )}

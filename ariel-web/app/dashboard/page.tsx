@@ -145,7 +145,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
         >
           {/* Front face — Question */}
           <div
-            className={`absolute inset-0 bg-gradient-to-br ${meta.gradient} rounded-2xl overflow-hidden`}
+            className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-zinc-800 rounded-3xl overflow-hidden border border-zinc-700/40"
             style={{ backfaceVisibility: 'hidden' }}
           >
             {card.subject && (
@@ -168,10 +168,10 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
 
           {/* Back face — Answer */}
           <div
-            className={`absolute inset-0 bg-gradient-to-br ${meta.gradient} rounded-2xl overflow-hidden`}
+            className="absolute inset-0 bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-3xl overflow-hidden border border-zinc-700/40"
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           >
-            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-sky-500/5" />
             <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
               <span className="text-[9px] font-black text-white">A</span>
             </div>
@@ -192,7 +192,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
         <p className="text-xs font-semibold text-white leading-snug line-clamp-2">{card.question}</p>
         <div className="flex items-center justify-between mt-1.5">
           <div className="flex items-center gap-1.5 min-w-0">
-            <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${meta.gradient} flex-shrink-0`} />
+            <div className="w-4 h-4 rounded-full bg-zinc-700 flex-shrink-0" />
             <p className="text-[11px] text-zinc-500 truncate">
               {card.author_username ? `@${card.author_username}` : meta.short}
               {card.created_at ? ` · ${timeAgo(card.created_at)}` : ''}
@@ -250,7 +250,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
         {/* "See all" entry tile */}
         <button
           onClick={() => onNavigate('/reels')}
-          className="flex-shrink-0 w-[160px] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors"
+          className="flex-shrink-0 w-[160px] rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors"
           style={{ aspectRatio: '9/16' }}
         >
           <div className="h-full flex flex-col items-center justify-center gap-2 p-2">
@@ -266,7 +266,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
               <button
                 key={reel.id}
                 onClick={() => onNavigate('/reels')}
-                className="flex-shrink-0 w-[160px] rounded-2xl overflow-hidden relative bg-zinc-900"
+                className="flex-shrink-0 w-[160px] rounded-3xl overflow-hidden relative bg-zinc-900"
                 style={{ aspectRatio: '9/16' }}
               >
                 {reel.thumbnail_url ? (
@@ -321,7 +321,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
 function CardSkeleton() {
   return (
     <div className="flex flex-col animate-pulse">
-      <div className="w-full rounded-2xl bg-zinc-800" style={{ aspectRatio: '1/1' }} />
+      <div className="w-full rounded-3xl bg-zinc-800" style={{ aspectRatio: '1/1' }} />
       <div className="mt-2 space-y-1.5 px-0.5">
         <div className="h-2.5 bg-zinc-800 rounded-full w-4/5" />
         <div className="h-2.5 bg-zinc-800 rounded-full w-3/5" />
