@@ -519,7 +519,7 @@ export default function Dashboard() {
             <div className="flex items-center">
               <button onClick={() => router.push('/messages')} className="relative w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 </svg>
                 {unreadMessages > 0 && (
                   <span className="absolute top-1 right-1 min-w-[14px] h-[14px] rounded-full bg-sky-500 flex items-center justify-center">
