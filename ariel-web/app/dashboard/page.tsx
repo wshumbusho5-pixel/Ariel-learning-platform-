@@ -343,6 +343,8 @@ export default function Dashboard() {
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [showSubjectPicker, setShowSubjectPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<FeedCard[]>([]);
+  const [searching, setSearching] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -370,6 +372,23 @@ export default function Dashboard() {
       setReels(allReels.filter(r => r.video_url && r.kind !== 'card'));
     }).finally(() => setDataLoading(false));
   }, [isAuthenticated, isLoading, user]);
+
+  // Debounced backend search
+  useEffect(() => {
+    if (!searchQuery.trim() || searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await cardsAPI.search(searchQuery.trim(), 30);
+        setSearchResults(data);
+      } catch { setSearchResults([]); }
+      setSearching(false);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   const addSubject = useCallback(async (key: string) => {
     if (!user?.subjects) return;
@@ -424,6 +443,10 @@ export default function Dashboard() {
 
   // Filter feed
   const displayCards: FeedCard[] = (() => {
+    if (searchQuery.trim().length >= 2) {
+      // Use backend results when searching
+      return searchResults;
+    }
     let cards = feedCards;
     if (activeSubject) {
       const m = SUBJECT_META[activeSubject];
@@ -436,16 +459,6 @@ export default function Dashboard() {
       const tl = activeTopic.toLowerCase();
       cards = cards.filter(c =>
         c.topic?.toLowerCase().includes(tl) || c.question?.toLowerCase().includes(tl)
-      );
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      cards = cards.filter(c =>
-        c.question?.toLowerCase().includes(q) ||
-        c.answer?.toLowerCase().includes(q) ||
-        c.subject?.toLowerCase().includes(q) ||
-        c.topic?.toLowerCase().includes(q) ||
-        c.author_username?.toLowerCase().includes(q)
       );
     }
     return cards;
@@ -588,10 +601,16 @@ export default function Dashboard() {
           )}
 
           {/* Search results label */}
-          {searchQuery && (
+          {searchQuery.trim().length >= 2 && (
             <div className="flex items-center justify-between mb-5">
-              <p className="text-sm text-zinc-400">
-                <span className="font-bold text-white">{displayCards.length}</span> result{displayCards.length !== 1 ? 's' : ''} for "<span className="text-sky-400">{searchQuery}</span>"
+              <p className="text-sm text-zinc-400 flex items-center gap-2">
+                {searching ? (
+                  <span className="w-3.5 h-3.5 border border-zinc-600 border-t-sky-400 rounded-full animate-spin inline-block" />
+                ) : (
+                  <span className="font-bold text-white">{displayCards.length}</span>
+                )}
+                {!searching && <> result{displayCards.length !== 1 ? 's' : ''} for "<span className="text-sky-400">{searchQuery}</span>"</>}
+                {searching && <span className="text-zinc-500">Searching...</span>}
               </p>
               <button onClick={() => setSearchQuery('')} className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Clear</button>
             </div>

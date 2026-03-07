@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import SideNav from '@/components/SideNav';
 import BottomNav from '@/components/BottomNav';
@@ -25,6 +25,7 @@ export default function DuelsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [countdown, setCountdown] = useState(3);
   const [timeLeft, setTimeLeft] = useState(15);
+  const [choices, setChoices] = useState<string[]>([]);
   const [userAnswer, setUserAnswer] = useState('');
   const [userScore, setUserScore] = useState(0);
   const [botScore, setBotScore] = useState(0);
@@ -47,31 +48,38 @@ export default function DuelsPage() {
 
   useEffect(() => () => clearTimers(), []);
 
-  const loadCards = async () => {
+  const FALLBACK_CARDS: DuelCard[] = [
+    { id: '1', question: 'What is the powerhouse of the cell?', answer: 'Mitochondria', subject: 'Biology' },
+    { id: '2', question: 'What is the speed of light?', answer: '299,792,458 m/s', subject: 'Physics' },
+    { id: '3', question: 'What year did WW2 end?', answer: '1945', subject: 'History' },
+    { id: '4', question: 'What is H2O?', answer: 'Water', subject: 'Chemistry' },
+    { id: '5', question: 'Who wrote Romeo and Juliet?', answer: 'Shakespeare', subject: 'Literature' },
+    { id: '6', question: 'What is the capital of France?', answer: 'Paris', subject: 'Geography' },
+    { id: '7', question: 'What is 12 × 12?', answer: '144', subject: 'Mathematics' },
+    { id: '8', question: 'Who painted the Mona Lisa?', answer: 'Leonardo da Vinci', subject: 'Art' },
+  ];
+
+  const loadCards = async (): Promise<DuelCard[]> => {
     setLoadingCards(true);
+    let result: DuelCard[] = [];
     try {
-      const data = await cardsAPI.getTrendingCards(ROUNDS);
-      setCards(data.slice(0, ROUNDS));
+      const data = await cardsAPI.getTrendingCards(20);
+      result = data.length >= ROUNDS ? data : [...data, ...FALLBACK_CARDS].slice(0, Math.max(data.length, ROUNDS + 3));
     } catch {
-      // use fallback cards
-      setCards([
-        { id: '1', question: 'What is the powerhouse of the cell?', answer: 'Mitochondria', subject: 'Biology' },
-        { id: '2', question: 'What is the speed of light?', answer: '299,792,458 m/s', subject: 'Physics' },
-        { id: '3', question: 'What year did WW2 end?', answer: '1945', subject: 'History' },
-        { id: '4', question: 'What is H2O?', answer: 'Water', subject: 'Chemistry' },
-        { id: '5', question: 'Who wrote Romeo and Juliet?', answer: 'Shakespeare', subject: 'Literature' },
-      ]);
-    } finally {
-      setLoadingCards(false);
+      result = FALLBACK_CARDS;
     }
+    setCards(result);
+    setLoadingCards(false);
+    return result;
   };
 
   const startDuel = async () => {
-    await loadCards();
+    const loaded = await loadCards();
     setPhase('countdown');
     setCurrentIndex(0);
     setUserScore(0);
     setBotScore(0);
+    if (loaded && loaded.length > 0) buildChoices(loaded[0], loaded);
     let c = 3;
     setCountdown(c);
     const cd = setInterval(() => {
@@ -84,7 +92,19 @@ export default function DuelsPage() {
     }, 1000);
   };
 
-  const beginQuestion = () => {
+  const buildChoices = useCallback((card: DuelCard, allCards: DuelCard[]) => {
+    const correct = card.answer;
+    const distractors = allCards
+      .filter(c => c.id !== card.id)
+      .map(c => c.answer)
+      .filter(a => a.toLowerCase() !== correct.toLowerCase());
+    // Shuffle and take 3 distractors
+    const shuffled = distractors.sort(() => Math.random() - 0.5).slice(0, 3);
+    const all = [correct, ...shuffled].sort(() => Math.random() - 0.5);
+    setChoices(all);
+  }, []);
+
+  const beginQuestion = useCallback(() => {
     setPhase('question');
     setUserAnswer('');
     setUserAnswered(false);
@@ -107,9 +127,9 @@ export default function DuelsPage() {
     botRef.current = setTimeout(() => {
       setBotAnswered(true);
     }, delay);
-  };
+  }, [botDelay]); // eslint-disable-line
 
-  const resolveRound = (userCorrect: boolean, botCorrect: boolean) => {
+  const resolveRound = useCallback((userCorrect: boolean, botCorrect: boolean, nextIdx: number, allCards: DuelCard[]) => {
     clearTimers();
     let result: 'win' | 'lose' | 'tie' = 'tie';
     if (userCorrect && !botCorrect) { setUserScore(s => s + 1); result = 'win'; }
@@ -123,22 +143,22 @@ export default function DuelsPage() {
     setPhase('reveal');
 
     setTimeout(() => {
-      if (currentIndex + 1 >= ROUNDS) {
+      if (nextIdx >= ROUNDS) {
         setPhase('complete');
       } else {
-        setCurrentIndex(i => i + 1);
+        setCurrentIndex(nextIdx);
+        if (allCards[nextIdx]) buildChoices(allCards[nextIdx], allCards);
         beginQuestion();
       }
-    }, 2500);
-  };
+    }, 2200);
+  }, [buildChoices, beginQuestion]); // eslint-disable-line
 
-  const handleSubmit = () => {
-    if (!userAnswer.trim() || userAnswered) return;
+  const handleChoiceSelect = (choice: string) => {
+    if (userAnswered) return;
     setUserAnswered(true);
-    const correct = userAnswer.trim().toLowerCase().includes(
-      currentCard.answer.toLowerCase().substring(0, 5)
-    );
-    resolveRound(correct, botAnswered);
+    setUserAnswer(choice);
+    const correct = choice.trim().toLowerCase() === currentCard.answer.trim().toLowerCase();
+    resolveRound(correct, botAnswered, currentIndex + 1, cards);
   };
 
   const finalResult = userScore > botScore ? 'win' : userScore < botScore ? 'lose' : 'tie';
@@ -273,27 +293,30 @@ export default function DuelsPage() {
                 </span>
               </div>
 
-              {/* Answer input */}
-              {phase === 'question' && (
-                <div className="flex gap-2">
-                  <input
-                    value={userAnswer}
-                    onChange={e => setUserAnswer(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                    placeholder="Type your answer..."
-                    disabled={userAnswered}
-                    autoFocus
-                    className="flex-1 px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-sky-500 placeholder:text-zinc-600 disabled:opacity-50"
-                  />
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!userAnswer.trim() || userAnswered}
-                    className="px-5 py-3 bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors"
-                  >
-                    Go
-                  </button>
-                </div>
-              )}
+              {/* Multiple choice answers */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {(phase === 'question' ? choices : choices).map((choice, i) => {
+                  const isSelected = userAnswer === choice;
+                  const isCorrect = choice.trim().toLowerCase() === currentCard.answer.trim().toLowerCase();
+                  let cls = 'border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-sky-500/50 hover:bg-zinc-800';
+                  if (phase === 'reveal') {
+                    if (isCorrect) cls = 'border-sky-500 bg-sky-900/30 text-sky-300';
+                    else if (isSelected && !isCorrect) cls = 'border-red-600 bg-red-900/20 text-red-300';
+                    else cls = 'border-zinc-800 bg-zinc-900/50 text-zinc-600';
+                  }
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleChoiceSelect(choice)}
+                      disabled={userAnswered || phase === 'reveal'}
+                      className={`p-3.5 rounded-xl border-2 text-sm font-semibold text-left transition-all leading-snug ${cls} disabled:cursor-default`}
+                    >
+                      <span className="text-xs font-bold opacity-60 mr-1.5">{String.fromCharCode(65 + i)}.</span>
+                      {choice}
+                    </button>
+                  );
+                })}
+              </div>
 
               {/* Round result */}
               {phase === 'reveal' && roundResult && (

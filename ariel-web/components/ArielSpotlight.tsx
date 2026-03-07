@@ -59,6 +59,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingCards, setPendingCards] = useState<{ question: string; answer: string; explanation?: string }[]>([]);
   const [saving, setSaving] = useState(false);
+  const [showKeyBanner, setShowKeyBanner] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -115,12 +116,23 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
         cards: cards.length > 0 ? cards : undefined,
       };
       setMessages(prev => [...prev, arielMsg]);
-    } catch {
-      setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        sender: 'ariel',
-        text: "I'm having trouble reaching the server right now. Try again in a moment 🙏",
-      }]);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || '';
+      const isKeyError = err?.response?.status === 422 || detail.toLowerCase().includes('api') || detail.toLowerCase().includes('key') || detail.toLowerCase().includes('model') || detail.toLowerCase().includes('provider');
+      if (isKeyError) {
+        setShowKeyBanner(true);
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          sender: 'ariel',
+          text: "I need an AI provider key to answer that. Set one up below and I'll be ready to help!",
+        }]);
+      } else {
+        setMessages(prev => [...prev, {
+          id: (Date.now() + 1).toString(),
+          sender: 'ariel',
+          text: "I'm having trouble reaching the server right now. Try again in a moment 🙏",
+        }]);
+      }
     } finally {
       setLoading(false);
     }
@@ -338,6 +350,44 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
 
         <div ref={bottomRef} />
       </div>
+
+      {/* AI key setup banner */}
+      {showKeyBanner && (
+        <div className="mx-4 mb-2 flex-shrink-0 bg-amber-900/20 border border-amber-700/40 rounded-2xl p-3.5">
+          <div className="flex items-start gap-2.5">
+            <span className="text-lg flex-shrink-0">🔑</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-amber-300 mb-0.5">AI key required</p>
+              <p className="text-xs text-amber-200/70 leading-relaxed">Ariel needs an OpenAI or Anthropic key to think. It only takes 30 seconds to set up.</p>
+              <div className="flex gap-2 mt-2">
+                <a
+                  href="https://platform.openai.com/settings/organization/api-keys"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-bold text-amber-300 hover:text-amber-200 underline underline-offset-2"
+                >
+                  Get OpenAI key →
+                </a>
+                <span className="text-amber-700">·</span>
+                <a
+                  href="https://console.anthropic.com/settings/keys"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-bold text-amber-300 hover:text-amber-200 underline underline-offset-2"
+                >
+                  Get Anthropic key →
+                </a>
+              </div>
+              <p className="text-xs text-amber-200/50 mt-1.5">Then go to <strong className="text-amber-300">Create Cards</strong> → AI Settings to paste your key.</p>
+            </div>
+            <button onClick={() => setShowKeyBanner(false)} className="text-amber-600 hover:text-amber-400 flex-shrink-0 mt-0.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* URL input panel */}
       {showUpload && (

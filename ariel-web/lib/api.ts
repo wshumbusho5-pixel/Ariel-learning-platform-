@@ -178,6 +178,11 @@ export const cardsAPI = {
     return response.data;
   },
 
+  search: async (q: string, limit = 30) => {
+    const response = await api.get(`/api/cards/search?q=${encodeURIComponent(q)}&limit=${limit}`);
+    return response.data;
+  },
+
   // Get cards
   getMyDeck: async (filters?: { subject?: string; topic?: string; tags?: string[]; limit?: number; skip?: number }) => {
     const params = new URLSearchParams();

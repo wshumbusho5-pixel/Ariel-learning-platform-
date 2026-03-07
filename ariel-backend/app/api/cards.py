@@ -10,7 +10,8 @@ from app.services.card_repository import CardRepository
 from app.services.gamification_service import GamificationService
 from app.services.user_repository import UserRepository
 from app.services.personalized_feed import personalized_feed_service
-from app.api.auth import get_current_user_dependency
+from app.api.auth import get_current_user_dependency, get_optional_user_dependency
+from app.services.database_service import db_service
 from app.core.database import get_database
 from app.api.activity_feed import create_activity
 
@@ -103,6 +104,38 @@ async def get_due_cards(
     """Get cards due for review (spaced repetition queue)"""
     try:
         cards = await CardRepository.get_due_cards(current_user.id, limit)
+        return cards
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/search", response_model=List[Card])
+async def search_cards(
+    q: str,
+    limit: int = 30,
+    current_user: User = Depends(get_optional_user_dependency)
+):
+    """Full-text search across public cards"""
+    if not q or len(q.strip()) < 2:
+        return []
+    try:
+        db = db_service.get_db()
+        keyword = q.strip()
+        regex = {"$regex": keyword, "$options": "i"}
+        cursor = db["cards"].find(
+            {"visibility": "public", "$or": [
+                {"question": regex},
+                {"answer": regex},
+                {"subject": regex},
+                {"topic": regex},
+                {"tags": regex},
+            ]},
+            limit=limit
+        )
+        docs = await cursor.to_list(length=limit)
+        cards = []
+        for doc in docs:
+            doc["id"] = str(doc.pop("_id"))
+            cards.append(Card(**doc))
         return cards
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
