@@ -115,6 +115,9 @@ class PasswordReset(BaseModel):
     new_password: str
 
 class UserProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
+    username: Optional[str] = None
+    bio: Optional[str] = None
     education_level: Optional[EducationLevel] = None
     year_level: Optional[str] = None
     subjects: Optional[List[str]] = None

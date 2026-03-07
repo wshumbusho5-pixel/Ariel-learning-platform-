@@ -60,6 +60,9 @@ export const authAPI = {
   },
 
   updateProfile: async (profileData: {
+    full_name?: string;
+    username?: string;
+    bio?: string;
     education_level?: string;
     year_level?: string;
     subjects?: string[];

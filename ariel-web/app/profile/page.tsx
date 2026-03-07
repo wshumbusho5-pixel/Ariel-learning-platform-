@@ -3,17 +3,23 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
-import { progressAPI, gamificationAPI } from '@/lib/api';
+import { progressAPI, gamificationAPI, authAPI } from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout, checkAuth } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [gamification, setGamification] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'grid' | 'stats' | 'achievements'>('grid');
+  const [showEditSheet, setShowEditSheet] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editUsername, setEditUsername] = useState('');
+  const [editBio, setEditBio] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -42,6 +48,32 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     await logout();
     router.push('/');
+  };
+
+  const openEditSheet = () => {
+    setEditName(user?.full_name || '');
+    setEditUsername(user?.username || '');
+    setEditBio((user as any)?.bio || '');
+    setEditError('');
+    setShowEditSheet(true);
+  };
+
+  const handleSaveProfile = async () => {
+    setEditSaving(true);
+    setEditError('');
+    try {
+      await authAPI.updateProfile({
+        full_name: editName.trim() || undefined,
+        username: editUsername.trim() || undefined,
+        bio: editBio.trim() || undefined,
+      });
+      await checkAuth();
+      setShowEditSheet(false);
+    } catch (e: any) {
+      setEditError(e?.response?.data?.detail || 'Failed to save. Try again.');
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   if (!isAuthenticated && !isLoading) {
@@ -148,16 +180,16 @@ export default function ProfilePage() {
 
                 <div className="flex gap-2">
                   <button
-                    onClick={handleLogout}
-                    className="flex-1 py-1 px-4 bg-zinc-900 text-white hover:bg-zinc-800 text-sm font-semibold rounded-lg transition-colors"
+                    onClick={openEditSheet}
+                    className="flex-1 py-1 px-4 bg-white hover:bg-stone-100 text-sm font-semibold text-zinc-800 rounded-lg transition-colors border border-stone-200"
                   >
-                    Log out
+                    Edit Profile
                   </button>
                   <button
-                    onClick={() => router.push('/achievements')}
-                    className="py-1 px-4 bg-white hover:bg-stone-100 text-sm font-semibold text-zinc-700 rounded-lg transition-colors border border-stone-200"
+                    onClick={handleLogout}
+                    className="py-1 px-4 bg-zinc-900 hover:bg-zinc-800 text-sm font-semibold text-zinc-300 rounded-lg transition-colors border border-stone-200"
                   >
-                    Achievements
+                    Log out
                   </button>
                 </div>
               </div>
@@ -357,6 +389,79 @@ export default function ProfilePage() {
 
         <BottomNav />
       </div>
+
+      {/* Edit Profile sheet */}
+      {showEditSheet && (
+        <div className="fixed inset-0 z-[200] flex items-end" onClick={() => setShowEditSheet(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative w-full bg-zinc-950 border-t border-zinc-800 rounded-t-3xl pb-10 animate-slideUp"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-5">
+              <div className="w-10 h-1 rounded-full bg-zinc-700" />
+            </div>
+
+            <div className="px-5 space-y-4 max-w-lg mx-auto">
+              <h2 className="text-base font-bold text-white">Edit Profile</h2>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1.5">Full name</label>
+                <input
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="Your name"
+                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-sky-500 placeholder:text-zinc-600 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1.5">Username</label>
+                <input
+                  value={editUsername}
+                  onChange={e => setEditUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+                  placeholder="username"
+                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-sky-500 placeholder:text-zinc-600 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 mb-1.5">Bio</label>
+                <textarea
+                  value={editBio}
+                  onChange={e => setEditBio(e.target.value)}
+                  placeholder="Tell people about yourself..."
+                  rows={3}
+                  maxLength={160}
+                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-sky-500 placeholder:text-zinc-600 text-sm resize-none"
+                />
+                <p className="text-xs text-zinc-600 text-right mt-0.5">{editBio.length}/160</p>
+              </div>
+
+              {editError && (
+                <p className="text-sm text-red-400 bg-red-900/20 border border-red-800/40 rounded-xl px-4 py-2">{editError}</p>
+              )}
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => setShowEditSheet(false)}
+                  className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 font-semibold text-sm hover:bg-zinc-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={editSaving}
+                  className="flex-1 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-sm transition-colors disabled:opacity-60"
+                >
+                  {editSaving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
