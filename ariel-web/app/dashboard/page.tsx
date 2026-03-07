@@ -130,7 +130,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
       {/* 3D flip container */}
       <div
         className="relative w-full cursor-pointer"
-        style={{ aspectRatio: '1/1', perspective: '700px' }}
+        style={{ aspectRatio: '3/4', perspective: '700px' }}
         onClick={() => setFlipped(f => !f)}
       >
         <div
@@ -157,7 +157,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
               <span className="text-[9px] font-black text-white">Q</span>
             </div>
             <div className="absolute inset-0 flex items-center justify-center p-5">
-              <p className="text-white font-semibold text-sm text-center leading-snug line-clamp-5 drop-shadow">
+              <p className="text-white font-semibold text-base text-center leading-snug line-clamp-6 drop-shadow">
                 {card.question}
               </p>
             </div>
@@ -176,7 +176,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
               <span className="text-[9px] font-black text-white">A</span>
             </div>
             <div className="absolute inset-0 flex items-center justify-center p-5">
-              <p className="text-white font-semibold text-sm text-center leading-snug line-clamp-5 drop-shadow">
+              <p className="text-white font-semibold text-base text-center leading-snug line-clamp-6 drop-shadow">
                 {card.answer || 'No answer provided.'}
               </p>
             </div>
@@ -233,40 +233,29 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
   const hasReal = reels.length > 0;
 
   return (
-    <div className="col-span-2 sm:col-span-3 py-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="col-span-2 sm:col-span-3 -mx-4 py-4">
+      {/* Header — inside padding */}
+      <div className="flex items-center justify-between mb-3 px-4">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded bg-red-500 flex items-center justify-center">
-            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-          </div>
-          <span className="text-sm font-bold text-white">Clips</span>
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+          </span>
+          <span className="text-xs font-black text-white tracking-widest uppercase">Clips</span>
         </div>
-        <button onClick={() => onNavigate('/reels')} className="text-xs text-zinc-500 hover:text-sky-400 transition-colors font-medium">
+        <button onClick={() => onNavigate('/reels')} className="text-xs text-zinc-500 hover:text-sky-400 transition-colors font-medium px-4">
           See all →
         </button>
       </div>
 
-      <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-        {/* "See all" entry tile */}
-        <button
-          onClick={() => onNavigate('/reels')}
-          className="flex-shrink-0 w-[160px] rounded-3xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors"
-          style={{ aspectRatio: '9/16' }}
-        >
-          <div className="h-full flex flex-col items-center justify-center gap-2 p-2">
-            <div className="w-10 h-10 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
-              <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-            </div>
-            <p className="text-[10px] text-zinc-400 font-semibold text-center leading-tight">Watch<br />Clips</p>
-          </div>
-        </button>
-
+      {/* Full-bleed scroll strip */}
+      <div className="flex gap-2.5 overflow-x-auto pl-4 pb-1" style={{ scrollbarWidth: 'none' }}>
         {hasReal
-          ? reels.slice(0, 7).map((reel) => (
+          ? reels.slice(0, 8).map((reel) => (
               <button
                 key={reel.id}
                 onClick={() => onNavigate('/reels')}
-                className="flex-shrink-0 w-[160px] rounded-3xl overflow-hidden relative bg-zinc-900"
+                className="flex-shrink-0 w-[140px] rounded-2xl overflow-hidden relative bg-zinc-900"
                 style={{ aspectRatio: '9/16' }}
               >
                 {reel.thumbnail_url ? (
@@ -278,16 +267,15 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-b from-zinc-700 to-zinc-900" />
                 )}
-                {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                {/* Play icon */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                <div className="absolute top-2 left-2">
+                  <div className="w-6 h-6 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                  </div>
                 </div>
-                {/* Title + creator */}
-                <div className="absolute bottom-0 inset-x-0 p-3">
-                  <p className="text-xs font-bold text-white leading-tight line-clamp-2">{reel.title}</p>
-                  <p className="text-[10px] text-white/50 mt-0.5 truncate">@{reel.creator_username}</p>
+                <div className="absolute bottom-0 inset-x-0 p-2.5">
+                  <p className="text-[11px] font-bold text-white leading-tight line-clamp-2">{reel.title}</p>
+                  <p className="text-[9px] text-white/50 mt-0.5 truncate">@{reel.creator_username}</p>
                 </div>
               </button>
             ))
@@ -297,11 +285,15 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
                 <button
                   key={i}
                   onClick={() => onNavigate(`/topic/${encodeURIComponent(topic)}?subject=${encodeURIComponent(meta.label)}`)}
-                  className={`flex-shrink-0 w-[160px] rounded-2xl overflow-hidden bg-gradient-to-b ${meta.gradient} relative`}
+                  className={`flex-shrink-0 w-[140px] rounded-2xl overflow-hidden bg-gradient-to-b ${meta.gradient} relative`}
                   style={{ aspectRatio: '9/16' }}
                 >
                   <div className="h-full flex flex-col justify-between p-3">
-                    <span className="text-lg">{meta.icon}</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-5 h-5 rounded-full bg-black/30 flex items-center justify-center">
+                        <svg className="w-2.5 h-2.5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                      </div>
+                    </div>
                     <div>
                       <p className="text-[11px] font-bold text-white leading-tight">{topic}</p>
                       <p className="text-[9px] text-white/50 mt-0.5">{meta.short}</p>
@@ -311,6 +303,8 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
               );
             })
         }
+        {/* Right padding spacer */}
+        <div className="flex-shrink-0 w-4" />
       </div>
     </div>
   );
