@@ -125,7 +125,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
   };
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-zinc-800 bg-zinc-900">
+    <div className="border-b border-zinc-800 bg-zinc-900">
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
         <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center flex-shrink-0`}>
@@ -154,7 +154,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
 
       {/* 3D flip area — full width, fixed height */}
       <div
-        className="mx-4 mb-3 cursor-pointer"
+        className="mb-0 cursor-pointer"
         style={{ perspective: '900px' }}
         onClick={() => setFlipped(f => !f)}
       >
@@ -169,7 +169,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
         >
           {/* Front — Question */}
           <div
-            className="absolute inset-0 bg-white rounded-2xl flex flex-col items-center justify-center p-5"
+            className="absolute inset-0 bg-white flex flex-col items-center justify-center p-5"
             style={{ backfaceVisibility: 'hidden', minHeight: '140px', position: 'relative' }}
           >
             <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
@@ -185,7 +185,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
 
           {/* Back — Answer */}
           <div
-            className="absolute inset-0 bg-sky-50 rounded-2xl flex flex-col items-center justify-center p-5"
+            className="absolute inset-0 bg-sky-50 flex flex-col items-center justify-center p-5"
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', minHeight: '140px' }}
           >
             <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
@@ -330,7 +330,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
 
 function CardSkeleton() {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden animate-pulse">
+    <div className="border-b border-zinc-800 bg-zinc-900 animate-pulse">
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
         <div className="w-8 h-8 rounded-full bg-zinc-800 flex-shrink-0" />
@@ -340,7 +340,7 @@ function CardSkeleton() {
         </div>
       </div>
       {/* Card body */}
-      <div className="mx-4 mb-3 h-[140px] rounded-2xl bg-zinc-800" />
+      <div className="h-[140px] bg-zinc-800" />
       {/* Action bar */}
       <div className="flex gap-2 px-3 pb-3 pt-2 border-t border-zinc-800">
         <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
@@ -690,13 +690,13 @@ export default function Dashboard() {
 
           {/* Card feed — full-width posts */}
           {dataLoading ? (
-            <div className="space-y-3">
+            <div className="-mx-4">
               {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
             </div>
           ) : displayCards.length > 0 ? (
             <>
               {/* First 2 cards */}
-              <div className="space-y-3 mb-3">
+              <div className="-mx-4">
                 {displayCards.slice(0, 2).map(card => (
                   <CardTile key={card.id} card={card} onComment={openComments} />
                 ))}
@@ -709,7 +709,7 @@ export default function Dashboard() {
 
               {/* Next 4 cards */}
               {displayCards.length > 2 && (
-                <div className="space-y-3 mt-3">
+                <div className="-mx-4">
                   {displayCards.slice(2, 6).map(card => (
                     <CardTile key={card.id} card={card} onComment={openComments} />
                   ))}
