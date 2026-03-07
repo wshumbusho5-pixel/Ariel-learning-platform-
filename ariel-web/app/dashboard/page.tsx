@@ -145,77 +145,74 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
         >
           {/* Front face — Question */}
           <div
-            className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-zinc-800 rounded-3xl overflow-hidden border border-zinc-700/40"
+            className="absolute inset-0 bg-white rounded-3xl overflow-hidden"
             style={{ backfaceVisibility: 'hidden' }}
           >
             {card.subject && (
-              <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-sm">
-                <span className="text-white text-[10px] font-semibold">{card.subject}</span>
+              <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-zinc-900">
+                <span className="text-zinc-400 text-[10px] font-semibold">{card.subject}</span>
               </div>
             )}
-            <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center">
               <span className="text-[9px] font-black text-white">Q</span>
             </div>
             <div className="absolute inset-0 flex items-center justify-center p-5">
-              <p className="text-white font-semibold text-base text-center leading-snug line-clamp-6 drop-shadow">
+              <p className="text-zinc-900 font-semibold text-base text-center leading-snug line-clamp-6">
                 {card.question}
               </p>
             </div>
             <div className="absolute bottom-2.5 inset-x-0 flex justify-center">
-              <span className="text-[9px] text-white/30 font-medium">tap for answer</span>
+              <span className="text-[9px] text-zinc-300 font-medium">tap for answer</span>
             </div>
           </div>
 
           {/* Back face — Answer */}
           <div
-            className="absolute inset-0 bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-3xl overflow-hidden border border-zinc-700/40"
+            className="absolute inset-0 bg-white rounded-3xl overflow-hidden"
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           >
-            <div className="absolute inset-0 bg-sky-500/5" />
-            <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <div className="absolute inset-0 bg-sky-50" />
+            <div className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full bg-gradient-to-br from-sky-500 to-indigo-500 flex items-center justify-center">
               <span className="text-[9px] font-black text-white">A</span>
             </div>
             <div className="absolute inset-0 flex items-center justify-center p-5">
-              <p className="text-white font-semibold text-base text-center leading-snug line-clamp-6 drop-shadow">
+              <p className="text-zinc-900 font-semibold text-base text-center leading-snug line-clamp-6">
                 {card.answer || 'No answer provided.'}
               </p>
             </div>
             <div className="absolute bottom-2.5 inset-x-0 flex justify-center">
-              <span className="text-[9px] text-white/30 font-medium">tap for question</span>
+              <span className="text-[9px] text-zinc-300 font-medium">tap for question</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Metadata + actions below thumbnail */}
-      <div className="mt-2 px-0.5">
-        <p className="text-xs font-semibold text-white leading-snug line-clamp-2">{card.question}</p>
-        <div className="flex items-center justify-between mt-1.5">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <div className="w-4 h-4 rounded-full bg-zinc-700 flex-shrink-0" />
-            <p className="text-[11px] text-zinc-500 truncate">
-              {card.author_username ? `@${card.author_username}` : meta.short}
-              {card.created_at ? ` · ${timeAgo(card.created_at)}` : ''}
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5 flex-shrink-0">
-            <button onClick={handleLike} className="flex items-center gap-1">
-              <svg className={`w-4 h-4 transition-colors ${liked ? 'text-red-500' : 'text-zinc-600'}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-              {likeCount > 0 && <span className="text-[10px] text-zinc-600">{likeCount}</span>}
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); onComment(card.id); }}>
-              <svg className="w-4 h-4 text-zinc-600 hover:text-zinc-400 transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </button>
-            <button onClick={handleSave}>
-              <svg className={`w-4 h-4 transition-colors ${saved ? 'text-sky-400' : 'text-zinc-600 hover:text-zinc-400'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-            </button>
-          </div>
+      {/* Action row */}
+      <div className="mt-2 px-0.5 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="w-4 h-4 rounded-full bg-zinc-700 flex-shrink-0" />
+          <p className="text-[11px] text-zinc-500 truncate">
+            {card.author_username ? `@${card.author_username}` : meta.short}
+            {card.created_at ? ` · ${timeAgo(card.created_at)}` : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-2.5 flex-shrink-0">
+          <button onClick={handleLike} className="flex items-center gap-1">
+            <svg className={`w-4 h-4 transition-colors ${liked ? 'text-red-500' : 'text-zinc-600'}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            {likeCount > 0 && <span className="text-[10px] text-zinc-600">{likeCount}</span>}
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onComment(card.id); }}>
+            <svg className="w-4 h-4 text-zinc-600 hover:text-zinc-400 transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </button>
+          <button onClick={handleSave}>
+            <svg className={`w-4 h-4 transition-colors ${saved ? 'text-sky-400' : 'text-zinc-600 hover:text-zinc-400'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -233,20 +230,22 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
   const hasReal = reels.length > 0;
 
   return (
-    <div className="col-span-2 sm:col-span-3 -mx-4 py-4">
-      {/* Header — inside padding */}
-      <div className="flex items-center justify-between mb-3 px-4">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
-          </span>
-          <span className="text-xs font-black text-white tracking-widest uppercase">Clips</span>
+    <div className="col-span-2 sm:col-span-3 -mx-4">
+      {/* Wrapped section */}
+      <div className="bg-zinc-900 py-4 my-2">
+        {/* Header — inside padding */}
+        <div className="flex items-center justify-between mb-3 px-4">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+            </span>
+            <span className="text-xs font-black text-white tracking-widest uppercase">Clips</span>
+          </div>
+          <button onClick={() => onNavigate('/reels')} className="text-xs text-zinc-500 hover:text-sky-400 transition-colors font-medium px-4">
+            See all →
+          </button>
         </div>
-        <button onClick={() => onNavigate('/reels')} className="text-xs text-zinc-500 hover:text-sky-400 transition-colors font-medium px-4">
-          See all →
-        </button>
-      </div>
 
       {/* Full-bleed scroll strip */}
       <div className="flex gap-2.5 overflow-x-auto pl-4 pb-1" style={{ scrollbarWidth: 'none' }}>
@@ -255,7 +254,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
               <button
                 key={reel.id}
                 onClick={() => onNavigate('/reels')}
-                className="flex-shrink-0 w-[140px] rounded-2xl overflow-hidden relative bg-zinc-900"
+                className="flex-shrink-0 w-[160px] rounded-2xl overflow-hidden relative bg-zinc-800"
                 style={{ aspectRatio: '9/16' }}
               >
                 {reel.thumbnail_url ? (
@@ -285,7 +284,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
                 <button
                   key={i}
                   onClick={() => onNavigate(`/topic/${encodeURIComponent(topic)}?subject=${encodeURIComponent(meta.label)}`)}
-                  className={`flex-shrink-0 w-[140px] rounded-2xl overflow-hidden bg-gradient-to-b ${meta.gradient} relative`}
+                  className={`flex-shrink-0 w-[160px] rounded-2xl overflow-hidden bg-gradient-to-b ${meta.gradient} relative`}
                   style={{ aspectRatio: '9/16' }}
                 >
                   <div className="h-full flex flex-col justify-between p-3">
@@ -305,6 +304,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
         }
         {/* Right padding spacer */}
         <div className="flex-shrink-0 w-4" />
+      </div>
       </div>
     </div>
   );
@@ -472,12 +472,13 @@ export default function Dashboard() {
 
         {/* ── Sticky header: brand + search only ───────────────────────────── */}
         <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-zinc-800/60">
+          <div className="h-[2px] bg-gradient-to-r from-sky-500 via-indigo-500 to-sky-500" />
           {/* Row 1: brand | icons */}
           <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
-            <span className="text-lg font-black text-white tracking-tight">ariel</span>
+            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">ariel</span>
             <div className="flex items-center">
               <button onClick={() => router.push('/messages')} className="relative w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
                 </svg>
                 {unreadMessages > 0 && (
@@ -487,7 +488,7 @@ export default function Dashboard() {
                 )}
               </button>
               <button onClick={() => router.push('/notifications')} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
@@ -496,7 +497,7 @@ export default function Dashboard() {
 
           {/* Row 2: full-width search bar */}
           <div className="max-w-3xl mx-auto px-4 pb-3">
-            <div className="flex items-center bg-zinc-900 border border-zinc-700/60 rounded-full px-4 h-9 gap-2 focus-within:border-sky-500/60 transition-colors">
+            <div className="flex items-center bg-zinc-900 border border-zinc-700/60 rounded-full px-4 h-10 gap-2 focus-within:border-sky-500/60 transition-colors">
               <svg className="w-4 h-4 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
