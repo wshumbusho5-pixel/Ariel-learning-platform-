@@ -19,6 +19,10 @@ interface FeedCard {
   subject?: string;
   topic?: string;
   likes?: number;
+  comments_count?: number;
+  saves?: number;
+  is_liked_by_user?: boolean;
+  is_saved_by_user?: boolean;
   author_username?: string;
   created_at?: string;
 }
@@ -43,11 +47,11 @@ const SUBJECT_META: Record<string, {
   gradient: string; ring: string; keywords: string[];
 }> = {
   gospel:      { label: 'Gospel & Faith',   short: 'Gospel',     icon: '✝️',  gradient: 'from-amber-700 to-yellow-600',  ring: 'ring-amber-500',   keywords: ['bible','gospel','faith','theology','scripture','church','religion'] },
-  business:    { label: 'Business',          short: 'Business',   icon: '💼',  gradient: 'from-sky-700 to-blue-600',      ring: 'ring-sky-500',     keywords: ['business','marketing','finance','management','accounting','sales'] },
-  economics:   { label: 'Economics',         short: 'Economics',  icon: '📈',  gradient: 'from-violet-700 to-purple-600', ring: 'ring-violet-500',  keywords: ['economics','gdp','inflation','trade','monetary','fiscal','economy'] },
+  business:    { label: 'Business',          short: 'Business',   icon: '💼',  gradient: 'from-sky-700 to-blue-600',      ring: 'ring-amber-500',     keywords: ['business','marketing','finance','management','accounting','sales'] },
+  economics:   { label: 'Economics',         short: 'Economics',  icon: '📈',  gradient: 'from-violet-700 to-purple-600', ring: 'ring-violet-300',  keywords: ['economics','gdp','inflation','trade','monetary','fiscal','economy'] },
   technology:  { label: 'Technology',        short: 'Tech',       icon: '💻',  gradient: 'from-zinc-600 to-zinc-500',     ring: 'ring-zinc-400',    keywords: ['programming','software','coding','javascript','python','ai','data'] },
   health:      { label: 'Health & Medicine', short: 'Health',     icon: '🧬',  gradient: 'from-rose-700 to-pink-600',     ring: 'ring-rose-500',    keywords: ['health','medicine','anatomy','nutrition','fitness','psychology'] },
-  mathematics: { label: 'Mathematics',       short: 'Maths',      icon: '📐',  gradient: 'from-indigo-700 to-indigo-500', ring: 'ring-indigo-500',  keywords: ['mathematics','calculus','algebra','geometry','statistics','math'] },
+  mathematics: { label: 'Mathematics',       short: 'Maths',      icon: '📐',  gradient: 'from-indigo-700 to-emerald-500', ring: 'ring-emerald-500',  keywords: ['mathematics','calculus','algebra','geometry','statistics','math'] },
   sciences:    { label: 'Sciences',          short: 'Sciences',   icon: '🔬',  gradient: 'from-emerald-700 to-green-600', ring: 'ring-emerald-500', keywords: ['biology','chemistry','physics','science','lab'] },
   history:     { label: 'History',           short: 'History',    icon: '🏛️',  gradient: 'from-stone-600 to-stone-500',   ring: 'ring-stone-400',   keywords: ['history','historical','civilization','war','ancient'] },
   literature:  { label: 'Literature',        short: 'Lit',        icon: '📚',  gradient: 'from-orange-700 to-orange-600', ring: 'ring-orange-500',  keywords: ['literature','english','writing','poetry','novel'] },
@@ -108,13 +112,27 @@ function cardHeight(card: FeedCard): number {
   return 280;
 }
 
-function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string) => void }) {
+function CardTile({ card, onComment, flush = false }: { card: FeedCard; onComment: (id: string) => void; flush?: boolean }) {
   const [flipped, setFlipped] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(() => {
+    if (card.is_liked_by_user) return true;
+    try { return JSON.parse(localStorage.getItem('ariel_liked') || '[]').includes(card.id); } catch { return false; }
+  });
   const [likeCount, setLikeCount] = useState(card.likes ?? 0);
   const [likeAnim, setLikeAnim] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(() => {
+    if (card.is_saved_by_user) return true;
+    try { return JSON.parse(localStorage.getItem('ariel_saved') || '[]').includes(card.id); } catch { return false; }
+  });
   const [saveToast, setSaveToast] = useState(false);
+  const [commentCount, setCommentCount] = useState(() => {
+    const base = card.comments_count ?? 0;
+    try {
+      const commented: string[] = JSON.parse(localStorage.getItem('ariel_commented') || '[]');
+      return commented.includes(card.id) ? Math.max(base, 1) : base;
+    } catch { return base; }
+  });
+  const [saveCount, setSaveCount] = useState(card.saves ?? 0);
 
   const key = getSubjectKey(card);
   const meta = SUBJECT_META[key];
@@ -130,16 +148,30 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
       setTimeout(() => setLikeAnim(false), 400);
       cardsAPI.likeCard(card.id).catch(() => {});
     }
+    try {
+      const stored: string[] = JSON.parse(localStorage.getItem('ariel_liked') || '[]');
+      const updated = next ? [...stored.filter(id => id !== card.id), card.id] : stored.filter(id => id !== card.id);
+      localStorage.setItem('ariel_liked', JSON.stringify(updated));
+    } catch {}
   };
 
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!saved) {
+    const next = !saved;
+    if (next) {
       cardsAPI.saveCardToDeck(card.id).catch(() => {});
       setSaveToast(true);
+      setSaveCount(c => c + 1);
       setTimeout(() => setSaveToast(false), 1600);
+    } else {
+      setSaveCount(c => Math.max(0, c - 1));
     }
-    setSaved(s => !s);
+    setSaved(next);
+    try {
+      const stored: string[] = JSON.parse(localStorage.getItem('ariel_saved') || '[]');
+      const updated = next ? [...stored.filter(id => id !== card.id), card.id] : stored.filter(id => id !== card.id);
+      localStorage.setItem('ariel_saved', JSON.stringify(updated));
+    } catch {}
   };
 
   const handleShare = async (e: React.MouseEvent) => {
@@ -157,10 +189,10 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
   };
 
   return (
-    <div className="border-b border-zinc-800 bg-zinc-900 relative">
+    <div className="overflow-hidden relative rounded-xl border border-zinc-700/60 bg-[#1e1e22] mb-3">
       {/* Save toast */}
       {saveToast && (
-        <div className="animate-toast absolute bottom-14 left-1/2 -translate-x-1/2 z-10 px-3.5 py-1.5 rounded-full bg-zinc-800 border border-zinc-700 text-xs font-semibold text-zinc-200 whitespace-nowrap pointer-events-none">
+        <div className="animate-toast absolute bottom-14 left-1/2 -translate-x-1/2 z-10 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
           Saved to deck ✓
         </div>
       )}
@@ -185,94 +217,141 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
           )}
         </div>
         {/* Q / A indicator */}
-        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${flipped ? 'bg-sky-500' : 'bg-zinc-800'}`}>
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${flipped ? 'bg-violet-500 scale-110' : 'bg-zinc-800'}`}>
           <span className="text-[11px] font-black text-white">{flipped ? 'A' : 'Q'}</span>
         </div>
       </div>
 
-      {/* 3D flip area — full width, fixed height */}
+      {/* Card face — scale flip (no bleed) */}
       <div
-        className="mb-0 cursor-pointer"
-        style={{ perspective: '900px' }}
+        className="cursor-pointer relative overflow-hidden"
+        style={{ minHeight: `${flipHeight}px` }}
         onClick={() => setFlipped(f => !f)}
       >
+        {/* Front — Question */}
         <div
+          className="absolute inset-0 flex flex-col items-center justify-center p-6 transition-all duration-200"
           style={{
-            position: 'relative',
-            minHeight: `${flipHeight}px`,
-            transformStyle: 'preserve-3d',
-            transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-            transition: 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
+            background: '#ffffff',
+            opacity: flipped ? 0 : 1,
+            transform: flipped ? 'scaleX(0.92) scaleY(0.96)' : 'scaleX(1) scaleY(1)',
+            pointerEvents: flipped ? 'none' : 'auto',
           }}
         >
-          {/* Front — Question */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-5"
-            style={{ backfaceVisibility: 'hidden', minHeight: `${flipHeight}px`, position: 'relative', background: '#f7f7f8' }}
-          >
-            <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
-              {card.question}
-            </p>
-            <span className="absolute bottom-3 text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              tap to flip
-            </span>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] to-transparent pointer-events-none" />
+          <p className="text-zinc-800 font-bold text-[16px] text-center leading-relaxed relative z-10">
+            {card.question}
+          </p>
+          <span className="absolute bottom-3 text-[10px] text-zinc-300 font-medium flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            tap to reveal
+          </span>
+        </div>
 
-          {/* Back — Answer */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center p-5"
-            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', minHeight: `${flipHeight}px`, background: '#eaf4ff' }}
-          >
-            <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
+        {/* Back — Answer */}
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center px-6 py-5 transition-all duration-200"
+          style={{
+            background: '#f8f6ff',
+            opacity: flipped ? 1 : 0,
+            transform: flipped ? 'scaleX(1) scaleY(1)' : 'scaleX(0.92) scaleY(0.96)',
+            pointerEvents: flipped ? 'auto' : 'none',
+          }}
+        >
+          <div className="flex items-start gap-3 w-full">
+            <div className="w-[3px] self-stretch rounded-full bg-violet-500 flex-shrink-0" />
+            <p className="text-zinc-800 font-semibold text-[15px] leading-relaxed">
               {card.answer || 'No answer provided.'}
             </p>
-            <span className="absolute bottom-3 text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              tap to flip
-            </span>
           </div>
+          <span className="absolute bottom-3 text-[10px] text-zinc-300 font-medium flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            tap to hide
+          </span>
         </div>
       </div>
 
-      {/* Action bar */}
-      <div className="flex items-center gap-1 px-3 pb-3 border-t border-zinc-800 pt-2.5">
+      {/* Counts summary — LinkedIn style */}
+      {(likeCount > 0 || commentCount > 0 || saveCount > 0) && (
+        <div className="flex items-center gap-3 px-4 py-2 border-t border-zinc-800/50">
+          {likeCount > 0 && (
+            <span className="flex items-center gap-1 text-[11px] text-zinc-500">
+              <svg className="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              <span className="font-semibold text-zinc-400">{likeCount}</span>
+            </span>
+          )}
+          {commentCount > 0 && (
+            <span className="text-[11px] text-zinc-500">
+              <span className="font-semibold text-zinc-400">{commentCount}</span> comment{commentCount !== 1 ? 's' : ''}
+            </span>
+          )}
+          {saveCount > 0 && (
+            <span className="text-[11px] text-zinc-500 ml-auto">
+              <span className="font-semibold text-zinc-400">{saveCount}</span> save{saveCount !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Action bar — LinkedIn style: tall, full labels, always visible */}
+      <div className="flex items-stretch border-t border-zinc-800">
         <button
           onClick={handleLike}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${liked ? 'text-red-400 bg-red-500/10' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+          className={`flex items-center justify-center gap-2 flex-1 py-3 text-sm font-semibold transition-colors ${liked ? 'text-red-400' : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50'}`}
         >
-          <svg className={`w-4 h-4 ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg className={`w-5 h-5 flex-shrink-0 ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
-          {likeCount > 0 ? likeCount : 'Like'}
+          Like
         </button>
+
+        <div className="w-px bg-zinc-800 self-stretch" />
+
         <button
-          onClick={(e) => { e.stopPropagation(); onComment(card.id); }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors flex-1 justify-center"
+          onClick={(e) => {
+            e.stopPropagation();
+            try {
+              const commented: string[] = JSON.parse(localStorage.getItem('ariel_commented') || '[]');
+              if (!commented.includes(card.id)) {
+                localStorage.setItem('ariel_commented', JSON.stringify([...commented, card.id]));
+                setCommentCount(c => c + 1);
+              }
+            } catch {}
+            onComment(card.id);
+          }}
+          className="flex items-center justify-center gap-2 flex-1 py-3 text-sm font-semibold text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
           Comment
         </button>
+
+        <div className="w-px bg-zinc-800 self-stretch" />
+
         <button
           onClick={handleShare}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors flex-1 justify-center"
+          className="flex items-center justify-center gap-2 flex-1 py-3 text-sm font-semibold text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
           Share
         </button>
+
+        <div className="w-px bg-zinc-800 self-stretch" />
+
         <button
           onClick={handleSave}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${saved ? 'text-sky-400 bg-sky-500/10' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
+          className={`flex items-center justify-center gap-2 flex-1 py-3 text-sm font-semibold transition-colors ${saved ? 'text-violet-400' : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50'}`}
         >
-          <svg className="w-4 h-4" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg className="w-5 h-5 flex-shrink-0" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
           </svg>
           {saved ? 'Saved' : 'Save'}
@@ -297,16 +376,22 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
       {/* Wrapped section */}
       <div style={{ background: '#111115', borderTop: '1px solid #27272a', borderBottom: '1px solid #27272a' }} className="py-5 my-0">
         {/* Header — inside padding */}
-        <div className="flex items-center justify-between mb-4 px-4">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
-            </span>
-            <span className="text-xs font-black text-white tracking-widest uppercase">Clips</span>
+        <div className="flex items-start justify-between mb-4 px-4">
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="relative flex h-2.5 w-2.5 mt-0.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+              </span>
+              <span className="text-base font-black text-white tracking-tight">Short Clips</span>
+            </div>
+            <p className="text-xs text-zinc-400">Quick learning videos from the community</p>
           </div>
-          <button onClick={() => onNavigate('/reels')} className="text-xs text-zinc-500 hover:text-sky-400 transition-colors font-medium px-4">
-            See all →
+          <button onClick={() => onNavigate('/reels')} className="text-xs text-zinc-400 hover:text-white transition-colors font-semibold flex items-center gap-1 mt-0.5 flex-shrink-0">
+            See all
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
 
@@ -375,9 +460,9 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
 
 // ─── Skeleton card ────────────────────────────────────────────────────────────
 
-function CardSkeleton({ height = 210 }: { height?: number }) {
+function CardSkeleton({ height = 210, flush = false }: { height?: number; flush?: boolean }) {
   return (
-    <div className="border-b border-zinc-800 bg-zinc-900 animate-pulse">
+    <div className="animate-pulse overflow-hidden rounded-xl border border-zinc-700/60 bg-[#1e1e22] mb-3">
       <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
         <div className="w-8 h-8 rounded-full bg-zinc-800 flex-shrink-0" />
         <div className="flex-1 space-y-1.5">
@@ -385,11 +470,34 @@ function CardSkeleton({ height = 210 }: { height?: number }) {
           <div className="h-2.5 bg-zinc-800 rounded-full w-1/4" />
         </div>
       </div>
-      <div style={{ height: `${height}px`, background: '#e4e4e6' }} />
-      <div className="flex gap-2 px-3 pb-3 pt-2 border-t border-zinc-800">
+      <div style={{ height: `${height}px`, background: '#d8d8de' }} />
+      <div className="flex gap-2 px-3 pb-3 pt-2 border-t border-zinc-800/60">
         <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
         <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
         <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
+      </div>
+    </div>
+  );
+}
+
+function ArielSkeleton() {
+  return (
+    <div className="rounded-2xl bg-[#1e1e22] border border-zinc-700/60 p-4 mb-3 animate-pulse">
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl bg-zinc-800 flex-shrink-0" />
+        <div className="flex-1 space-y-2 pt-0.5">
+          <div className="flex items-center gap-2">
+            <div className="h-3 bg-zinc-800 rounded-full w-10" />
+            <div className="h-3 bg-zinc-800 rounded-full w-5" />
+          </div>
+          <div className="h-2.5 bg-zinc-800 rounded-full w-3/4" />
+          <div className="h-2.5 bg-zinc-800 rounded-full w-1/2" />
+        </div>
+      </div>
+      <div className="flex gap-2 mt-3">
+        <div className="h-6 w-24 bg-zinc-800 rounded-full" />
+        <div className="h-6 w-20 bg-zinc-800 rounded-full" />
+        <div className="h-6 w-28 bg-zinc-800 rounded-full" />
       </div>
     </div>
   );
@@ -482,12 +590,12 @@ export default function Dashboard() {
   }
 
   if (isLoading) {
-    return <div className="min-h-screen bg-black flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-700 border-t-sky-500 rounded-full animate-spin" /></div>;
+    return <div className="min-h-screen bg-[#09090b] flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-600 border-t-violet-300 rounded-full animate-spin" /></div>;
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
         <div className="text-center space-y-3">
           <p className="text-base font-semibold text-white">Sign in to continue</p>
           <button onClick={() => router.push('/')} className="px-4 py-2 rounded-lg bg-zinc-800 text-sm font-semibold text-zinc-200">Go to login</button>
@@ -554,126 +662,181 @@ export default function Dashboard() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-black lg:pl-[72px] pb-24">
+      <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-24 page-enter">
 
         {/* ── Sticky header ─────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-zinc-800/50">
-          <div className="h-[2px] bg-gradient-to-r from-sky-500 via-indigo-500 to-sky-500" />
+        <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800">
 
-          {/* Single row: greeting + icons (collapses to search when open) */}
-          <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
-            {showSearch ? (
-              /* Search mode */
-              <>
-                <div className="flex-1 flex items-center bg-zinc-900 border border-zinc-700/60 rounded-full px-4 h-9 gap-2 focus-within:border-sky-500/60 transition-colors">
-                  <svg className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    ref={searchRef}
-                    autoFocus
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    onKeyDown={e => e.key === 'Escape' && (setSearchQuery(''), setShowSearch(false))}
-                    placeholder="Search cards, topics..."
-                    className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-600 focus:outline-none min-w-0"
-                  />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="flex-shrink-0 text-zinc-500 hover:text-white transition-colors">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+          {/* Ariel violet crown line */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-violet-400 to-violet-600/40 pointer-events-none" />
+
+          {showSearch ? (
+            /* Search mode */
+            <div className="max-w-3xl mx-auto px-4 h-16 flex items-center gap-3">
+              <div className="flex-1 flex items-center bg-zinc-900 border border-zinc-700/60 rounded-xl px-4 h-10 gap-2 focus-within:border-violet-400/60 transition-colors">
+                <svg className="w-4 h-4 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  ref={searchRef}
+                  autoFocus
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Escape' && (setSearchQuery(''), setShowSearch(false))}
+                  placeholder="Search cards, topics..."
+                  className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-600 focus:outline-none min-w-0"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="flex-shrink-0 text-zinc-500 hover:text-white transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => { setShowSearch(false); setSearchQuery(''); }}
+                className="text-sm font-semibold text-violet-400 hover:text-violet-300 transition-colors flex-shrink-0"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Main row */}
+              <div className="max-w-3xl mx-auto px-4 pt-4 pb-2 flex items-center gap-3">
+                {/* Avatar */}
+                <button onClick={() => router.push('/profile')} className="flex-shrink-0 relative">
+                  {user?.profile_picture ? (
+                    <img
+                      src={user.profile_picture}
+                      alt={user.username}
+                      className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-800 hover:ring-violet-400/50 transition-all"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-violet-500 flex items-center justify-center ring-2 ring-zinc-800 hover:ring-violet-400/50 transition-all">
+                      <span className="text-base font-black text-white">
+                        {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
+                      </span>
+                    </div>
                   )}
-                </div>
-                <button
-                  onClick={() => { setShowSearch(false); setSearchQuery(''); }}
-                  className="text-sm font-semibold text-sky-400 hover:text-sky-300 transition-colors flex-shrink-0"
-                >
-                  Cancel
                 </button>
-              </>
-            ) : (
-              /* Normal mode: greeting left, icons right */
-              <>
+
+                {/* Name + status */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-zinc-600 font-medium leading-none mb-0.5">{greeting}</p>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-base font-black text-white leading-none truncate">{firstName || 'there'}</h1>
+                  <div className="flex items-center gap-2.5">
+                    <h1 className="text-2xl font-black text-white leading-none truncate tracking-tight">{firstName || 'there'}</h1>
                     {!dataLoading && streakDays > 0 && (
-                      <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-1.5 py-0.5 rounded-full flex-shrink-0">🔥 {streakDays}d</span>
+                      <span className="text-[11px] font-bold text-orange-400 leading-none flex-shrink-0">🔥 {streakDays}d</span>
                     )}
                   </div>
+                  <p className="text-[11px] text-zinc-500 mt-1 leading-none">
+                    {dataLoading ? (
+                      <span className="inline-block w-28 h-2.5 bg-zinc-800 rounded-full animate-pulse" />
+                    ) : dueCards.length > 0 ? (
+                      <><span className="text-violet-400 font-semibold">{dueCards.length} card{dueCards.length !== 1 ? 's' : ''}</span> ready for review</>
+                    ) : feedCards.length > 0 ? (
+                      <><span className="text-zinc-300 font-semibold">{feedCards.length} new card{feedCards.length !== 1 ? 's' : ''}</span> in your feed</>
+                    ) : (
+                      <span className="text-zinc-600">All caught up · keep it going</span>
+                    )}
+                  </p>
                 </div>
-                <div className="flex items-center flex-shrink-0">
+
+                {/* Action icons */}
+                <div className="flex items-center gap-0.5 flex-shrink-0">
                   <button onClick={() => setShowSearch(true)} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </button>
                   <button onClick={() => router.push('/messages')} className="relative w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                     </svg>
                     {unreadMessages > 0 && (
-                      <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] rounded-full bg-sky-500 flex items-center justify-center">
+                      <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] rounded-full bg-violet-500 flex items-center justify-center">
                         <span className="text-[9px] font-black text-white leading-none px-0.5">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
                       </span>
                     )}
                   </button>
                   <button onClick={() => router.push('/notifications')} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                   </button>
                   <button onClick={() => setDrawerOpen(true)} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors lg:hidden">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor">
                       <circle cx="5" cy="5" r="1.5" /><circle cx="12" cy="5" r="1.5" /><circle cx="19" cy="5" r="1.5" />
                       <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
                       <circle cx="5" cy="19" r="1.5" /><circle cx="12" cy="19" r="1.5" /><circle cx="19" cy="19" r="1.5" />
                     </svg>
                   </button>
                 </div>
-              </>
-            )}
-          </div>
-
-          {/* Subject filter strip — always in header so it stays on screen */}
-          {!showSearch && (
-            <div className="max-w-3xl mx-auto">
-              <div className="flex items-center gap-1.5 overflow-x-auto px-4 pb-3 pt-0.5" style={{ scrollbarWidth: 'none' }}>
-                <button
-                  onClick={() => { setActiveSubject(null); setActiveTopic(null); }}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${!activeSubject ? 'bg-white text-zinc-950' : 'border border-zinc-700 text-zinc-500 hover:text-zinc-300'}`}
-                >
-                  All
-                </button>
-                {userSubjects.map(key => {
-                  const m = SUBJECT_META[key] || SUBJECT_META.other;
-                  const isActive = activeSubject === key;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => handleStoryTap(key)}
-                      className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
-                        isActive ? 'bg-white text-zinc-950' : 'border border-zinc-700 text-zinc-500 hover:text-zinc-300'
-                      }`}
-                    >
-                      <span>{m.icon}</span>
-                      <span>{m.short}</span>
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => setShowSubjectPicker(true)}
-                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-zinc-700 text-zinc-600 hover:text-zinc-400 hover:border-zinc-500 transition-all"
-                >
-                  + Add
-                </button>
               </div>
-            </div>
+
+              {/* Subject filter strip */}
+              <div className="max-w-3xl mx-auto">
+                <div className="flex items-center gap-1.5 overflow-x-auto px-4 pb-3 pt-1" style={{ scrollbarWidth: 'none' }}>
+                  <button
+                    onClick={() => { setActiveSubject(null); setActiveTopic(null); }}
+                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${!activeSubject ? 'bg-violet-500 text-white' : 'border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'}`}
+                  >
+                    All
+                  </button>
+                  {userSubjects.map(key => {
+                    const m = SUBJECT_META[key] || SUBJECT_META.other;
+                    const isActive = activeSubject === key;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => handleStoryTap(key)}
+                        className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                          isActive
+                            ? 'bg-violet-500 text-white'
+                            : 'border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                        }`}
+                      >
+                        <span>{m.icon}</span>
+                        <span>{m.short}</span>
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setShowSubjectPicker(true)}
+                    className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold border border-dashed border-zinc-800 text-zinc-600 hover:text-zinc-400 hover:border-zinc-600 transition-all"
+                  >
+                    + Add
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </header>
+
+        {/* ── Stats strip ───────────────────────────────────────────────────── */}
+        {!dataLoading && (
+          <div className="max-w-3xl mx-auto px-4 pt-4 pb-2">
+            <div className="flex items-stretch divide-x divide-zinc-800 border border-zinc-800/60 rounded-xl overflow-hidden bg-[#111113]">
+              <div className="flex-1 flex flex-col items-center justify-center py-3 px-2">
+                <span className="text-2xl font-black text-white leading-none">{streakDays > 0 ? streakDays : '—'}</span>
+                <span className="text-[10px] text-zinc-500 font-medium mt-1 uppercase tracking-wider">Day streak</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-center py-3 px-2">
+                <span className="text-2xl font-black text-white leading-none">{level}</span>
+                <span className="text-[10px] text-zinc-500 font-medium mt-1 uppercase tracking-wider">Level</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-center py-3 px-2">
+                <span className="text-2xl font-black text-white leading-none">{dueCards.length > 0 ? dueCards.length : '0'}</span>
+                <span className="text-[10px] text-zinc-500 font-medium mt-1 uppercase tracking-wider">Cards due</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-center py-3 px-2">
+                <span className="text-2xl font-black text-white leading-none">{feedCards.length > 0 ? feedCards.length : '0'}</span>
+                <span className="text-[10px] text-zinc-500 font-medium mt-1 uppercase tracking-wider">In feed</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Feed ──────────────────────────────────────────────────────────── */}
         <div className="max-w-3xl mx-auto px-4 pb-4">
@@ -689,6 +852,7 @@ export default function Dashboard() {
                     activeTopic === chip
                       ? 'bg-zinc-100 text-zinc-950'
                       : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300'
+
                   }`}
                 >
                   {chip}
@@ -702,74 +866,107 @@ export default function Dashboard() {
             <div className="flex items-center justify-between pt-3 mb-4">
               <p className="text-sm text-zinc-400 flex items-center gap-2">
                 {searching ? (
-                  <span className="w-3.5 h-3.5 border border-zinc-600 border-t-sky-400 rounded-full animate-spin inline-block" />
+                  <span className="w-3.5 h-3.5 border border-zinc-600 border-t-violet-300 rounded-full animate-spin inline-block" />
                 ) : (
                   <span className="font-bold text-white">{displayCards.length}</span>
                 )}
-                {!searching && <> result{displayCards.length !== 1 ? 's' : ''} for "<span className="text-sky-400">{searchQuery}</span>"</>}
-                {searching && <span className="text-zinc-500">Searching...</span>}
+                {!searching && <> result{displayCards.length !== 1 ? 's' : ''} for "<span className="text-violet-300">{searchQuery}</span>"</>}
+                {searching && <span className="text-zinc-400">Searching...</span>}
               </p>
               <button onClick={() => { setSearchQuery(''); setShowSearch(false); }} className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Clear</button>
             </div>
           )}
 
-          {/* Ariel entry — pinned first feed post */}
-          {!searchQuery && (
-            <button
-              onClick={openAriel}
-              className="-mx-4 w-[calc(100%+2rem)] flex items-center gap-3 px-4 py-3.5 border-b border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60 active:bg-zinc-800 transition-colors text-left"
-            >
-              <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-base shadow-lg shadow-sky-500/20">
-                  A
-                </div>
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-zinc-900" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-white">Ariel</p>
-                  <span className="text-[10px] text-zinc-600">now</span>
-                  {dueCards.length > 0 && (
-                    <span className="ml-auto flex-shrink-0 px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 text-[10px] font-bold">
-                      {dueCards.length} due
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-zinc-500 truncate mt-0.5">
-                  Hey {firstName}! What are we studying today?
-                </p>
-              </div>
-              <svg className="w-4 h-4 text-zinc-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          )}
-
-
-          {/* Card feed — full-width posts */}
+          {/* Card feed */}
           {dataLoading ? (
-            <div className="-mx-4">
-              {[160, 280, 210].map((h, i) => <CardSkeleton key={i} height={h} />)}
+            <div className="mt-3">
+              <CardSkeleton height={160} flush />
+              <CardSkeleton height={240} />
+              <ArielSkeleton />
+              <CardSkeleton height={200} flush />
+              <CardSkeleton height={180} />
             </div>
           ) : displayCards.length > 0 ? (
             <>
-              {/* First 2 cards */}
-              <div className="-mx-4">
-                {displayCards.slice(0, 2).map(card => (
-                  <CardTile key={card.id} card={card} onComment={openComments} />
+              {/* Feed section label */}
+              <div className="mt-5 mb-3">
+                <h2 className="text-lg font-black text-white leading-none">
+                  {activeSubject ? SUBJECT_META[activeSubject]?.label : 'What people are studying'}
+                </h2>
+                <p className="text-xs text-zinc-500 mt-1">
+                  {activeTopic
+                    ? `Cards about ${activeTopic}`
+                    : activeSubject
+                    ? `Top cards in ${SUBJECT_META[activeSubject]?.label}`
+                    : 'Latest cards from the community across all subjects'}
+                </p>
+                <div className="border-t border-zinc-800 mt-3" />
+              </div>
+
+              {/* First 2 cards — content first */}
+              <div className="mt-3">
+                {displayCards.slice(0, 2).map((card, i) => (
+                  <CardTile key={card.id} card={card} onComment={openComments} flush={i === 0} />
                 ))}
               </div>
 
+              {/* Ariel — full bleed like LinkedIn */}
+              {!searchQuery && (
+                <div className="-mx-4">
+                <button
+                  onClick={openAriel}
+                  className="w-full text-left border-t border-b border-zinc-800 hover:bg-zinc-900/40 transition-colors p-4 mb-0"
+                  style={{ background: '#1e1e22' }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="relative flex-shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-violet-400 flex items-center justify-center font-black text-white text-base">A</div>
+                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-[#1e1e22]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-bold text-white leading-none">Ariel</span>
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-300/15 text-violet-300 tracking-wide">AI</span>
+                        {dueCards.length > 0 && (
+                          <span className="ml-auto text-[10px] font-bold text-violet-300 bg-violet-300/10 px-2 py-0.5 rounded-full flex-shrink-0">
+                            {dueCards.length} due
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-zinc-300 leading-relaxed">
+                        Hey {firstName}! I can generate flashcards on any topic, break down hard concepts, or build you a full study plan — just tell me what you need.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3 flex-wrap">
+                    {['🎴 Make cards', '💡 Explain', '🗓️ Study plan'].map(chip => (
+                      <span key={chip} className="px-2.5 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-zinc-400 text-xs font-medium">
+                        {chip}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+                </div>
+              )}
+
               {/* Clips row */}
-              {!activeTopic && (
+              {!searchQuery && !activeTopic && (
                 <ReelsRow reels={reels} fallbackTopics={reelTopics} onNavigate={router.push} />
               )}
 
-              {/* Next 4 cards */}
+              {/* Remaining cards */}
               {displayCards.length > 2 && (
-                <div className="-mx-4">
-                  {displayCards.slice(2, 6).map(card => (
-                    <CardTile key={card.id} card={card} onComment={openComments} />
+                <div className="mt-5">
+                  <div className="border-t border-zinc-800 mb-4" />
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-base font-black text-white leading-none">More to explore</h3>
+                      <p className="text-xs text-zinc-500 mt-1">Keep going — there's more to learn</p>
+                    </div>
+                    <span className="text-xs text-zinc-500 font-medium">{displayCards.length - 2} more</span>
+                  </div>
+                  {displayCards.slice(2, 8).map((card, i) => (
+                    <CardTile key={card.id} card={card} onComment={openComments} flush={i === 0} />
                   ))}
                 </div>
               )}
@@ -777,20 +974,26 @@ export default function Dashboard() {
               {/* Due for review */}
               {dueCards.length > 0 && !searchQuery && (
                 <div className="mt-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-bold text-white">Due for review</span>
-                    <span className="text-xs text-zinc-500">{dueCards.length} card{dueCards.length !== 1 ? 's' : ''}</span>
+                  <div className="border-t border-zinc-800 mb-4" />
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-base font-black text-white leading-none">Due for review</h3>
+                      <p className="text-xs text-zinc-500 mt-1">Cards you haven't seen in a while</p>
+                    </div>
+                    <span className="text-xs font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full mt-0.5">
+                      {dueCards.length} card{dueCards.length !== 1 ? 's' : ''}
+                    </span>
                   </div>
                   <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                     {dueCards.map(card => (
                       <button
                         key={card.id}
                         onClick={() => router.push('/cram')}
-                        className="flex-shrink-0 w-44 p-3 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-sky-500/30 text-left transition-colors"
+                        className="flex-shrink-0 w-44 p-3 rounded-2xl bg-[#1e1e22] border border-zinc-700/60 hover:border-violet-300/30 text-left transition-colors"
                       >
                         <p className="text-xs font-semibold text-white line-clamp-3 leading-snug">{card.question}</p>
                         {card.subject && (
-                          <p className="text-[10px] text-zinc-600 mt-2 truncate">{card.subject}</p>
+                          <p className="text-[10px] text-zinc-400 mt-2 truncate">{card.subject}</p>
                         )}
                       </button>
                     ))}
@@ -802,17 +1005,17 @@ export default function Dashboard() {
               {!searchQuery && (
                 <button
                   onClick={openAriel}
-                  className="mt-5 w-full flex items-center justify-between p-4 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-sky-500/30 active:scale-[0.98] transition-all"
+                  className="mt-5 w-full flex items-center justify-between p-4 rounded-2xl bg-[#1e1e22] border border-zinc-700/60 hover:border-violet-300/30 active:scale-[0.98] transition-all"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <div className="w-10 h-10 rounded-xl bg-violet-300/10 border border-violet-300/20 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-violet-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                       </svg>
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-bold text-white">Build your study deck</p>
-                      <p className="text-xs text-zinc-500 mt-0.5">Create cards on anything you're learning</p>
+                      <p className="text-sm font-black text-white">Build your study deck</p>
+                      <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">Turn your notes into flashcards. Ask Ariel to generate a full deck on any subject in seconds.</p>
                     </div>
                   </div>
                   <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -825,7 +1028,7 @@ export default function Dashboard() {
             <div className="flex flex-col items-center justify-center py-20 text-center px-6">
               {/* Ariel avatar with sparkle */}
               <div className="relative mb-5">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-500/20">
+                <div className="w-16 h-16 rounded-2xl bg-violet-400 flex items-center justify-center">
                   <span className="text-3xl font-black text-white">A</span>
                 </div>
                 <span className="absolute -top-1 -right-1 text-base">✦</span>
@@ -840,7 +1043,7 @@ export default function Dashboard() {
               </p>
               <button
                 onClick={openAriel}
-                className="mt-6 px-6 py-2.5 rounded-full bg-sky-500 hover:bg-sky-400 active:scale-95 text-white text-sm font-bold transition-all"
+                className="mt-6 px-6 py-2.5 rounded-full bg-violet-400 hover:bg-violet-400 active:scale-95 text-white text-sm font-bold transition-all"
               >
                 {activeSubject || activeTopic ? 'Create cards' : 'Start with Ariel'}
               </button>
@@ -866,7 +1069,7 @@ export default function Dashboard() {
                 {allSubjectKeys.filter(k => !userSubjects.includes(k)).map(key => {
                   const m = SUBJECT_META[key];
                   return (
-                    <button key={key} onClick={() => addSubject(key)} className="flex items-center gap-3 p-4 rounded-2xl border border-zinc-800 hover:border-sky-500/40 hover:bg-sky-500/5 transition-all text-left">
+                    <button key={key} onClick={() => addSubject(key)} className="flex items-center gap-3 p-4 rounded-2xl border border-zinc-800 hover:border-violet-300/40 hover:bg-violet-400/5 transition-all text-left">
                       <span className="text-2xl">{m.icon}</span>
                       <p className="text-sm font-semibold text-zinc-300">{m.label}</p>
                     </button>
@@ -900,7 +1103,7 @@ export default function Dashboard() {
                     key={item.name}
                     onClick={() => { router.push(item.path); setDrawerOpen(false); }}
                     className={`flex flex-col items-center gap-2 py-4 rounded-2xl transition-colors ${
-                      isActive ? 'bg-zinc-800 text-sky-400' : 'text-zinc-400 hover:bg-zinc-900'
+                      isActive ? 'bg-zinc-800 text-violet-300' : 'text-zinc-400 hover:bg-zinc-900'
                     }`}
                   >
                     {item.icon}

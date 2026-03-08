@@ -126,86 +126,122 @@ export default function ActivityFeedPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen lg:pl-[72px] bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-zinc-800 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm text-zinc-500 font-medium">Loading...</p>
+      <>
+        <SideNav />
+        <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-20">
+          <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 relative">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-violet-400 to-violet-600/40 pointer-events-none" />
+            <div className="max-w-2xl mx-auto px-4 py-4">
+              <h1 className="text-2xl font-black text-white tracking-tight">Feed</h1>
+              <p className="text-[11px] text-zinc-500 mt-0.5">What your network is learning</p>
+            </div>
+          </header>
+          <div className="max-w-2xl mx-auto px-4 pt-4 space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-xl border border-zinc-800 bg-[#1e1e22] mb-3 animate-pulse p-4">
+                <div className="flex gap-3">
+                  <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-zinc-800 rounded w-1/3" />
+                    <div className="h-3 bg-zinc-800 rounded w-2/3" />
+                    <div className="h-2 bg-zinc-800 rounded w-1/4" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <BottomNav />
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-black pb-20 lg:pl-[72px]">
-        <header className="sticky top-0 bg-black border-b border-zinc-800 z-30">
-          <div className="max-w-2xl mx-auto px-4 py-3">
-            <h1 className="text-2xl font-bold text-white">Activity</h1>
+      <div className="min-h-screen bg-[#09090b] pb-20 lg:pl-[72px] page-enter">
+        <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 relative">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-violet-400 to-violet-600/40 pointer-events-none" />
+          <div className="max-w-2xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-black text-white tracking-tight">Feed</h1>
+            <p className="text-[11px] text-zinc-500 mt-0.5">What your network is learning</p>
           </div>
         </header>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto px-4 pt-4">
           {activities.length === 0 ? (
-            <div className="text-center py-20 px-4">
-              <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-5xl">📱</span>
+            <div className="flex flex-col items-center justify-center min-h-[50vh] px-8 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">No activity yet</h3>
-              <p className="text-sm text-zinc-500">Follow people to see their learning journey</p>
+              <h3 className="text-lg font-black text-white mb-2">Nothing here yet</h3>
+              <p className="text-sm text-zinc-500 leading-relaxed">Follow other learners to see their activity — streaks, achievements, new decks.</p>
             </div>
           ) : (
-            activities.map((activity) => (
-              <div
-                key={activity.id}
-                className="border-b border-zinc-800 px-4 py-4 hover:bg-zinc-900 transition-colors"
-              >
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center">
-                      {activity.profile_picture ? (
-                        <img
-                          src={activity.profile_picture}
-                          alt={activity.username}
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-white font-semibold text-sm">
-                          {activity.username[0].toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="font-semibold text-white text-sm">{activity.username}</span>
-                      <span className="text-zinc-400 text-sm">{getActivityText(activity)}</span>
-                      <span className="text-2xl">{getActivityIcon(activity.activity_type)}</span>
-                    </div>
-                    <p className="text-xs text-zinc-600">{formatTimestamp(activity.created_at)}</p>
-                  </div>
-
-                  <button
-                    onClick={() => handleLike(activity.id)}
-                    className="flex flex-col items-center gap-0.5 group"
-                  >
-                    <svg
-                      className="w-5 h-5 text-zinc-600 group-hover:text-red-500 transition-colors"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                    {activity.likes > 0 && (
-                      <span className="text-xs text-zinc-600">{activity.likes}</span>
-                    )}
-                  </button>
-                </div>
+            <>
+              <div className="pt-1 pb-3 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-violet-400" />
+                <span className="text-base font-black text-white">Recent Activity</span>
+                <span className="text-violet-400 text-sm font-semibold ml-1">{activities.length}</span>
               </div>
-            ))
+              {activities.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="rounded-xl border border-zinc-800 bg-[#1e1e22] mb-3 px-4 py-4 hover:border-zinc-700 transition-colors"
+                >
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center">
+                        {activity.profile_picture ? (
+                          <img
+                            src={activity.profile_picture}
+                            alt={activity.username}
+                            className="w-full h-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white font-semibold text-sm">
+                            {activity.username[0].toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2 mb-1 flex-wrap">
+                        <span className="font-bold text-white text-sm">{activity.username}</span>
+                        <span className="text-zinc-300 text-sm">{getActivityText(activity)}</span>
+                        <span className="text-lg leading-none">{getActivityIcon(activity.activity_type)}</span>
+                      </div>
+                      <p className="text-zinc-600 text-xs">{formatTimestamp(activity.created_at)}</p>
+                    </div>
+
+                    <button
+                      onClick={() => handleLike(activity.id)}
+                      className="flex flex-col items-center gap-0.5 group flex-shrink-0"
+                    >
+                      <svg
+                        className={`w-5 h-5 transition-colors ${
+                          activity.is_liked_by_current_user
+                            ? 'text-violet-400 fill-current'
+                            : 'text-zinc-600 group-hover:text-violet-400'
+                        }`}
+                        fill={activity.is_liked_by_current_user ? 'currentColor' : 'none'}
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      {activity.likes > 0 && (
+                        <span className="font-black text-white text-xs">{activity.likes}</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </>
           )}
         </div>
 

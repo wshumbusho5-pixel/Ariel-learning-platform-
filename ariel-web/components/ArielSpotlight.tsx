@@ -26,14 +26,14 @@ const QUICK_CHIPS = [
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-2 mb-3">
-      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center flex-shrink-0 font-black text-white text-xs shadow-md shadow-sky-500/20">
+      <div className="w-7 h-7 rounded-full bg-violet-400 flex items-center justify-center flex-shrink-0 font-black text-white text-xs">
         A
       </div>
-      <div className="px-4 py-3 rounded-2xl rounded-bl-sm" style={{ background: 'rgba(28,28,48,0.9)', border: '1px solid rgba(99,102,241,0.15)' }}>
+      <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-zinc-900 border border-zinc-800">
         <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-indigo-400/70 animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 rounded-full bg-sky-400/70 animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 rounded-full bg-indigo-400/70 animate-bounce" style={{ animationDelay: '300ms' }} />
+          <span className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
       </div>
     </div>
@@ -290,7 +290,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
       />
 
       {/* Chat header */}
-      <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0" style={{ background: 'rgba(13,13,20,0.95)', borderBottom: '1px solid rgba(99,102,241,0.12)' }}>
+      <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0 bg-[#0d0d14] border-b border-zinc-800/60">
         {onClose && (
           <button onClick={onClose} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors flex-shrink-0">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
@@ -300,33 +300,23 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
         )}
         <div className="flex items-center gap-3 flex-1">
           <div className="relative flex-shrink-0">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-indigo-500/25">
+            <div className="w-10 h-10 rounded-full bg-violet-400 flex items-center justify-center font-black text-white text-sm">
               A
             </div>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0d0d14]" />
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-[#0d0d14]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <p className="text-sm font-bold text-white leading-none">Ariel</p>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 tracking-wide">AI</span>
+              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-300/15 text-violet-300 tracking-wide">AI</span>
             </div>
             <p className="text-[11px] text-zinc-500 mt-0.5">Study partner · always here</p>
           </div>
         </div>
-        {/* Info dots */}
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        </div>
       </div>
 
       {/* Messages */}
-      <div
-        className="flex-1 overflow-y-auto px-4 py-5"
-        style={{
-          WebkitOverflowScrolling: 'touch',
-          background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99,102,241,0.06) 0%, #0d0d14 60%)',
-        }}
-      >
+      <div className="flex-1 overflow-y-auto px-4 py-5 bg-[#0d0d14]" style={{ WebkitOverflowScrolling: 'touch' }}>
         {/* Date chip */}
         <div className="flex justify-center mb-5">
           <span className="text-[10px] font-semibold text-zinc-600 bg-zinc-900/60 border border-zinc-800/60 rounded-full px-3 py-1 tracking-wide">
@@ -364,14 +354,10 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                   {/* Swipe reply arrow — appears behind bubble as it slides */}
                   {swipeState?.id === msg.id && (
                     <div
-                      className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full ${isAriel ? 'left-9' : 'right-9'}`}
-                      style={{
-                        background: 'rgba(99,102,241,0.2)',
-                        border: '1px solid rgba(99,102,241,0.4)',
-                        opacity: Math.min(swipeState.x / SWIPE_THRESHOLD, 1),
-                      }}
+                      className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full bg-zinc-800 ${isAriel ? 'left-9' : 'right-9'}`}
+                      style={{ opacity: Math.min(swipeState.x / SWIPE_THRESHOLD, 1) }}
                     >
-                      <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                       </svg>
                     </div>
@@ -387,7 +373,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                     {/* Avatar */}
                     {isAriel ? (
                       <div className={`w-7 h-7 flex-shrink-0 ${hasTail ? '' : 'invisible'}`}>
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-xs shadow-md shadow-indigo-500/20">A</div>
+                        <div className="w-7 h-7 rounded-full bg-violet-400 flex items-center justify-center font-black text-white text-xs">A</div>
                       </div>
                     ) : (
                       <div className="w-7 h-7 flex-shrink-0" />
@@ -404,11 +390,11 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                           }
                         `}
                         style={isAriel ? {
-                          background: 'rgba(28,28,52,0.85)',
-                          border: '1px solid rgba(99,102,241,0.18)',
+                          background: '#18181b',
+                          border: '1px solid #27272a',
                           padding: '10px 14px',
                         } : {
-                          background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
+                          background: '#7c3aed',
                           padding: '10px 14px',
                         }}
                       >
@@ -447,7 +433,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                         <button
                           onClick={() => pickReaction(msg.id, msgReactions[msg.id])}
                           className={`absolute -bottom-3 ${isAriel ? 'left-2' : 'right-2'} text-sm px-1.5 py-0.5 rounded-full`}
-                          style={{ background: 'rgba(28,28,52,0.95)', border: '1px solid rgba(99,102,241,0.3)', lineHeight: 1.4 }}
+                          style={{ background: '#18181b', border: '1px solid #3f3f46', lineHeight: 1.4 }}
                         >
                           {msgReactions[msg.id]}
                         </button>
@@ -459,7 +445,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                   {reactionPickerFor === msg.id && (
                     <div
                       className={`absolute z-10 ${isAriel ? 'left-9' : 'right-0'} -top-12 flex items-center gap-1 px-2.5 py-2 rounded-2xl shadow-xl`}
-                      style={{ background: 'rgba(28,28,52,0.98)', border: '1px solid rgba(99,102,241,0.3)' }}
+                      style={{ background: '#18181b', border: '1px solid #3f3f46' }}
                     >
                       {REACTIONS.map(emoji => (
                         <button
@@ -486,7 +472,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                 {!isAriel && msg.id === seenMsgId && (
                   <div className="flex justify-end items-center gap-1 pr-1 mt-1">
                     <span className="text-[9px] text-zinc-600">Seen</span>
-                    <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white" style={{ fontSize: '7px' }}>A</div>
+                    <div className="w-3.5 h-3.5 rounded-full bg-violet-400 flex items-center justify-center font-black text-white" style={{ fontSize: '7px' }}>A</div>
                   </div>
                 )}
 
@@ -496,7 +482,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                     {QUICK_CHIPS.map(chip => (
                       <button key={chip.label} onClick={() => sendMessage(chip.prompt)} disabled={loading}
                         className="px-3 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white transition-all whitespace-nowrap"
-                        style={{ background: 'rgba(28,28,52,0.8)', border: '1px solid rgba(99,102,241,0.25)' }}>
+                        style={{ background: '#18181b', border: '1px solid #27272a' }}>
                         {chip.label}
                       </button>
                     ))}
@@ -564,7 +550,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                 className="flex-1 text-sm bg-zinc-800 text-white placeholder:text-zinc-600 rounded-xl px-3 py-2 focus:outline-none"
                 disabled={uploading}
               />
-              <button onClick={handleUrlSubmit} disabled={uploading || !urlInput.trim()} className="px-3 py-2 rounded-xl bg-sky-500 text-white text-xs font-bold disabled:opacity-50">
+              <button onClick={handleUrlSubmit} disabled={uploading || !urlInput.trim()} className="px-3 py-2 rounded-xl bg-violet-400 text-white text-xs font-bold disabled:opacity-50">
                 Go
               </button>
             </div>
@@ -583,13 +569,13 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
       )}
 
       {/* Input bar */}
-      <div className="flex-shrink-0 px-4 py-3" style={{ background: 'rgba(13,13,20,0.97)', borderTop: '1px solid rgba(99,102,241,0.12)' }}>
+      <div className="flex-shrink-0 px-4 py-3 bg-[#0d0d14] border-t border-zinc-800/60">
         {/* Reply preview */}
         {replyTo && (
           <div className="flex items-center gap-2 mb-2.5 px-1">
-            <div className="w-0.5 h-9 rounded-full bg-indigo-500 flex-shrink-0" />
+            <div className="w-0.5 h-9 rounded-full bg-violet-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-indigo-400 mb-0.5">
+              <p className="text-[10px] font-bold text-violet-300 mb-0.5">
                 {replyTo.sender === 'ariel' ? 'Ariel' : 'You'}
               </p>
               <p className="text-[11px] text-zinc-500 truncate leading-snug">
@@ -612,9 +598,9 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
             onClick={() => setShowUpload(v => !v)}
             className="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition-all"
             style={{
-              background: showUpload ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)',
-              border: showUpload ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.08)',
-              color: showUpload ? '#818cf8' : '#71717a',
+              background: showUpload ? '#27272a' : 'transparent',
+              border: '1px solid #27272a',
+              color: showUpload ? '#ffffff' : '#71717a',
             }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -623,14 +609,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
           </button>
 
           {/* Pill input */}
-          <div
-            className="flex-1 flex items-center px-4 h-10 transition-all"
-            style={{
-              background: 'rgba(28,28,52,0.7)',
-              border: '1px solid rgba(99,102,241,0.2)',
-              borderRadius: '999px',
-            }}
-          >
+          <div className="flex-1 flex items-center px-4 h-10 bg-zinc-900 border border-zinc-800 rounded-full">
             <input
               ref={inputRef}
               value={input}
@@ -651,7 +630,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                 ? 'opacity-100 scale-100'
                 : 'opacity-0 scale-75 pointer-events-none'
             }`}
-            style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)' }}
+            style={{ background: '#7c3aed' }}
           >
             {loading ? (
               <div className="w-3.5 h-3.5 border border-white/40 border-t-white rounded-full animate-spin" />

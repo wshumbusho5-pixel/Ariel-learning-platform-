@@ -135,7 +135,7 @@ export default function BottomNav() {
         <div className="fixed inset-0 z-[100] lg:hidden" onClick={() => setDrawerOpen(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="absolute bottom-0 left-0 right-0 bg-black border-t border-zinc-800 rounded-t-3xl pb-8"
+            className="absolute bottom-0 left-0 right-0 bg-[#0c0c0e] border-t border-zinc-800/60 rounded-t-3xl pb-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-center pt-3 pb-4">
@@ -149,7 +149,7 @@ export default function BottomNav() {
                     key={item.name}
                     onClick={() => { router.push(item.path); setDrawerOpen(false); }}
                     className={`flex flex-col items-center gap-2 py-4 rounded-2xl transition-colors ${
-                      isActive ? 'bg-zinc-800 text-sky-400' : 'text-zinc-400 hover:bg-zinc-900'
+                      isActive ? 'bg-violet-500/15 text-violet-400' : 'text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300'
                     }`}
                   >
                     {item.icon}
@@ -163,8 +163,8 @@ export default function BottomNav() {
       )}
 
       {/* Bottom nav bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-black border-t border-zinc-800">
-        <div className="flex items-stretch h-16 max-w-screen-sm mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#09090b] border-t border-zinc-800">
+        <div className="flex items-stretch h-[68px] max-w-screen-sm mx-auto">
 
           {/* Today, Deck */}
           {mainNav.slice(0, 2).map((item) => {
@@ -175,28 +175,33 @@ export default function BottomNav() {
               <button
                 key={item.name}
                 onClick={() => router.push(item.path)}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative pt-1 ${
-                  isActive ? 'text-sky-500' : 'text-zinc-600 hover:text-zinc-300'
-                }`}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 pt-1 transition-all"
               >
-                {isActive && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-sky-500" />
-                )}
-                {item.icon(isActive)}
-                <span className="text-[10px] font-medium">{item.name}</span>
+                <div className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all duration-200 ${
+                  isActive ? 'bg-violet-500/15' : ''
+                }`}>
+                  <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-600'}`}>
+                    {item.icon(isActive)}
+                  </span>
+                  <span className={`text-[10px] font-semibold transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-600'}`}>
+                    {item.name}
+                  </span>
+                </div>
               </button>
             );
           })}
 
-          {/* Ariel — LinkedIn-style box */}
+          {/* Ariel — hero center button */}
           <button
             onClick={openAriel}
-            className="flex-1 flex flex-col items-center justify-center"
+            className="flex-1 flex flex-col items-center justify-center pb-1"
           >
-            <div className="w-11 h-11 bg-sky-500 rounded-xl flex items-center justify-center shadow-md shadow-sky-500/25 -mt-3 border border-sky-400/40">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
+            <div className="relative">
+              <div className="w-12 h-12 bg-violet-500 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30 -mt-5 border border-violet-400/30 transition-transform duration-150 active:scale-95">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                </svg>
+              </div>
             </div>
           </button>
 
@@ -209,15 +214,18 @@ export default function BottomNav() {
               <button
                 key={item.name}
                 onClick={() => router.push(item.path)}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative pt-1 ${
-                  isActive ? 'text-sky-500' : 'text-zinc-600 hover:text-zinc-300'
-                }`}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 pt-1 transition-all"
               >
-                {isActive && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-sky-500" />
-                )}
-                {item.icon(isActive)}
-                <span className="text-[10px] font-medium">{item.name}</span>
+                <div className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all duration-200 ${
+                  isActive ? 'bg-violet-500/15' : ''
+                }`}>
+                  <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-600'}`}>
+                    {item.icon(isActive)}
+                  </span>
+                  <span className={`text-[10px] font-semibold transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-600'}`}>
+                    {item.name}
+                  </span>
+                </div>
               </button>
             );
           })}
