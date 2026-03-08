@@ -20,7 +20,7 @@ export default function ArielOverlay() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black flex flex-col">
+    <div className="fixed inset-0 z-[200] flex flex-col" style={{ background: '#0d0d14' }}>
       <ArielSpotlight onClose={closeAriel} />
     </div>
   );

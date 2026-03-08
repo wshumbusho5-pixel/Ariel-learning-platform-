@@ -23,18 +23,27 @@ const QUICK_CHIPS = [
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-2 mb-3">
-      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center flex-shrink-0 font-black text-white text-xs shadow-sm">
+      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center flex-shrink-0 font-black text-white text-xs shadow-md shadow-sky-500/20">
         A
       </div>
-      <div className="bg-zinc-800 rounded-2xl rounded-bl-md px-4 py-3">
-        <div className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+      <div className="px-4 py-3 rounded-2xl rounded-bl-sm" style={{ background: 'rgba(28,28,48,0.9)', border: '1px solid rgba(99,102,241,0.15)' }}>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-indigo-400/70 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 rounded-full bg-sky-400/70 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 rounded-full bg-indigo-400/70 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
       </div>
     </div>
   );
+}
+
+function BubbleTime() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes().toString().padStart(2, '0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return <span className="text-[9px] opacity-40 ml-2 flex-shrink-0 self-end mb-0.5">{h12}:{m} {ampm}</span>;
 }
 
 export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
@@ -221,9 +230,9 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
       />
 
       {/* Chat header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800/60 flex-shrink-0">
+      <div className="flex items-center gap-3 px-4 py-3 flex-shrink-0" style={{ background: 'rgba(13,13,20,0.95)', borderBottom: '1px solid rgba(99,102,241,0.12)' }}>
         {onClose && (
-          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors flex-shrink-0">
+          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors flex-shrink-0">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
@@ -231,22 +240,41 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
         )}
         <div className="flex items-center gap-3 flex-1">
           <div className="relative flex-shrink-0">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-sm shadow-md">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-sm shadow-lg shadow-indigo-500/25">
               A
             </div>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-zinc-950" />
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#0d0d14]" />
           </div>
           <div>
-            <p className="text-sm font-bold text-white leading-none">Ariel</p>
-            <p className="text-[11px] text-green-400 mt-0.5">online</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-white leading-none">Ariel</p>
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 tracking-wide">AI</span>
+            </div>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Study partner · always here</p>
           </div>
+        </div>
+        {/* Info dots */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div
+        className="flex-1 overflow-y-auto px-4 py-5"
+        style={{
+          WebkitOverflowScrolling: 'touch',
+          background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99,102,241,0.06) 0%, #0d0d14 60%)',
+        }}
+      >
+        {/* Date chip */}
+        <div className="flex justify-center mb-5">
+          <span className="text-[10px] font-semibold text-zinc-600 bg-zinc-900/60 border border-zinc-800/60 rounded-full px-3 py-1 tracking-wide">
+            Today
+          </span>
+        </div>
+
         {(() => {
-          // Find the last user message that Ariel has "seen" (has an Ariel reply after it, or Ariel is typing)
           let seenMsgId: string | null = null;
           for (let i = messages.length - 1; i >= 0; i--) {
             if (messages[i].sender === 'user') {
@@ -255,98 +283,121 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
               break;
             }
           }
+
           return messages.map((msg, i) => {
-          const isAriel = msg.sender === 'ariel';
-          const nextSame = i < messages.length - 1 && messages[i + 1].sender === msg.sender;
+            const isAriel = msg.sender === 'ariel';
+            const prevSame = i > 0 && messages[i - 1].sender === msg.sender;
+            const nextSame = i < messages.length - 1 && messages[i + 1].sender === msg.sender;
+            // Tail = last bubble in a consecutive group
+            const hasTail = !nextSame;
 
-          return (
-            <div key={msg.id}>
-              <div className={`flex items-end gap-2 ${isAriel ? 'flex-row' : 'flex-row-reverse'} ${!nextSame ? 'mb-1' : 'mb-0.5'}`}>
-                {/* Avatar — only on last in group */}
-                {isAriel ? (
-                  <div className={`w-7 h-7 flex-shrink-0 ${nextSame ? 'invisible' : ''}`}>
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-xs">A</div>
-                  </div>
-                ) : (
-                  <div className="w-7 h-7 flex-shrink-0" />
-                )}
+            return (
+              <div key={msg.id} className={prevSame ? 'mt-0.5' : 'mt-4'}>
+                <div className={`flex items-end gap-2 ${isAriel ? 'flex-row' : 'flex-row-reverse'}`}>
 
-                {/* Bubble */}
-                <div className={`
-                  max-w-[78%] px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words
-                  ${isAriel
-                    ? 'bg-zinc-800 text-zinc-100 rounded-2xl ' + (nextSame ? 'rounded-bl-md' : 'rounded-bl-sm')
-                    : 'bg-sky-500 text-white rounded-2xl ' + (nextSame ? 'rounded-br-md' : 'rounded-br-sm')
-                  }
-                `}>
-                  {msg.text}
-
-                  {/* Generated cards */}
-                  {msg.cards && msg.cards.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {msg.cards.slice(0, 5).map((c, ci) => (
-                        <div key={ci} className="bg-zinc-700/60 rounded-xl p-2.5">
-                          <p className="text-xs font-bold text-white">{ci + 1}. {c.question}</p>
-                          <p className="text-xs text-zinc-300 mt-1">{c.answer}</p>
-                        </div>
-                      ))}
-                      <div className="pt-1 space-y-2">
-                        <div className="flex gap-2">
-                          <input
-                            value={subject}
-                            onChange={e => setSubject(e.target.value)}
-                            placeholder="Subject (optional)"
-                            className="flex-1 text-xs bg-zinc-700/60 text-white placeholder:text-zinc-500 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-sky-500/50"
-                          />
-                          <input
-                            value={topic}
-                            onChange={e => setTopic(e.target.value)}
-                            placeholder="Topic (optional)"
-                            className="flex-1 text-xs bg-zinc-700/60 text-white placeholder:text-zinc-500 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-sky-500/50"
-                          />
-                        </div>
-                        <button
-                          onClick={() => handleSaveCards(msg.cards!)}
-                          disabled={saving}
-                          className="w-full py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-colors disabled:opacity-50"
-                        >
-                          {saving ? 'Saving…' : '💾 Save to my deck'}
-                        </button>
+                  {/* Avatar — only on last in group */}
+                  {isAriel ? (
+                    <div className={`w-7 h-7 flex-shrink-0 ${hasTail ? '' : 'invisible'}`}>
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-xs shadow-md shadow-indigo-500/20">
+                        A
                       </div>
                     </div>
+                  ) : (
+                    <div className="w-7 h-7 flex-shrink-0" />
                   )}
+
+                  {/* Bubble */}
+                  <div
+                    className={`
+                      max-w-[78%] text-sm leading-relaxed whitespace-pre-wrap break-words
+                      ${isAriel
+                        ? `text-zinc-100 ${hasTail ? 'rounded-2xl rounded-bl-[4px]' : prevSame ? 'rounded-2xl rounded-l-lg' : 'rounded-2xl'}`
+                        : `text-white ${hasTail ? 'rounded-2xl rounded-br-[4px]' : prevSame ? 'rounded-2xl rounded-r-lg' : 'rounded-2xl'}`
+                      }
+                    `}
+                    style={isAriel ? {
+                      background: 'rgba(28,28,52,0.85)',
+                      border: '1px solid rgba(99,102,241,0.18)',
+                      padding: '10px 14px',
+                    } : {
+                      background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
+                      padding: '10px 14px',
+                    }}
+                  >
+                    {/* Message text + inline time */}
+                    <span>{msg.text}</span>
+                    <BubbleTime />
+
+                    {/* Generated cards */}
+                    {msg.cards && msg.cards.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {msg.cards.slice(0, 5).map((c, ci) => (
+                          <div key={ci} className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <p className="text-xs font-bold text-white">{ci + 1}. {c.question}</p>
+                            <p className="text-xs text-zinc-300 mt-1 leading-relaxed">{c.answer}</p>
+                          </div>
+                        ))}
+                        <div className="pt-1 space-y-2">
+                          <div className="flex gap-2">
+                            <input
+                              value={subject}
+                              onChange={e => setSubject(e.target.value)}
+                              placeholder="Subject (optional)"
+                              className="flex-1 text-xs text-white placeholder:text-zinc-500 rounded-lg px-2.5 py-1.5 focus:outline-none"
+                              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
+                            />
+                            <input
+                              value={topic}
+                              onChange={e => setTopic(e.target.value)}
+                              placeholder="Topic (optional)"
+                              className="flex-1 text-xs text-white placeholder:text-zinc-500 rounded-lg px-2.5 py-1.5 focus:outline-none"
+                              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
+                            />
+                          </div>
+                          <button
+                            onClick={() => handleSaveCards(msg.cards!)}
+                            disabled={saving}
+                            className="w-full py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-colors disabled:opacity-50 border border-white/20"
+                          >
+                            {saving ? 'Saving…' : '💾 Save to my deck'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Seen receipt */}
+                {!isAriel && msg.id === seenMsgId && (
+                  <div className="flex justify-end items-center gap-1 pr-1 mt-1">
+                    <span className="text-[9px] text-zinc-600">Seen</span>
+                    <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white" style={{ fontSize: '7px' }}>A</div>
+                  </div>
+                )}
+
+                {/* Quick chips */}
+                {msg.showChips && (
+                  <div className="flex flex-wrap gap-2 pl-9 mt-3">
+                    {QUICK_CHIPS.map(chip => (
+                      <button
+                        key={chip.label}
+                        onClick={() => sendMessage(chip.prompt)}
+                        disabled={loading}
+                        className="px-3 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white transition-all whitespace-nowrap"
+                        style={{ background: 'rgba(28,28,52,0.8)', border: '1px solid rgba(99,102,241,0.25)' }}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-
-              {/* Seen receipt — Ariel's avatar under the last user message Ariel has read */}
-              {!isAriel && msg.id === seenMsgId && (
-                <div className="flex justify-end pr-1 mt-1 mb-1">
-                  <div className="w-4 h-4 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white" style={{ fontSize: '8px' }}>A</div>
-                </div>
-              )}
-
-              {/* Quick chips after welcome message */}
-              {msg.showChips && (
-                <div className="flex flex-wrap gap-2 pl-9 mt-2 mb-3">
-                  {QUICK_CHIPS.map(chip => (
-                    <button
-                      key={chip.label}
-                      onClick={() => sendMessage(chip.prompt)}
-                      disabled={loading}
-                      className="px-3 py-1.5 rounded-full bg-zinc-800 border border-zinc-700 hover:border-sky-500/40 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition-all whitespace-nowrap"
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        });
+            );
+          });
         })()}
 
         {/* Typing indicator */}
-        {(loading || uploading) && <TypingIndicator />}
+        {(loading || uploading) && <div className="mt-4"><TypingIndicator /></div>}
 
         <div ref={bottomRef} />
       </div>
@@ -421,39 +472,59 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
       )}
 
       {/* Input bar */}
-      <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-800/60 bg-black">
-        <div className="flex items-end gap-2">
+      <div className="flex-shrink-0 px-4 py-3" style={{ background: 'rgba(13,13,20,0.97)', borderTop: '1px solid rgba(99,102,241,0.12)' }}>
+        <div className="flex items-center gap-2">
+          {/* Attachment */}
           <button
             onClick={() => setShowUpload(v => !v)}
-            className={`w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition-colors ${showUpload ? 'bg-sky-500/20 text-sky-400' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}
+            className="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition-all"
+            style={{
+              background: showUpload ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)',
+              border: showUpload ? '1px solid rgba(99,102,241,0.4)' : '1px solid rgba(255,255,255,0.08)',
+              color: showUpload ? '#818cf8' : '#71717a',
+            }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
             </svg>
           </button>
 
-          <div className="flex-1 flex items-end bg-zinc-900 border border-zinc-700/60 rounded-2xl px-3.5 py-2 min-h-[38px] focus-within:border-sky-500/50 transition-colors">
+          {/* Pill input */}
+          <div
+            className="flex-1 flex items-center px-4 h-10 transition-all"
+            style={{
+              background: 'rgba(28,28,52,0.7)',
+              border: '1px solid rgba(99,102,241,0.2)',
+              borderRadius: '999px',
+            }}
+          >
             <input
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
-              placeholder="Message Ariel..."
+              placeholder="Message Ariel…"
               className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-600 focus:outline-none"
               disabled={loading || uploading}
             />
           </div>
 
+          {/* Send — only visible when there's text */}
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || loading || uploading}
-            className={`w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition-all ${input.trim() ? 'bg-sky-500 hover:bg-sky-400' : 'bg-zinc-800'}`}
+            className={`w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition-all duration-200 ${
+              input.trim()
+                ? 'opacity-100 scale-100'
+                : 'opacity-0 scale-75 pointer-events-none'
+            }`}
+            style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)' }}
           >
             {loading ? (
               <div className="w-3.5 h-3.5 border border-white/40 border-t-white rounded-full animate-spin" />
             ) : (
-              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
               </svg>
             )}
           </button>
