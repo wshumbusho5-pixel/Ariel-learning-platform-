@@ -398,6 +398,7 @@ export default function Dashboard() {
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [showSubjectPicker, setShowSubjectPicker] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FeedCard[]>([]);
   const [searching, setSearching] = useState(false);
@@ -539,123 +540,140 @@ export default function Dashboard() {
       <SideNav />
       <div className="min-h-screen bg-black lg:pl-[72px] pb-24">
 
-        {/* ── Sticky header: brand + search only ───────────────────────────── */}
-        <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-zinc-800/60">
+        {/* ── Sticky header ─────────────────────────────────────────────────── */}
+        <header className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-zinc-800/50">
           <div className="h-[2px] bg-gradient-to-r from-sky-500 via-indigo-500 to-sky-500" />
-          {/* Row 1: brand | icons */}
-          <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
-            <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">ariel</span>
-            <div className="flex items-center">
-              <button onClick={() => router.push('/messages')} className="relative w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                </svg>
-                {unreadMessages > 0 && (
-                  <span className="absolute top-1 right-1 min-w-[14px] h-[14px] rounded-full bg-sky-500 flex items-center justify-center">
-                    <span className="text-[9px] font-black text-white leading-none px-0.5">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
-                  </span>
-                )}
-              </button>
-              <button onClick={() => router.push('/notifications')} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
-              <button onClick={() => setDrawerOpen(true)} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors lg:hidden">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="5" cy="5" r="1.5" /><circle cx="12" cy="5" r="1.5" /><circle cx="19" cy="5" r="1.5" />
-                  <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
-                  <circle cx="5" cy="19" r="1.5" /><circle cx="12" cy="19" r="1.5" /><circle cx="19" cy="19" r="1.5" />
-                </svg>
-              </button>
-            </div>
+
+          {/* Single row: greeting + icons (collapses to search when open) */}
+          <div className="max-w-3xl mx-auto px-4 h-14 flex items-center gap-3">
+            {showSearch ? (
+              /* Search mode */
+              <>
+                <div className="flex-1 flex items-center bg-zinc-900 border border-zinc-700/60 rounded-full px-4 h-9 gap-2 focus-within:border-sky-500/60 transition-colors">
+                  <svg className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    ref={searchRef}
+                    autoFocus
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={e => e.key === 'Escape' && (setSearchQuery(''), setShowSearch(false))}
+                    placeholder="Search cards, topics..."
+                    className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-600 focus:outline-none min-w-0"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="flex-shrink-0 text-zinc-500 hover:text-white transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => { setShowSearch(false); setSearchQuery(''); }}
+                  className="text-sm font-semibold text-sky-400 hover:text-sky-300 transition-colors flex-shrink-0"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              /* Normal mode: greeting left, icons right */
+              <>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] text-zinc-600 font-medium leading-none mb-0.5">{greeting}</p>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-base font-black text-white leading-none truncate">{firstName || 'there'}</h1>
+                    {!dataLoading && streakDays > 0 && (
+                      <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-1.5 py-0.5 rounded-full flex-shrink-0">🔥 {streakDays}d</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center flex-shrink-0">
+                  <button onClick={() => setShowSearch(true)} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </button>
+                  <button onClick={() => router.push('/messages')} className="relative w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                    </svg>
+                    {unreadMessages > 0 && (
+                      <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] rounded-full bg-sky-500 flex items-center justify-center">
+                        <span className="text-[9px] font-black text-white leading-none px-0.5">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
+                      </span>
+                    )}
+                  </button>
+                  <button onClick={() => router.push('/notifications')} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                  </button>
+                  <button onClick={() => setDrawerOpen(true)} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors lg:hidden">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="5" cy="5" r="1.5" /><circle cx="12" cy="5" r="1.5" /><circle cx="19" cy="5" r="1.5" />
+                      <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
+                      <circle cx="5" cy="19" r="1.5" /><circle cx="12" cy="19" r="1.5" /><circle cx="19" cy="19" r="1.5" />
+                    </svg>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Row 2: full-width search bar */}
-          <div className="max-w-3xl mx-auto px-4 pb-3">
-            <div className="flex items-center bg-zinc-900 border border-zinc-700/60 rounded-full px-4 h-10 gap-2 focus-within:border-sky-500/60 transition-colors">
-              <svg className="w-4 h-4 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                ref={searchRef}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => e.key === 'Escape' && setSearchQuery('')}
-                placeholder="Search cards, topics..."
-                className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-600 focus:outline-none min-w-0"
-              />
-              {searchQuery && (
-                <button onClick={() => { setSearchQuery(''); searchRef.current?.focus(); }} className="flex-shrink-0 text-zinc-500 hover:text-white transition-colors">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+          {/* Subject filter strip — always in header so it stays on screen */}
+          {!showSearch && (
+            <div className="max-w-3xl mx-auto">
+              <div className="flex items-center gap-1.5 overflow-x-auto px-4 pb-3 pt-0.5" style={{ scrollbarWidth: 'none' }}>
+                <button
+                  onClick={() => { setActiveSubject(null); setActiveTopic(null); }}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${!activeSubject ? 'bg-white text-zinc-950' : 'border border-zinc-700 text-zinc-500 hover:text-zinc-300'}`}
+                >
+                  All
                 </button>
-              )}
+                {userSubjects.map(key => {
+                  const m = SUBJECT_META[key] || SUBJECT_META.other;
+                  const isActive = activeSubject === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleStoryTap(key)}
+                      className={`flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                        isActive ? 'bg-white text-zinc-950' : 'border border-zinc-700 text-zinc-500 hover:text-zinc-300'
+                      }`}
+                    >
+                      <span>{m.icon}</span>
+                      <span>{m.short}</span>
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setShowSubjectPicker(true)}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-zinc-700 text-zinc-600 hover:text-zinc-400 hover:border-zinc-500 transition-all"
+                >
+                  + Add
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </header>
 
         {/* ── Feed ──────────────────────────────────────────────────────────── */}
         <div className="max-w-3xl mx-auto px-4 pb-4">
 
-          {/* Greeting + stats */}
-          {!searchQuery && (
-            <div className="pt-4 pb-3">
-              <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">{greeting}</p>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <h1 className="text-xl font-black text-white leading-none">{firstName || 'there'}</h1>
-                {!dataLoading && streakDays > 0 && (
-                  <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">🔥 {streakDays}d streak</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Subject stories */}
-          {!searchQuery && (
-            <div className="pb-4">
-              <div className="flex items-center gap-3.5 overflow-x-auto px-1 py-1" style={{ scrollbarWidth: 'none' }}>
-                {userSubjects.map(key => {
-                  const m = SUBJECT_META[key] || SUBJECT_META.other;
-                  const isActive = activeSubject === key;
-                  return (
-                    <button key={key} onClick={() => handleStoryTap(key)} className="flex-shrink-0 flex flex-col items-center gap-1.5">
-                      <div className={`p-[2.5px] rounded-full transition-all duration-200 ${isActive ? 'bg-gradient-to-br from-sky-400 via-indigo-500 to-sky-400 scale-105' : 'bg-zinc-800'}`}>
-                        <div className={`w-[52px] h-[52px] rounded-full flex items-center justify-center text-xl ${isActive ? 'bg-black' : 'bg-zinc-800'}`}>
-                          {m.icon}
-                        </div>
-                      </div>
-                      <span className={`text-[10px] font-semibold transition-colors truncate w-[54px] text-center ${isActive ? 'text-white' : 'text-zinc-600'}`}>{m.short}</span>
-                    </button>
-                  );
-                })}
-                <button onClick={() => setShowSubjectPicker(true)} className="flex-shrink-0 flex flex-col items-center gap-1.5">
-                  <div className="w-[54px] h-[54px] rounded-full bg-zinc-900 border-2 border-dashed border-zinc-700 hover:border-zinc-500 flex items-center justify-center transition-colors">
-                    <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </div>
-                  <span className="text-[10px] font-semibold text-zinc-700">Add</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Topic chips */}
-          {topicChips.length > 0 && !searchQuery && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-4" style={{ scrollbarWidth: 'none' }}>
-              <button
-                onClick={() => { setActiveTopic(null); setActiveSubject(null); }}
-                className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${!activeSubject && !activeTopic ? 'bg-white text-zinc-950' : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'}`}
-              >
-                All
-              </button>
+          {/* Topic chips — only when a subject is active */}
+          {activeSubject && topicChips.length > 0 && !searchQuery && (
+            <div className="flex items-center gap-2 overflow-x-auto pt-3 pb-1" style={{ scrollbarWidth: 'none' }}>
               {topicChips.map(chip => (
                 <button
                   key={chip}
                   onClick={() => handleChipTap(chip)}
-                  className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${activeTopic === chip ? 'bg-white text-zinc-950' : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'}`}
+                  className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                    activeTopic === chip
+                      ? 'bg-zinc-100 text-zinc-950'
+                      : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                  }`}
                 >
                   {chip}
                 </button>
@@ -665,7 +683,7 @@ export default function Dashboard() {
 
           {/* Search results label */}
           {searchQuery.trim().length >= 2 && (
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center justify-between pt-3 mb-4">
               <p className="text-sm text-zinc-400 flex items-center gap-2">
                 {searching ? (
                   <span className="w-3.5 h-3.5 border border-zinc-600 border-t-sky-400 rounded-full animate-spin inline-block" />
@@ -675,7 +693,7 @@ export default function Dashboard() {
                 {!searching && <> result{displayCards.length !== 1 ? 's' : ''} for "<span className="text-sky-400">{searchQuery}</span>"</>}
                 {searching && <span className="text-zinc-500">Searching...</span>}
               </p>
-              <button onClick={() => setSearchQuery('')} className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Clear</button>
+              <button onClick={() => { setSearchQuery(''); setShowSearch(false); }} className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Clear</button>
             </div>
           )}
 
@@ -711,21 +729,6 @@ export default function Dashboard() {
             </button>
           )}
 
-          {/* Active subject header */}
-          {activeSubject && (
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{SUBJECT_META[activeSubject]?.icon}</span>
-                <h2 className="text-base font-bold text-white">{SUBJECT_META[activeSubject]?.label}</h2>
-              </div>
-              <button
-                onClick={() => setActiveSubject(null)}
-                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-              >
-                Clear ×
-              </button>
-            </div>
-          )}
 
           {/* Card feed — full-width posts */}
           {dataLoading ? (
