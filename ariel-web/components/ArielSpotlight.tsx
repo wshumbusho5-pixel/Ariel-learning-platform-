@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { aiChatAPI, cardsAPI, scraperAPI } from '@/lib/api';
 import { useAuth } from '@/lib/useAuth';
 import AuthModal from './AuthModal';
@@ -12,6 +12,9 @@ interface Message {
   cards?: { question: string; answer: string; explanation?: string }[];
   showChips?: boolean;
 }
+
+const REACTIONS = ['❤️', '👍', '😂', '😮', '🙏'];
+const SWIPE_THRESHOLD = 65;
 
 const QUICK_CHIPS = [
   { label: '🎴 Make flashcards', prompt: 'Generate 5 flashcards for me on a topic I choose' },
@@ -73,6 +76,59 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Swipe-to-reply + reactions
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [swipeState, setSwipeState] = useState<{ id: string; x: number } | null>(null);
+  const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
+  const [msgReactions, setMsgReactions] = useState<Record<string, string>>({});
+  const touchStartRef = useRef<{ x: number; y: number; id: string; horizontal: boolean | null } | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const onTouchStart = useCallback((e: React.TouchEvent, msgId: string) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, id: msgId, horizontal: null };
+    longPressTimerRef.current = setTimeout(() => {
+      setReactionPickerFor(msgId);
+      if (navigator.vibrate) navigator.vibrate(40);
+      touchStartRef.current = null;
+    }, 480);
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent, msgId: string) => {
+    if (!touchStartRef.current || touchStartRef.current.id !== msgId) return;
+    const dx = e.touches[0].clientX - touchStartRef.current.x;
+    const dy = Math.abs(e.touches[0].clientY - touchStartRef.current.y);
+
+    // Detect axis on first movement
+    if (touchStartRef.current.horizontal === null && (Math.abs(dx) > 6 || dy > 6)) {
+      touchStartRef.current.horizontal = Math.abs(dx) > dy;
+    }
+
+    if (!touchStartRef.current.horizontal) return; // vertical scroll — bail
+
+    // Cancel long press if moving
+    if (longPressTimerRef.current) { clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null; }
+
+    if (dx > 0) {
+      setSwipeState({ id: msgId, x: Math.min(dx, SWIPE_THRESHOLD + 20) });
+    }
+  }, []);
+
+  const onTouchEnd = useCallback((msg: Message) => {
+    if (longPressTimerRef.current) { clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null; }
+    if (swipeState && swipeState.id === msg.id && swipeState.x >= SWIPE_THRESHOLD) {
+      setReplyTo(msg);
+      if (navigator.vibrate) navigator.vibrate(10);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+    setSwipeState(null);
+    touchStartRef.current = null;
+  }, [swipeState]);
+
+  const pickReaction = useCallback((msgId: string, emoji: string) => {
+    setMsgReactions(prev => prev[msgId] === emoji ? { ...prev, [msgId]: '' } : { ...prev, [msgId]: emoji });
+    setReactionPickerFor(null);
+  }, []);
+
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
@@ -102,9 +158,13 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return;
+    const fullText = replyTo
+      ? `[Replying to: "${replyTo.text.slice(0, 60)}${replyTo.text.length > 60 ? '…' : ''}"]\n${text.trim()}`
+      : text.trim();
     const userMsg: Message = { id: Date.now().toString(), sender: 'user', text: text.trim() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
+    setReplyTo(null);
     setLoading(true);
     setPendingCards([]);
 
@@ -114,7 +174,7 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
       .join('\n');
 
     try {
-      const res = await aiChatAPI.sendMessage(text.trim(), context || undefined);
+      const res = await aiChatAPI.sendMessage(fullText, context || undefined);
       const replyText = formatReply(res?.reply);
       const cards = res?.cards && Array.isArray(res.cards) ? res.cards : [];
       if (cards.length > 0) setPendingCards(cards);
@@ -293,78 +353,133 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
 
             return (
               <div key={msg.id} className={prevSame ? 'mt-0.5' : 'mt-4'}>
-                <div className={`flex items-end gap-2 ${isAriel ? 'flex-row' : 'flex-row-reverse'}`}>
-
-                  {/* Avatar — only on last in group */}
-                  {isAriel ? (
-                    <div className={`w-7 h-7 flex-shrink-0 ${hasTail ? '' : 'invisible'}`}>
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-xs shadow-md shadow-indigo-500/20">
-                        A
-                      </div>
+                {/* Swipe + long-press wrapper */}
+                <div
+                  className="relative select-none"
+                  onTouchStart={e => onTouchStart(e, msg.id)}
+                  onTouchMove={e => onTouchMove(e, msg.id)}
+                  onTouchEnd={() => onTouchEnd(msg)}
+                  onTouchCancel={() => { setSwipeState(null); if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); }}
+                >
+                  {/* Swipe reply arrow — appears behind bubble as it slides */}
+                  {swipeState?.id === msg.id && (
+                    <div
+                      className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full ${isAriel ? 'left-9' : 'right-9'}`}
+                      style={{
+                        background: 'rgba(99,102,241,0.2)',
+                        border: '1px solid rgba(99,102,241,0.4)',
+                        opacity: Math.min(swipeState.x / SWIPE_THRESHOLD, 1),
+                      }}
+                    >
+                      <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                      </svg>
                     </div>
-                  ) : (
-                    <div className="w-7 h-7 flex-shrink-0" />
                   )}
 
-                  {/* Bubble */}
                   <div
-                    className={`
-                      max-w-[78%] text-sm leading-relaxed whitespace-pre-wrap break-words
-                      ${isAriel
-                        ? `text-zinc-100 ${hasTail ? 'rounded-2xl rounded-bl-[4px]' : prevSame ? 'rounded-2xl rounded-l-lg' : 'rounded-2xl'}`
-                        : `text-white ${hasTail ? 'rounded-2xl rounded-br-[4px]' : prevSame ? 'rounded-2xl rounded-r-lg' : 'rounded-2xl'}`
-                      }
-                    `}
-                    style={isAriel ? {
-                      background: 'rgba(28,28,52,0.85)',
-                      border: '1px solid rgba(99,102,241,0.18)',
-                      padding: '10px 14px',
-                    } : {
-                      background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
-                      padding: '10px 14px',
+                    className={`flex items-end gap-2 ${isAriel ? 'flex-row' : 'flex-row-reverse'}`}
+                    style={{
+                      transform: swipeState?.id === msg.id ? `translateX(${swipeState.x}px)` : 'translateX(0)',
+                      transition: swipeState?.id === msg.id ? 'none' : 'transform 0.25s cubic-bezier(0.34,1.56,0.64,1)',
                     }}
                   >
-                    {/* Message text + inline time */}
-                    <span>{msg.text}</span>
-                    <BubbleTime />
-
-                    {/* Generated cards */}
-                    {msg.cards && msg.cards.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {msg.cards.slice(0, 5).map((c, ci) => (
-                          <div key={ci} className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <p className="text-xs font-bold text-white">{ci + 1}. {c.question}</p>
-                            <p className="text-xs text-zinc-300 mt-1 leading-relaxed">{c.answer}</p>
-                          </div>
-                        ))}
-                        <div className="pt-1 space-y-2">
-                          <div className="flex gap-2">
-                            <input
-                              value={subject}
-                              onChange={e => setSubject(e.target.value)}
-                              placeholder="Subject (optional)"
-                              className="flex-1 text-xs text-white placeholder:text-zinc-500 rounded-lg px-2.5 py-1.5 focus:outline-none"
-                              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
-                            />
-                            <input
-                              value={topic}
-                              onChange={e => setTopic(e.target.value)}
-                              placeholder="Topic (optional)"
-                              className="flex-1 text-xs text-white placeholder:text-zinc-500 rounded-lg px-2.5 py-1.5 focus:outline-none"
-                              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
-                            />
-                          </div>
-                          <button
-                            onClick={() => handleSaveCards(msg.cards!)}
-                            disabled={saving}
-                            className="w-full py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-colors disabled:opacity-50 border border-white/20"
-                          >
-                            {saving ? 'Saving…' : '💾 Save to my deck'}
-                          </button>
-                        </div>
+                    {/* Avatar */}
+                    {isAriel ? (
+                      <div className={`w-7 h-7 flex-shrink-0 ${hasTail ? '' : 'invisible'}`}>
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-white text-xs shadow-md shadow-indigo-500/20">A</div>
                       </div>
+                    ) : (
+                      <div className="w-7 h-7 flex-shrink-0" />
                     )}
+
+                    {/* Bubble */}
+                    <div className="relative">
+                      <div
+                        className={`
+                          max-w-[78%] text-sm leading-relaxed whitespace-pre-wrap break-words
+                          ${isAriel
+                            ? `text-zinc-100 ${hasTail ? 'rounded-2xl rounded-bl-[4px]' : prevSame ? 'rounded-2xl rounded-l-lg' : 'rounded-2xl'}`
+                            : `text-white ${hasTail ? 'rounded-2xl rounded-br-[4px]' : prevSame ? 'rounded-2xl rounded-r-lg' : 'rounded-2xl'}`
+                          }
+                        `}
+                        style={isAriel ? {
+                          background: 'rgba(28,28,52,0.85)',
+                          border: '1px solid rgba(99,102,241,0.18)',
+                          padding: '10px 14px',
+                        } : {
+                          background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
+                          padding: '10px 14px',
+                        }}
+                      >
+                        <span>{msg.text}</span>
+                        <BubbleTime />
+
+                        {/* Generated cards */}
+                        {msg.cards && msg.cards.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            {msg.cards.slice(0, 5).map((c, ci) => (
+                              <div key={ci} className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <p className="text-xs font-bold text-white">{ci + 1}. {c.question}</p>
+                                <p className="text-xs text-zinc-300 mt-1 leading-relaxed">{c.answer}</p>
+                              </div>
+                            ))}
+                            <div className="pt-1 space-y-2">
+                              <div className="flex gap-2">
+                                <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject (optional)"
+                                  className="flex-1 text-xs text-white placeholder:text-zinc-500 rounded-lg px-2.5 py-1.5 focus:outline-none"
+                                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }} />
+                                <input value={topic} onChange={e => setTopic(e.target.value)} placeholder="Topic (optional)"
+                                  className="flex-1 text-xs text-white placeholder:text-zinc-500 rounded-lg px-2.5 py-1.5 focus:outline-none"
+                                  style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }} />
+                              </div>
+                              <button onClick={() => handleSaveCards(msg.cards!)} disabled={saving}
+                                className="w-full py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition-colors disabled:opacity-50 border border-white/20">
+                                {saving ? 'Saving…' : '💾 Save to my deck'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Reaction badge on bubble */}
+                      {msgReactions[msg.id] && (
+                        <button
+                          onClick={() => pickReaction(msg.id, msgReactions[msg.id])}
+                          className={`absolute -bottom-3 ${isAriel ? 'left-2' : 'right-2'} text-sm px-1.5 py-0.5 rounded-full`}
+                          style={{ background: 'rgba(28,28,52,0.95)', border: '1px solid rgba(99,102,241,0.3)', lineHeight: 1.4 }}
+                        >
+                          {msgReactions[msg.id]}
+                        </button>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Reaction picker (long-press) */}
+                  {reactionPickerFor === msg.id && (
+                    <div
+                      className={`absolute z-10 ${isAriel ? 'left-9' : 'right-0'} -top-12 flex items-center gap-1 px-2.5 py-2 rounded-2xl shadow-xl`}
+                      style={{ background: 'rgba(28,28,52,0.98)', border: '1px solid rgba(99,102,241,0.3)' }}
+                    >
+                      {REACTIONS.map(emoji => (
+                        <button
+                          key={emoji}
+                          onClick={() => pickReaction(msg.id, emoji)}
+                          className="text-xl hover:scale-125 transition-transform active:scale-110 px-0.5"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setReactionPickerFor(null)}
+                        className="ml-1 text-zinc-600 hover:text-zinc-300 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Seen receipt */}
@@ -379,13 +494,9 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                 {msg.showChips && (
                   <div className="flex flex-wrap gap-2 pl-9 mt-3">
                     {QUICK_CHIPS.map(chip => (
-                      <button
-                        key={chip.label}
-                        onClick={() => sendMessage(chip.prompt)}
-                        disabled={loading}
+                      <button key={chip.label} onClick={() => sendMessage(chip.prompt)} disabled={loading}
                         className="px-3 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white transition-all whitespace-nowrap"
-                        style={{ background: 'rgba(28,28,52,0.8)', border: '1px solid rgba(99,102,241,0.25)' }}
-                      >
+                        style={{ background: 'rgba(28,28,52,0.8)', border: '1px solid rgba(99,102,241,0.25)' }}>
                         {chip.label}
                       </button>
                     ))}
@@ -473,6 +584,28 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
 
       {/* Input bar */}
       <div className="flex-shrink-0 px-4 py-3" style={{ background: 'rgba(13,13,20,0.97)', borderTop: '1px solid rgba(99,102,241,0.12)' }}>
+        {/* Reply preview */}
+        {replyTo && (
+          <div className="flex items-center gap-2 mb-2.5 px-1">
+            <div className="w-0.5 h-9 rounded-full bg-indigo-500 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-indigo-400 mb-0.5">
+                {replyTo.sender === 'ariel' ? 'Ariel' : 'You'}
+              </p>
+              <p className="text-[11px] text-zinc-500 truncate leading-snug">
+                {replyTo.text.slice(0, 70)}{replyTo.text.length > 70 ? '…' : ''}
+              </p>
+            </div>
+            <button
+              onClick={() => setReplyTo(null)}
+              className="w-5 h-5 flex items-center justify-center rounded-full flex-shrink-0 text-zinc-600 hover:text-zinc-300 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-2">
           {/* Attachment */}
           <button
