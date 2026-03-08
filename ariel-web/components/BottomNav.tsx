@@ -175,10 +175,13 @@ export default function BottomNav() {
               <button
                 key={item.name}
                 onClick={() => router.push(item.path)}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative pt-1 ${
                   isActive ? 'text-sky-500' : 'text-zinc-600 hover:text-zinc-300'
                 }`}
               >
+                {isActive && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-sky-500" />
+                )}
                 {item.icon(isActive)}
                 <span className="text-[10px] font-medium">{item.name}</span>
               </button>
@@ -206,10 +209,13 @@ export default function BottomNav() {
               <button
                 key={item.name}
                 onClick={() => router.push(item.path)}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative pt-1 ${
                   isActive ? 'text-sky-500' : 'text-zinc-600 hover:text-zinc-300'
                 }`}
               >
+                {isActive && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full bg-sky-500" />
+                )}
                 {item.icon(isActive)}
                 <span className="text-[10px] font-medium">{item.name}</span>
               </button>

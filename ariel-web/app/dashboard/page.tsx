@@ -112,7 +112,9 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
   const [flipped, setFlipped] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(card.likes ?? 0);
+  const [likeAnim, setLikeAnim] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveToast, setSaveToast] = useState(false);
 
   const key = getSubjectKey(card);
   const meta = SUBJECT_META[key];
@@ -123,12 +125,20 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
     const next = !liked;
     setLiked(next);
     setLikeCount(c => next ? c + 1 : Math.max(0, c - 1));
-    if (next) cardsAPI.likeCard(card.id).catch(() => {});
+    if (next) {
+      setLikeAnim(true);
+      setTimeout(() => setLikeAnim(false), 400);
+      cardsAPI.likeCard(card.id).catch(() => {});
+    }
   };
 
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!saved) cardsAPI.saveCardToDeck(card.id).catch(() => {});
+    if (!saved) {
+      cardsAPI.saveCardToDeck(card.id).catch(() => {});
+      setSaveToast(true);
+      setTimeout(() => setSaveToast(false), 1600);
+    }
     setSaved(s => !s);
   };
 
@@ -147,7 +157,13 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
   };
 
   return (
-    <div className="border-b border-zinc-800 bg-zinc-900">
+    <div className="border-b border-zinc-800 bg-zinc-900 relative">
+      {/* Save toast */}
+      {saveToast && (
+        <div className="animate-toast absolute bottom-14 left-1/2 -translate-x-1/2 z-10 px-3.5 py-1.5 rounded-full bg-zinc-800 border border-zinc-700 text-xs font-semibold text-zinc-200 whitespace-nowrap pointer-events-none">
+          Saved to deck ✓
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
         <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center flex-shrink-0`}>
@@ -229,7 +245,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
           onClick={handleLike}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-1 justify-center ${liked ? 'text-red-400 bg-red-500/10' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'}`}
         >
-          <svg className="w-4 h-4" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg className={`w-4 h-4 ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
           {likeCount > 0 ? likeCount : 'Like'}
@@ -806,20 +822,27 @@ export default function Dashboard() {
               )}
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
-                <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+            <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+              {/* Ariel avatar with sparkle */}
+              <div className="relative mb-5">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-500/20">
+                  <span className="text-3xl font-black text-white">A</span>
+                </div>
+                <span className="absolute -top-1 -right-1 text-base">✦</span>
               </div>
-              <p className="text-base font-semibold text-zinc-300">
-                {activeSubject || activeTopic ? 'No cards for this yet' : 'Your feed is empty'}
+              <p className="text-base font-bold text-white">
+                {activeSubject || activeTopic ? 'Nothing here yet' : 'Your feed is wide open'}
               </p>
-              <p className="text-sm text-zinc-600 mt-1">
-                {activeSubject || activeTopic ? 'Be the first to create cards here' : 'Ask Ariel to generate your first cards'}
+              <p className="text-sm text-zinc-500 mt-2 leading-relaxed max-w-[240px]">
+                {activeSubject || activeTopic
+                  ? 'No cards in this area yet — be the first to add some.'
+                  : "Tell me what you're studying and I'll fill this up for you."}
               </p>
-              <button onClick={openAriel} className="mt-5 px-6 py-2.5 rounded-full bg-sky-500 hover:bg-sky-400 text-white text-sm font-bold transition-colors">
-                Ask Ariel
+              <button
+                onClick={openAriel}
+                className="mt-6 px-6 py-2.5 rounded-full bg-sky-500 hover:bg-sky-400 active:scale-95 text-white text-sm font-bold transition-all"
+              >
+                {activeSubject || activeTopic ? 'Create cards' : 'Start with Ariel'}
               </button>
             </div>
           )}
