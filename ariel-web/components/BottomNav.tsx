@@ -35,15 +35,25 @@ const mainNav = [
       </svg>
     ),
   },
+  {
+    name: 'Duels',
+    path: '/duels',
+    exact: false,
+    icon: (active: boolean) => (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+      </svg>
+    ),
+  },
 ];
 
-const drawerItems = [
+export const drawerItems = [
   {
     name: 'Messages',
     path: '/messages',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
       </svg>
     ),
   },
@@ -110,15 +120,6 @@ const drawerItems = [
       </svg>
     ),
   },
-  {
-    name: 'Duels',
-    path: '/duels',
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-      </svg>
-    ),
-  },
 ];
 
 export default function BottomNav() {
@@ -129,21 +130,17 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Hamburger drawer */}
+      {/* Drawer — still accessible programmatically */}
       {drawerOpen && (
         <div className="fixed inset-0 z-[100] lg:hidden" onClick={() => setDrawerOpen(false)}>
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          {/* Sheet */}
           <div
             className="absolute bottom-0 left-0 right-0 bg-black border-t border-zinc-800 rounded-t-3xl pb-8"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Handle */}
             <div className="flex justify-center pt-3 pb-4">
               <div className="w-10 h-1 rounded-full bg-zinc-700" />
             </div>
-
             <div className="grid grid-cols-4 gap-1 px-4">
               {drawerItems.map((item) => {
                 const isActive = pathname === item.path || pathname?.startsWith(item.path + '/');
@@ -168,6 +165,7 @@ export default function BottomNav() {
       {/* Bottom nav bar */}
       <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-black border-t border-zinc-800">
         <div className="flex items-stretch h-16 max-w-screen-sm mx-auto">
+
           {/* Today, Deck */}
           {mainNav.slice(0, 2).map((item) => {
             const isActive = item.exact
@@ -187,19 +185,19 @@ export default function BottomNav() {
             );
           })}
 
-          {/* Ariel center button */}
+          {/* Ariel — LinkedIn-style box */}
           <button
             onClick={openAriel}
             className="flex-1 flex flex-col items-center justify-center"
           >
-            <div className="w-12 h-12 bg-sky-500 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/30 -mt-4">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <div className="w-11 h-11 bg-sky-500 rounded-xl flex items-center justify-center shadow-md shadow-sky-500/25 -mt-3 border border-sky-400/40">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
             </div>
           </button>
 
-          {/* Cram */}
+          {/* Cram, Duels */}
           {mainNav.slice(2).map((item) => {
             const isActive = item.exact
               ? pathname === item.path
@@ -218,18 +216,6 @@ export default function BottomNav() {
             );
           })}
 
-          {/* Hamburger */}
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
-              drawerOpen ? 'text-sky-500' : 'text-zinc-600 hover:text-zinc-300'
-            }`}
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-            <span className="text-[10px] font-medium">More</span>
-          </button>
         </div>
       </div>
     </>

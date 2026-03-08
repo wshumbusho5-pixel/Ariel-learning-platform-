@@ -247,7 +247,7 @@ class CardRepository:
 
         # Get the original card
         original_card = await db[CardRepository.collection_name].find_one({"_id": ObjectId(card_id)})
-        if not original_card or original_card["visibility"] == "private":
+        if not original_card or original_card.get("visibility", "public") == "private":
             return None
 
         # Create a copy for the user

@@ -302,39 +302,23 @@ async def get_card_comments(
 ):
     """Get comments for a card"""
     try:
-        from bson import ObjectId
+        raw = await db["card_comments"].find(
+            {"card_id": card_id, "is_deleted": {"$ne": True}}
+        ).sort("created_at", -1).to_list(length=100)
 
-        # Query comments
-        pipeline = [
-            {"$match": {"card_id": card_id, "is_deleted": {"$ne": True}}},
-            {
-                "$lookup": {
-                    "from": "users",
-                    "localField": "user_id",
-                    "foreignField": "_id",
-                    "as": "user"
-                }
-            },
-            {"$unwind": "$user"},
-            {"$sort": {"created_at": -1}},
-            {
-                "$project": {
-                    "id": {"$toString": "$_id"},
-                    "user_id": {"$toString": "$user_id"},
-                    "username": "$user.username",
-                    "profile_picture": "$user.profile_picture",
-                    "text": "$content",
-                    "created_at": {"$toString": "$created_at"},
-                    "likes": {"$ifNull": ["$likes", 0]},
-                    "replies_count": 0,
-                    "liked_by_current_user": {
-                        "$in": [current_user.id, {"$ifNull": ["$liked_by", []]}]
-                    }
-                }
-            }
-        ]
-
-        comments = await db["card_comments"].aggregate(pipeline).to_list(length=100)
+        comments = []
+        for c in raw:
+            comments.append({
+                "id": str(c["_id"]),
+                "user_id": str(c.get("user_id", "")),
+                "username": c.get("username", "unknown"),
+                "profile_picture": c.get("profile_picture"),
+                "text": c.get("content", ""),
+                "created_at": c["created_at"].isoformat() if hasattr(c.get("created_at"), "isoformat") else str(c.get("created_at", "")),
+                "likes": c.get("likes", 0),
+                "replies_count": 0,
+                "liked_by_current_user": current_user.id in c.get("liked_by", []),
+            })
         return comments
 
     except Exception as e:
@@ -359,6 +343,8 @@ async def create_card_comment(
         comment_doc = {
             "card_id": card_id,
             "user_id": current_user.id,
+            "username": current_user.username,
+            "profile_picture": getattr(current_user, 'profile_picture', None),
             "content": text.get("text", ""),
             "created_at": datetime.utcnow(),
             "likes": 0,

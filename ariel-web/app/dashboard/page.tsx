@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/useAuth';
 import api, { gamificationAPI, cardsAPI, messagesAPI } from '@/lib/api';
 import { useAriel } from '@/lib/arielContext';
 import { useComments } from '@/lib/commentsContext';
-import BottomNav from '@/components/BottomNav';
+import BottomNav, { drawerItems } from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 import Onboarding from '@/components/Onboarding';
 
@@ -101,6 +101,13 @@ function timeAgo(d?: string) {
 
 // ─── Card Tile (square, 1:1) ─────────────────────────────────────────────────
 
+function cardHeight(card: FeedCard): number {
+  const maxLen = Math.max(card.question?.length ?? 0, card.answer?.length ?? 0);
+  if (maxLen < 60) return 160;
+  if (maxLen < 150) return 210;
+  return 280;
+}
+
 function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string) => void }) {
   const [flipped, setFlipped] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -109,6 +116,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
 
   const key = getSubjectKey(card);
   const meta = SUBJECT_META[key];
+  const flipHeight = cardHeight(card);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -122,6 +130,20 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
     e.stopPropagation();
     if (!saved) cardsAPI.saveCardToDeck(card.id).catch(() => {});
     setSaved(s => !s);
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/cards/${card.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: card.question, text: card.question, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+      }
+    } catch {
+      try { await navigator.clipboard.writeText(url); } catch {}
+    }
   };
 
   return (
@@ -161,7 +183,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
         <div
           style={{
             position: 'relative',
-            minHeight: '210px',
+            minHeight: `${flipHeight}px`,
             transformStyle: 'preserve-3d',
             transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
             transition: 'transform 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -170,7 +192,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
           {/* Front — Question */}
           <div
             className="absolute inset-0 bg-white flex flex-col items-center justify-center p-5"
-            style={{ backfaceVisibility: 'hidden', minHeight: '210px', position: 'relative' }}
+            style={{ backfaceVisibility: 'hidden', minHeight: `${flipHeight}px`, position: 'relative' }}
           >
             <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
               {card.question}
@@ -186,7 +208,7 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
           {/* Back — Answer */}
           <div
             className="absolute inset-0 bg-sky-50 flex flex-col items-center justify-center p-5"
-            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', minHeight: '210px' }}
+            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', minHeight: `${flipHeight}px` }}
           >
             <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
               {card.answer || 'No answer provided.'}
@@ -220,6 +242,15 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
           Comment
+        </button>
+        <button
+          onClick={handleShare}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors flex-1 justify-center"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          Share
         </button>
         <button
           onClick={handleSave}
@@ -328,10 +359,9 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
 
 // ─── Skeleton card ────────────────────────────────────────────────────────────
 
-function CardSkeleton() {
+function CardSkeleton({ height = 210 }: { height?: number }) {
   return (
     <div className="border-b border-zinc-800 bg-zinc-900 animate-pulse">
-      {/* Header */}
       <div className="flex items-center gap-2.5 px-4 pt-3.5 pb-2">
         <div className="w-8 h-8 rounded-full bg-zinc-800 flex-shrink-0" />
         <div className="flex-1 space-y-1.5">
@@ -339,9 +369,7 @@ function CardSkeleton() {
           <div className="h-2.5 bg-zinc-800 rounded-full w-1/4" />
         </div>
       </div>
-      {/* Card body */}
-      <div className="h-[210px] bg-zinc-800" />
-      {/* Action bar */}
+      <div className="bg-zinc-800" style={{ height: `${height}px` }} />
       <div className="flex gap-2 px-3 pb-3 pt-2 border-t border-zinc-800">
         <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
         <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
@@ -369,6 +397,7 @@ export default function Dashboard() {
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [showSubjectPicker, setShowSubjectPicker] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FeedCard[]>([]);
   const [searching, setSearching] = useState(false);
@@ -530,6 +559,13 @@ export default function Dashboard() {
               <button onClick={() => router.push('/notifications')} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </button>
+              <button onClick={() => setDrawerOpen(true)} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors lg:hidden">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="5" cy="5" r="1.5" /><circle cx="12" cy="5" r="1.5" /><circle cx="19" cy="5" r="1.5" />
+                  <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
+                  <circle cx="5" cy="19" r="1.5" /><circle cx="12" cy="19" r="1.5" /><circle cx="19" cy="19" r="1.5" />
                 </svg>
               </button>
             </div>
@@ -694,7 +730,7 @@ export default function Dashboard() {
           {/* Card feed — full-width posts */}
           {dataLoading ? (
             <div className="-mx-4">
-              {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
+              {[160, 280, 210].map((h, i) => <CardSkeleton key={i} height={h} />)}
             </div>
           ) : displayCards.length > 0 ? (
             <>
@@ -814,6 +850,38 @@ export default function Dashboard() {
                   <p className="col-span-2 text-sm text-zinc-600 text-center py-6">You've added all subjects.</p>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* More drawer */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-[100] lg:hidden" onClick={() => setDrawerOpen(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-black border-t border-zinc-800 rounded-t-3xl pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-center pt-3 pb-4">
+              <div className="w-10 h-1 rounded-full bg-zinc-700" />
+            </div>
+            <div className="grid grid-cols-4 gap-1 px-4">
+              {drawerItems.map((item) => {
+                const isActive = typeof window !== 'undefined' && (window.location.pathname === item.path || window.location.pathname.startsWith(item.path + '/'));
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => { router.push(item.path); setDrawerOpen(false); }}
+                    className={`flex flex-col items-center gap-2 py-4 rounded-2xl transition-colors ${
+                      isActive ? 'bg-zinc-800 text-sky-400' : 'text-zinc-400 hover:bg-zinc-900'
+                    }`}
+                  >
+                    {item.icon}
+                    <span className="text-[11px] font-medium">{item.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
