@@ -191,8 +191,8 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
         >
           {/* Front — Question */}
           <div
-            className="absolute inset-0 bg-white flex flex-col items-center justify-center p-5"
-            style={{ backfaceVisibility: 'hidden', minHeight: `${flipHeight}px`, position: 'relative' }}
+            className="absolute inset-0 flex flex-col items-center justify-center p-5"
+            style={{ backfaceVisibility: 'hidden', minHeight: `${flipHeight}px`, position: 'relative', background: '#f7f7f8' }}
           >
             <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
               {card.question}
@@ -207,8 +207,8 @@ function CardTile({ card, onComment }: { card: FeedCard; onComment: (id: string)
 
           {/* Back — Answer */}
           <div
-            className="absolute inset-0 bg-sky-50 flex flex-col items-center justify-center p-5"
-            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', minHeight: `${flipHeight}px` }}
+            className="absolute inset-0 flex flex-col items-center justify-center p-5"
+            style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', minHeight: `${flipHeight}px`, background: '#eaf4ff' }}
           >
             <p className="text-zinc-900 font-semibold text-[15px] text-center leading-snug">
               {card.answer || 'No answer provided.'}
@@ -279,9 +279,9 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
   return (
     <div className="-mx-4">
       {/* Wrapped section */}
-      <div className="bg-zinc-900 py-4 my-2">
+      <div style={{ background: '#111115', borderTop: '1px solid #27272a', borderBottom: '1px solid #27272a' }} className="py-5 my-0">
         {/* Header — inside padding */}
-        <div className="flex items-center justify-between mb-3 px-4">
+        <div className="flex items-center justify-between mb-4 px-4">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
@@ -295,7 +295,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
         </div>
 
       {/* Full-bleed scroll strip */}
-      <div className="flex gap-2.5 overflow-x-auto pl-4 pb-1" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-3 overflow-x-auto pl-4 pb-2 pr-4" style={{ scrollbarWidth: 'none' }}>
         {hasReal
           ? reels.slice(0, 8).map((reel) => (
               <button
@@ -369,7 +369,7 @@ function CardSkeleton({ height = 210 }: { height?: number }) {
           <div className="h-2.5 bg-zinc-800 rounded-full w-1/4" />
         </div>
       </div>
-      <div className="bg-zinc-800" style={{ height: `${height}px` }} />
+      <div style={{ height: `${height}px`, background: '#e4e4e6' }} />
       <div className="flex gap-2 px-3 pb-3 pt-2 border-t border-zinc-800">
         <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
         <div className="flex-1 h-8 rounded-lg bg-zinc-800" />
