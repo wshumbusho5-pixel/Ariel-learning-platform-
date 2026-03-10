@@ -390,14 +390,65 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   );
 }
 
-// ─── Reels Row (real thumbnails) ─────────────────────────────────────────────
+// ─── Reels Row (autoplay preview) ────────────────────────────────────────────
+
+function ReelCard({ reel, onNavigate }: { reel: Reel; onNavigate: (path: string) => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) video.play().catch(() => {});
+        else { video.pause(); video.currentTime = 0; }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <button
+      onClick={() => onNavigate('/reels')}
+      className="flex-shrink-0 w-[130px] rounded-2xl overflow-hidden relative bg-zinc-900"
+      style={{ aspectRatio: '9/16' }}
+    >
+      {reel.video_url ? (
+        <video
+          ref={videoRef}
+          src={reel.video_url.replace(/^https?:\/\/localhost(:\d+)?/, '')}
+          className="absolute inset-0 w-full h-full object-cover"
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={reel.thumbnail_url ? reel.thumbnail_url.replace(/^https?:\/\/localhost(:\d+)?/, '') : undefined}
+        />
+      ) : reel.thumbnail_url ? (
+        <img
+          src={reel.thumbnail_url.replace(/^https?:\/\/localhost(:\d+)?/, '')}
+          alt={reel.title}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-700 to-zinc-900" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-transparent" />
+      <div className="absolute bottom-0 inset-x-0 p-2.5">
+        <p className="text-[11px] font-bold text-white leading-tight line-clamp-2">{reel.title}</p>
+        <p className="text-[9px] text-white/50 mt-0.5 truncate">@{reel.creator_username}</p>
+      </div>
+    </button>
+  );
+}
 
 function ReelsRow({ reels, fallbackTopics, onNavigate }: {
   reels: Reel[];
   fallbackTopics: { topic: string; subjectKey: string }[];
   onNavigate: (path: string) => void;
 }) {
-  // Show real reels if available, otherwise show topic placeholders
   const hasReal = reels.length > 0;
 
   return (
@@ -431,32 +482,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
       <div className="flex gap-3 overflow-x-auto pl-4 pb-2 pr-4" style={{ scrollbarWidth: 'none' }}>
         {hasReal
           ? reels.slice(0, 8).map((reel) => (
-              <button
-                key={reel.id}
-                onClick={() => onNavigate('/reels')}
-                className="flex-shrink-0 w-[160px] rounded-2xl overflow-hidden relative bg-zinc-800"
-                style={{ aspectRatio: '9/16' }}
-              >
-                {reel.thumbnail_url ? (
-                  <img
-                    src={reel.thumbnail_url.replace(/^https?:\/\/localhost(:\d+)?/, '')}
-                    alt={reel.title}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-b from-zinc-700 to-zinc-900" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                <div className="absolute top-2 left-2">
-                  <div className="w-6 h-6 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
-                    <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                  </div>
-                </div>
-                <div className="absolute bottom-0 inset-x-0 p-2.5">
-                  <p className="text-[11px] font-bold text-white leading-tight line-clamp-2">{reel.title}</p>
-                  <p className="text-[9px] text-white/50 mt-0.5 truncate">@{reel.creator_username}</p>
-                </div>
-              </button>
+              <ReelCard key={reel.id} reel={reel} onNavigate={onNavigate} />
             ))
           : fallbackTopics.map(({ topic, subjectKey }, i) => {
               const meta = SUBJECT_META[subjectKey] || SUBJECT_META.other;
