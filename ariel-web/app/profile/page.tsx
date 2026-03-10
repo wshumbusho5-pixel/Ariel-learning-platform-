@@ -36,6 +36,9 @@ export default function ProfilePage() {
   }, [isAuthenticated, isLoading]);
 
   const loadData = async () => {
+    // Refresh user data to get live follower/following counts
+    checkAuth();
+
     const results = await Promise.allSettled([
       progressAPI.getStats(),
       gamificationAPI.getStats(),
@@ -134,7 +137,7 @@ export default function ProfilePage() {
 
   const level = gamification?.level_info?.current_level || 1;
   const progress = gamification?.level_info?.progress_percentage || 0;
-  const totalCards = stats?.total_cards || 0;
+  const totalCards = myCards.length || stats?.total_cards || 0;
   const cardsReviewed = stats?.total_reviews || 0;
   const cardsMastered = stats?.cards_mastered || 0;
   const streakDays = stats?.current_streak || 0;

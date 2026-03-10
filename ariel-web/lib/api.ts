@@ -326,12 +326,12 @@ export const aiCredentialsAPI = {
 export const socialAPI = {
   // Follow/Unfollow
   followUser: async (userId: string) => {
-    const response = await api.post('/api/social/follow', { user_id: userId });
+    const response = await api.post(`/api/social/users/${userId}/follow`);
     return response.data;
   },
 
   unfollowUser: async (userId: string) => {
-    const response = await api.post('/api/social/unfollow', { user_id: userId });
+    const response = await api.post(`/api/social/users/${userId}/follow`);
     return response.data;
   },
 

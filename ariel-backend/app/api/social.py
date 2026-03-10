@@ -275,6 +275,22 @@ async def toggle_follow_user(
             related_user_id=user_id
         )
 
+        # Send notification to the person being followed
+        from datetime import datetime
+        await db.notifications.insert_one({
+            "user_id": user_id,
+            "notification_type": "new_follower",
+            "title": "New follower",
+            "message": f"@{current_user.username} started following you",
+            "icon": "👤",
+            "actor_id": current_user_id,
+            "actor_username": current_user.username,
+            "actor_profile_picture": getattr(current_user, "profile_picture", None),
+            "is_read": False,
+            "is_archived": False,
+            "created_at": datetime.utcnow(),
+        })
+
     updated_target = await db.users.find_one({"_id": user_id})
 
     return {
