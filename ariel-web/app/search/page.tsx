@@ -113,16 +113,25 @@ export default function SearchPage() {
   }, [query]);
 
   const toggleFollow = (id: string) => {
+    // Determine current state before updating
+    const current = [...suggested, ...results].find(p => p.id === id);
+    if (!current) return;
+    const newFollowing = !current.is_following;
+
+    // Update UI optimistically
     const update = (list: Person[]) =>
-      list.map(p => {
-        if (p.id !== id) return p;
-        const next = { ...p, is_following: !p.is_following };
-        if (next.is_following) socialAPI.followUser(id).catch(() => {});
-        else socialAPI.unfollowUser(id).catch(() => {});
-        return next;
-      });
+      list.map(p => p.id === id ? { ...p, is_following: newFollowing } : p);
     setSuggested(update);
     setResults(update);
+
+    // Make API call exactly once (toggle endpoint handles both directions)
+    socialAPI.followUser(id).catch(() => {
+      // Revert on error
+      const revert = (list: Person[]) =>
+        list.map(p => p.id === id ? { ...p, is_following: !newFollowing } : p);
+      setSuggested(revert);
+      setResults(revert);
+    });
   };
 
   const isSearching = query.trim().length >= 2;
