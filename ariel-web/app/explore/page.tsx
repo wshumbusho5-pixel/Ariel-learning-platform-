@@ -425,7 +425,6 @@ export default function ExplorePage() {
               )}
             </div>
           )}
-        </div>
 
           {(subjectFilter || topicFilter) && (
             <div className="flex items-center justify-center pb-2">
