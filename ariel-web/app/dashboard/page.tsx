@@ -804,7 +804,7 @@ export default function Dashboard() {
 
                 {/* Action icons */}
                 <div className="flex items-center gap-0.5 flex-shrink-0">
-                  <button onClick={() => setShowSearch(true)} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
+                  <button onClick={() => router.push('/search')} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
                     <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
