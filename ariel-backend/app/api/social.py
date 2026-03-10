@@ -434,6 +434,7 @@ async def get_suggested_users(
     3. Users with high engagement (followers, points)
     4. Exclude already following
     """
+    db = db_service.get_db()
     current_user_id = str(current_user.id)
 
     # Build suggestion query
@@ -444,7 +445,7 @@ async def get_suggested_users(
         async for user in db.users.find({
             "_id": {"$ne": current_user_id, "$nin": current_user.following},
             "subjects": {"$in": current_user.subjects},
-            "is_active": True
+            "is_active": {"$ne": False}
         }).limit(limit):
             suggestions.append(user)
 
@@ -453,7 +454,7 @@ async def get_suggested_users(
         async for user in db.users.find({
             "_id": {"$ne": current_user_id, "$nin": current_user.following},
             "school": current_user.school,
-            "is_active": True
+            "is_active": {"$ne": False}
         }).limit(limit - len(suggestions)):
             if user not in suggestions:
                 suggestions.append(user)
@@ -462,7 +463,7 @@ async def get_suggested_users(
     if len(suggestions) < limit:
         async for user in db.users.find({
             "_id": {"$ne": current_user_id, "$nin": current_user.following},
-            "is_active": True
+            "is_active": {"$ne": False}
         }).sort("followers_count", -1).limit(limit - len(suggestions)):
             if user not in suggestions:
                 suggestions.append(user)
@@ -499,6 +500,8 @@ async def search_users(
             detail="Query must be at least 2 characters"
         )
 
+    db = db_service.get_db()
+
     # Search in username, full_name, school
     search_regex = {"$regex": query, "$options": "i"}  # Case-insensitive
 
@@ -509,7 +512,7 @@ async def search_users(
             {"full_name": search_regex},
             {"school": search_regex}
         ],
-        "is_active": True
+        "is_active": {"$ne": False}
     }).limit(limit):
         results.append(FollowListItem(
             id=str(user["_id"]),
