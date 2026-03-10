@@ -1,8 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cardsAPI, socialAPI } from '@/lib/api';
+
+interface UserResult {
+  id: string;
+  username: string;
+  full_name?: string;
+  profile_picture?: string;
+  bio?: string;
+  is_following: boolean;
+  is_teacher?: boolean;
+  is_verified?: boolean;
+}
 
 interface Card {
   id: string;
@@ -40,6 +51,12 @@ export default function ExplorePage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [peopleResults, setPeopleResults] = useState<UserResult[]>([]);
+  const [searchingPeople, setSearchingPeople] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     loadCards();
@@ -77,6 +94,46 @@ export default function ExplorePage() {
       setLoading(false);
     }
   };
+
+  const handleSearchChange = (q: string) => {
+    setSearchQuery(q);
+    clearTimeout(searchTimeout.current);
+    if (q.trim().length < 2) {
+      setPeopleResults([]);
+      return;
+    }
+    setSearchingPeople(true);
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const results = await socialAPI.searchUsers(q.trim());
+        setPeopleResults(results);
+      } catch {}
+      finally { setSearchingPeople(false); }
+    }, 350);
+  };
+
+  const handleToggleFollow = async (userId: string) => {
+    const user = peopleResults.find(u => u.id === userId);
+    if (!user) return;
+    try {
+      if (user.is_following) {
+        await socialAPI.unfollowUser(userId);
+      } else {
+        await socialAPI.followUser(userId);
+      }
+      setPeopleResults(prev => prev.map(u =>
+        u.id === userId ? { ...u, is_following: !u.is_following } : u
+      ));
+      // also update the card feed follow state
+      setFollowingCreators(prev => {
+        const next = new Set(prev);
+        if (user.is_following) next.delete(userId); else next.add(userId);
+        return next;
+      });
+    } catch {}
+  };
+
+  const isSearchMode = searchFocused || searchQuery.length > 0;
 
   const handleLike = async (cardId: string) => {
     const isCurrentlyLiked = likedCards.has(cardId);
@@ -289,10 +346,86 @@ export default function ExplorePage() {
         {/* Violet crown line */}
         <div className="h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
         <div className="bg-[#09090b] border-b border-zinc-800">
-          <div className="px-4 pt-3 pb-2">
-            <h1 className="text-2xl font-black text-white tracking-tight">Explore</h1>
-            <p className="text-[11px] text-zinc-500 mt-0.5">Discover cards from the community</p>
+          <div className="px-4 pt-3 pb-2 flex items-center gap-3">
+            {!isSearchMode && <h1 className="text-2xl font-black text-white tracking-tight flex-1">Explore</h1>}
+            {/* Search bar */}
+            <div className={`flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl px-3 h-10 transition-all ${isSearchMode ? 'flex-1' : 'w-10 cursor-pointer'}`}
+              onClick={() => { if (!isSearchMode) { setSearchFocused(true); searchRef.current?.focus(); } }}>
+              <svg className="w-4 h-4 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {isSearchMode && (
+                <input
+                  ref={searchRef}
+                  autoFocus
+                  value={searchQuery}
+                  onChange={e => handleSearchChange(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  placeholder="Search people..."
+                  className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-zinc-600"
+                />
+              )}
+            </div>
+            {isSearchMode && (
+              <button
+                onClick={() => { setSearchQuery(''); setSearchFocused(false); setPeopleResults([]); }}
+                className="text-xs text-zinc-400 font-semibold flex-shrink-0"
+              >
+                Cancel
+              </button>
+            )}
           </div>
+
+          {/* People results overlay */}
+          {isSearchMode && (
+            <div className="px-4 pb-3">
+              {searchingPeople ? (
+                <div className="py-6 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
+                </div>
+              ) : searchQuery.length < 2 ? (
+                <p className="text-xs text-zinc-600 py-4 text-center">Type at least 2 characters to search</p>
+              ) : peopleResults.length === 0 ? (
+                <p className="text-xs text-zinc-600 py-4 text-center">No people found for "{searchQuery}"</p>
+              ) : (
+                <div className="space-y-2 max-h-[55vh] overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+                  {peopleResults.map(person => (
+                    <div key={person.id} className="flex items-center gap-3 py-2">
+                      {person.profile_picture ? (
+                        <img src={person.profile_picture.replace(/^https?:\/\/[^/]+/, '')} alt={person.username}
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                          <span className="text-white font-bold text-sm">{person.username[0]?.toUpperCase()}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-bold text-white truncate">{person.full_name || person.username}</span>
+                          {person.is_verified && <span className="text-violet-400 text-xs">✓</span>}
+                          {person.is_teacher && <span className="text-[9px] bg-violet-500/20 text-violet-300 px-1.5 py-0.5 rounded font-bold">Teacher</span>}
+                        </div>
+                        <p className="text-xs text-zinc-500">@{person.username}</p>
+                        {person.bio && <p className="text-xs text-zinc-500 truncate mt-0.5">{person.bio}</p>}
+                      </div>
+                      <button
+                        onClick={() => handleToggleFollow(person.id)}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                          person.is_following
+                            ? 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+                            : 'bg-violet-600 hover:bg-violet-500 text-white'
+                        }`}
+                      >
+                        {person.is_following ? 'Following' : 'Follow'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
           {(subjectFilter || topicFilter) && (
             <div className="flex items-center justify-center pb-2">

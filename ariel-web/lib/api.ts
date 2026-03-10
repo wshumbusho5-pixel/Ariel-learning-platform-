@@ -177,12 +177,13 @@ export const cardsAPI = {
     return response.data;
   },
 
-  createCardsBulk: async (cards: any[], subject?: string, topic?: string, tags?: string[]) => {
+  createCardsBulk: async (cards: any[], subject?: string, topic?: string, tags?: string[], visibility: 'public' | 'private' = 'private') => {
     const response = await api.post('/api/cards/bulk', {
       cards,
       subject,
       topic,
       tags,
+      visibility,
     });
     return response.data;
   },

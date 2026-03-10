@@ -46,6 +46,8 @@ async def create_cards_bulk(
                 card.topic = bulk_data.topic
             if bulk_data.tags:
                 card.tags = list(set(card.tags + bulk_data.tags))
+            # Apply bulk visibility to each card
+            card.visibility = bulk_data.visibility
             cards_data.append(card)
 
         cards = await CardRepository.create_cards_bulk(cards_data, current_user.id)
