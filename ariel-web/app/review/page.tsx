@@ -75,7 +75,7 @@ export default function ReviewPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-sky-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-violet-300 mx-auto"></div>
           <p className="text-gray-500 mt-4">Loading your cards...</p>
         </div>
       </div>
@@ -87,7 +87,7 @@ export default function ReviewPage() {
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center px-4">
           <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 ">
-            <svg className="w-12 h-12 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-12 h-12 text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -100,7 +100,7 @@ export default function ReviewPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => router.push('/deck')}
-              className="px-8 py-3 bg-sky-500 hover:bg-sky-400 text-white font-semibold rounded-lg transition-colors"
+              className="px-8 py-3 bg-violet-400 hover:bg-violet-300 text-white font-semibold rounded-lg transition-colors"
             >
               Back to Deck
             </button>
@@ -137,7 +137,7 @@ export default function ReviewPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => router.push('/deck')}
-              className="px-6 py-2 bg-sky-500 hover:bg-sky-400 text-white font-medium rounded-lg transition-colors"
+              className="px-6 py-2 bg-violet-400 hover:bg-violet-300 text-white font-medium rounded-lg transition-colors"
             >
               View My Deck
             </button>

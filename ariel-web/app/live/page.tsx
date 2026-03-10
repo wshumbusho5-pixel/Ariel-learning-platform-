@@ -107,7 +107,7 @@ export default function LivePage() {
         <div className="min-h-screen bg-[#09090b] lg:pl-[72px] w-full">
           {/* Skeleton header */}
           <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 relative">
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-violet-400 to-violet-600/40 pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
             <div className="max-w-2xl mx-auto px-4 py-3">
               <div className="flex items-center justify-between mb-3">
                 <div>
@@ -158,7 +158,7 @@ export default function LivePage() {
       <div className="min-h-screen bg-[#09090b] pb-20 lg:pl-[72px] w-full page-enter">
         {/* Header */}
         <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 relative">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-violet-400 to-violet-600/40 pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
           <div className="max-w-2xl mx-auto px-4 py-3">
             <div className="flex items-center justify-between mb-3">
               <div>

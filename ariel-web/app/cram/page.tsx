@@ -86,20 +86,20 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
   const priorityColor = (p: CramBlock['priority']) => ({
     critical: 'text-red-400 bg-red-900/20 border-red-800/40',
     high: 'text-orange-400 bg-orange-900/20 border-orange-800/40',
-    medium: 'text-sky-400 bg-sky-900/20 border-sky-800/40',
+    medium: 'text-violet-300 bg-violet-900/20 border-violet-800/40',
   }[p]);
 
   const priorityDot = (p: CramBlock['priority']) => ({
     critical: 'bg-red-400',
     high: 'bg-orange-400',
-    medium: 'bg-sky-400',
+    medium: 'bg-violet-300',
   }[p]);
 
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-black lg:pl-[72px] pb-20">
-        <header className="sticky top-0 bg-black border-b border-zinc-800 z-30">
+      <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-20">
+        <header className="sticky top-0 bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/50 z-30">
           <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-white">Cram Mode</h1>
@@ -243,7 +243,7 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-sky-500 transition-all duration-500"
+                    className="h-full bg-violet-400 transition-all duration-500"
                     style={{ width: `${(completedBlocks.size / plan.blocks.length) * 100}%` }}
                   />
                 </div>
@@ -260,7 +260,7 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
                       key={idx}
                       className={`border rounded-xl overflow-hidden transition-all ${
                         isDone
-                          ? 'border-sky-800/40 bg-sky-900/10'
+                          ? 'border-violet-800/40 bg-violet-900/10'
                           : isActive
                           ? 'border-zinc-600 bg-zinc-900'
                           : 'border-zinc-800 bg-zinc-900'
@@ -271,10 +271,10 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
                         onClick={() => setActiveBlock(isActive ? null : idx)}
                       >
                         <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isDone ? 'bg-sky-400' : priorityDot(block.priority)}`} />
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isDone ? 'bg-violet-300' : priorityDot(block.priority)}`} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${isDone ? 'text-sky-400 bg-sky-900/20 border-sky-800/40' : priorityColor(block.priority)}`}>
+                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${isDone ? 'text-violet-300 bg-violet-900/20 border-violet-800/40' : priorityColor(block.priority)}`}>
                                 {isDone ? 'Done' : block.priority}
                               </span>
                               <span className="text-xs text-zinc-500">{block.minutes} min</span>
@@ -305,7 +305,7 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
                                   setCompletedBlocks(prev => new Set([...prev, idx]));
                                   setActiveBlock(null);
                                 }}
-                                className="flex-1 py-2 bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold rounded-lg transition-colors"
+                                className="flex-1 py-2 bg-violet-400 hover:bg-violet-300 text-white text-sm font-semibold rounded-lg transition-colors"
                               >
                                 Mark done
                               </button>
@@ -324,9 +324,9 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
               </div>
 
               {completedBlocks.size === plan.blocks.length && (
-                <div className="bg-sky-900/20 border border-sky-700/40 rounded-xl p-5 text-center">
-                  <p className="text-2xl font-bold text-sky-400 mb-1">You're ready.</p>
-                  <p className="text-sm text-sky-300/70">Go get it.</p>
+                <div className="bg-violet-900/20 border border-violet-700/40 rounded-xl p-5 text-center">
+                  <p className="text-2xl font-bold text-violet-300 mb-1">You're ready.</p>
+                  <p className="text-sm text-violet-300/70">Go get it.</p>
                 </div>
               )}
             </div>

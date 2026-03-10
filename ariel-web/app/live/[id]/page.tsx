@@ -157,7 +157,7 @@ export default function LiveStreamPage() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 bg-[#09090b] flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-gray-800 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-sm text-white font-medium">Loading stream...</p>
@@ -168,7 +168,7 @@ export default function LiveStreamPage() {
 
   if (!stream) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 bg-[#09090b] flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-bold text-white mb-2">Stream not found</h2>
           <button
@@ -183,7 +183,7 @@ export default function LiveStreamPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col">
+    <div className="fixed inset-0 bg-[#09090b] flex flex-col">
       {/* Video Player */}
       <div className="flex-1 relative bg-gray-900">
         {stream.status === 'live' && stream.playback_url ? (

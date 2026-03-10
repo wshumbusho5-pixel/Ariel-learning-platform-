@@ -66,6 +66,7 @@ async def get_conversations(
             other_user_full_name=other_user.get("full_name"),
             other_user_profile_picture=other_user.get("profile_picture"),
             other_user_is_verified=other_user.get("is_verified", False),
+            other_user_last_seen=other_user.get("last_login"),
             last_message_content=convo.get("last_message_content"),
             last_message_sender_id=convo.get("last_message_sender_id"),
             last_message_at=convo.get("last_message_at"),

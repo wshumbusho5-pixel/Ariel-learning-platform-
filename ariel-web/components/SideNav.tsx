@@ -98,7 +98,7 @@ const expandedGroups: NavGroup[] = [
         ),
       },
       {
-        name: 'Messages',
+        name: 'Rooms',
         path: '/messages',
         icon: (active) => (
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>

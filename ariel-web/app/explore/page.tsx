@@ -191,7 +191,7 @@ export default function ExplorePage() {
       <div className="h-screen bg-[#09090b] flex flex-col overflow-hidden">
         {/* Header */}
         <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 relative flex-shrink-0">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-violet-400 to-violet-600/40 pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
           <div className="px-4 py-4">
             <h1 className="text-2xl font-black text-white tracking-tight">Explore</h1>
             <p className="text-[11px] text-zinc-500 mt-0.5">Discover cards from the community</p>
@@ -229,7 +229,7 @@ export default function ExplorePage() {
     return (
       <div className="h-screen bg-[#09090b] flex flex-col overflow-hidden">
         <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 relative flex-shrink-0">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-violet-400 to-violet-600/40 pointer-events-none" />
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
           <div className="px-4 py-4">
             <h1 className="text-2xl font-black text-white tracking-tight">Explore</h1>
             <p className="text-[11px] text-zinc-500 mt-0.5">Discover cards from the community</p>
@@ -287,7 +287,7 @@ export default function ExplorePage() {
       {/* Top Bar */}
       <div className="absolute top-0 left-0 right-0 z-50">
         {/* Violet crown line */}
-        <div className="h-[3px] bg-gradient-to-r from-violet-600 via-violet-400 to-violet-600/40 pointer-events-none" />
+        <div className="h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
         <div className="bg-[#09090b] border-b border-zinc-800">
           <div className="px-4 pt-3 pb-2">
             <h1 className="text-2xl font-black text-white tracking-tight">Explore</h1>

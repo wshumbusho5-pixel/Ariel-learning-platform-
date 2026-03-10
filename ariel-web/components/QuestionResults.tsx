@@ -94,7 +94,7 @@ export default function QuestionResults({ questions, onSaved, onRequireAuth }: Q
 
       {/* Save Dialog */}
       {showSaveDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-[#09090b] bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">
             <h3 className="text-xl font-bold text-gray-900 mb-4">Organize Your Cards</h3>
 

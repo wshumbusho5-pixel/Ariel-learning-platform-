@@ -21,9 +21,9 @@ export default function DuelJoinRedirect() {
   }, []);  // eslint-disable-line
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
       <div className="text-center space-y-3">
-        <div className="w-10 h-10 border-2 border-sky-500/30 border-t-sky-500 rounded-full animate-spin mx-auto" />
+        <div className="w-10 h-10 border-2 border-violet-300/30 border-t-violet-300 rounded-full animate-spin mx-auto" />
         <p className="text-zinc-400 text-sm">Joining duel...</p>
       </div>
     </div>

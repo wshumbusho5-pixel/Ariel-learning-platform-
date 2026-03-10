@@ -98,8 +98,8 @@ export default function KnowledgeMapPage() {
   const topicPct = (t: TopicNode) => t.count ? Math.round((t.mastered / t.count) * 100) : 0;
 
   const nodeColor = (pct: number) => {
-    if (pct >= 80) return { ring: 'ring-sky-500', bg: 'bg-sky-900/30', text: 'text-sky-400', bar: 'bg-sky-500' };
-    if (pct >= 50) return { ring: 'ring-sky-500', bg: 'bg-sky-900/20', text: 'text-sky-400', bar: 'bg-sky-500' };
+    if (pct >= 80) return { ring: 'ring-violet-300', bg: 'bg-violet-900/30', text: 'text-violet-300', bar: 'bg-violet-400' };
+    if (pct >= 50) return { ring: 'ring-violet-300', bg: 'bg-violet-900/20', text: 'text-violet-300', bar: 'bg-violet-400' };
     if (pct >= 25) return { ring: 'ring-orange-500', bg: 'bg-orange-900/20', text: 'text-orange-400', bar: 'bg-orange-500' };
     return { ring: 'ring-red-500', bg: 'bg-red-900/20', text: 'text-red-400', bar: 'bg-red-500' };
   };
@@ -111,8 +111,8 @@ export default function KnowledgeMapPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-black lg:pl-[72px] pb-20">
-        <header className="sticky top-0 bg-black border-b border-zinc-800 z-30">
+      <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-20">
+        <header className="sticky top-0 bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/50 z-30">
           <div className="max-w-4xl mx-auto px-4 py-4">
             <h1 className="text-xl font-bold text-white">Knowledge Map</h1>
             <p className="text-xs text-zinc-500 mt-0.5">Your mastery across every subject</p>
@@ -122,7 +122,7 @@ export default function KnowledgeMapPage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           {loading ? (
             <div className="flex items-center justify-center min-h-[50vh]">
-              <div className="w-12 h-12 border-2 border-zinc-800 border-t-sky-500 rounded-full animate-spin" />
+              <div className="w-12 h-12 border-2 border-zinc-800 border-t-violet-300 rounded-full animate-spin" />
             </div>
           ) : (
             <div className="space-y-6">
@@ -130,7 +130,7 @@ export default function KnowledgeMapPage() {
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { label: 'Total cards', value: totalCards, color: 'text-white' },
-                  { label: 'Mastered', value: totalMastered, color: 'text-sky-400' },
+                  { label: 'Mastered', value: totalMastered, color: 'text-violet-300' },
                   { label: 'Due today', value: totalDue, color: 'text-orange-400' },
                 ].map(stat => (
                   <div key={stat.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
@@ -143,8 +143,8 @@ export default function KnowledgeMapPage() {
               {/* Legend */}
               <div className="flex items-center gap-4 text-xs text-zinc-500">
                 {[
-                  { label: '80%+ mastered', color: 'bg-sky-500' },
-                  { label: '50–79%', color: 'bg-sky-500' },
+                  { label: '80%+ mastered', color: 'bg-violet-400' },
+                  { label: '50–79%', color: 'bg-violet-400' },
                   { label: '25–49%', color: 'bg-orange-500' },
                   { label: 'Under 25%', color: 'bg-red-500' },
                 ].map(l => (
@@ -160,7 +160,7 @@ export default function KnowledgeMapPage() {
                   <p className="text-zinc-500 text-sm mb-4">No cards in your deck yet.</p>
                   <button
                     onClick={() => router.push('/create-cards')}
-                    className="px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold rounded-xl transition-colors"
+                    className="px-5 py-2.5 bg-violet-400 hover:bg-violet-300 text-white text-sm font-semibold rounded-xl transition-colors"
                   >
                     Create cards
                   </button>
@@ -211,7 +211,7 @@ export default function KnowledgeMapPage() {
                         </div>
                         <button
                           onClick={() => router.push('/review')}
-                          className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-white text-sm font-semibold rounded-lg transition-colors"
+                          className="px-4 py-2 bg-violet-400 hover:bg-violet-300 text-white text-sm font-semibold rounded-lg transition-colors"
                         >
                           Review
                         </button>

@@ -1,11 +1,16 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
+import os
+import uuid
+import aiofiles
+from pathlib import Path
 from app.models.user import (
     UserCreate, UserLogin, Token, User, OAuthLoginRequest, AuthProvider, UserProfileUpdate
 )
 from app.services.user_repository import UserRepository
 from app.services.auth_service import AuthService
+from app.core.config import settings
 
 router = APIRouter()
 security = HTTPBearer()
@@ -146,6 +151,10 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Keep last_login current for presence tracking
+    from datetime import datetime
+    await UserRepository.update_user(token_data.user_id, {"last_login": datetime.utcnow()})
+
     return user
 
 @router.put("/profile", response_model=User)
@@ -168,6 +177,47 @@ async def update_profile(
         raise HTTPException(status_code=404, detail="User not found")
 
     return user
+
+@router.post("/profile/picture", response_model=User)
+async def upload_profile_picture(
+    file: UploadFile = File(...),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Upload a profile picture for the current user"""
+    token = credentials.credentials
+    token_data = AuthService.verify_token(token)
+
+    if not token_data or not token_data.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials"
+        )
+
+    # Validate file type (lenient check — content_type may vary by browser/OS)
+    if not (file.content_type or "").startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
+
+    # Save file
+    upload_dir = Path("uploads/avatars")
+    upload_dir.mkdir(parents=True, exist_ok=True)
+
+    ext = os.path.splitext(file.filename or "pic.jpg")[1] or ".jpg"
+    unique_filename = f"{uuid.uuid4()}{ext}"
+    file_path = upload_dir / unique_filename
+
+    async with aiofiles.open(file_path, 'wb') as f:
+        content = await file.read()
+        await f.write(content)
+
+    # Store a relative path so the frontend proxy (/uploads/...) handles it
+    picture_url = f"/uploads/avatars/{unique_filename}"
+
+    user = await UserRepository.update_user(token_data.user_id, {"profile_picture": picture_url})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user
+
 
 # Dependency to get current user
 async def get_current_user_dependency(

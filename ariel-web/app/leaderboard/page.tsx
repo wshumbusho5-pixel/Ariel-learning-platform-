@@ -53,17 +53,27 @@ export default function LeaderboardPage() {
     return null;
   };
 
+  const getRowAccent = (rank: number) => {
+    if (rank === 1) return 'border-yellow-500/40 bg-yellow-950/10';
+    if (rank === 2) return 'border-zinc-400/30 bg-zinc-800/20';
+    if (rank === 3) return 'border-orange-500/30 bg-orange-950/10';
+    return 'border-zinc-800';
+  };
+
   return (
     <>
       <SideNav />
-      <div className="min-h-screen lg:pl-[72px] bg-black">
-        <div className="bg-black border-b border-zinc-800">
+      <div className="min-h-screen lg:pl-[72px] bg-[#09090b] page-enter">
+        {/* Page intro */}
+        <div className="bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/60">
           <div className="max-w-4xl mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold text-white">Streak Leaderboard</h1>
-            <p className="text-zinc-500 text-sm mt-1">Top students by current study streak</p>
+            <h1 className="text-2xl font-black text-white">Streak Leaderboard</h1>
+            <p className="text-zinc-400 text-sm mt-1">Top students ranked by current study streak — updated daily</p>
 
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 mt-4">
-              <p className="text-sm text-zinc-400">
+            <div className="border-t border-zinc-800/60 my-4" />
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+              <p className="text-sm text-zinc-300">
                 Keep your streak alive by reviewing cards every day! Compete with students worldwide.
               </p>
             </div>
@@ -71,6 +81,18 @@ export default function LeaderboardPage() {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-6">
+
+          {/* Section heading */}
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 rounded-full bg-violet-400 inline-block" />
+              <h2 className="text-base font-black text-white">Rankings</h2>
+            </div>
+            <p className="text-xs text-zinc-400 ml-4">Sorted by current active streak</p>
+          </div>
+
+          <div className="border-t border-zinc-800/60 my-4" />
+
           {isLoading && (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -93,16 +115,22 @@ export default function LeaderboardPage() {
                 <Link
                   key={entry.user_id}
                   href={`/profile/${entry.user_id}`}
-                  className={`block bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-600 transition-colors ${
-                    entry.is_current_user ? 'ring-2 ring-sky-500' : ''
+                  className={`block bg-zinc-900 border rounded-xl p-4 hover:border-zinc-600 transition-colors ${getRowAccent(entry.rank)} ${
+                    entry.is_current_user ? 'ring-2 ring-violet-400' : ''
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 ${getRankColor(entry.rank)}`}>
-                      {getRankEmoji(entry.rank) || `#${entry.rank}`}
+                    {/* Rank badge */}
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${getRankColor(entry.rank)}`}>
+                      {getRankEmoji(entry.rank) ? (
+                        <span className="text-xl">{getRankEmoji(entry.rank)}</span>
+                      ) : (
+                        <span className="text-lg font-black">#{entry.rank}</span>
+                      )}
                     </div>
 
-                    <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold flex-shrink-0">
+                    {/* Avatar */}
+                    <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold flex-shrink-0 overflow-hidden">
                       {entry.profile_picture ? (
                         <img
                           src={entry.profile_picture}
@@ -114,32 +142,37 @@ export default function LeaderboardPage() {
                       )}
                     </div>
 
+                    {/* User info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold text-white truncate">
+                        <p className="font-bold text-white truncate">
                           {entry.full_name || entry.username || 'User'}
                         </p>
                         {entry.is_verified && (
-                          <svg className="w-4 h-4 text-sky-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="w-4 h-4 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
                         )}
                         {entry.is_current_user && (
-                          <span className="px-2 py-0.5 bg-sky-900/40 text-sky-400 text-xs font-medium rounded-full">
+                          <span className="px-2 py-0.5 bg-violet-900/40 text-violet-300 text-xs font-medium rounded-full">
                             You
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-zinc-500">
-                        {entry.achievements_count} achievements · {entry.total_points} points
+                      <p className="text-sm text-zinc-400">
+                        <span className="text-violet-400 font-black">{entry.achievements_count}</span>
+                        <span className="text-zinc-500"> achievements · </span>
+                        <span className="text-violet-400 font-black">{entry.total_points}</span>
+                        <span className="text-zinc-500"> pts</span>
                       </p>
                     </div>
 
+                    {/* Streak */}
                     <div className="text-right flex-shrink-0">
-                      <div className="text-2xl font-bold text-white flex items-center gap-1">
+                      <div className="text-2xl font-black text-violet-300 flex items-center gap-1">
                         🔥 {entry.current_streak}
                       </div>
-                      <p className="text-xs text-zinc-500">day streak</p>
+                      <p className="text-xs text-zinc-400">day streak</p>
                     </div>
                   </div>
                 </Link>
@@ -155,22 +188,24 @@ export default function LeaderboardPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">No leaderboard data yet</h3>
-              <p className="text-zinc-500">Start your streak to appear on the leaderboard!</p>
+              <p className="text-zinc-400">Start your streak to appear on the leaderboard!</p>
             </div>
           )}
 
-          <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-            <div className="flex gap-3">
-              <div>
-                <h3 className="font-semibold text-sky-400 mb-1">How to climb the leaderboard</h3>
-                <ul className="text-sm text-zinc-400 space-y-1">
-                  <li>· Review cards every single day to build your streak</li>
-                  <li>· Use freeze cards to protect your streak on busy days</li>
-                  <li>· Unlock achievements to earn more points</li>
-                  <li>· Share your progress to inspire others!</li>
-                </ul>
-              </div>
+          <div className="border-t border-zinc-800/60 my-6" />
+
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 rounded-full bg-violet-400 inline-block" />
+              <h3 className="text-base font-black text-white">How to climb the leaderboard</h3>
             </div>
+            <p className="text-xs text-zinc-400 ml-4 mb-3">Tips to maximize your rank and stay ahead</p>
+            <ul className="text-sm text-zinc-300 space-y-1 ml-4">
+              <li>· Review cards every single day to build your streak</li>
+              <li>· Use freeze cards to protect your streak on busy days</li>
+              <li>· Unlock achievements to earn more points</li>
+              <li>· Share your progress to inspire others!</li>
+            </ul>
           </div>
         </div>
       </div>

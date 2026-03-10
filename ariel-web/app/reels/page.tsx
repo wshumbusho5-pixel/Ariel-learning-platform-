@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/useAuth';
 import { useComments } from '@/lib/commentsContext';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
+import TikTokPlayer from '@/components/TikTokPlayer';
 
 interface Reel {
   id: string;
@@ -336,40 +337,31 @@ function SectionRow({
   const router = useRouter();
 
   return (
-    <section className="mb-10">
-      {/* Section header — no panel, just typography + violet accent */}
-      <div className="px-4 mb-4 flex items-start justify-between gap-3">
-        <div className="flex items-start gap-2.5 flex-1 min-w-0">
-          {/* Thin violet accent bar */}
-          <div className={`w-[3px] rounded-full flex-shrink-0 mt-1 self-stretch ${isFreshSection || isUserTopic ? 'bg-violet-400' : 'bg-zinc-700'}`} />
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-black text-white leading-tight">{label}</h2>
-              {(isUserTopic || isFreshSection) && (
-                <span className="text-[10px] font-bold text-violet-400 border border-violet-400/30 px-1.5 py-0.5 rounded-sm">
-                  {isFreshSection ? 'New' : 'Your topic'}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              <span className="text-violet-400 font-bold">{reels.length}</span>
-              {isFreshSection
-                ? ` clip${reels.length !== 1 ? 's' : ''} this week`
-                : ` clip${reels.length !== 1 ? 's' : ''} in ${label}`}
-            </p>
-          </div>
+    <section className="mb-1">
+      {/* YouTube-style section header: bold label left, See all right, generous air above */}
+      <div className="px-4 pt-7 pb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-[15px] font-black text-white leading-none">{label}</h2>
+          {isUserTopic && (
+            <span className="text-[10px] font-bold text-violet-400 bg-violet-400/10 px-1.5 py-0.5 rounded-full">
+              For you
+            </span>
+          )}
+          {isFreshSection && (
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded-full">
+              New
+            </span>
+          )}
         </div>
-        {!isFreshSection && (
-          <button
-            onClick={() => router.push(`/reels/subject/${subjectKey}`)}
-            className="text-xs text-zinc-500 hover:text-violet-300 font-semibold transition-colors flex items-center gap-1 flex-shrink-0 mt-1"
-          >
-            See all
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
+        <button
+          onClick={() => router.push(`/reels/subject/${subjectKey}`)}
+          className="text-xs font-semibold text-zinc-500 hover:text-white transition-colors flex items-center gap-0.5"
+        >
+          See all
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
 
       {heroLayout && reels.length > 0 ? (
@@ -377,12 +369,11 @@ function SectionRow({
           {/* Hero — full-width 16:9 */}
           <HeroCard reel={reels[0]} onTap={() => onTap(reels[0])} />
 
-          {/* Remaining — Netflix horizontal shelf */}
+          {/* Shelf — more in this section */}
           {reels.length > 1 && (
-            <div className="mt-4">
-              <p className="text-xs text-zinc-600 font-semibold px-4 mb-3 uppercase tracking-wider">More in this section</p>
+            <div className="mt-1">
               <div
-                className="flex gap-3 overflow-x-auto px-4 pb-1"
+                className="flex gap-3 overflow-x-auto px-4 pt-4 pb-2"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
               >
                 {reels.slice(1).map(reel => (
@@ -395,9 +386,8 @@ function SectionRow({
           )}
         </>
       ) : (
-        /* Netflix horizontal shelf */
         <div
-          className="flex gap-3 overflow-x-auto px-4 pb-1"
+          className="flex gap-3 overflow-x-auto px-4 pb-2"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
         >
           {reels.map(reel => (
@@ -407,323 +397,15 @@ function SectionRow({
           ))}
         </div>
       )}
+
+      {/* Section divider */}
+      <div className="mx-4 mt-4 border-t border-zinc-800/50" />
     </section>
   );
 }
 
-// ─── Full-screen player modal ──────────────────────────────────────────────────
-function PlayerModal({
-  reel,
-  allReels,
-  onClose,
-  onNav,
-  onSave,
-  onFollow,
-  onShare,
-  onComment,
-  muted,
-  onToggleMute,
-}: {
-  reel: Reel;
-  allReels: Reel[];
-  onClose: () => void;
-  onNav: (reel: Reel) => void;
-  onSave: (id: string) => void;
-  onFollow: (creatorId: string) => void;
-  onShare: (id: string) => void;
-  onComment: (id: string) => void;
-  muted: boolean;
-  onToggleMute: () => void;
-}) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoReady, setVideoReady] = useState(false);
-  const currentIdx = allReels.findIndex(r => r.id === reel.id);
-  const hasPrev = currentIdx > 0;
-  const hasNext = currentIdx < allReels.length - 1;
-
-  useEffect(() => {
-    setVideoReady(false);
-    if (videoRef.current) {
-      videoRef.current.load();
-      videoRef.current.play().catch(() => {});
-    }
-  }, [reel.id]);
-
-  useEffect(() => {
-    if (videoRef.current) videoRef.current.muted = muted;
-  }, [muted]);
-
-  // Close on Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft' && hasPrev) onNav(allReels[currentIdx - 1]);
-      if (e.key === 'ArrowRight' && hasNext) onNav(allReels[currentIdx + 1]);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [hasPrev, hasNext, currentIdx, allReels, onClose, onNav]);
-
-  return (
-    <div className="fixed inset-0 z-[300] bg-black flex flex-col lg:flex-row">
-      {/* Close */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 left-4 z-50 w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-      >
-        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-
-      {/* Mute */}
-      <button
-        onClick={onToggleMute}
-        className="absolute top-4 right-4 z-50 w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-      >
-        {muted ? (
-          <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-          </svg>
-        ) : (
-          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6L5.586 9H4a1 1 0 00-1 1v4a1 1 0 001 1h1.586L12 18V6z" />
-          </svg>
-        )}
-      </button>
-
-      {/* Video area */}
-      <div className="relative flex-1 flex items-center justify-center bg-black">
-        {!videoReady && (
-          <div className="absolute inset-0 flex items-center justify-center z-10">
-            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-          </div>
-        )}
-        <video
-          ref={videoRef}
-          src={proxyUrl(reel.video_url)}
-          className="w-full h-full object-contain"
-          loop
-          playsInline
-          muted={muted}
-          poster={proxyUrl(reel.thumbnail_url)}
-          onLoadedData={() => setVideoReady(true)}
-        />
-        {/* Bottom gradient + info overlay (mobile) */}
-        <div className="lg:hidden absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent pointer-events-none" />
-        <div className="lg:hidden absolute bottom-[80px] left-4 right-20 z-20">
-          <div className="flex items-center gap-2.5 mb-2">
-            <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-              {reel.creator_username[0]?.toUpperCase()}
-            </div>
-            <p className="text-white text-sm font-semibold flex-1 truncate">@{reel.creator_username}</p>
-            <button
-              onClick={() => onFollow(reel.creator_id)}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
-                reel.following_creator
-                  ? 'border-white/30 text-white/60'
-                  : 'border-white text-white'
-              }`}
-            >
-              {reel.following_creator ? 'Following' : 'Follow'}
-            </button>
-          </div>
-          <p className="text-white font-semibold text-sm leading-snug line-clamp-2">{reel.title}</p>
-          {reel.description && (
-            <p className="text-white/50 text-xs mt-0.5 line-clamp-1">{reel.description}</p>
-          )}
-        </div>
-
-        {/* Mobile right-side actions */}
-        <div className="lg:hidden absolute bottom-[160px] right-4 z-20 flex flex-col gap-5">
-          <button onClick={() => onSave(reel.id)}>
-            <svg
-              className={`w-7 h-7 drop-shadow-lg transition-colors ${reel.saved_to_deck ? 'text-violet-300' : 'text-white'}`}
-              fill={reel.saved_to_deck ? 'currentColor' : 'none'}
-              stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-          </button>
-          <button onClick={() => onComment(reel.id)}>
-            <svg className="w-7 h-7 text-white drop-shadow-lg" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </button>
-          <button onClick={() => onShare(reel.id)}>
-            <svg className="w-7 h-7 text-white drop-shadow-lg" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Prev / next arrows */}
-        {hasPrev && (
-          <button
-            onClick={() => onNav(allReels[currentIdx - 1])}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-          >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-        )}
-        {hasNext && (
-          <button
-            onClick={() => onNav(allReels[currentIdx + 1])}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
-          >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        )}
-
-        {/* Counter */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 lg:hidden">
-          <span className="text-white/40 text-xs">{currentIdx + 1} / {allReels.length}</span>
-        </div>
-      </div>
-
-      {/* Desktop sidebar */}
-      <div className="hidden lg:flex flex-col w-[320px] flex-shrink-0 bg-zinc-950 border-l border-zinc-800 overflow-y-auto">
-
-        {/* Creator block */}
-        <div className="p-5 border-b border-zinc-800">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-white font-black text-base flex-shrink-0">
-              {reel.creator_username[0]?.toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-bold text-sm truncate">@{reel.creator_username}</p>
-              <p className="text-xs text-zinc-500 mt-0.5">
-                {reel.creator_verified ? 'Verified Educator' : 'Creator'}
-              </p>
-            </div>
-            <button
-              onClick={() => onFollow(reel.creator_id)}
-              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                reel.following_creator
-                  ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700'
-                  : 'bg-white text-zinc-950 hover:bg-zinc-200'
-              }`}
-            >
-              {reel.following_creator ? 'Following' : 'Follow'}
-            </button>
-          </div>
-        </div>
-
-        {/* Title + description + stats */}
-        <div className="p-5 border-b border-zinc-800">
-          <h3 className="text-white font-black text-lg leading-snug">{reel.title}</h3>
-          {reel.description && (
-            <p className="text-zinc-300 text-sm mt-2 leading-relaxed">{reel.description}</p>
-          )}
-          {reel.category && (
-            <span className="inline-block mt-3 text-xs font-bold px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700">
-              {reel.category}
-            </span>
-          )}
-          {/* Stats row */}
-          {(reel.view_count || reel.like_count || reel.created_at) && (
-            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-zinc-800">
-              {reel.view_count ? (
-                <div>
-                  <p className="text-base font-black text-white leading-none">{formatViews(reel.view_count)}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-wider">Views</p>
-                </div>
-              ) : null}
-              {reel.like_count ? (
-                <div>
-                  <p className="text-base font-black text-white leading-none">{formatViews(reel.like_count)}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-wider">Likes</p>
-                </div>
-              ) : null}
-              {reel.created_at ? (
-                <div>
-                  <p className="text-base font-black text-white leading-none">{formatDate(reel.created_at)}</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-wider">Uploaded</p>
-                </div>
-              ) : null}
-            </div>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <div className="p-5 border-b border-zinc-800">
-          <p className="text-[10px] text-zinc-600 font-semibold uppercase tracking-wider mb-3">
-            {currentIdx + 1} of {allReels.length} clips
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => hasPrev && onNav(allReels[currentIdx - 1])}
-              disabled={!hasPrev}
-              className="flex-1 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white disabled:opacity-30 transition-colors text-sm font-bold"
-            >
-              ← Previous
-            </button>
-            <button
-              onClick={() => hasNext && onNav(allReels[currentIdx + 1])}
-              disabled={!hasNext}
-              className="flex-1 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white disabled:opacity-30 transition-colors text-sm font-bold"
-            >
-              Next →
-            </button>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="p-5 space-y-3">
-          <p className="text-[10px] text-zinc-600 font-semibold uppercase tracking-wider mb-1">Actions</p>
-
-          {/* Save to deck — primary */}
-          <button
-            onClick={() => onSave(reel.id)}
-            className={`w-full py-3 rounded-xl text-sm font-bold transition-colors ${
-              reel.saved_to_deck
-                ? 'bg-zinc-800 text-zinc-300 border border-zinc-700'
-                : 'bg-violet-400 hover:bg-violet-500 text-white'
-            }`}
-          >
-            {reel.saved_to_deck ? '✓ Saved to deck' : 'Save to deck'}
-          </button>
-          <p className="text-[11px] text-zinc-600 text-center -mt-1">
-            {reel.saved_to_deck ? 'This clip is in your study materials' : 'Add this clip to your study materials'}
-          </p>
-
-          <div className="border-t border-zinc-800 pt-3 flex flex-col gap-2">
-            <button
-              onClick={() => onComment(reel.id)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-colors"
-            >
-              <svg className="w-4 h-4 text-zinc-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              <div className="text-left">
-                <p className="text-sm font-bold text-white">Join the discussion</p>
-                <p className="text-[11px] text-zinc-500">Leave a comment or question</p>
-              </div>
-            </button>
-            <button
-              onClick={() => onShare(reel.id)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-colors"
-            >
-              <svg className="w-4 h-4 text-zinc-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-              <div className="text-left">
-                <p className="text-sm font-bold text-white">Share this clip</p>
-                <p className="text-[11px] text-zinc-500">Copy link or send to someone</p>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Main page ─────────────────────────────────────────────────────────────────
+// (TikTokPlayer imported from @/components/TikTokPlayer)
 export default function ReelsPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -732,10 +414,10 @@ export default function ReelsPage() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [tab, setTab] = useState<'foryou' | 'following'>('foryou');
   const [loading, setLoading] = useState(true);
+
   const [loadingMore, setLoadingMore] = useState(false);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [muted, setMuted] = useState(true);
   const [activeReel, setActiveReel] = useState<Reel | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -943,19 +625,16 @@ export default function ReelsPage() {
         </div>
       )}
 
-      {/* Player modal */}
+      {/* TikTok player */}
       {activeReel && (
-        <PlayerModal
-          reel={activeReel}
-          allReels={reels}
+        <TikTokPlayer
+          reels={reels}
+          startIndex={Math.max(0, reels.findIndex(r => r.id === activeReel.id))}
           onClose={() => setActiveReel(null)}
-          onNav={setActiveReel}
           onSave={handleSaveToDeck}
           onFollow={handleFollow}
           onShare={handleShare}
           onComment={(id) => { setActiveReel(null); openComments(id); }}
-          muted={muted}
-          onToggleMute={() => setMuted(m => !m)}
         />
       )}
 
@@ -978,9 +657,12 @@ export default function ReelsPage() {
           </div>
           <button
             onClick={() => router.push('/reels/upload')}
-            className="text-xs font-semibold text-zinc-400 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-full hover:text-white hover:border-zinc-600 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-bold text-white bg-violet-500 hover:bg-violet-400 active:scale-95 transition-all px-3.5 py-2 rounded-full shadow-md shadow-violet-500/25"
           >
-            + Upload
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Clip
           </button>
         </header>
 

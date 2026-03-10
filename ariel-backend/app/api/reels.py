@@ -9,6 +9,8 @@ from pydantic import BaseModel
 import json
 import os
 import uuid
+import asyncio
+import subprocess
 import aiofiles
 from pathlib import Path
 
@@ -18,6 +20,40 @@ from app.models.user import User
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+FFMPEG_PATH = "/opt/homebrew/bin/ffmpeg"
+
+async def generate_thumbnail(video_path: Path, thumbnail_path: Path) -> bool:
+    """Extract a frame at 1s (or first frame) from a video using ffmpeg."""
+    try:
+        cmd = [
+            FFMPEG_PATH, "-y",
+            "-ss", "00:00:01",        # seek to 1 second
+            "-i", str(video_path),
+            "-vframes", "1",          # extract 1 frame
+            "-vf", "scale=480:-2",    # resize to 480px wide, preserve aspect
+            "-q:v", "3",              # quality (lower = better, 2–5 is good)
+            str(thumbnail_path),
+        ]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
+        if proc.returncode != 0 or not thumbnail_path.exists():
+            # Retry at 0s if video is shorter than 1s
+            cmd[3] = "00:00:00"
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            await asyncio.wait_for(proc.communicate(), timeout=30)
+        return thumbnail_path.exists()
+    except Exception as e:
+        logger.warning(f"Thumbnail generation failed: {e}")
+        return False
 router = APIRouter(prefix="/api/reels", tags=["reels"])
 
 
@@ -363,11 +399,16 @@ async def upload_reel(
             content = await video.read()
             await f.write(content)
 
-        # Generate accessible URL (served by FastAPI static files)
-        video_url = f"{settings.BASE_URL}/uploads/reels/{unique_filename}"
+        # Store relative paths so the frontend proxy handles them
+        video_url = f"/uploads/reels/{unique_filename}"
 
-        # Thumbnail defaults to the video file itself until server-side generation is implemented
-        thumbnail_url = f"{settings.BASE_URL}/uploads/reels/{unique_filename}"
+        # Generate thumbnail from first frame
+        thumb_filename = f"{uuid.uuid4()}.jpg"
+        thumb_dir = Path("uploads/thumbnails")
+        thumb_dir.mkdir(parents=True, exist_ok=True)
+        thumb_path = thumb_dir / thumb_filename
+        success = await generate_thumbnail(file_path, thumb_path)
+        thumbnail_url = f"/uploads/thumbnails/{thumb_filename}" if success else None
 
         # Create reel document
         reel_doc = {
@@ -508,6 +549,131 @@ async def save_reel(
     except Exception as e:
         logger.error(f"Error saving reel: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to save reel: {str(e)}")
+
+
+@router.get("/my-reels", response_model=List[ReelResponse])
+async def get_my_reels(
+    limit: int = 50,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user_dependency)
+):
+    """Get the current user's own uploaded reels"""
+    db = db_service.get_db()
+    try:
+        pipeline = [
+            {"$match": {"creator_id": current_user.id}},
+            {
+                "$addFields": {
+                    "creator_id_obj": {"$toObjectId": "$creator_id"}
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "users",
+                    "localField": "creator_id_obj",
+                    "foreignField": "_id",
+                    "as": "creator"
+                }
+            },
+            {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": True}},
+            {"$sort": {"created_at": -1}},
+            {"$skip": offset},
+            {"$limit": limit},
+            {
+                "$project": {
+                    "id": {"$toString": "$_id"},
+                    "video_url": 1,
+                    "thumbnail_url": 1,
+                    "title": 1,
+                    "description": 1,
+                    "creator_id": {"$toString": "$creator_id"},
+                    "creator_username": "$creator.username",
+                    "creator_profile_picture": "$creator.profile_picture",
+                    "creator_verified": {"$ifNull": ["$creator.is_verified", False]},
+                    "creator_badge_type": {
+                        "$cond": ["$creator.is_teacher", "teacher", "student"]
+                    },
+                    "likes": 1,
+                    "comments_count": 1,
+                    "shares_count": 1,
+                    "views": 1,
+                    "created_at": {"$toString": "$created_at"},
+                    "liked_by_current_user": {"$literal": False},
+                    "following_creator": {"$literal": False},
+                    "category": 1,
+                    "hashtags": 1
+                }
+            }
+        ]
+
+        reels = await db["reels"].aggregate(pipeline).to_list(length=limit)
+        return reels
+    except Exception as e:
+        logger.error(f"Error loading my reels: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load your reels: {str(e)}")
+
+
+@router.get("/saved", response_model=List[ReelResponse])
+async def get_saved_reels(
+    limit: int = 50,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user_dependency)
+):
+    """Get reels the current user has saved to their deck"""
+    db = db_service.get_db()
+    try:
+        from bson import ObjectId
+        pipeline = [
+            {"$match": {"user_id": current_user.id}},
+            {"$sort": {"created_at": -1}},
+            {"$skip": offset},
+            {"$limit": limit},
+            # Convert reel_id string to ObjectId for lookup
+            {"$addFields": {"reel_id_obj": {"$toObjectId": "$reel_id"}}},
+            # Join reel data
+            {"$lookup": {
+                "from": "reels",
+                "localField": "reel_id_obj",
+                "foreignField": "_id",
+                "as": "reel"
+            }},
+            {"$unwind": "$reel"},
+            # Join creator data
+            {"$addFields": {"creator_id_obj": {"$toObjectId": "$reel.creator_id"}}},
+            {"$lookup": {
+                "from": "users",
+                "localField": "creator_id_obj",
+                "foreignField": "_id",
+                "as": "creator"
+            }},
+            {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": True}},
+            {"$project": {
+                "id": {"$toString": "$reel._id"},
+                "video_url": "$reel.video_url",
+                "thumbnail_url": "$reel.thumbnail_url",
+                "title": "$reel.title",
+                "description": "$reel.description",
+                "creator_id": "$reel.creator_id",
+                "creator_username": "$creator.username",
+                "creator_profile_picture": "$creator.profile_picture",
+                "creator_verified": {"$ifNull": ["$creator.is_verified", False]},
+                "creator_badge_type": {"$cond": ["$creator.is_teacher", "teacher", "student"]},
+                "likes": {"$ifNull": ["$reel.likes", 0]},
+                "comments_count": {"$ifNull": ["$reel.comments_count", 0]},
+                "shares_count": {"$ifNull": ["$reel.shares_count", 0]},
+                "views": {"$ifNull": ["$reel.views", 0]},
+                "created_at": {"$toString": "$reel.created_at"},
+                "liked_by_current_user": {"$literal": False},
+                "following_creator": {"$literal": False},
+                "category": "$reel.category",
+                "hashtags": "$reel.hashtags",
+            }}
+        ]
+        reels = await db["reel_saves"].aggregate(pipeline).to_list(length=limit)
+        return reels
+    except Exception as e:
+        logger.error(f"Error loading saved reels: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load saved reels: {str(e)}")
 
 
 @router.get("/{reel_id}", response_model=ReelResponse)

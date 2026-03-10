@@ -37,7 +37,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
   return (
     <button
       onClick={() => onChange(!on)}
-      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${on ? 'bg-sky-500' : 'bg-zinc-700'}`}
+      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${on ? 'bg-violet-400' : 'bg-zinc-700'}`}
     >
       <span
         className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-5' : 'translate-x-0'}`}
@@ -81,8 +81,8 @@ export default function NotificationsSettingsPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-black lg:pl-[72px] pb-24">
-        <header className="sticky top-0 bg-black border-b border-zinc-800 z-30">
+      <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-24">
+        <header className="sticky top-0 bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/50 z-30">
           <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
             <button
               onClick={() => router.back()}
@@ -93,7 +93,7 @@ export default function NotificationsSettingsPage() {
               </svg>
             </button>
             <h1 className="text-base font-bold text-white flex-1">Notification Settings</h1>
-            {saved && <span className="text-xs text-sky-400 font-medium">Saved</span>}
+            {saved && <span className="text-xs text-violet-300 font-medium">Saved</span>}
           </div>
         </header>
 
@@ -113,7 +113,7 @@ export default function NotificationsSettingsPage() {
           <div>
             <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Social</p>
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-4">
-              <Row label="Messages" sublabel="When someone sends you a message" on={prefs.messages} onChange={v => update('messages', v)} />
+              <Row label="Rooms" sublabel="When someone sends you a message" on={prefs.messages} onChange={v => update('messages', v)} />
               <Row label="New followers" sublabel="When someone follows you" on={prefs.follows} onChange={v => update('follows', v)} />
               <Row label="Likes" sublabel="When someone likes your content" on={prefs.likes} onChange={v => update('likes', v)} />
               <Row label="Comments" sublabel="When someone comments on your content" on={prefs.comments} onChange={v => update('comments', v)} />
@@ -143,7 +143,7 @@ export default function NotificationsSettingsPage() {
                     type="time"
                     value={prefs.reminderTime}
                     onChange={e => update('reminderTime', e.target.value)}
-                    className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-500"
+                    className="bg-zinc-800 border border-zinc-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-violet-300"
                   />
                 </div>
               )}

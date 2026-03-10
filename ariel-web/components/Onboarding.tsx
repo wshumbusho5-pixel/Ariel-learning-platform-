@@ -72,17 +72,17 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="fixed inset-0 bg-[#09090b] z-50 flex flex-col">
       {/* Progress */}
       <div className="h-0.5 bg-zinc-800">
-        <div className="h-full bg-sky-500 transition-all duration-500" style={{ width: `${(step / 2) * 100}%` }} />
+        <div className="h-full bg-violet-400 transition-all duration-500" style={{ width: `${(step / 2) * 100}%` }} />
       </div>
 
       {/* Header */}
       <div className="px-6 py-5 border-b border-zinc-800">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-sky-500 rounded-lg flex items-center justify-center">
+            <div className="w-7 h-7 bg-violet-400 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xs">A</span>
             </div>
             <h1 className="text-base font-bold text-white">Set up Ariel</h1>
@@ -108,12 +108,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                     onClick={() => setData({ ...data, educationLevel: level.id })}
                     className={`p-5 rounded-2xl border-2 text-left transition-all ${
                       data.educationLevel === level.id
-                        ? 'border-sky-500 bg-sky-500/10'
+                        ? 'border-violet-300 bg-violet-300/10'
                         : 'border-zinc-800 hover:border-zinc-600'
                     }`}
                   >
                     <span className="text-2xl mb-2 block">{level.icon}</span>
-                    <p className={`font-semibold text-sm ${data.educationLevel === level.id ? 'text-sky-400' : 'text-zinc-300'}`}>
+                    <p className={`font-semibold text-sm ${data.educationLevel === level.id ? 'text-violet-300' : 'text-zinc-300'}`}>
                       {level.label}
                     </p>
                   </button>
@@ -137,12 +137,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                       onClick={() => toggleSubject(subject.id)}
                       className={`p-4 rounded-2xl border-2 text-left transition-all ${
                         selected
-                          ? 'border-sky-500 bg-sky-500/10'
+                          ? 'border-violet-300 bg-violet-300/10'
                           : 'border-zinc-800 hover:border-zinc-600'
                       }`}
                     >
                       <span className="text-xl mb-1.5 block">{subject.icon}</span>
-                      <p className={`font-semibold text-sm leading-tight ${selected ? 'text-sky-400' : 'text-zinc-300'}`}>
+                      <p className={`font-semibold text-sm leading-tight ${selected ? 'text-violet-300' : 'text-zinc-300'}`}>
                         {subject.label}
                       </p>
                     </button>
@@ -173,7 +173,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             disabled={!canContinue || saving}
             className={`flex-1 py-3.5 rounded-2xl font-bold text-sm transition-all ${
               canContinue && !saving
-                ? 'bg-sky-500 hover:bg-sky-400 text-white'
+                ? 'bg-violet-400 hover:bg-violet-300 text-white'
                 : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
             }`}
           >

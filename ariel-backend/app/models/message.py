@@ -76,6 +76,7 @@ class ConversationWithUser(BaseModel):
     other_user_full_name: Optional[str]
     other_user_profile_picture: Optional[str]
     other_user_is_verified: bool
+    other_user_last_seen: Optional[datetime] = None
 
     last_message_content: Optional[str]
     last_message_sender_id: Optional[str]

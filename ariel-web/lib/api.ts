@@ -73,6 +73,15 @@ export const authAPI = {
     const response = await api.put('/api/auth/profile', profileData);
     return response.data;
   },
+
+  uploadProfilePicture: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/api/auth/profile/picture', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
 };
 
 // Progress API
@@ -657,6 +666,24 @@ export const messagesAPI = {
   // Archive
   toggleArchive: async (conversationId: string) => {
     const response = await api.post(`/api/messages/conversation/${conversationId}/archive`);
+    return response.data;
+  },
+};
+
+// Reels API
+export const reelsAPI = {
+  getFeed: async (limit: number = 20, offset: number = 0) => {
+    const response = await api.get(`/api/reels/feed?limit=${limit}&offset=${offset}`);
+    return response.data;
+  },
+
+  getMyReels: async (limit: number = 50, offset: number = 0) => {
+    const response = await api.get(`/api/reels/my-reels?limit=${limit}&offset=${offset}`);
+    return response.data;
+  },
+
+  getSaved: async (limit: number = 50, offset: number = 0) => {
+    const response = await api.get(`/api/reels/saved?limit=${limit}&offset=${offset}`);
     return response.data;
   },
 };

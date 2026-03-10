@@ -437,8 +437,8 @@ export default function DuelsPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-black lg:pl-[72px] pb-20">
-        <header className="sticky top-0 bg-black border-b border-zinc-800 z-30">
+      <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-20 page-enter">
+        <header className="sticky top-0 bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/50 z-30">
           <div className="max-w-2xl mx-auto px-4 py-4">
             <h1 className="text-xl font-bold text-white">Study Duels</h1>
             <p className="text-xs text-zinc-500 mt-0.5">Head-to-head flashcard battles</p>
@@ -559,7 +559,7 @@ function SoloLobby({ opponent, onStart }: { opponent: string; onStart: () => voi
         <RulesList />
         <button
           onClick={onStart}
-          className="w-full py-4 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-xl transition-colors"
+          className="w-full py-4 bg-violet-400 hover:bg-violet-400 text-white font-bold rounded-xl transition-colors"
         >
           Start duel
         </button>
@@ -610,7 +610,7 @@ function OnlineLobby({
       {tab === 'quick-match' && (
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center space-y-4">
           <div className="text-4xl">
-            <svg className="w-12 h-12 mx-auto text-sky-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <svg className="w-12 h-12 mx-auto text-violet-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75V16.5zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
             </svg>
@@ -623,7 +623,7 @@ function OnlineLobby({
           <button
             onClick={onQuickMatch}
             disabled={matchmakingLoading}
-            className="w-full py-4 bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 bg-violet-400 hover:bg-violet-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {matchmakingLoading ? (
               <>
@@ -640,7 +640,7 @@ function OnlineLobby({
           {challengeSent ? (
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center space-y-3">
               <p className="text-3xl">⚔️</p>
-              <p className="text-white font-semibold">Challenge sent to <span className="text-sky-400">@{challengeSent}</span></p>
+              <p className="text-white font-semibold">Challenge sent to <span className="text-violet-300">@{challengeSent}</span></p>
               <p className="text-zinc-400 text-sm">Waiting for them to accept. You&apos;ll be connected automatically.</p>
             </div>
           ) : (
@@ -651,7 +651,7 @@ function OnlineLobby({
                 placeholder="Search by username..."
                 value={challengeQuery}
                 onChange={e => setChallengeQuery(e.target.value)}
-                className="w-full bg-zinc-800 text-white placeholder-zinc-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/50"
+                className="w-full bg-zinc-800 text-white placeholder-zinc-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300/50"
               />
               {challengeResults.length > 0 && (
                 <div className="space-y-1">
@@ -664,7 +664,7 @@ function OnlineLobby({
                       <button
                         onClick={() => onChallenge(user.username)}
                         disabled={challengeSending === user.username}
-                        className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 disabled:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+                        className="px-4 py-1.5 bg-violet-400 hover:bg-violet-400 disabled:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
                       >
                         {challengeSending === user.username ? (
                           <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -695,11 +695,11 @@ function WaitingRoom({
 }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
-      <div className="w-16 h-16 rounded-full border-4 border-sky-500/30 border-t-sky-500 animate-spin" />
+      <div className="w-16 h-16 rounded-full border-4 border-violet-300/30 border-t-violet-300 animate-spin" />
       <div>
         <p className="text-white font-semibold text-lg">{status || 'Connecting...'}</p>
         {opponentName && (
-          <p className="text-sky-400 font-bold mt-1">{opponentName} is ready!</p>
+          <p className="text-violet-300 font-bold mt-1">{opponentName} is ready!</p>
         )}
         {roomId && !opponentName && (
           <p className="text-zinc-500 text-xs mt-2">Room: <span className="text-zinc-400 font-mono">{roomId}</span></p>
@@ -739,7 +739,7 @@ function GameRound({
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-4">
         <div className="flex-1 text-center">
           <p className="text-xs text-zinc-500 mb-1">You</p>
-          <p className="text-2xl font-black text-sky-400">{userScore}</p>
+          <p className="text-2xl font-black text-violet-300">{userScore}</p>
         </div>
         <div className="text-center">
           <p className="text-xs text-zinc-500 mb-1">Round</p>
@@ -756,7 +756,7 @@ function GameRound({
         <div className="flex items-center gap-3">
           <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-1000 ${timeLeft > 8 ? 'bg-sky-500' : timeLeft > 4 ? 'bg-orange-500' : 'bg-red-500'}`}
+              className={`h-full rounded-full transition-all duration-1000 ${timeLeft > 8 ? 'bg-violet-400' : timeLeft > 4 ? 'bg-orange-500' : 'bg-red-500'}`}
               style={{ width: `${(timeLeft / 15) * 100}%` }}
             />
           </div>
@@ -787,9 +787,9 @@ function GameRound({
         {choices.map((choice, i) => {
           const isSelected = userAnswer === choice;
           const isCorrect = card.answer && choice.trim().toLowerCase() === card.answer.trim().toLowerCase();
-          let cls = 'border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-sky-500/50 hover:bg-zinc-800';
+          let cls = 'border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-violet-300/50 hover:bg-zinc-800';
           if (phase === 'reveal') {
-            if (isCorrect) cls = 'border-sky-500 bg-sky-900/30 text-sky-300';
+            if (isCorrect) cls = 'border-violet-300 bg-violet-900/30 text-violet-300';
             else if (isSelected && !isCorrect) cls = 'border-red-600 bg-red-900/20 text-red-300';
             else cls = 'border-zinc-800 bg-zinc-900/50 text-zinc-600';
           }
@@ -810,12 +810,12 @@ function GameRound({
       {/* Round result */}
       {phase === 'reveal' && roundResult && (
         <div className={`rounded-xl p-5 border text-center ${
-          roundResult === 'win' ? 'bg-sky-900/20 border-sky-700/40' :
+          roundResult === 'win' ? 'bg-violet-900/20 border-violet-700/40' :
           roundResult === 'lose' ? 'bg-red-900/20 border-red-800/40' :
           'bg-zinc-800/40 border-zinc-700'
         }`}>
           <p className={`text-lg font-black mb-1 ${
-            roundResult === 'win' ? 'text-sky-400' :
+            roundResult === 'win' ? 'text-violet-300' :
             roundResult === 'lose' ? 'text-red-400' : 'text-zinc-300'
           }`}>
             {roundResult === 'win' ? 'You got it first!' : roundResult === 'lose' ? `${opponentName} was faster` : 'Tied!'}
@@ -842,7 +842,7 @@ function GameComplete({
   return (
     <div className="space-y-4">
       <div className={`rounded-xl p-8 border text-center ${
-        finalResult === 'win' ? 'bg-sky-900/20 border-sky-700/40' :
+        finalResult === 'win' ? 'bg-violet-900/20 border-violet-700/40' :
         finalResult === 'lose' ? 'bg-red-900/20 border-red-800/40' :
         'bg-zinc-900 border-zinc-800'
       }`}>
@@ -850,7 +850,7 @@ function GameComplete({
           {finalResult === 'win' ? 'You won!' : finalResult === 'lose' ? 'You lost' : 'Draw'}
         </p>
         <p className={`text-lg font-bold mb-6 ${
-          finalResult === 'win' ? 'text-sky-400' :
+          finalResult === 'win' ? 'text-violet-300' :
           finalResult === 'lose' ? 'text-red-400' : 'text-zinc-400'
         }`}>
           {userScore} – {opponentScore} vs {opponentName}
@@ -864,7 +864,7 @@ function GameComplete({
           </button>
           <button
             onClick={onLeaderboard}
-            className="flex-1 py-3 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-xl transition-colors"
+            className="flex-1 py-3 bg-violet-400 hover:bg-violet-400 text-white font-bold rounded-xl transition-colors"
           >
             Leaderboard
           </button>
@@ -878,11 +878,11 @@ function PlayerAvatar({ label, letter, color }: { label: string; letter: string;
   return (
     <div className="text-center">
       <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 ${
-        color === 'sky' ? 'bg-sky-900/40 border-2 border-sky-600' : 'bg-zinc-800 border-2 border-zinc-600'
+        color === 'violet' ? 'bg-violet-900/40 border-2 border-violet-500' : 'bg-zinc-800 border-2 border-zinc-600'
       }`}>
-        <span className={`text-2xl font-bold ${color === 'sky' ? 'text-sky-400' : 'text-zinc-400'}`}>{letter}</span>
+        <span className={`text-2xl font-bold ${color === 'violet' ? 'text-violet-300' : 'text-zinc-400'}`}>{letter}</span>
       </div>
-      <p className={`text-sm font-semibold ${color === 'sky' ? 'text-white' : 'text-zinc-400'}`}>{label}</p>
+      <p className={`text-sm font-semibold ${color === 'violet' ? 'text-white' : 'text-zinc-400'}`}>{label}</p>
     </div>
   );
 }

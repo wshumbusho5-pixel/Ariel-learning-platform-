@@ -104,7 +104,7 @@ export default function BroadcastPage() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex flex-col">
+    <div className="fixed inset-0 bg-[#09090b] flex flex-col">
 
       {/* Camera feed */}
       <div className="flex-1 relative overflow-hidden">
@@ -119,7 +119,7 @@ export default function BroadcastPage() {
               <p className="text-sm text-zinc-400 leading-relaxed">{camError}</p>
               <button
                 onClick={startCamera}
-                className="mt-4 px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white text-sm font-bold rounded-xl transition-colors"
+                className="mt-4 px-5 py-2.5 bg-violet-400 hover:bg-violet-300 text-white text-sm font-bold rounded-xl transition-colors"
               >
                 Retry
               </button>
@@ -180,7 +180,7 @@ export default function BroadcastPage() {
         <div className="absolute bottom-12 left-4 right-4 space-y-1 pointer-events-none">
           {comments.slice(-4).map((c, i) => (
             <div key={i} className="text-sm">
-              <span className="font-semibold text-sky-300">{c.username}</span>
+              <span className="font-semibold text-violet-300">{c.username}</span>
               <span className="text-white ml-1">{c.message}</span>
             </div>
           ))}

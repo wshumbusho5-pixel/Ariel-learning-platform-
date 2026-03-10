@@ -63,8 +63,8 @@ export default function AchievementsPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen lg:pl-[72px] bg-black">
-        <div className="bg-black border-b border-zinc-800 sticky top-0 z-10">
+      <div className="min-h-screen lg:pl-[72px] bg-[#09090b] page-enter">
+        <div className="bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/50 sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 py-4">
             <h1 className="text-2xl font-bold text-white">Achievements</h1>
             <p className="text-zinc-500 text-sm mt-1">Track your progress and unlock rewards</p>
@@ -72,13 +72,13 @@ export default function AchievementsPage() {
             <div className="grid grid-cols-3 gap-4 mt-4">
               <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
                 <p className="text-xs text-zinc-500">Unlocked</p>
-                <p className="text-2xl font-bold text-sky-400">
+                <p className="text-2xl font-bold text-violet-300">
                   {stats.unlocked}/{stats.total}
                 </p>
               </div>
               <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
                 <p className="text-xs text-zinc-500">Completion</p>
-                <p className="text-2xl font-bold text-sky-400">
+                <p className="text-2xl font-bold text-violet-300">
                   {stats.total > 0 ? Math.round((stats.unlocked / stats.total) * 100) : 0}%
                 </p>
               </div>
@@ -102,7 +102,7 @@ export default function AchievementsPage() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition-colors ${
                   selectedCategory === cat.id
-                    ? 'bg-sky-500 text-white'
+                    ? 'bg-violet-400 text-white'
                     : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
                 }`}
               >

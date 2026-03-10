@@ -25,9 +25,10 @@ interface CardFeedProps {
   subjectFilter?: string | null;
   groupBySubject?: boolean;
   snapScroll?: boolean;
+  headerOffset?: number; // px — pushes the subject label below a fixed header
 }
 
-export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubject = false, snapScroll = false }: CardFeedProps) {
+export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubject = false, snapScroll = false, headerOffset = 0 }: CardFeedProps) {
   const router = useRouter();
   const { openComments } = useComments();
   const [cards, setCards] = useState<Card[]>([]);
@@ -193,7 +194,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
         <div className="absolute inset-0 bg-black" />
 
         {/* Top info */}
-        <div className="absolute top-0 left-0 right-0 z-10 px-4 pt-4 pb-6 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+        <div className="absolute top-0 left-0 right-0 z-10 px-4 pb-6 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" style={{ paddingTop: `${headerOffset + 16}px` }}>
           {card.subject && (
             <span className="inline-block px-3 py-1 bg-violet-300/15 border border-violet-300/40 text-violet-300 text-xs font-semibold rounded-full">
               {card.subject}

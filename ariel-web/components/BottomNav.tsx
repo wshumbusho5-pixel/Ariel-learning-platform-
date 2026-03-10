@@ -49,7 +49,7 @@ const mainNav = [
 
 export const drawerItems = [
   {
-    name: 'Messages',
+    name: 'Rooms',
     path: '/messages',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
@@ -163,7 +163,7 @@ export default function BottomNav() {
       )}
 
       {/* Bottom nav bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#09090b] border-t border-zinc-800">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#09090b]/75 backdrop-blur-xl border-t border-white/[0.06]">
         <div className="flex items-stretch h-[68px] max-w-screen-sm mx-auto">
 
           {/* Today, Deck */}

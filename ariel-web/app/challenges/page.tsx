@@ -124,13 +124,13 @@ export default function ChallengesPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-black pb-24 lg:pl-[72px]">
+      <div className="min-h-screen bg-[#09090b] pb-24 lg:pl-[72px]">
 
       {/* Header */}
       <div className="sticky top-0 z-40 bg-black border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center gap-4 ">
-            <div className="w-10 h-10 rounded-xl bg-sky-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-violet-400 flex items-center justify-center">
               <span className="text-lg"></span>
             </div>
             <div>
@@ -206,7 +206,7 @@ export default function ChallengesPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => joinChallenge(challenge.id)}
-                      className={`flex-1 py-2.5 bg-sky-500 hover:bg-sky-400 text-white rounded-lg font-semibold transition-colors`}
+                      className={`flex-1 py-2.5 bg-violet-400 hover:bg-violet-300 text-white rounded-lg font-semibold transition-colors`}
                     >
                       Join Challenge
                     </button>
