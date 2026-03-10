@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel
+from bson import ObjectId
 
 from app.services.database_service import db_service
 from app.api.auth import get_current_user_dependency
@@ -216,7 +217,7 @@ async def toggle_follow_user(
         )
 
     # Check if target user exists
-    target_user = await db.users.find_one({"_id": user_id})
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
     if not target_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -224,20 +225,20 @@ async def toggle_follow_user(
         )
 
     # Check if already following
-    current_user_data = await db.users.find_one({"_id": current_user_id})
+    current_user_data = await db.users.find_one({"_id": ObjectId(current_user_id)})
     is_following = user_id in current_user_data.get("following", [])
 
     if is_following:
         # Unfollow
         await db.users.update_one(
-            {"_id": current_user_id},
+            {"_id": ObjectId(current_user_id)},
             {
                 "$pull": {"following": user_id},
                 "$inc": {"following_count": -1}
             }
         )
         await db.users.update_one(
-            {"_id": user_id},
+            {"_id": ObjectId(user_id)},
             {
                 "$pull": {"followers": current_user_id},
                 "$inc": {"followers_count": -1}
@@ -248,14 +249,14 @@ async def toggle_follow_user(
     else:
         # Follow
         await db.users.update_one(
-            {"_id": current_user_id},
+            {"_id": ObjectId(current_user_id)},
             {
                 "$addToSet": {"following": user_id},
                 "$inc": {"following_count": 1}
             }
         )
         await db.users.update_one(
-            {"_id": user_id},
+            {"_id": ObjectId(user_id)},
             {
                 "$addToSet": {"followers": current_user_id},
                 "$inc": {"followers_count": 1}
@@ -291,7 +292,7 @@ async def toggle_follow_user(
             "created_at": datetime.utcnow(),
         })
 
-    updated_target = await db.users.find_one({"_id": user_id})
+    updated_target = await db.users.find_one({"_id": ObjectId(user_id)})
 
     return {
         "success": True,
