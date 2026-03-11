@@ -32,6 +32,14 @@ class Message(BaseModel):
     shared_deck_id: Optional[str] = None
     shared_card_id: Optional[str] = None
 
+    # Reply threading
+    reply_to_message_id: Optional[str] = None
+    reply_to_content: Optional[str] = None
+    reply_to_sender_username: Optional[str] = None
+
+    # Reactions: {user_id: emoji}
+    reactions: dict = {}
+
     # Status
     is_read: bool = False
     read_at: Optional[datetime] = None
@@ -104,6 +112,14 @@ class MessageWithSender(BaseModel):
     is_read: bool
     read_at: Optional[datetime]
 
+    # Reply threading
+    reply_to_message_id: Optional[str] = None
+    reply_to_content: Optional[str] = None
+    reply_to_sender_username: Optional[str] = None
+
+    # Reactions
+    reactions: dict = {}
+
     # Sender info
     sender_username: Optional[str]
     sender_full_name: Optional[str]
@@ -124,3 +140,4 @@ class MessageCreate(BaseModel):
     image_url: Optional[str] = None
     shared_deck_id: Optional[str] = None
     shared_card_id: Optional[str] = None
+    reply_to_message_id: Optional[str] = None

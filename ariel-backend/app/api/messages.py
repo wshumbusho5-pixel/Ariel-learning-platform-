@@ -4,6 +4,7 @@ Messages API - Direct messaging between users
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 from datetime import datetime
+from bson import ObjectId
 
 from app.core.database import get_database
 from app.core.security import get_current_user
@@ -48,7 +49,7 @@ async def get_conversations(
         other_user_id = next(uid for uid in convo["participant_ids"] if uid != current_user_id)
 
         # Get other user's info
-        other_user = await db.users.find_one({"_id": other_user_id})
+        other_user = await db.users.find_one({"_id": ObjectId(other_user_id)})
 
         if not other_user:
             continue
@@ -99,7 +100,7 @@ async def get_or_create_conversation(
         )
 
     # Check if other user exists
-    other_user = await db.users.find_one({"_id": other_user_id})
+    other_user = await db.users.find_one({"_id": ObjectId(other_user_id)})
     if not other_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -143,13 +144,13 @@ async def get_conversation_messages(
 
     - Validates user is participant
     - Returns messages with sender info
-    - Sorted by created_at descending (newest first)
+    - Sorted by created_at ascending (oldest first)
     - Marks messages as read
     """
     current_user_id = str(current_user.id)
 
     # Validate conversation and participation
-    conversation = await db.conversations.find_one({"_id": conversation_id})
+    conversation = await db.conversations.find_one({"_id": ObjectId(conversation_id)})
 
     if not conversation:
         raise HTTPException(
@@ -163,15 +164,18 @@ async def get_conversation_messages(
             detail="Not authorized to view this conversation"
         )
 
-    # Get messages
+    # Get messages — sorted oldest first so UI renders naturally top-to-bottom
     messages = []
     async for message in db.messages.find({
         "conversation_id": conversation_id,
-        f"is_deleted_by_{'sender' if message.get('sender_id') == current_user_id else 'receiver'}": False
-    }).sort("created_at", -1).skip(offset).limit(limit):
+    }).sort("created_at", 1).skip(offset).limit(limit):
+        if message.get("sender_id") == current_user_id and message.get("is_deleted_by_sender"):
+            continue
+        if message.get("receiver_id") == current_user_id and message.get("is_deleted_by_receiver"):
+            continue
 
         # Get sender info
-        sender = await db.users.find_one({"_id": message["sender_id"]})
+        sender = await db.users.find_one({"_id": ObjectId(message["sender_id"])})
 
         if not sender:
             continue
@@ -186,6 +190,10 @@ async def get_conversation_messages(
             image_url=message.get("image_url"),
             shared_deck_id=message.get("shared_deck_id"),
             shared_card_id=message.get("shared_card_id"),
+            reply_to_message_id=message.get("reply_to_message_id"),
+            reply_to_content=message.get("reply_to_content"),
+            reply_to_sender_username=message.get("reply_to_sender_username"),
+            reactions=message.get("reactions", {}),
             is_read=message.get("is_read", False),
             read_at=message.get("read_at"),
             sender_username=sender.get("username"),
@@ -212,7 +220,7 @@ async def get_conversation_messages(
 
     # Reset unread count for current user
     await db.conversations.update_one(
-        {"_id": conversation_id},
+        {"_id": ObjectId(conversation_id)},
         {"$set": {f"unread_count.{current_user_id}": 0}}
     )
 
@@ -237,7 +245,7 @@ async def send_message(
     current_user_id = str(current_user.id)
 
     # Validate conversation and participation
-    conversation = await db.conversations.find_one({"_id": conversation_id})
+    conversation = await db.conversations.find_one({"_id": ObjectId(conversation_id)})
 
     if not conversation:
         raise HTTPException(
@@ -254,6 +262,16 @@ async def send_message(
     # Get receiver ID
     receiver_id = next(uid for uid in conversation["participant_ids"] if uid != current_user_id)
 
+    # Resolve reply info
+    reply_to_content = None
+    reply_to_sender_username = None
+    if message_data.reply_to_message_id:
+        replied = await db.messages.find_one({"_id": ObjectId(message_data.reply_to_message_id)})
+        if replied:
+            reply_to_content = replied.get("content", "")[:200]
+            rsender = await db.users.find_one({"_id": ObjectId(replied["sender_id"])})
+            reply_to_sender_username = rsender.get("username") if rsender else None
+
     # Create message
     message = Message(
         conversation_id=conversation_id,
@@ -263,7 +281,10 @@ async def send_message(
         content=message_data.content,
         image_url=message_data.image_url,
         shared_deck_id=message_data.shared_deck_id,
-        shared_card_id=message_data.shared_card_id
+        shared_card_id=message_data.shared_card_id,
+        reply_to_message_id=message_data.reply_to_message_id,
+        reply_to_content=reply_to_content,
+        reply_to_sender_username=reply_to_sender_username,
     )
 
     result = await db.messages.insert_one(message.dict(exclude={"id"}))
@@ -274,7 +295,7 @@ async def send_message(
     unread_count[receiver_id] = unread_count.get(receiver_id, 0) + 1
 
     await db.conversations.update_one(
-        {"_id": conversation_id},
+        {"_id": ObjectId(conversation_id)},
         {
             "$set": {
                 "last_message_content": message_data.content[:100],
@@ -296,7 +317,7 @@ async def send_message(
     )
 
     # Return message with sender info
-    sender = await db.users.find_one({"_id": current_user_id})
+    sender = await db.users.find_one({"_id": ObjectId(current_user_id)})
 
     return MessageWithSender(
         id=message_id,
@@ -308,11 +329,15 @@ async def send_message(
         image_url=message_data.image_url,
         shared_deck_id=message_data.shared_deck_id,
         shared_card_id=message_data.shared_card_id,
+        reply_to_message_id=message_data.reply_to_message_id,
+        reply_to_content=reply_to_content,
+        reply_to_sender_username=reply_to_sender_username,
+        reactions={},
         is_read=False,
         read_at=None,
-        sender_username=sender.get("username"),
-        sender_full_name=sender.get("full_name"),
-        sender_profile_picture=sender.get("profile_picture"),
+        sender_username=sender.get("username") if sender else None,
+        sender_full_name=sender.get("full_name") if sender else None,
+        sender_profile_picture=sender.get("profile_picture") if sender else None,
         is_sent_by_current_user=True,
         created_at=message.created_at
     )
@@ -335,7 +360,7 @@ async def delete_message(
     current_user_id = str(current_user.id)
 
     # Find message
-    message = await db.messages.find_one({"_id": message_id})
+    message = await db.messages.find_one({"_id": ObjectId(message_id)})
 
     if not message:
         raise HTTPException(
@@ -356,7 +381,7 @@ async def delete_message(
 
     # Soft delete
     await db.messages.update_one(
-        {"_id": message_id},
+        {"_id": ObjectId(message_id)},
         {"$set": {delete_field: True}}
     )
 
@@ -377,7 +402,7 @@ async def toggle_archive_conversation(
     current_user_id = str(current_user.id)
 
     # Validate conversation
-    conversation = await db.conversations.find_one({"_id": conversation_id})
+    conversation = await db.conversations.find_one({"_id": ObjectId(conversation_id)})
 
     if not conversation:
         raise HTTPException(
@@ -397,14 +422,14 @@ async def toggle_archive_conversation(
     if current_user_id in archived_by:
         # Unarchive
         await db.conversations.update_one(
-            {"_id": conversation_id},
+            {"_id": ObjectId(conversation_id)},
             {"$pull": {"is_archived_by": current_user_id}}
         )
         return {"success": True, "action": "unarchived"}
     else:
         # Archive
         await db.conversations.update_one(
-            {"_id": conversation_id},
+            {"_id": ObjectId(conversation_id)},
             {"$addToSet": {"is_archived_by": current_user_id}}
         )
         return {"success": True, "action": "archived"}
@@ -430,3 +455,32 @@ async def get_unread_count(
         total_unread += unread_count
 
     return {"unread_count": total_unread}
+
+
+# ============== REACT TO MESSAGE ==============
+
+@router.post("/message/{message_id}/react")
+async def react_to_message(
+    message_id: str,
+    current_user: User = Depends(get_current_user),
+    db = Depends(get_database)
+):
+    """Toggle a ❤️ reaction on a message"""
+    current_user_id = str(current_user.id)
+    message = await db.messages.find_one({"_id": ObjectId(message_id)})
+    if not message:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
+
+    reactions = message.get("reactions", {})
+    if current_user_id in reactions:
+        del reactions[current_user_id]
+        action = "removed"
+    else:
+        reactions[current_user_id] = "❤️"
+        action = "added"
+
+    await db.messages.update_one(
+        {"_id": ObjectId(message_id)},
+        {"$set": {"reactions": reactions}}
+    )
+    return {"reactions": reactions, "action": action}

@@ -649,18 +649,24 @@ export const messagesAPI = {
     return response.data;
   },
 
-  sendMessage: async (conversationId: string, content: string, messageType: string = 'text', sharedDeckId?: string, sharedCardId?: string) => {
+  sendMessage: async (conversationId: string, content: string, messageType: string = 'text', sharedDeckId?: string, sharedCardId?: string, replyToMessageId?: string) => {
     const response = await api.post(`/api/messages/conversation/${conversationId}/send`, {
       content,
       message_type: messageType,
       shared_deck_id: sharedDeckId,
       shared_card_id: sharedCardId,
+      reply_to_message_id: replyToMessageId,
     });
     return response.data;
   },
 
   deleteMessage: async (messageId: string) => {
     const response = await api.delete(`/api/messages/message/${messageId}`);
+    return response.data;
+  },
+
+  reactToMessage: async (messageId: string) => {
+    const response = await api.post(`/api/messages/message/${messageId}/react`);
     return response.data;
   },
 
