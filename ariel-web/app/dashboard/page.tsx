@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
-import api, { gamificationAPI, cardsAPI, messagesAPI } from '@/lib/api';
+import api, { gamificationAPI, cardsAPI, messagesAPI, notificationsAPI } from '@/lib/api';
 import { useAriel } from '@/lib/arielContext';
 import { useComments } from '@/lib/commentsContext';
 import BottomNav, { drawerItems } from '@/components/BottomNav';
@@ -575,6 +575,7 @@ export default function Dashboard() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
@@ -597,6 +598,7 @@ export default function Dashboard() {
     }
     if (user && !user.onboarding_completed) { setShowOnboarding(true); return; }
     messagesAPI.getUnreadCount().then((d: any) => setUnreadMessages(d?.unread_count ?? 0)).catch(() => {});
+    notificationsAPI.getSummary().then((d: any) => setUnreadNotifications(d?.unread_count ?? 0)).catch(() => {});
 
     Promise.all([
       gamificationAPI.getStats().catch(() => null),
@@ -819,10 +821,15 @@ export default function Dashboard() {
                       </span>
                     )}
                   </button>
-                  <button onClick={() => router.push('/notifications')} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
+                  <button onClick={() => router.push('/notifications')} className="relative w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
                     <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
+                    {unreadNotifications > 0 && (
+                      <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] rounded-full bg-red-500 flex items-center justify-center">
+                        <span className="text-[9px] font-black text-white leading-none px-0.5">{unreadNotifications > 9 ? '9+' : unreadNotifications}</span>
+                      </span>
+                    )}
                   </button>
                   <button onClick={() => setDrawerOpen(true)} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors lg:hidden">
                     <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor">

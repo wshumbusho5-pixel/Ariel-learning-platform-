@@ -13,6 +13,7 @@ interface Person {
   profile_picture?: string;
   bio?: string;
   is_following: boolean;
+  follows_you?: boolean;
   is_teacher?: boolean;
   is_verified?: boolean;
 }
@@ -62,10 +63,12 @@ function PersonRow({ person, onToggleFollow }: { person: Person; onToggleFollow:
         className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
           person.is_following
             ? 'bg-gray-100 text-zinc-500 border border-gray-200'
+            : person.follows_you
+            ? 'bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700'
             : 'bg-violet-600 hover:bg-violet-500 text-white'
         }`}
       >
-        {person.is_following ? 'Following' : 'Follow'}
+        {person.is_following ? 'Following' : person.follows_you ? 'Follow Back' : 'Follow'}
       </button>
     </div>
   );

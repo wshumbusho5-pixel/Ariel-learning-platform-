@@ -65,6 +65,7 @@ class FollowListItem(BaseModel):
     profile_picture: Optional[str]
     bio: Optional[str]
     is_following: bool
+    follows_you: bool = False  # Does this person follow the current user?
     is_teacher: bool
     is_verified: bool
 
@@ -495,6 +496,7 @@ async def get_suggested_users(
             profile_picture=user.get("profile_picture"),
             bio=user.get("bio"),
             is_following=False,  # By definition (we filtered them out)
+            follows_you=current_user_id in user.get("following", []),
             is_teacher=user.get("is_teacher", False),
             is_verified=user.get("is_verified", False)
         ))
@@ -531,13 +533,15 @@ async def search_users(
         ],
         "is_active": {"$ne": False}
     }).limit(limit):
+        uid = str(user["_id"])
         results.append(FollowListItem(
-            id=str(user["_id"]),
+            id=uid,
             username=user.get("username"),
             full_name=user.get("full_name"),
             profile_picture=user.get("profile_picture"),
             bio=user.get("bio"),
-            is_following=str(user["_id"]) in current_user.following,
+            is_following=uid in current_user.following,
+            follows_you=current_user_id in user.get("following", []),
             is_teacher=user.get("is_teacher", False),
             is_verified=user.get("is_verified", False)
         ))
