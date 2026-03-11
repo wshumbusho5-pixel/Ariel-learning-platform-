@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { notificationsAPI } from '@/lib/api';
-import Link from 'next/link';
-import SideNav from '@/components/SideNav';
+import { useRouter } from 'next/navigation';
+import { notificationsAPI, socialAPI } from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
+import SideNav from '@/components/SideNav';
 
 interface Notification {
   id: string;
@@ -16,254 +16,172 @@ interface Notification {
   actor_username?: string;
   actor_full_name?: string;
   actor_profile_picture?: string;
-  action_url?: string;
   is_read: boolean;
   created_at: string;
 }
 
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d`;
+  return `${Math.floor(d / 7)}w`;
+}
+
+function NotifAvatar({ n }: { n: Notification }) {
+  const [broken, setBroken] = useState(false);
+  if (n.actor_profile_picture && !broken) {
+    return (
+      <img
+        src={n.actor_profile_picture.replace(/^https?:\/\/[^/]+/, '')}
+        alt={n.actor_username || ''}
+        className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+        onError={() => setBroken(true)}
+      />
+    );
+  }
+  const initial = (n.actor_full_name || n.actor_username || '?')[0].toUpperCase();
+  return (
+    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
+      <span className="text-white font-bold text-base">{initial}</span>
+    </div>
+  );
+}
+
+function FollowBackButton({ actorId }: { actorId: string }) {
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const toggle = async () => {
+    setLoading(true);
+    try {
+      const res = await socialAPI.followUser(actorId);
+      setIsFollowing(res.is_following);
+    } catch {}
+    setLoading(false);
+  };
+
+  return (
+    <button
+      onClick={toggle}
+      disabled={loading}
+      className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+        isFollowing
+          ? 'bg-gray-100 text-zinc-500 border border-gray-200'
+          : 'bg-zinc-900 hover:bg-zinc-800 text-white'
+      } disabled:opacity-50`}
+    >
+      {loading ? '...' : isFollowing ? 'Following' : 'Follow Back'}
+    </button>
+  );
+}
+
+function NotificationRow({ n }: { n: Notification }) {
+  const isFollow = n.notification_type === 'new_follower';
+  const name = n.actor_full_name || n.actor_username;
+
+  return (
+    <div className={`flex items-center gap-3 px-4 py-3.5 ${!n.is_read ? 'bg-violet-50/60' : ''}`}>
+      <div className="relative flex-shrink-0">
+        <NotifAvatar n={n} />
+        {!n.is_read && (
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-violet-500 border-2 border-white" />
+        )}
+      </div>
+
+      <p className="flex-1 text-sm text-zinc-800 leading-snug">
+        {name && <span className="font-bold">{name} </span>}
+        {isFollow ? 'started following you.' : n.message}
+        <span className="text-zinc-400 ml-1.5">{timeAgo(n.created_at)}</span>
+      </p>
+
+      {isFollow && n.actor_id && <FollowBackButton actorId={n.actor_id} />}
+    </div>
+  );
+}
+
 export default function NotificationsPage() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadNotifications();
-  }, [filter]);
+    // Load notifications
+    notificationsAPI.getNotifications(100, 0)
+      .then(data => setNotifications(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
 
-  const loadNotifications = async () => {
-    try {
-      setIsLoading(true);
-      const data = await notificationsAPI.getNotifications(50, 0, filter === 'unread');
-      setNotifications(data);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Auto mark all as read immediately — clears the badge
+    notificationsAPI.markAllAsRead().catch(() => {});
+  }, []);
 
-  const handleMarkAsRead = async (notificationId: string) => {
-    try {
-      await notificationsAPI.markAsRead(notificationId);
-      setNotifications(notifications.map(n =>
-        n.id === notificationId ? { ...n, is_read: true } : n
-      ));
-    } catch (error) {
-      console.error('Error marking as read:', error);
-    }
-  };
-
-  const handleMarkAllRead = async () => {
-    try {
-      await notificationsAPI.markAllAsRead();
-      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
-    } catch (error) {
-      console.error('Error marking all as read:', error);
-    }
-  };
-
-  const handleDelete = async (notificationId: string) => {
-    try {
-      await notificationsAPI.deleteNotification(notificationId);
-      setNotifications(notifications.filter(n => n.id !== notificationId));
-    } catch (error) {
-      console.error('Error deleting notification:', error);
-    }
-  };
-
-  const handleClearAll = async () => {
-    if (!confirm('Clear all notifications? This cannot be undone.')) return;
-    try {
-      await notificationsAPI.clearAll();
-      setNotifications([]);
-    } catch (error) {
-      console.error('Error clearing notifications:', error);
-    }
-  };
-
-  const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
-    return date.toLocaleDateString();
-  };
-
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  // Split into New (last 24h or unread) and Earlier
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const newNotifs = notifications.filter(n => !n.is_read || new Date(n.created_at).getTime() > cutoff);
+  const earlierNotifs = notifications.filter(n => n.is_read && new Date(n.created_at).getTime() <= cutoff);
 
   return (
     <>
       <SideNav />
-      <div className="min-h-screen lg:pl-[72px] bg-[#09090b] page-enter">
-        <div className="bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/50 sticky top-0 z-10">
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-white">Notifications</h1>
-                <p className="text-sm text-zinc-500">
-                  {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
-                </p>
-              </div>
-              <Link
-                href="/notifications/settings"
-                className="p-2 rounded-lg hover:bg-zinc-800 transition-colors"
-              >
-                <svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </Link>
-            </div>
+      <div className="min-h-screen bg-white pb-24 lg:pl-[72px]">
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === 'all'
-                    ? 'bg-violet-400 text-white'
-                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilter('unread')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === 'unread'
-                    ? 'bg-violet-400 text-white'
-                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                }`}
-              >
-                Unread {unreadCount > 0 && `(${unreadCount})`}
-              </button>
-            </div>
-
-            {notifications.length > 0 && (
-              <div className="flex gap-2 mt-4">
-                {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllRead}
-                    className="text-sm text-violet-300 hover:text-violet-300 font-medium"
-                  >
-                    Mark all as read
-                  </button>
-                )}
-                <button
-                  onClick={handleClearAll}
-                  className="text-sm text-red-500 hover:text-red-400 font-medium"
-                >
-                  Clear all
-                </button>
-              </div>
-            )}
+        {/* Header */}
+        <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+          <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
+            <button onClick={() => router.back()} className="p-1 -ml-1">
+              <svg className="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="text-[17px] font-bold text-zinc-900">Notifications</h1>
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          {isLoading && (
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="bg-zinc-900 rounded-xl p-4 animate-pulse">
-                  <div className="flex gap-3">
-                    <div className="w-10 h-10 bg-zinc-800 rounded-full" />
-                    <div className="flex-1">
-                      <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2" />
-                      <div className="h-3 bg-zinc-800 rounded w-1/2" />
-                    </div>
-                  </div>
-                </div>
-              ))}
+        <div className="max-w-2xl mx-auto">
+          {loading && (
+            <div className="py-16 flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-gray-100 border-t-violet-500 rounded-full animate-spin" />
             </div>
           )}
 
-          {!isLoading && notifications.length > 0 && (
-            <div className="space-y-2">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`bg-zinc-900 border rounded-xl p-4 transition-colors ${
-                    !notification.is_read ? 'border-violet-800/60 ring-1 ring-violet-800/40' : 'border-zinc-800'
-                  }`}
-                >
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0">
-                      {notification.actor_profile_picture ? (
-                        <img
-                          src={notification.actor_profile_picture}
-                          alt={notification.actor_username || 'User'}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-2xl">
-                          {notification.icon || '📬'}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white">
-                        {notification.title}
-                      </p>
-                      <p className="text-sm text-zinc-400 mt-1">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-zinc-600 mt-2">
-                        {getTimeAgo(notification.created_at)}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col gap-2 items-end">
-                      {!notification.is_read && (
-                        <button
-                          onClick={() => handleMarkAsRead(notification.id)}
-                          className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
-                          title="Mark as read"
-                        >
-                          <svg className="w-5 h-5 text-violet-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(notification.id)}
-                        className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
-                        title="Delete"
-                      >
-                        <svg className="w-5 h-5 text-zinc-600 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {notification.action_url && (
-                    <Link
-                      href={notification.action_url}
-                      className="mt-3 block w-full py-2 text-center bg-zinc-800 hover:bg-zinc-700 text-violet-300 rounded-lg font-medium transition-colors"
-                    >
-                      View
-                    </Link>
-                  )}
-                </div>
-              ))}
+          {!loading && notifications.length === 0 && (
+            <div className="py-24 text-center px-8">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <p className="text-sm font-semibold text-zinc-700">No notifications yet</p>
+              <p className="text-xs text-zinc-400 mt-1">When people follow you or interact with your content, you'll see it here.</p>
             </div>
           )}
 
-          {!isLoading && notifications.length === 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-12 text-center">
-              <div className="text-6xl mb-4">🔔</div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                {filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
-              </h3>
-              <p className="text-zinc-500">
-                {filter === 'unread'
-                  ? 'You have no unread notifications'
-                  : "We'll notify you when something happens"}
-              </p>
-            </div>
+          {!loading && newNotifs.length > 0 && (
+            <>
+              <div className="px-4 pt-5 pb-2">
+                <p className="text-[13px] font-bold text-zinc-900">New</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {newNotifs.map(n => <NotificationRow key={n.id} n={n} />)}
+              </div>
+            </>
+          )}
+
+          {!loading && earlierNotifs.length > 0 && (
+            <>
+              <div className="px-4 pt-5 pb-2">
+                <p className="text-[13px] font-bold text-zinc-900">Earlier</p>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {earlierNotifs.map(n => <NotificationRow key={n.id} n={n} />)}
+              </div>
+            </>
           )}
         </div>
       </div>
