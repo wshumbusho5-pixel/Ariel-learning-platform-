@@ -215,14 +215,14 @@ export default function ProfilePage() {
                     <p className="text-xl font-black text-zinc-900">{totalCards}</p>
                     <p className="text-[10px] text-zinc-400 uppercase tracking-wider">cards</p>
                   </div>
-                  <div className="text-center">
+                  <button onClick={() => router.push('/profile/followers')} className="text-center">
                     <p className="text-xl font-black text-zinc-900">{followers}</p>
                     <p className="text-[10px] text-zinc-400 uppercase tracking-wider">followers</p>
-                  </div>
-                  <div className="text-center">
+                  </button>
+                  <button onClick={() => router.push('/profile/following')} className="text-center">
                     <p className="text-xl font-black text-zinc-900">{following}</p>
                     <p className="text-[10px] text-zinc-400 uppercase tracking-wider">following</p>
-                  </div>
+                  </button>
                 </div>
 
                 <div className="flex gap-2">

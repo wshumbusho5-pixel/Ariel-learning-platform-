@@ -367,34 +367,28 @@ async def get_followers(
     user_id: str,
     current_user: User = Depends(get_current_user_dependency)
 ):
-    """
-    Get list of users who follow this user
-    """
-    # Get target user
-    target_user = await db.users.find_one({"_id": user_id})
+    db = db_service.get_db()
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
     if not target_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     follower_ids = target_user.get("followers", [])
-
     if not follower_ids:
         return []
 
-    # Get follower user data
     followers = []
-    async for user in db.users.find({"_id": {"$in": follower_ids}}):
+    async for u in db.users.find({"_id": {"$in": [ObjectId(fid) for fid in follower_ids]}}):
+        uid = str(u["_id"])
         followers.append(FollowListItem(
-            id=str(user["_id"]),
-            username=user.get("username"),
-            full_name=user.get("full_name"),
-            profile_picture=user.get("profile_picture"),
-            bio=user.get("bio"),
-            is_following=str(user["_id"]) in current_user.following,
-            is_teacher=user.get("is_teacher", False),
-            is_verified=user.get("is_verified", False)
+            id=uid,
+            username=u.get("username"),
+            full_name=u.get("full_name"),
+            profile_picture=u.get("profile_picture"),
+            bio=u.get("bio"),
+            is_following=uid in current_user.following,
+            follows_you=str(current_user.id) in u.get("following", []),
+            is_teacher=u.get("is_teacher", False),
+            is_verified=u.get("is_verified", False)
         ))
 
     return followers
@@ -405,34 +399,28 @@ async def get_following(
     user_id: str,
     current_user: User = Depends(get_current_user_dependency)
 ):
-    """
-    Get list of users this user follows
-    """
-    # Get target user
-    target_user = await db.users.find_one({"_id": user_id})
+    db = db_service.get_db()
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
     if not target_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     following_ids = target_user.get("following", [])
-
     if not following_ids:
         return []
 
-    # Get following user data
     following = []
-    async for user in db.users.find({"_id": {"$in": following_ids}}):
+    async for u in db.users.find({"_id": {"$in": [ObjectId(fid) for fid in following_ids]}}):
+        uid = str(u["_id"])
         following.append(FollowListItem(
-            id=str(user["_id"]),
-            username=user.get("username"),
-            full_name=user.get("full_name"),
-            profile_picture=user.get("profile_picture"),
-            bio=user.get("bio"),
-            is_following=str(user["_id"]) in current_user.following,
-            is_teacher=user.get("is_teacher", False),
-            is_verified=user.get("is_verified", False)
+            id=uid,
+            username=u.get("username"),
+            full_name=u.get("full_name"),
+            profile_picture=u.get("profile_picture"),
+            bio=u.get("bio"),
+            is_following=uid in current_user.following,
+            follows_you=str(current_user.id) in u.get("following", []),
+            is_teacher=u.get("is_teacher", False),
+            is_verified=u.get("is_verified", False)
         ))
 
     return following
