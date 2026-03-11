@@ -346,7 +346,8 @@ async def create_notification(
     actor_profile_picture = None
 
     if actor_id:
-        actor = await db.users.find_one({"_id": actor_id})
+        from bson import ObjectId
+        actor = await db.users.find_one({"_id": ObjectId(actor_id)})
         if actor:
             actor_username = actor.get("username")
             actor_full_name = actor.get("full_name")

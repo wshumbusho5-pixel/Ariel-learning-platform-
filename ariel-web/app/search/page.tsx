@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { socialAPI } from '@/lib/api';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { socialAPI, messagesAPI } from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 
@@ -37,7 +37,7 @@ function Avatar({ person }: { person: Person }) {
   );
 }
 
-function PersonRow({ person, onToggleFollow }: { person: Person; onToggleFollow: (id: string) => void }) {
+function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onToggleFollow: (id: string) => void; onOpenDM?: (id: string) => void }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <Avatar person={person} />
@@ -58,24 +58,35 @@ function PersonRow({ person, onToggleFollow }: { person: Person; onToggleFollow:
         <p className="text-xs text-zinc-400 truncate">@{person.username}</p>
         {person.bio && <p className="text-xs text-zinc-400 truncate mt-0.5">{person.bio}</p>}
       </div>
-      <button
-        onClick={() => onToggleFollow(person.id)}
-        className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
-          person.is_following
-            ? 'bg-gray-100 text-zinc-500 border border-gray-200'
-            : person.follows_you
-            ? 'bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700'
-            : 'bg-violet-600 hover:bg-violet-500 text-white'
-        }`}
-      >
-        {person.is_following ? 'Following' : person.follows_you ? 'Follow Back' : 'Follow'}
-      </button>
+      {onOpenDM ? (
+        <button
+          onClick={() => onOpenDM(person.id)}
+          className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white transition-colors"
+        >
+          Message
+        </button>
+      ) : (
+        <button
+          onClick={() => onToggleFollow(person.id)}
+          className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+            person.is_following
+              ? 'bg-gray-100 text-zinc-500 border border-gray-200'
+              : person.follows_you
+              ? 'bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700'
+              : 'bg-violet-600 hover:bg-violet-500 text-white'
+          }`}
+        >
+          {person.is_following ? 'Following' : person.follows_you ? 'Follow Back' : 'Follow'}
+        </button>
+      )}
     </div>
   );
 }
 
 export default function SearchPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isDM = searchParams.get('dm') === '1';
   const [query, setQuery] = useState('');
   const [suggested, setSuggested] = useState<Person[]>([]);
   const [results, setResults] = useState<Person[]>([]);
@@ -137,6 +148,13 @@ export default function SearchPage() {
     });
   };
 
+  const openDM = async (id: string) => {
+    try {
+      const res = await messagesAPI.getOrCreateConversation(id);
+      router.push(`/messages/${res.conversation_id}`);
+    } catch {}
+  };
+
   const isSearching = query.trim().length >= 2;
   const displayList = isSearching ? results : suggested;
   const isLoading = isSearching ? loadingSearch : loadingSuggested;
@@ -162,7 +180,7 @@ export default function SearchPage() {
                 ref={inputRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder="Search people..."
+                placeholder={isDM ? 'Search to message...' : 'Search people...'}
                 className="flex-1 bg-transparent text-zinc-900 text-sm outline-none placeholder:text-zinc-400"
               />
               {query && (
@@ -212,7 +230,7 @@ export default function SearchPage() {
           {!isLoading && displayList.length > 0 && (
             <div className="divide-y divide-gray-100">
               {displayList.map(person => (
-                <PersonRow key={person.id} person={person} onToggleFollow={toggleFollow} />
+                <PersonRow key={person.id} person={person} onToggleFollow={toggleFollow} onOpenDM={isDM ? openDM : undefined} />
               ))}
             </div>
           )}
