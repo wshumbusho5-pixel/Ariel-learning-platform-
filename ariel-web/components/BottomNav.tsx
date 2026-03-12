@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import ArielLogo from '@/components/ArielLogo';
+import ArielIcon from '@/components/ArielIcon';
 
 const mainNav = [
   {

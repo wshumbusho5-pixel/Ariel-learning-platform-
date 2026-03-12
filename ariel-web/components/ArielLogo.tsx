@@ -129,7 +129,6 @@ export default function ArielLogo({
     zIndex: 1,
     paddingBottom: 8 * s,
     userSelect: 'none',
-    display: 'flex',
   };
 
   const dotKillStyle: React.CSSProperties = {
