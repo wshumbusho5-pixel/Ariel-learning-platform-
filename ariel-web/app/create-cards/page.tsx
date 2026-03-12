@@ -8,13 +8,6 @@ import SideNav from '@/components/SideNav';
 import BottomNav from '@/components/BottomNav';
 import AuthModal from '@/components/AuthModal';
 
-// ─── Subjects list ──────────────────────────────────────────────
-const SUBJECTS = [
-  'Mathematics', 'Biology', 'Chemistry', 'Physics', 'History',
-  'Geography', 'Literature', 'Economics', 'Business', 'Law',
-  'Psychology', 'Engineering', 'Languages', 'Arts', 'Technology',
-  'Gospel & Theology', 'Other',
-];
 
 // Parse bulk-pasted Q&A text (tab-separated or blank-line-separated)
 function parseBulkText(raw: string): { question: string; answer: string }[] {
@@ -80,15 +73,12 @@ export default function CreateCardsPage() {
 
   // ── Deck metadata ─────────────────────────────────────────────
   const [subject, setSubject] = useState('');
-  const [customSubject, setCustomSubject] = useState('');
   const [topic, setTopic] = useState('');
   const [showBulkPaste, setShowBulkPaste] = useState(false);
   const [bulkText, setBulkText] = useState('');
   const [bulkError, setBulkError] = useState('');
 
-  const effectiveSubject = subject === 'Other' && customSubject.trim()
-    ? customSubject.trim()
-    : subject;
+  const effectiveSubject = subject.trim();
 
   const handleBulkImport = () => {
     const pairs = parseBulkText(bulkText);
@@ -248,25 +238,14 @@ export default function CreateCardsPage() {
 
                 {/* Subject */}
                 <div>
-                  <label className="text-xs font-semibold text-zinc-400 mb-1.5 block">Subject</label>
-                  <select
+                  <label className="text-xs font-semibold text-zinc-400 mb-1.5 block">Subject <span className="text-zinc-600">(optional)</span></label>
+                  <input
+                    type="text"
                     value={subject}
                     onChange={e => setSubject(e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                  >
-                    <option value="">— Select subject —</option>
-                    {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  {subject === 'Other' && (
-                    <input
-                      type="text"
-                      value={customSubject}
-                      onChange={e => setCustomSubject(e.target.value)}
-                      placeholder="Enter your subject…"
-                      autoFocus
-                      className="mt-2 w-full bg-zinc-800 border border-violet-500/40 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                    />
-                  )}
+                    placeholder="e.g. Biology, Law, Theology…"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                  />
                 </div>
 
                 {/* Topic */}

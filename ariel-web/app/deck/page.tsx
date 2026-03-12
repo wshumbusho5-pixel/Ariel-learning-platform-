@@ -9,6 +9,7 @@ import { cardsAPI, reelsAPI } from '@/lib/api';
 import api, { socialAPI } from '@/lib/api';
 import SideNav from '@/components/SideNav';
 import TikTokPlayer, { type TikTokReel } from '@/components/TikTokPlayer';
+import SwipeCardReview, { type SessionStats } from '@/components/SwipeCardReview';
 
 interface DeckStats {
   total_cards: number;
@@ -39,6 +40,12 @@ export default function DeckPage() {
   const [activeClip, setActiveClip] = useState<TikTokReel | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
+  // Inline review state
+  const [reviewCards, setReviewCards] = useState<any[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewActive, setReviewActive] = useState(false);
+  const [sessionStats, setSessionStats] = useState<SessionStats | null>(null);
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 2000);
@@ -65,6 +72,30 @@ export default function DeckPage() {
     } finally {
       setStatsLoading(false);
     }
+  };
+
+  const startReview = async () => {
+    setReviewLoading(true);
+    try {
+      const data = await cardsAPI.getDueCards(20);
+      if (data && data.length > 0) {
+        setReviewCards(data);
+        setSessionStats(null);
+        setReviewActive(true);
+      } else {
+        showToast('No cards due right now!');
+      }
+    } catch {
+      showToast('Could not load cards');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleReviewComplete = (stats: SessionStats) => {
+    setReviewActive(false);
+    setSessionStats(stats);
+    loadStats(); // refresh due count
   };
 
   const loadClips = async () => {
@@ -169,6 +200,99 @@ export default function DeckPage() {
       {toast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[400] px-4 py-2 bg-zinc-800/90 backdrop-blur-sm text-white text-sm font-semibold rounded-full shadow-lg pointer-events-none">
           {toast}
+        </div>
+      )}
+
+      {/* ── Inline review overlay ── */}
+      {reviewActive && reviewCards.length > 0 && (
+        <SwipeCardReview
+          initialCards={reviewCards}
+          onComplete={handleReviewComplete}
+          onExit={() => setReviewActive(false)}
+        />
+      )}
+
+      {/* ── Session summary overlay ── */}
+      {sessionStats && (
+        <div className="fixed inset-0 z-50 bg-[#09090b] flex flex-col items-center justify-center px-5 py-12 lg:pl-[72px]">
+          {(() => {
+            const { total, ratings, durationMs } = sessionStats;
+            const again  = ratings.filter(r => r.quality === 0).length;
+            const hard   = ratings.filter(r => r.quality === 2).length;
+            const good   = ratings.filter(r => r.quality === 4).length;
+            const easy   = ratings.filter(r => r.quality === 5).length;
+            const accuracy = total > 0 ? Math.round(((good + easy) / total) * 100) : 0;
+            const hardestCard = ratings.find(r => r.quality === 0) ?? ratings.find(r => r.quality === 2);
+            const mins = Math.floor(durationMs / 60000);
+            const secs = Math.round((durationMs % 60000) / 1000);
+            const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+            return (
+              <>
+                <div className="w-20 h-20 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-5">
+                  <span className="text-3xl">{accuracy >= 80 ? '🏆' : accuracy >= 50 ? '👍' : '💪'}</span>
+                </div>
+                <h2 className="text-2xl font-black text-white mb-1">Session done</h2>
+                <p className="text-zinc-500 text-sm mb-7">{timeStr} · {total} card{total !== 1 ? 's' : ''}</p>
+
+                {/* Accuracy ring */}
+                <div className="relative w-28 h-28 mb-7">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#27272a" strokeWidth="2.5" />
+                    <circle cx="18" cy="18" r="15.9" fill="none"
+                      stroke={accuracy >= 80 ? '#10b981' : accuracy >= 50 ? '#8b5cf6' : '#f97316'}
+                      strokeWidth="2.5"
+                      strokeDasharray={`${accuracy} ${100 - accuracy}`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black text-white">{accuracy}%</span>
+                    <span className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wide">Accuracy</span>
+                  </div>
+                </div>
+
+                {/* Breakdown */}
+                <div className="w-full max-w-xs grid grid-cols-4 gap-2 mb-5">
+                  {[
+                    { label: 'Again', count: again,  color: 'text-red-400',     bg: 'bg-red-500/10 border-red-500/20' },
+                    { label: 'Hard',  count: hard,   color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/20' },
+                    { label: 'Good',  count: good,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+                    { label: 'Easy',  count: easy,   color: 'text-sky-400',     bg: 'bg-sky-500/10 border-sky-500/20' },
+                  ].map(({ label, count, color, bg }) => (
+                    <div key={label} className={`flex flex-col items-center py-3 rounded-xl border ${bg}`}>
+                      <span className={`text-xl font-black ${color}`}>{count}</span>
+                      <span className="text-[10px] text-zinc-500 font-semibold mt-0.5">{label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Hardest card */}
+                {hardestCard && (
+                  <div className="w-full max-w-xs bg-zinc-900 border border-zinc-800 rounded-2xl p-4 mb-7">
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-1.5">Needs more work</p>
+                    <p className="text-sm text-white/75 leading-relaxed line-clamp-3">{hardestCard.question}</p>
+                  </div>
+                )}
+
+                <div className="w-full max-w-xs flex flex-col gap-2.5">
+                  <button
+                    onClick={() => setSessionStats(null)}
+                    className="w-full py-3.5 bg-violet-500 hover:bg-violet-400 text-white font-bold rounded-2xl transition-colors"
+                  >
+                    Back to Deck
+                  </button>
+                  {(stats?.due_today ?? 0) > 0 && (
+                    <button
+                      onClick={() => { setSessionStats(null); startReview(); }}
+                      className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white font-semibold rounded-2xl transition-colors text-sm"
+                    >
+                      Review more
+                    </button>
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -286,10 +410,15 @@ export default function DeckPage() {
             <h1 className="text-lg font-bold text-white drop-shadow">My Deck</h1>
             {stats && stats.due_today > 0 && activeTab === 'cards' && (
               <button
-                onClick={() => router.push('/review')}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-violet-500 hover:bg-violet-400 text-white text-xs font-bold rounded-full transition-colors shadow shadow-violet-500/30"
+                onClick={startReview}
+                disabled={reviewLoading}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-violet-500 hover:bg-violet-400 disabled:opacity-60 text-white text-xs font-bold rounded-full transition-colors shadow shadow-violet-500/30"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse" />
+                {reviewLoading ? (
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse" />
+                )}
                 Review {stats.due_today} due
               </button>
             )}
