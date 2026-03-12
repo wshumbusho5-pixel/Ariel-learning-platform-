@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import ArielLogo from '@/components/ArielLogo';
 import ArielIcon from '@/components/ArielIcon';
+import ArielWordmark from '@/components/ArielWordmark';
 
 const mainNav = [
   {
@@ -156,9 +156,9 @@ export default function BottomNav() {
             className="absolute bottom-0 left-0 right-0 bg-[#0c0c0e] border-t border-zinc-800/60 rounded-t-3xl pb-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col items-center pt-3 pb-4 gap-3">
+            <div className="flex flex-col items-center pt-3 pb-5 gap-3">
               <div className="w-10 h-1 rounded-full bg-zinc-700" />
-              <ArielLogo size={40} variant="dark" bgColor="#0c0c0e" />
+              <ArielWordmark size={38} variant="dark" showTagline />
             </div>
             <div className="grid grid-cols-4 gap-1 px-4">
               {drawerItems.map((item) => {

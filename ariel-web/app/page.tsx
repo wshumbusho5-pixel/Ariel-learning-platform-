@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/lib/useAuth';
-import ArielLogo from '@/components/ArielLogo';
+import ArielWordmark from '@/components/ArielWordmark';
 
 // Sample cards that rotate in the preview
 const PREVIEW_CARDS = [
@@ -126,7 +126,7 @@ export default function Home() {
 
         {/* Top: wordmark */}
         <div className="flex flex-col items-center pt-6">
-          <ArielLogo size={60} variant="light" bgColor="#ffffff" showTagline />
+          <ArielWordmark size={72} variant="light" showTagline animate />
         </div>
 
         {/* Middle: live preview */}
@@ -160,7 +160,7 @@ export default function Home() {
         {/* Left: brand + actions */}
         <div className="flex-1 flex flex-col justify-center px-20 max-w-lg">
           <div className="mb-16">
-            <ArielLogo size={72} variant="light" bgColor="#ffffff" showTagline />
+            <ArielWordmark size={88} variant="light" showTagline animate />
           </div>
 
           <div className="space-y-3 w-full max-w-[360px]">
@@ -192,9 +192,6 @@ export default function Home() {
 
         {/* Right: live preview */}
         <div className="flex-1 bg-gray-50 flex flex-col items-center justify-center gap-8 border-l border-gray-100">
-          <div className="text-center mb-2">
-            <p className="text-zinc-400 text-sm font-medium">Learn smarter. One card at a time.</p>
-          </div>
           <PreviewStack />
         </div>
       </div>

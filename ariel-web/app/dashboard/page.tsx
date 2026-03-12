@@ -979,8 +979,8 @@ export default function Dashboard() {
                 >
                   <div className="flex items-start gap-3">
                     <div className="relative flex-shrink-0">
-                      <div className="w-10 h-10 rounded-xl bg-[#0d0d18] border border-violet-500/30 flex items-center justify-center">
-                        <ArielIcon size={28} variant="dark" />
+                      <div className="w-10 h-10 rounded-xl bg-[#0d0d18] border border-violet-500/20 flex items-center justify-center">
+                        <span style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 26, color: '#c4b0ff', lineHeight: 1 }}>a</span>
                       </div>
                       <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-[#1e1e22]" />
                     </div>
