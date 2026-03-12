@@ -38,12 +38,10 @@ export default function ArielWordmark({
   const [visibleChars, setVisibleChars] = useState(
     animate && showTagline ? 0 : TAGLINE_FULL.length
   );
-  const [periodLanded, setPeriodLanded] = useState(!animate);
 
   useEffect(() => {
     if (!animate || !showTagline) return;
     setVisibleChars(0);
-    setPeriodLanded(false);
 
     // Wait for wordmark fade-in to finish before typing starts
     const startDelay = setTimeout(() => {
@@ -51,12 +49,8 @@ export default function ArielWordmark({
       const interval = setInterval(() => {
         i++;
         setVisibleChars(i);
-        if (i >= TAGLINE_FULL.length) {
-          clearInterval(interval);
-          // Small pause then "settle" the period
-          setTimeout(() => setPeriodLanded(true), 60);
-        }
-      }, 88); // ~human typing cadence
+        if (i >= TAGLINE_FULL.length) clearInterval(interval);
+      }, 88);
       return () => clearInterval(interval);
     }, 1300);
 
@@ -140,7 +134,7 @@ export default function ArielWordmark({
               <span style={{
                 color: goldColor,
                 display: 'inline-block',
-                animation: periodLanded ? 'period-settle 0.35s ease both' : undefined,
+                animation: animate ? 'period-settle 0.4s ease both' : undefined,
               }}>.</span>
             )}
           </div>
