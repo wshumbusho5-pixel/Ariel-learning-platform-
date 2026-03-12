@@ -443,47 +443,60 @@ async def get_suggested_users(
     db = db_service.get_db()
     current_user_id = str(current_user.id)
 
-    # Build suggestion query
+    # Convert following list to ObjectIds for proper MongoDB comparison
+    following_ids = [ObjectId(fid) for fid in (current_user.following or []) if fid]
+    current_oid = ObjectId(current_user_id)
+
+    base_filter = {
+        "_id": {"$ne": current_oid, "$nin": following_ids},
+        "is_active": {"$ne": False}
+    }
+
     suggestions = []
+    seen_ids = set()
 
     # Strategy 1: Same subjects
     if current_user.subjects:
         async for user in db.users.find({
-            "_id": {"$ne": current_user_id, "$nin": current_user.following},
+            **base_filter,
             "subjects": {"$in": current_user.subjects},
-            "is_active": {"$ne": False}
         }).limit(limit):
-            suggestions.append(user)
+            uid = str(user["_id"])
+            if uid not in seen_ids:
+                seen_ids.add(uid)
+                suggestions.append(user)
 
     # Strategy 2: Same school
     if current_user.school and len(suggestions) < limit:
         async for user in db.users.find({
-            "_id": {"$ne": current_user_id, "$nin": current_user.following},
+            **base_filter,
             "school": current_user.school,
-            "is_active": {"$ne": False}
         }).limit(limit - len(suggestions)):
-            if user not in suggestions:
+            uid = str(user["_id"])
+            if uid not in seen_ids:
+                seen_ids.add(uid)
                 suggestions.append(user)
 
-    # Strategy 3: Popular users (high followers, points)
+    # Strategy 3: Popular users (high followers)
     if len(suggestions) < limit:
-        async for user in db.users.find({
-            "_id": {"$ne": current_user_id, "$nin": current_user.following},
-            "is_active": {"$ne": False}
-        }).sort("followers_count", -1).limit(limit - len(suggestions)):
-            if user not in suggestions:
+        async for user in db.users.find(base_filter).sort("followers_count", -1).limit(limit - len(suggestions)):
+            uid = str(user["_id"])
+            if uid not in seen_ids:
+                seen_ids.add(uid)
                 suggestions.append(user)
 
     # Convert to response format
+    following_str = set(current_user.following or [])
     result = []
     for user in suggestions[:limit]:
+        uid = str(user["_id"])
         result.append(FollowListItem(
-            id=str(user["_id"]),
+            id=uid,
             username=user.get("username"),
             full_name=user.get("full_name"),
             profile_picture=user.get("profile_picture"),
             bio=user.get("bio"),
-            is_following=False,  # By definition (we filtered them out)
+            is_following=uid in following_str,
             follows_you=current_user_id in user.get("following", []),
             is_teacher=user.get("is_teacher", False),
             is_verified=user.get("is_verified", False)
