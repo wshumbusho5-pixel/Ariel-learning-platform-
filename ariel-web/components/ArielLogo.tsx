@@ -35,13 +35,13 @@ export default function ArielLogo({
   };
   const bg = bgMap[variant];
 
-  // Text gradient per variant
-  const textGradient =
+  // Per-letter colors — accent i matches the gold node
+  const letterColors =
     variant === 'purple'
-      ? undefined
+      ? { ar: '#ffffff', i: 'rgba(255,255,255,0.55)', el: '#ffffff' }
       : variant === 'light'
-      ? 'linear-gradient(90deg, #4a28a8 0%, #1a1828 38%, #a07840 100%)'
-      : 'linear-gradient(90deg, #c4b0ff 0%, #ffffff 38%, #C9A96E 100%)';
+      ? { ar: '#4a28a8', i: '#a07840', el: '#1a1828' }
+      : { ar: '#c4b0ff', i: '#C9A96E', el: '#ffffff' };
 
   // Ring border gradient per variant
   const ringGradient =
@@ -103,14 +103,14 @@ export default function ArielLogo({
     border: `${ringThick}px solid transparent`,
   };
 
-  const ringBackStyle: React.CSSProperties = {
+  const ringBack: React.CSSProperties = {
     ...ringSharedStyle,
     background: `linear-gradient(${bg}, ${bg}) padding-box, ${ringGradient} border-box`,
     opacity: ringBackOpacity,
     zIndex: 0,
   };
 
-  const ringFrontStyle: React.CSSProperties = {
+  const ringFront: React.CSSProperties = {
     ...ringSharedStyle,
     background: `linear-gradient(${bg}, ${bg}) padding-box, ${ringGradient} border-box`,
     opacity: ringFrontOpacity,
@@ -127,12 +127,9 @@ export default function ArielLogo({
     letterSpacing: `-${4 * s}px`,
     position: 'relative',
     zIndex: 1,
-    background: textGradient,
-    WebkitBackgroundClip: textGradient ? 'text' : undefined,
-    WebkitTextFillColor: textGradient ? 'transparent' : '#ffffff',
-    backgroundClip: textGradient ? 'text' : undefined,
     paddingBottom: 8 * s,
     userSelect: 'none',
+    display: 'flex',
   };
 
   const dotKillStyle: React.CSSProperties = {
@@ -178,16 +175,20 @@ export default function ArielLogo({
 
       <div style={{ position: 'relative', display: 'inline-block' }}>
         {/* Layer 0: ring behind text */}
-        <div style={ringBackStyle} />
+        <div style={ringBack} />
 
-        {/* Layer 1: the word */}
-        <div style={wordStyle}>ariel</div>
+        {/* Layer 1: the word — i is gold to tie it to the orbital node */}
+        <div style={wordStyle}>
+          <span style={{ color: letterColors.ar }}>ar</span>
+          <span style={{ color: letterColors.i }}>i</span>
+          <span style={{ color: letterColors.el }}>el</span>
+        </div>
 
         {/* Layer 2: erase i-dot */}
         <div style={dotKillStyle} />
 
         {/* Layer 3: ring in front (right half only) */}
-        <div style={ringFrontStyle} />
+        <div style={ringFront} />
 
         {/* Layer 4: gold orbital node */}
         <div style={nodeStyle}>
