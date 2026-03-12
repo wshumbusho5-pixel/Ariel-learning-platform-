@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import ClientProviders from "@/components/ClientProviders";
+import { Syne, DM_Sans } from "next/font/google";
+
+const syne = Syne({ subsets: ["latin"], weight: ["800"], variable: "--font-syne", display: "swap" });
+const dmSans = DM_Sans({ subsets: ["latin"], weight: ["200", "300"], variable: "--font-dm-sans", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Ariel — Learn smarter",
@@ -15,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${GeistSans.className} antialiased`}>
+      <body className={`${GeistSans.className} ${syne.variable} ${dmSans.variable} antialiased`}>
         <ClientProviders>
           {children}
         </ClientProviders>

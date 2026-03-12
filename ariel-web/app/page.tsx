@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/lib/useAuth';
+import ArielLogo from '@/components/ArielLogo';
 
 // Sample cards that rotate in the preview
 const PREVIEW_CARDS = [
@@ -124,11 +125,8 @@ export default function Home() {
       <div className="flex flex-col items-center justify-between min-h-screen px-6 py-10 lg:hidden">
 
         {/* Top: wordmark */}
-        <div className="flex flex-col items-center gap-2 pt-6">
-          <div className="w-14 h-14 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-black text-2xl">A</span>
-          </div>
-          <span className="text-2xl font-black text-zinc-900 tracking-tight">ariel</span>
+        <div className="flex flex-col items-center pt-6">
+          <ArielLogo size={60} variant="light" bgColor="#ffffff" showTagline />
         </div>
 
         {/* Middle: live preview */}
@@ -164,11 +162,8 @@ export default function Home() {
 
         {/* Left: brand + actions */}
         <div className="flex-1 flex flex-col justify-center px-20 max-w-lg">
-          <div className="flex items-center gap-3 mb-16">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-black text-xl">A</span>
-            </div>
-            <span className="text-3xl font-black text-zinc-900 tracking-tight">ariel</span>
+          <div className="mb-16">
+            <ArielLogo size={72} variant="light" bgColor="#ffffff" showTagline />
           </div>
 
           <div className="space-y-3 w-full max-w-[360px]">

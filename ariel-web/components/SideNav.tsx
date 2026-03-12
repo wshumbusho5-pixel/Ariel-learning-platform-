@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
+import ArielLogo from '@/components/ArielLogo';
 
 type NavItem = {
   name: string;
@@ -234,11 +235,8 @@ export default function SideNav() {
             </svg>
           </button>
           {expanded && (
-            <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-violet-400 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-xs">A</span>
-              </div>
-              <span className="text-white font-bold text-lg tracking-tight">Ariel</span>
+            <button onClick={() => navigate('/dashboard')} className="flex items-center overflow-hidden">
+              <ArielLogo size={32} variant="dark" bgColor="#09090b" />
             </button>
           )}
         </div>
