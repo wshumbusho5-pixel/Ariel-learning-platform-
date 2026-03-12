@@ -72,8 +72,8 @@ function FollowBackButton({ actorId }: { actorId: string }) {
       disabled={loading}
       className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
         isFollowing
-          ? 'bg-gray-100 text-zinc-500 border border-gray-200'
-          : 'bg-zinc-900 hover:bg-zinc-800 text-white'
+          ? 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+          : 'bg-white text-black hover:bg-zinc-100'
       } disabled:opacity-50`}
     >
       {loading ? '...' : isFollowing ? 'Following' : 'Follow Back'}
@@ -86,18 +86,18 @@ function NotificationRow({ n }: { n: Notification }) {
   const name = n.actor_full_name || n.actor_username;
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-3.5 ${!n.is_read ? 'bg-violet-50/60' : ''}`}>
+    <div className={`flex items-center gap-3 px-4 py-3.5 ${!n.is_read ? 'bg-violet-500/10' : ''}`}>
       <div className="relative flex-shrink-0">
         <NotifAvatar n={n} />
         {!n.is_read && (
-          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-violet-500 border-2 border-white" />
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-violet-500 border-2 border-[#09090b]" />
         )}
       </div>
 
-      <p className="flex-1 text-sm text-zinc-800 leading-snug">
-        {name && <span className="font-bold">{name} </span>}
+      <p className="flex-1 text-sm text-zinc-300 leading-snug">
+        {name && <span className="font-bold text-white">{name} </span>}
         {isFollow ? 'started following you.' : n.message}
-        <span className="text-zinc-400 ml-1.5">{timeAgo(n.created_at)}</span>
+        <span className="text-zinc-600 ml-1.5">{timeAgo(n.created_at)}</span>
       </p>
 
       {isFollow && n.actor_id && <FollowBackButton actorId={n.actor_id} />}
@@ -111,17 +111,13 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load notifications
     notificationsAPI.getNotifications(100, 0)
       .then(data => setNotifications(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
-
-    // Auto mark all as read immediately — clears the badge
     notificationsAPI.markAllAsRead().catch(() => {});
   }, []);
 
-  // Split into New (last 24h or unread) and Earlier
   const cutoff = Date.now() - 24 * 60 * 60 * 1000;
   const newNotifs = notifications.filter(n => !n.is_read || new Date(n.created_at).getTime() > cutoff);
   const earlierNotifs = notifications.filter(n => n.is_read && new Date(n.created_at).getTime() <= cutoff);
@@ -129,45 +125,45 @@ export default function NotificationsPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-white pb-24 lg:pl-[72px]">
+      <div className="min-h-screen bg-[#09090b] pb-24 lg:pl-[72px]">
 
         {/* Header */}
-        <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        <div className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800">
           <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
             <button onClick={() => router.back()} className="p-1 -ml-1">
-              <svg className="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-[17px] font-bold text-zinc-900">Notifications</h1>
+            <h1 className="text-[17px] font-bold text-white">Notifications</h1>
           </div>
         </div>
 
         <div className="max-w-2xl mx-auto">
           {loading && (
             <div className="py-16 flex items-center justify-center">
-              <div className="w-6 h-6 border-2 border-gray-100 border-t-violet-500 rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-zinc-800 border-t-violet-500 rounded-full animate-spin" />
             </div>
           )}
 
           {!loading && notifications.length === 0 && (
             <div className="py-24 text-center px-8">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <div className="w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-zinc-700">No notifications yet</p>
-              <p className="text-xs text-zinc-400 mt-1">When people follow you or interact with your content, you'll see it here.</p>
+              <p className="text-sm font-semibold text-white">No notifications yet</p>
+              <p className="text-xs text-zinc-500 mt-1">When people follow you or interact with your content, you'll see it here.</p>
             </div>
           )}
 
           {!loading && newNotifs.length > 0 && (
             <>
               <div className="px-4 pt-5 pb-2">
-                <p className="text-[13px] font-bold text-zinc-900">New</p>
+                <p className="text-[13px] font-bold text-white">New</p>
               </div>
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-zinc-800/30">
                 {newNotifs.map(n => <NotificationRow key={n.id} n={n} />)}
               </div>
             </>
@@ -176,9 +172,9 @@ export default function NotificationsPage() {
           {!loading && earlierNotifs.length > 0 && (
             <>
               <div className="px-4 pt-5 pb-2">
-                <p className="text-[13px] font-bold text-zinc-900">Earlier</p>
+                <p className="text-[13px] font-bold text-zinc-400">Earlier</p>
               </div>
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-zinc-800/30">
                 {earlierNotifs.map(n => <NotificationRow key={n.id} n={n} />)}
               </div>
             </>

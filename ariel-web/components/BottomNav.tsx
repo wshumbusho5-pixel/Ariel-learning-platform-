@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAriel } from '@/lib/arielContext';
 
 const mainNav = [
   {
@@ -48,6 +47,15 @@ const mainNav = [
 ];
 
 export const drawerItems = [
+  {
+    name: 'Create Cards',
+    path: '/create-cards',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    ),
+  },
   {
     name: 'Duels',
     path: '/duels',
@@ -134,7 +142,6 @@ export const drawerItems = [
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { openAriel } = useAriel();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
@@ -200,15 +207,19 @@ export default function BottomNav() {
             );
           })}
 
-          {/* Ariel — hero center button */}
+          {/* Create — hero center button */}
           <button
-            onClick={openAriel}
+            onClick={() => router.push('/create-cards')}
             className="flex-1 flex flex-col items-center justify-center pb-1"
           >
             <div className="relative">
-              <div className="w-12 h-12 bg-violet-500 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-500/30 -mt-5 border border-violet-400/30 transition-transform duration-150 active:scale-95">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg -mt-5 border transition-transform duration-150 active:scale-95 ${
+                pathname === '/create-cards'
+                  ? 'bg-violet-400 border-violet-300/30 shadow-violet-400/30'
+                  : 'bg-violet-500 border-violet-400/30 shadow-violet-500/30'
+              }`}>
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
               </div>
             </div>

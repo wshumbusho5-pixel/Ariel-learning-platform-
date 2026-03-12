@@ -113,8 +113,22 @@ async def _create_challenge_notification(db, challenger: User, challenged_id: st
 async def _run_game(room: DuelRoom):
     """Runs after both players connect."""
     if room.status != "waiting" or len(room.connections) < 2:
+        print(f"[DUEL] _run_game skipped: status={room.status} connections={len(room.connections)}")
         return
+    try:
+        print(f"[DUEL] Starting game for room {room.room_id}")
+        await _run_game_inner(room)
+        print(f"[DUEL] Game finished for room {room.room_id}")
+    except Exception as e:
+        import traceback
+        print(f"[DUEL] CRASH in room {room.room_id}: {e}")
+        traceback.print_exc()
+        room.status = "finished"
+        await _broadcast(room, {"type": "error", "message": "Game failed to start. Please try again."})
 
+
+async def _run_game_inner(room: DuelRoom):
+    """Inner game loop — separated so exceptions bubble to _run_game."""
     room.status = "playing"
     db = db_service.get_db()
 
@@ -186,7 +200,7 @@ async def _play_round(room: DuelRoom, idx: int):
     })
 
     # Poll until both answer or timeout
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     deadline = loop.time() + ROUND_TIMEOUT
     while loop.time() < deadline:
         if room.p1_answers[idx] is not None and room.p2_answers[idx] is not None:
@@ -251,14 +265,17 @@ async def quick_match(current_user: User = Depends(get_current_user_dependency))
     uname = current_user.username or "Player"
 
     global matchmaking_queue
-    # Remove stale entries for this user
-    matchmaking_queue = [(uid, un, rid) for uid, un, rid in matchmaking_queue if uid != user_id]
+
+    # If user already has a waiting room, return it (prevents double-call creating two rooms)
+    for uid, un, rid in matchmaking_queue:
+        if uid == user_id:
+            return {"room_id": rid, "status": "waiting", "opponent_username": None}
 
     # Try to match with someone waiting
-    if matchmaking_queue:
+    while matchmaking_queue:
         waiting_uid, waiting_uname, room_id = matchmaking_queue.pop(0)
         room = rooms.get(room_id)
-        if room and room.status == "waiting":
+        if room and room.status == "waiting" and waiting_uid != user_id:
             room.p2_id = user_id
             room.p2_username = uname
             return {"room_id": room_id, "status": "joined", "opponent_username": waiting_uname}
@@ -287,6 +304,14 @@ async def challenge_user(
 
     room_id = secrets.token_urlsafe(8)
     rooms[room_id] = DuelRoom(room_id, str(current_user.id), current_user.username or "Player")
+    # Persist to DB so room survives server restarts
+    await db.duel_rooms.insert_one({
+        "room_id": room_id,
+        "p1_id": str(current_user.id),
+        "p1_username": current_user.username or "Player",
+        "status": "waiting",
+        "created_at": datetime.utcnow(),
+    })
     await _create_challenge_notification(db, current_user, target_id, room_id)
     return {"room_id": room_id, "challenged_username": username}
 
@@ -296,7 +321,13 @@ async def join_room(room_id: str, current_user: User = Depends(get_current_user_
     """Accept a challenge or join a waiting room."""
     room = rooms.get(room_id)
     if not room:
-        raise HTTPException(status_code=404, detail="Room not found")
+        # Try to restore from DB (handles server restart case)
+        db = db_service.get_db()
+        stored = await db.duel_rooms.find_one({"room_id": room_id, "status": "waiting"})
+        if not stored:
+            raise HTTPException(status_code=404, detail="Challenge has expired. Ask them to send a new one.")
+        room = DuelRoom(room_id, stored["p1_id"], stored["p1_username"])
+        rooms[room_id] = room
     if room.status != "waiting":
         raise HTTPException(status_code=400, detail="Room is not open")
     if room.p1_id == str(current_user.id):
@@ -371,12 +402,27 @@ async def duel_ws(websocket: WebSocket, room_id: str, token: str):
         "opponent_username": opponent_username,
     })
 
-    # If both players now connected, start game
+    # If both players now connected
     if opponent_id and opponent_id in room.connections:
-        await _send_player(room, user_id, {"type": "player_joined", "opponent_username": opponent_username})
-        await _send_player(room, opponent_id, {"type": "player_joined", "opponent_username": username})
         if room.status == "waiting":
+            # Fresh start — notify both and launch game
+            await _send_player(room, user_id, {"type": "player_joined", "opponent_username": opponent_username})
+            await _send_player(room, opponent_id, {"type": "player_joined", "opponent_username": username})
             asyncio.create_task(_run_game(room))
+        elif room.status == "playing":
+            # Reconnect mid-game — resync this player with current round
+            await _send_player(room, user_id, {"type": "player_joined", "opponent_username": opponent_username})
+            idx = room.current_round
+            if idx < len(room.cards):
+                card = room.cards[idx]
+                await websocket.send_json({
+                    "type": "round_start",
+                    "round": idx + 1,
+                    "total": ROUND_COUNT,
+                    "question": card["question"],
+                    "subject": card["subject"],
+                    "choices": card["choices"],
+                })
     else:
         await websocket.send_json({"type": "waiting", "message": "Waiting for opponent..."})
 

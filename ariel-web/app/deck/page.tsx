@@ -284,17 +284,6 @@ export default function DeckPage() {
           {/* Title row */}
           <div className="flex items-center justify-between mb-3 pointer-events-auto">
             <h1 className="text-lg font-bold text-white drop-shadow">My Deck</h1>
-            {stats && stats.due_today > 0 && activeTab === 'cards' && (
-              <button
-                onClick={() => router.push('/review')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-400 hover:bg-violet-500 text-white text-xs font-bold rounded-full transition-colors shadow-lg"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Review {stats.due_today}
-              </button>
-            )}
           </div>
 
           {/* Tabs: Cards | Clips */}

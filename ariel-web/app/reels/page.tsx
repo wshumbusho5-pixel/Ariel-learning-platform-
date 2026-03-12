@@ -8,6 +8,7 @@ import { useComments } from '@/lib/commentsContext';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 import TikTokPlayer from '@/components/TikTokPlayer';
+import ShareSheet from '@/components/ShareSheet';
 
 interface Reel {
   id: string;
@@ -231,10 +232,12 @@ function ReelCard({
   reel,
   onTap,
   isNew,
+  onDMShare,
 }: {
   reel: Reel;
   onTap: () => void;
   isNew?: boolean;
+  onDMShare?: (reel: Reel) => void;
 }) {
   const hasStats = reel.view_count || reel.like_count || reel.created_at;
 
@@ -291,6 +294,19 @@ function ReelCard({
           className="absolute bottom-0 right-0 w-[22px] h-[22px] pointer-events-none"
           style={{ background: 'linear-gradient(135deg, transparent 50%, rgba(139, 92, 246, 0.55) 50%)' }}
         />
+
+        {/* DM share button — top-right */}
+        {onDMShare && (
+          <button
+            onClick={e => { e.stopPropagation(); onDMShare(reel); }}
+            className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
+            title="Send in DM"
+          >
+            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Text below */}
@@ -325,6 +341,7 @@ function SectionRow({
   isNew: isFreshSection,
   heroLayout,
   onTap,
+  onDMShare,
 }: {
   label: string;
   subjectKey: string;
@@ -333,6 +350,7 @@ function SectionRow({
   isNew?: boolean;
   heroLayout?: boolean;
   onTap: (reel: Reel) => void;
+  onDMShare?: (reel: Reel) => void;
 }) {
   const router = useRouter();
 
@@ -378,7 +396,7 @@ function SectionRow({
               >
                 {reels.slice(1).map(reel => (
                   <div key={reel.id} className="flex-shrink-0 w-36">
-                    <ReelCard reel={reel} onTap={() => onTap(reel)} />
+                    <ReelCard reel={reel} onTap={() => onTap(reel)} onDMShare={onDMShare} />
                   </div>
                 ))}
               </div>
@@ -392,7 +410,7 @@ function SectionRow({
         >
           {reels.map(reel => (
             <div key={reel.id} className="flex-shrink-0 w-36">
-              <ReelCard reel={reel} onTap={() => onTap(reel)} />
+              <ReelCard reel={reel} onTap={() => onTap(reel)} onDMShare={onDMShare} />
             </div>
           ))}
         </div>
@@ -419,6 +437,7 @@ export default function ReelsPage() {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [activeReel, setActiveReel] = useState<Reel | null>(null);
+  const [shareReel, setShareReel] = useState<Reel | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const PAGE_SIZE = 20;
@@ -549,8 +568,8 @@ export default function ReelsPage() {
     return (
       <>
         <SideNav />
-        <main className="lg:pl-[72px] min-h-screen bg-[#0f0f0f]">
-          <header className="sticky top-0 z-30 bg-[#0f0f0f] border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+        <main className="lg:pl-[72px] min-h-screen bg-[#09090b]">
+          <header className="sticky top-0 z-30 bg-[#09090b] border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
             <div className="h-8 w-40 bg-zinc-800 rounded-full animate-pulse" />
             <div className="h-8 w-20 bg-zinc-800 rounded-full animate-pulse" />
           </header>
@@ -635,13 +654,14 @@ export default function ReelsPage() {
           onFollow={handleFollow}
           onShare={handleShare}
           onComment={(id) => { setActiveReel(null); openComments(id); }}
+          onDMShare={(reel) => { setActiveReel(null); setShareReel(reels.find(r => r.id === reel.id) || null); }}
         />
       )}
 
-      <main className="lg:pl-[72px] min-h-screen bg-[#0f0f0f] page-enter">
+      <main className="lg:pl-[72px] min-h-screen bg-[#09090b] page-enter">
 
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-[#0f0f0f] border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+        <header className="sticky top-0 z-30 bg-[#09090b] border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
           <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-full p-0.5">
             {(['foryou', 'following'] as const).map(t => (
               <button
@@ -721,6 +741,7 @@ export default function ReelsPage() {
                   isNew
                   heroLayout
                   onTap={setActiveReel}
+                  onDMShare={setShareReel}
                 />
               )}
               {/* Subject sections — user topics get hero, others get grid */}
@@ -733,6 +754,7 @@ export default function ReelsPage() {
                   isUserTopic={section.isUserTopic}
                   heroLayout={section.isUserTopic}
                   onTap={setActiveReel}
+                  onDMShare={setShareReel}
                 />
               ))}
 
@@ -752,6 +774,20 @@ export default function ReelsPage() {
       </main>
 
       <div className="lg:hidden"><BottomNav /></div>
+
+      {/* DM Share Sheet */}
+      {shareReel && (
+        <ShareSheet
+          target={{
+            type: 'reel',
+            id: shareReel.id,
+            title: shareReel.title,
+            subtitle: `@${shareReel.creator_username}`,
+            thumbnail: shareReel.thumbnail_url,
+          }}
+          onClose={() => setShareReel(null)}
+        />
+      )}
 
       <style jsx global>{`
         div::-webkit-scrollbar { display: none; }

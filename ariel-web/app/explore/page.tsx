@@ -1,17 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { cardsAPI, socialAPI } from '@/lib/api';
+import { useAuth } from '@/lib/useAuth';
 
-interface UserResult {
-  id: string;
+interface Creator {
+  id?: string;
   username: string;
   full_name?: string;
   profile_picture?: string;
-  bio?: string;
-  is_following: boolean;
-  is_teacher?: boolean;
   is_verified?: boolean;
 }
 
@@ -25,83 +23,161 @@ interface Card {
   tags: string[];
   likes: number;
   saves: number;
-  comments_count?: number;
   visibility: string;
-  created_by?: {
-    id?: string;
-    username: string;
-    profile_picture?: string;
-  };
+  created_by?: Creator;
+}
+
+interface UserResult {
+  id: string;
+  username: string;
+  full_name?: string;
+  profile_picture?: string;
+  bio?: string;
+  is_following: boolean;
+  is_verified?: boolean;
+}
+
+function Avatar({ creator, size = 40 }: { creator?: Creator; size?: number }) {
+  const letter = (creator?.full_name || creator?.username || '?')[0].toUpperCase();
+  if (creator?.profile_picture) {
+    return (
+      <img
+        src={creator.profile_picture.replace(/^https?:\/\/[^/]+(?=\/)/, '')}
+        alt={creator.username}
+        className="rounded-full object-cover border-2 border-white/20"
+        style={{ width: size, height: size }}
+        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+      />
+    );
+  }
+  return (
+    <div
+      className="rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center border-2 border-white/20 flex-shrink-0"
+      style={{ width: size, height: size }}
+    >
+      <span className="text-white font-bold" style={{ fontSize: size * 0.35 }}>{letter}</span>
+    </div>
+  );
 }
 
 export default function ExplorePage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const subjectFilter = searchParams.get('subject');
   const topicFilter = searchParams.get('topic');
+  const { checkAuth } = useAuth();
 
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
-  const [savedCards, setSavedCards] = useState<Set<string>>(new Set());
-  const [followingCreators, setFollowingCreators] = useState<Set<string>>(new Set());
   const [feedMode, setFeedMode] = useState<'personalized' | 'trending'>('personalized');
-  const [showComments, setShowComments] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
+  const [flipped, setFlipped] = useState<Set<string>>(new Set());
+  const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [saved, setSaved] = useState<Set<string>>(new Set());
+  const [following, setFollowing] = useState<Set<string>>(new Set());
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  const [saveCounts, setSaveCounts] = useState<Record<string, number>>({});
+
+  // Search
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [peopleResults, setPeopleResults] = useState<UserResult[]>([]);
   const [searchingPeople, setSearchingPeople] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const searchRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadCards();
-  }, [feedMode, subjectFilter, topicFilter]);
+  const isSearchMode = searchFocused || searchQuery.length > 0;
+
+  useEffect(() => { checkAuth(); }, []);
+  useEffect(() => { loadCards(); }, [feedMode, subjectFilter, topicFilter]);
 
   const loadCards = async () => {
     setLoading(true);
+    setFlipped(new Set());
     try {
       const data = feedMode === 'personalized'
         ? await cardsAPI.getPersonalizedFeed(100)
         : await cardsAPI.getTrendingCards(100);
 
-      // Filter by subject/topic if coming from dashboard
+      let result = data as Card[];
+
       const filter = topicFilter || subjectFilter;
       if (filter) {
-        const keyword = filter.toLowerCase();
-        const filtered = data.filter((c: Card) =>
-          (c.subject || '').toLowerCase().includes(keyword) ||
-          (c.topic || '').toLowerCase().includes(keyword) ||
-          (c.tags || []).some((t: string) => t.toLowerCase().includes(keyword))
+        const kw = filter.toLowerCase();
+        const filtered = result.filter(c =>
+          (c.subject || '').toLowerCase().includes(kw) ||
+          (c.topic || '').toLowerCase().includes(kw) ||
+          (c.tags || []).some(t => t.toLowerCase().includes(kw))
         );
-        setCards(filtered.length > 0 ? filtered : data);
-      } else {
-        setCards(data);
+        result = filtered.length > 0 ? filtered : result;
       }
-    } catch (error) {
-      console.error('Failed to load cards:', error);
+
+      setCards(result);
+      const lc: Record<string, number> = {};
+      const sc: Record<string, number> = {};
+      result.forEach(c => { lc[c.id] = c.likes; sc[c.id] = c.saves; });
+      setLikeCounts(lc);
+      setSaveCounts(sc);
+    } catch {
       try {
-        const fallback = await cardsAPI.getTrendingCards(50);
+        const fallback = await cardsAPI.getTrendingCards(50) as Card[];
         setCards(fallback);
-      } catch (e) {
-        console.error('Fallback also failed:', e);
-      }
+      } catch {}
     } finally {
       setLoading(false);
     }
   };
 
+  const handleLike = async (e: React.MouseEvent, cardId: string) => {
+    e.stopPropagation();
+    const isLiked = liked.has(cardId);
+    const next = new Set(liked);
+    isLiked ? next.delete(cardId) : next.add(cardId);
+    setLiked(next);
+    setLikeCounts(prev => ({ ...prev, [cardId]: (prev[cardId] || 0) + (isLiked ? -1 : 1) }));
+    try { await cardsAPI.likeCard(cardId); } catch {
+      const rev = new Set(liked); setLiked(rev);
+      setLikeCounts(prev => ({ ...prev, [cardId]: (prev[cardId] || 0) + (isLiked ? 1 : -1) }));
+    }
+  };
+
+  const handleSave = async (e: React.MouseEvent, cardId: string) => {
+    e.stopPropagation();
+    const isSaved = saved.has(cardId);
+    const next = new Set(saved);
+    isSaved ? next.delete(cardId) : next.add(cardId);
+    setSaved(next);
+    setSaveCounts(prev => ({ ...prev, [cardId]: (prev[cardId] || 0) + (isSaved ? -1 : 1) }));
+    try { await cardsAPI.saveCardToDeck(cardId); } catch {
+      const rev = new Set(saved); setSaved(rev);
+      setSaveCounts(prev => ({ ...prev, [cardId]: (prev[cardId] || 0) + (isSaved ? 1 : -1) }));
+    }
+  };
+
+  const handleFollow = async (e: React.MouseEvent, userId?: string) => {
+    e.stopPropagation();
+    if (!userId) return;
+    const isFollowing = following.has(userId);
+    const next = new Set(following);
+    isFollowing ? next.delete(userId) : next.add(userId);
+    setFollowing(next);
+    try {
+      if (isFollowing) await socialAPI.unfollowUser(userId);
+      else await socialAPI.followUser(userId);
+    } catch {
+      const rev = new Set(following); setFollowing(rev);
+    }
+  };
+
+  const handleFlip = (cardId: string) => {
+    const next = new Set(flipped);
+    flipped.has(cardId) ? next.delete(cardId) : next.add(cardId);
+    setFlipped(next);
+  };
+
   const handleSearchChange = (q: string) => {
     setSearchQuery(q);
     clearTimeout(searchTimeout.current);
-    if (q.trim().length < 2) {
-      setPeopleResults([]);
-      return;
-    }
+    if (q.trim().length < 2) { setPeopleResults([]); return; }
     setSearchingPeople(true);
     searchTimeout.current = setTimeout(async () => {
       try {
@@ -116,568 +192,302 @@ export default function ExplorePage() {
     const user = peopleResults.find(u => u.id === userId);
     if (!user) return;
     try {
-      if (user.is_following) {
-        await socialAPI.unfollowUser(userId);
-      } else {
-        await socialAPI.followUser(userId);
-      }
-      setPeopleResults(prev => prev.map(u =>
-        u.id === userId ? { ...u, is_following: !u.is_following } : u
-      ));
-      // also update the card feed follow state
-      setFollowingCreators(prev => {
-        const next = new Set(prev);
-        if (user.is_following) next.delete(userId); else next.add(userId);
-        return next;
-      });
+      if (user.is_following) await socialAPI.unfollowUser(userId);
+      else await socialAPI.followUser(userId);
+      setPeopleResults(prev => prev.map(u => u.id === userId ? { ...u, is_following: !u.is_following } : u));
     } catch {}
   };
 
-  const isSearchMode = searchFocused || searchQuery.length > 0;
-
-  const handleLike = async (cardId: string) => {
-    const isCurrentlyLiked = likedCards.has(cardId);
-
-    try {
-      await cardsAPI.likeCard(cardId);
-
-      const newLikedCards = new Set(likedCards);
-      if (isCurrentlyLiked) {
-        newLikedCards.delete(cardId);
-      } else {
-        newLikedCards.add(cardId);
-      }
-      setLikedCards(newLikedCards);
-
-      setCards(cards.map(card =>
-        card.id === cardId
-          ? { ...card, likes: isCurrentlyLiked ? Math.max(0, card.likes - 1) : card.likes + 1 }
-          : card
-      ));
-    } catch (error) {
-      console.error('Failed to like card:', error);
-    }
-  };
-
-  const handleFollow = async (userId?: string) => {
-    if (!userId) return;
-    const isFollowing = followingCreators.has(userId);
-    try {
-      if (isFollowing) {
-        await socialAPI.unfollowUser(userId);
-        setFollowingCreators((prev) => { const next = new Set(prev); next.delete(userId); return next; });
-      } else {
-        await socialAPI.followUser(userId);
-        setFollowingCreators((prev) => new Set(prev).add(userId));
-      }
-    } catch (error) {
-      console.error('Failed to follow/unfollow:', error);
-    }
-  };
-
-  const handleSave = async (cardId: string) => {
-    const isCurrentlySaved = savedCards.has(cardId);
-
-    try {
-      await cardsAPI.saveCardToDeck(cardId);
-
-      const newSavedCards = new Set(savedCards);
-      if (isCurrentlySaved) {
-        newSavedCards.delete(cardId);
-      } else {
-        newSavedCards.add(cardId);
-      }
-      setSavedCards(newSavedCards);
-
-      setCards(cards.map(card =>
-        card.id === cardId
-          ? { ...card, saves: isCurrentlySaved ? Math.max(0, card.saves - 1) : card.saves + 1 }
-          : card
-      ));
-    } catch (error) {
-      console.error('Failed to save card:', error);
-    }
-  };
-
-  // Swipe detection for mobile
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientY);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientY);
-  };
-
-  const handleTouchEnd = () => {
-    if (touchStart - touchEnd > 150) {
-      if (currentIndex < cards.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-        setShowAnswer(false);
-      }
-    }
-
-    if (touchStart - touchEnd < -150) {
-      if (currentIndex > 0) {
-        setCurrentIndex(currentIndex - 1);
-        setShowAnswer(false);
-      }
-    }
-  };
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' && currentIndex < cards.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-        setShowAnswer(false);
-      } else if (e.key === 'ArrowUp' && currentIndex > 0) {
-        setCurrentIndex(currentIndex - 1);
-        setShowAnswer(false);
-      } else if (e.key === ' ') {
-        e.preventDefault();
-        setShowAnswer(!showAnswer);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentIndex, cards.length, showAnswer]);
-
   if (loading) {
     return (
-      <div className="h-screen bg-[#09090b] flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 relative flex-shrink-0">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
-          <div className="px-4 py-4">
-            <h1 className="text-2xl font-black text-white tracking-tight">Explore</h1>
-            <p className="text-[11px] text-zinc-500 mt-0.5">Discover cards from the community</p>
-          </div>
-          <div className="px-4 pb-3">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-1 flex gap-1">
-              <div className="flex-1 h-9 bg-zinc-800 rounded-lg" />
-              <div className="flex-1 h-9 rounded-lg" />
-            </div>
-          </div>
-        </header>
-        <div className="flex-1 px-4 pt-4 space-y-3 overflow-hidden">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl border border-zinc-800 bg-[#1e1e22] animate-pulse p-5">
-              <div className="space-y-3">
-                <div className="h-3 bg-zinc-800 rounded w-1/4" />
-                <div className="h-4 bg-zinc-800 rounded w-4/5" />
-                <div className="h-4 bg-zinc-800 rounded w-3/5" />
-                <div className="border-t border-zinc-800/60 my-3" />
-                <div className="h-3 bg-zinc-800 rounded w-2/3" />
-                <div className="h-3 bg-zinc-800 rounded w-1/2" />
-                <div className="flex gap-3 mt-2">
-                  <div className="h-3 bg-zinc-800 rounded w-12" />
-                  <div className="h-3 bg-zinc-800 rounded w-12" />
-                </div>
-              </div>
-            </div>
-          ))}
+      <div className="h-screen bg-black flex items-center justify-center lg:pl-[72px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
+          <p className="text-zinc-500 text-sm">Loading cards…</p>
         </div>
       </div>
     );
   }
-
-  if (cards.length === 0) {
-    return (
-      <div className="h-screen bg-[#09090b] flex flex-col overflow-hidden">
-        <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 relative flex-shrink-0">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
-          <div className="px-4 py-4">
-            <h1 className="text-2xl font-black text-white tracking-tight">Explore</h1>
-            <p className="text-[11px] text-zinc-500 mt-0.5">Discover cards from the community</p>
-          </div>
-          <div className="px-4 pb-3">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-1 flex gap-1">
-              <button
-                onClick={() => setFeedMode('personalized')}
-                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                  feedMode === 'personalized'
-                    ? 'bg-violet-500/15 text-violet-400 border border-violet-500/30'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                For You
-              </button>
-              <button
-                onClick={() => setFeedMode('trending')}
-                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                  feedMode === 'trending'
-                    ? 'bg-violet-500/15 text-violet-400 border border-violet-500/30'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                Trending
-              </button>
-            </div>
-          </div>
-        </header>
-        <div className="flex flex-col items-center justify-center min-h-[50vh] px-8 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
-            <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-black text-white mb-2">No cards found</h3>
-          <p className="text-sm text-zinc-500 leading-relaxed">Try switching to Trending or check back later as the community grows.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const currentCard = cards[currentIndex];
-  const isLiked = likedCards.has(currentCard.id);
-  const isSaved = savedCards.has(currentCard.id);
 
   return (
-    <div
-      ref={containerRef}
-      className="relative h-screen w-full bg-[#09090b] overflow-hidden page-enter"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Top Bar */}
-      <div className="absolute top-0 left-0 right-0 z-50">
-        {/* Violet crown line */}
-        <div className="h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
-        <div className="bg-[#09090b] border-b border-zinc-800">
-          <div className="px-4 pt-3 pb-2 flex items-center gap-3">
-            {!isSearchMode && <h1 className="text-2xl font-black text-white tracking-tight flex-1">Explore</h1>}
-            {/* Search bar */}
-            <div className={`flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl px-3 h-10 transition-all ${isSearchMode ? 'flex-1' : 'w-10 cursor-pointer'}`}
-              onClick={() => { if (!isSearchMode) { setSearchFocused(true); searchRef.current?.focus(); } }}>
-              <svg className="w-4 h-4 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              {isSearchMode && (
-                <input
-                  ref={searchRef}
-                  autoFocus
-                  value={searchQuery}
-                  onChange={e => handleSearchChange(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  placeholder="Search people..."
-                  className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-zinc-600"
-                />
-              )}
-            </div>
-            {isSearchMode && (
+    <div className="h-screen bg-black overflow-hidden lg:pl-[72px]">
+      {/* Fixed top bar */}
+      <div className="absolute top-0 left-0 right-0 lg:left-[72px] z-50">
+        <div className="px-4 pt-3 pb-2 flex items-center gap-3">
+          {!isSearchMode && (
+            <div className="flex gap-1 bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10">
               <button
-                onClick={() => { setSearchQuery(''); setSearchFocused(false); setPeopleResults([]); }}
-                className="text-xs text-zinc-400 font-semibold flex-shrink-0"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-
-          {/* People results overlay */}
-          {isSearchMode && (
-            <div className="px-4 pb-3">
-              {searchingPeople ? (
-                <div className="py-6 flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
-                </div>
-              ) : searchQuery.length < 2 ? (
-                <p className="text-xs text-zinc-600 py-4 text-center">Type at least 2 characters to search</p>
-              ) : peopleResults.length === 0 ? (
-                <p className="text-xs text-zinc-600 py-4 text-center">No people found for "{searchQuery}"</p>
-              ) : (
-                <div className="space-y-2 max-h-[55vh] overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
-                  {peopleResults.map(person => (
-                    <div key={person.id} className="flex items-center gap-3 py-2">
-                      {person.profile_picture ? (
-                        <img src={person.profile_picture.replace(/^https?:\/\/[^/]+/, '')} alt={person.username}
-                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
-                          <span className="text-white font-bold text-sm">{person.username[0]?.toUpperCase()}</span>
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-bold text-white truncate">{person.full_name || person.username}</span>
-                          {person.is_verified && <span className="text-violet-400 text-xs">✓</span>}
-                          {person.is_teacher && <span className="text-[9px] bg-violet-500/20 text-violet-300 px-1.5 py-0.5 rounded font-bold">Teacher</span>}
-                        </div>
-                        <p className="text-xs text-zinc-500">@{person.username}</p>
-                        {person.bio && <p className="text-xs text-zinc-500 truncate mt-0.5">{person.bio}</p>}
-                      </div>
-                      <button
-                        onClick={() => handleToggleFollow(person.id)}
-                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                          person.is_following
-                            ? 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-                            : 'bg-violet-600 hover:bg-violet-500 text-white'
-                        }`}
-                      >
-                        {person.is_following ? 'Following' : 'Follow'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {(subjectFilter || topicFilter) && (
-            <div className="flex items-center justify-center pb-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/15 rounded-full border border-violet-500/30">
-                <span className="text-zinc-400 text-xs">Filtered:</span>
-                <span className="text-violet-400 text-xs font-semibold">{topicFilter || subjectFilter}</span>
-                <a href="/explore" className="text-zinc-500 hover:text-zinc-300 text-xs ml-1 transition-colors">✕</a>
-              </div>
-            </div>
-          )}
-
-          {/* Tab switcher */}
-          <div className="px-4 pb-3">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-1 flex gap-1">
-              <button
-                onClick={() => { setFeedMode('personalized'); setCurrentIndex(0); setShowAnswer(false); }}
-                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                  feedMode === 'personalized'
-                    ? 'bg-violet-500/15 text-violet-400 border border-violet-500/30'
-                    : 'text-zinc-500 hover:text-zinc-300'
+                onClick={() => { setFeedMode('personalized'); }}
+                className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${
+                  feedMode === 'personalized' ? 'bg-white text-black' : 'text-white/60'
                 }`}
               >
                 For You
               </button>
               <button
-                onClick={() => { setFeedMode('trending'); setCurrentIndex(0); setShowAnswer(false); }}
-                className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-                  feedMode === 'trending'
-                    ? 'bg-violet-500/15 text-violet-400 border border-violet-500/30'
-                    : 'text-zinc-500 hover:text-zinc-300'
+                onClick={() => { setFeedMode('trending'); }}
+                className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${
+                  feedMode === 'trending' ? 'bg-white text-black' : 'text-white/60'
                 }`}
               >
                 Trending
               </button>
             </div>
+          )}
+
+          {/* Search */}
+          <div
+            className={`flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 h-10 transition-all ${isSearchMode ? 'flex-1' : 'w-10 cursor-pointer ml-auto'}`}
+            onClick={() => { if (!isSearchMode) { setSearchFocused(true); searchRef.current?.focus(); } }}
+          >
+            <svg className="w-4 h-4 text-white/60 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            {isSearchMode && (
+              <input
+                ref={searchRef}
+                autoFocus
+                value={searchQuery}
+                onChange={e => handleSearchChange(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                placeholder="Search people..."
+                className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-white/30"
+              />
+            )}
           </div>
+          {isSearchMode && (
+            <button onClick={() => { setSearchQuery(''); setSearchFocused(false); setPeopleResults([]); }}
+              className="text-white/60 text-sm font-semibold flex-shrink-0">
+              Cancel
+            </button>
+          )}
         </div>
-      </div>
 
-      {/* Main Card Display */}
-      <div className="relative h-full w-full flex items-center justify-center p-4 pt-[140px]">
-        <div
-          className="relative w-full max-w-md h-full cursor-pointer"
-          style={{ maxHeight: 'calc(85vh - 120px)' }}
-          onClick={() => setShowAnswer(!showAnswer)}
-        >
-          {/* Card Container */}
-          <div className="rounded-xl border border-zinc-800 bg-[#1e1e22] h-full flex flex-col p-6 overflow-y-auto">
-            {/* Subject / Topic badge row */}
-            <div className="flex items-center justify-between mb-5 flex-shrink-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                {currentCard.subject && (
-                  <span className="bg-zinc-800 text-zinc-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                    {currentCard.subject}
-                  </span>
-                )}
-                {currentCard.topic && (
-                  <span className="bg-zinc-800 text-zinc-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                    {currentCard.topic}
-                  </span>
-                )}
+        {/* Search results */}
+        {isSearchMode && (
+          <div className="mx-4 mt-1 bg-zinc-900/95 backdrop-blur-xl rounded-2xl border border-zinc-800 overflow-hidden max-h-[60vh] overflow-y-auto">
+            {searchingPeople ? (
+              <div className="py-8 flex items-center justify-center">
+                <div className="w-5 h-5 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
               </div>
-              <span className="bg-zinc-800 text-zinc-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">Card</span>
-            </div>
-
-            {/* Question / Answer Display */}
-            <div className="flex-1 flex items-center justify-center">
-              {!showAnswer ? (
-                <div className="text-center space-y-5 animate-fadeIn w-full">
-                  <div className="w-14 h-14 mx-auto rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-3">
-                    <svg className="w-7 h-7 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-white font-bold text-[15px] leading-snug px-2">
-                    {currentCard.question}
-                  </h2>
-                  <div className="flex items-center justify-center gap-2 animate-pulse">
-                    <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-                    <span className="text-xs font-semibold text-zinc-400">Tap to reveal answer</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full space-y-4 animate-fadeIn">
-                  {/* Answer Card */}
-                  <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-                      <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Answer</p>
+            ) : searchQuery.length < 2 ? (
+              <p className="text-xs text-zinc-600 py-6 text-center">Type to search people</p>
+            ) : peopleResults.length === 0 ? (
+              <p className="text-xs text-zinc-600 py-6 text-center">No results for "{searchQuery}"</p>
+            ) : (
+              <div className="divide-y divide-zinc-800">
+                {peopleResults.map(person => (
+                  <div key={person.id} className="flex items-center gap-3 px-4 py-3">
+                    <Avatar creator={person} size={40} />
+                    <div className="flex-1 min-w-0" onClick={() => router.push(`/profile/${person.username}`)}>
+                      <p className="text-sm font-bold text-white truncate">{person.full_name || person.username}</p>
+                      <p className="text-xs text-zinc-500">@{person.username}</p>
                     </div>
-                    <p className="text-zinc-300 font-medium text-[14px] leading-relaxed">
-                      {currentCard.answer}
-                    </p>
+                    <button
+                      onClick={() => handleToggleFollow(person.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                        person.is_following ? 'bg-zinc-800 text-zinc-400' : 'bg-violet-600 text-white'
+                      }`}
+                    >
+                      {person.is_following ? 'Following' : 'Follow'}
+                    </button>
                   </div>
-
-                  {/* Explanation */}
-                  {currentCard.explanation && (
-                    <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Explanation</p>
-                      </div>
-                      <p className="text-zinc-300 font-medium text-[14px] leading-relaxed">
-                        {currentCard.explanation}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Tags */}
-            {currentCard.tags && currentCard.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-4 flex-shrink-0">
-                {currentCard.tags.slice(0, 3).map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="bg-zinc-800 text-zinc-400 text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                  >
-                    #{tag}
-                  </span>
                 ))}
               </div>
             )}
+          </div>
+        )}
+      </div>
 
-            {/* Creator Info */}
-            {currentCard.created_by && (
-              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-zinc-800/60 flex-shrink-0">
-                <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
-                  {currentCard.created_by.profile_picture ? (
-                    <img
-                      src={currentCard.created_by.profile_picture}
-                      alt={currentCard.created_by.username}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-white font-bold text-xs">
-                      {currentCard.created_by.username[0].toUpperCase()}
-                    </span>
+      {/* TikTok scroll container */}
+      {!isSearchMode && (
+        cards.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-8">
+            <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
+              <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-black text-white mb-2">No cards yet</h3>
+            <p className="text-sm text-zinc-500 leading-relaxed">Try Trending or follow more people to see cards here.</p>
+          </div>
+        ) : (
+          <div
+            className="h-full overflow-y-scroll"
+            style={{
+              scrollSnapType: 'y mandatory',
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+            }}
+          >
+            {cards.map((card, idx) => {
+              const isFlipped = flipped.has(card.id);
+              const isLiked = liked.has(card.id);
+              const isSaved = saved.has(card.id);
+              const isFollowing = following.has(card.created_by?.id || '');
+              const lc = likeCounts[card.id] ?? card.likes;
+              const sc = saveCounts[card.id] ?? card.saves;
+
+              return (
+                <div
+                  key={card.id}
+                  className="relative w-full flex-shrink-0"
+                  style={{ height: '100svh', scrollSnapAlign: 'start' }}
+                >
+                  {/* Background gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-black to-zinc-950" />
+
+                  {/* Tap to flip */}
+                  <div
+                    className="absolute inset-0 flex flex-col justify-center px-5 pb-28 pt-24 cursor-pointer"
+                    onClick={() => handleFlip(card.id)}
+                  >
+                    {/* Subject / Topic pills */}
+                    <div className="flex items-center gap-2 flex-wrap mb-5">
+                      {card.subject && (
+                        <span className="px-3 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[11px] font-bold uppercase tracking-wide">
+                          {card.subject}
+                        </span>
+                      )}
+                      {card.topic && (
+                        <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-400 text-[11px] font-medium">
+                          {card.topic}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Card content */}
+                    <div className="flex-1 flex flex-col justify-center">
+                      {!isFlipped ? (
+                        <div className="space-y-6">
+                          <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Question</p>
+                          <h2 className="text-white text-2xl font-black leading-snug">
+                            {card.question}
+                          </h2>
+                          <div className="flex items-center gap-2 mt-4">
+                            <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+                            <span className="text-zinc-500 text-sm">Tap to reveal answer</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest">Answer</p>
+                          <p className="text-white text-xl font-bold leading-relaxed">
+                            {card.answer}
+                          </p>
+                          {card.explanation && (
+                            <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10">
+                              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Explanation</p>
+                              <p className="text-zinc-300 text-sm leading-relaxed">{card.explanation}</p>
+                            </div>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleFlip(card.id); }}
+                            className="mt-2 text-sm text-zinc-600 hover:text-zinc-400"
+                          >
+                            Tap to see question again
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Creator info — bottom left */}
+                  <div className="absolute bottom-28 left-5 right-20 z-10">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (card.created_by?.username) router.push(`/profile/${card.created_by.username}`); }}
+                      className="flex items-center gap-3"
+                    >
+                      <Avatar creator={card.created_by} size={42} />
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-white font-bold text-sm">
+                            {card.created_by?.full_name || card.created_by?.username || 'Ariel'}
+                          </span>
+                          {card.created_by?.is_verified && (
+                            <svg className="w-3.5 h-3.5 text-violet-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                        <p className="text-zinc-400 text-xs">@{card.created_by?.username || 'ariel'}</p>
+                      </div>
+                    </button>
+                    {card.created_by?.id && (
+                      <button
+                        onClick={(e) => handleFollow(e, card.created_by?.id)}
+                        className={`mt-2 px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                          isFollowing
+                            ? 'bg-transparent border-white/30 text-white/60'
+                            : 'bg-white text-black border-transparent'
+                        }`}
+                      >
+                        {isFollowing ? 'Following' : '+ Follow'}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Action buttons — right side (TikTok style) */}
+                  <div className="absolute bottom-28 right-4 flex flex-col items-center gap-6 z-10">
+                    {/* Like */}
+                    <button onClick={(e) => handleLike(e, card.id)} className="flex flex-col items-center gap-1">
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${isLiked ? 'bg-red-500/20' : 'bg-white/10'}`}>
+                        <svg className={`w-6 h-6 transition-colors ${isLiked ? 'text-red-400' : 'text-white'}`}
+                          fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                      </div>
+                      <span className="text-white text-[11px] font-semibold">{lc}</span>
+                    </button>
+
+                    {/* Save */}
+                    <button onClick={(e) => handleSave(e, card.id)} className="flex flex-col items-center gap-1">
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${isSaved ? 'bg-violet-500/20' : 'bg-white/10'}`}>
+                        <svg className={`w-6 h-6 transition-colors ${isSaved ? 'text-violet-400' : 'text-white'}`}
+                          fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                        </svg>
+                      </div>
+                      <span className="text-white text-[11px] font-semibold">{sc}</span>
+                    </button>
+
+                    {/* Share */}
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        const url = `${window.location.origin}/cards/${card.id}`;
+                        try { if (navigator.share) await navigator.share({ title: card.question, url }); else await navigator.clipboard.writeText(url); } catch {}
+                      }}
+                      className="flex flex-col items-center gap-1"
+                    >
+                      <div className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                        </svg>
+                      </div>
+                      <span className="text-white text-[11px] font-semibold">Share</span>
+                    </button>
+                  </div>
+
+                  {/* Progress dot */}
+                  <div className="absolute top-16 right-4 z-10">
+                    <span className="text-[11px] text-white/40 font-medium">{idx + 1}/{cards.length}</span>
+                  </div>
+
+                  {/* Swipe hint on first card */}
+                  {idx === 0 && cards.length > 1 && (
+                    <div className="absolute bottom-36 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce pointer-events-none z-10">
+                      <svg className="w-5 h-5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      <span className="text-white/30 text-xs">Scroll for next</span>
+                    </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-zinc-400 text-xs truncate">@{currentCard.created_by.username}</p>
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleFollow(currentCard.created_by?.id); }}
-                  className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors flex-shrink-0 ${
-                    currentCard.created_by?.id && followingCreators.has(currentCard.created_by.id)
-                      ? 'bg-zinc-700 text-zinc-300'
-                      : 'bg-violet-500/15 text-violet-400 border border-violet-500/30 hover:bg-violet-500/25'
-                  }`}
-                >
-                  {currentCard.created_by?.id && followingCreators.has(currentCard.created_by.id) ? 'Following' : 'Follow'}
-                </button>
-              </div>
-            )}
-
-            {/* Like / Save counts row */}
-            <div className="flex items-center gap-4 mt-3 flex-shrink-0">
-              <button
-                onClick={(e) => { e.stopPropagation(); handleLike(currentCard.id); }}
-                className={`flex items-center gap-1.5 text-zinc-500 hover:text-violet-400 transition-colors ${isLiked ? 'text-violet-400' : ''}`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill={isLiked ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-                <span className="text-zinc-500 text-xs font-medium">{currentCard.likes}</span>
-              </button>
-
-              <button
-                onClick={(e) => { e.stopPropagation(); handleSave(currentCard.id); }}
-                className={`flex items-center gap-1.5 text-zinc-500 hover:text-violet-400 transition-colors ${isSaved ? 'text-violet-400' : ''}`}
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill={isSaved ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-                <span className="text-zinc-500 text-xs font-medium">{currentCard.saves}</span>
-              </button>
-
-              <button
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  const shareUrl = `${window.location.origin}/cards/${currentCard.id}`;
-                  if (navigator.share) {
-                    try { await navigator.share({ title: currentCard.question, url: shareUrl }); } catch {}
-                  } else {
-                    await navigator.clipboard.writeText(shareUrl).catch(() => {});
-                  }
-                }}
-                className="flex items-center gap-1.5 text-zinc-500 hover:text-violet-400 transition-colors ml-auto"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-              </button>
-            </div>
+              );
+            })}
           </div>
-        </div>
-      </div>
-
-      {/* Progress Indicator */}
-      <div className="absolute top-[148px] right-4 z-40">
-        <div className="text-xs font-semibold bg-zinc-900/80 backdrop-blur-xl px-3 py-1.5 rounded-full border border-zinc-800">
-          <span className="text-violet-400">{currentIndex + 1}</span>
-          <span className="text-zinc-600"> / </span>
-          <span className="text-zinc-400">{cards.length}</span>
-        </div>
-      </div>
-
-      {/* Navigation arrows */}
-      <div className="absolute right-4 bottom-32 flex flex-col gap-3 z-40">
-        {currentIndex > 0 && (
-          <button
-            onClick={() => { setCurrentIndex(currentIndex - 1); setShowAnswer(false); }}
-            className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-violet-400 hover:border-violet-500/30 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
-        )}
-        {currentIndex < cards.length - 1 && (
-          <button
-            onClick={() => { setCurrentIndex(currentIndex + 1); setShowAnswer(false); }}
-            className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-500 hover:text-violet-400 hover:border-violet-500/30 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        )}
-      </div>
-
-      {/* Swipe Hint - First Time */}
-      {currentIndex === 0 && cards.length > 1 && (
-        <div className="absolute bottom-40 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 animate-bounce z-30 pointer-events-none">
-          <span className="text-zinc-500 text-xs font-semibold">Swipe up for next</span>
-          <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </div>
+        )
       )}
     </div>
   );

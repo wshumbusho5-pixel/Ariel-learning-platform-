@@ -12,6 +12,15 @@ import Onboarding from '@/components/Onboarding';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+const STRIP_COLOR: Record<string, string> = {
+  gospel: 'via-amber-400', business: 'via-sky-400', economics: 'via-violet-400',
+  technology: 'via-zinc-400', health: 'via-rose-400', mathematics: 'via-indigo-400',
+  sciences: 'via-emerald-400', history: 'via-amber-400', literature: 'via-orange-400',
+  languages: 'via-teal-400', law: 'via-slate-400', arts: 'via-fuchsia-400',
+  psychology: 'via-cyan-400', engineering: 'via-yellow-400', geography: 'via-lime-400',
+  other: 'via-zinc-400',
+};
+
 interface FeedCard {
   id: string;
   question: string;
@@ -48,22 +57,22 @@ const SUBJECT_META: Record<string, {
   label: string; short: string; icon: string;
   gradient: string; ring: string; keywords: string[];
 }> = {
-  gospel:      { label: 'Gospel & Faith',   short: 'Gospel',     icon: '✝️',  gradient: 'from-amber-700 to-yellow-600',  ring: 'ring-amber-500',   keywords: ['bible','gospel','faith','theology','scripture','church','religion'] },
-  business:    { label: 'Business',          short: 'Business',   icon: '💼',  gradient: 'from-sky-700 to-blue-600',      ring: 'ring-amber-500',     keywords: ['business','marketing','finance','management','accounting','sales'] },
-  economics:   { label: 'Economics',         short: 'Economics',  icon: '📈',  gradient: 'from-violet-700 to-purple-600', ring: 'ring-violet-300',  keywords: ['economics','gdp','inflation','trade','monetary','fiscal','economy'] },
-  technology:  { label: 'Technology',        short: 'Tech',       icon: '💻',  gradient: 'from-zinc-600 to-zinc-500',     ring: 'ring-zinc-400',    keywords: ['programming','software','coding','javascript','python','ai','data'] },
-  health:      { label: 'Health & Medicine', short: 'Health',     icon: '🧬',  gradient: 'from-rose-700 to-pink-600',     ring: 'ring-rose-500',    keywords: ['health','medicine','anatomy','nutrition','fitness','psychology'] },
-  mathematics: { label: 'Mathematics',       short: 'Maths',      icon: '📐',  gradient: 'from-indigo-700 to-emerald-500', ring: 'ring-emerald-500',  keywords: ['mathematics','calculus','algebra','geometry','statistics','math'] },
-  sciences:    { label: 'Sciences',          short: 'Sciences',   icon: '🔬',  gradient: 'from-emerald-700 to-green-600', ring: 'ring-emerald-500', keywords: ['biology','chemistry','physics','science','lab'] },
-  history:     { label: 'History',           short: 'History',    icon: '🏛️',  gradient: 'from-stone-600 to-stone-500',   ring: 'ring-stone-400',   keywords: ['history','historical','civilization','war','ancient'] },
-  literature:  { label: 'Literature',        short: 'Lit',        icon: '📚',  gradient: 'from-orange-700 to-orange-600', ring: 'ring-orange-500',  keywords: ['literature','english','writing','poetry','novel'] },
-  languages:   { label: 'Languages',         short: 'Languages',  icon: '🌍',  gradient: 'from-teal-700 to-teal-500',     ring: 'ring-teal-500',    keywords: ['language','french','spanish','swahili','grammar','vocabulary'] },
-  law:         { label: 'Law',               short: 'Law',        icon: '⚖️',  gradient: 'from-gray-700 to-gray-500',     ring: 'ring-gray-400',    keywords: ['law','legal','constitution','rights','court'] },
-  arts:        { label: 'Arts & Music',      short: 'Arts',       icon: '🎨',  gradient: 'from-fuchsia-700 to-pink-600',  ring: 'ring-fuchsia-500', keywords: ['art','music','design','creative','paint'] },
-  psychology:  { label: 'Psychology',        short: 'Psych',      icon: '🧠',  gradient: 'from-cyan-700 to-cyan-500',     ring: 'ring-cyan-500',    keywords: ['psychology','mental','behavior','cognitive','therapy'] },
-  engineering: { label: 'Engineering',       short: 'Eng.',       icon: '⚙️',  gradient: 'from-yellow-700 to-yellow-600', ring: 'ring-yellow-500',  keywords: ['engineering','mechanical','electrical','civil','structure'] },
-  geography:   { label: 'Geography',         short: 'Geography',  icon: '🗺️',  gradient: 'from-lime-700 to-lime-500',     ring: 'ring-lime-500',    keywords: ['geography','map','climate','continent','country'] },
-  other:       { label: 'General',           short: 'General',    icon: '✨',  gradient: 'from-zinc-700 to-zinc-600',     ring: 'ring-zinc-600',    keywords: [] },
+  gospel:      { label: 'Gospel & Faith',   short: 'Gospel',     icon: '✝️',  gradient: 'from-amber-400 to-transparent',   ring: 'ring-amber-500',   keywords: ['bible','gospel','faith','theology','scripture','church','religion'] },
+  business:    { label: 'Business',          short: 'Business',   icon: '💼',  gradient: 'from-sky-400 to-transparent',     ring: 'ring-amber-500',   keywords: ['business','marketing','finance','management','accounting','sales'] },
+  economics:   { label: 'Economics',         short: 'Economics',  icon: '📈',  gradient: 'from-violet-400 to-transparent',  ring: 'ring-violet-300',  keywords: ['economics','gdp','inflation','trade','monetary','fiscal','economy'] },
+  technology:  { label: 'Technology',        short: 'Tech',       icon: '💻',  gradient: 'from-zinc-500 to-transparent',    ring: 'ring-zinc-400',    keywords: ['programming','software','coding','javascript','python','ai','data'] },
+  health:      { label: 'Health & Medicine', short: 'Health',     icon: '🧬',  gradient: 'from-rose-400 to-transparent',    ring: 'ring-rose-500',    keywords: ['health','medicine','anatomy','nutrition','fitness','psychology'] },
+  mathematics: { label: 'Mathematics',       short: 'Maths',      icon: '📐',  gradient: 'from-indigo-400 to-transparent',  ring: 'ring-emerald-500', keywords: ['mathematics','calculus','algebra','geometry','statistics','math'] },
+  sciences:    { label: 'Sciences',          short: 'Sciences',   icon: '🔬',  gradient: 'from-emerald-400 to-transparent', ring: 'ring-emerald-500', keywords: ['biology','chemistry','physics','science','lab'] },
+  history:     { label: 'History',           short: 'History',    icon: '🏛️',  gradient: 'from-amber-400 to-transparent',   ring: 'ring-stone-400',   keywords: ['history','historical','civilization','war','ancient'] },
+  literature:  { label: 'Literature',        short: 'Lit',        icon: '📚',  gradient: 'from-orange-400 to-transparent',  ring: 'ring-orange-500',  keywords: ['literature','english','writing','poetry','novel'] },
+  languages:   { label: 'Languages',         short: 'Languages',  icon: '🌍',  gradient: 'from-teal-400 to-transparent',    ring: 'ring-teal-500',    keywords: ['language','french','spanish','swahili','grammar','vocabulary'] },
+  law:         { label: 'Law',               short: 'Law',        icon: '⚖️',  gradient: 'from-slate-400 to-transparent',   ring: 'ring-gray-400',    keywords: ['law','legal','constitution','rights','court'] },
+  arts:        { label: 'Arts & Music',      short: 'Arts',       icon: '🎨',  gradient: 'from-fuchsia-400 to-transparent', ring: 'ring-fuchsia-500', keywords: ['art','music','design','creative','paint'] },
+  psychology:  { label: 'Psychology',        short: 'Psych',      icon: '🧠',  gradient: 'from-cyan-400 to-transparent',    ring: 'ring-cyan-500',    keywords: ['psychology','mental','behavior','cognitive','therapy'] },
+  engineering: { label: 'Engineering',       short: 'Eng.',       icon: '⚙️',  gradient: 'from-yellow-400 to-transparent',  ring: 'ring-yellow-500',  keywords: ['engineering','mechanical','electrical','civil','structure'] },
+  geography:   { label: 'Geography',         short: 'Geography',  icon: '🗺️',  gradient: 'from-lime-400 to-transparent',    ring: 'ring-lime-500',    keywords: ['geography','map','climate','continent','country'] },
+  other:       { label: 'General',           short: 'General',    icon: '✨',  gradient: 'from-zinc-500 to-transparent',    ring: 'ring-zinc-600',    keywords: [] },
 };
 
 const TOPICS_BY_SUBJECT: Record<string, Record<string, string[]>> = {
@@ -193,7 +202,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   return (
     <div className="overflow-hidden relative rounded-xl border border-zinc-700/60 bg-[#1e1e22] mb-3">
       {/* Subject colour strip — instant visual identity */}
-      <div className={`h-[2px] w-full bg-gradient-to-r ${meta.gradient}`} />
+      <div className={`h-[2px] w-full bg-gradient-to-r from-transparent ${STRIP_COLOR[key] ?? 'via-zinc-400'} to-transparent`} />
 
       {/* Save toast */}
       {saveToast && (
@@ -608,7 +617,14 @@ export default function Dashboard() {
     ]).then(([gam, due, feed, reelsRes]) => {
       setGamification(gam || {});
       setDueCards((due as DueCard[]) || []);
-      setFeedCards((feed as FeedCard[]) || []);
+      // Map created_by fields to author_* fields expected by dashboard
+      const mappedFeed = ((feed as any[]) || []).map((card: any) => ({
+        ...card,
+        author_username: card.author_username || card.created_by?.username,
+        author_full_name: card.author_full_name || card.created_by?.full_name,
+        author_profile_picture: card.author_profile_picture || card.created_by?.profile_picture,
+      }));
+      setFeedCards(mappedFeed as FeedCard[]);
       const allReels: Reel[] = (reelsRes as any).data ?? [];
       setReels(allReels.filter(r => r.video_url && r.kind !== 'card'));
     }).finally(() => setDataLoading(false));

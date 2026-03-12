@@ -12,6 +12,7 @@ class MessageType(str, Enum):
     IMAGE = "image"
     DECK_SHARE = "deck_share"  # Sharing a deck
     CARD_SHARE = "card_share"  # Sharing a specific card
+    REEL_SHARE = "reel_share"  # Sharing a reel/video
 
 
 class Message(BaseModel):
@@ -31,6 +32,7 @@ class Message(BaseModel):
     # Shared content
     shared_deck_id: Optional[str] = None
     shared_card_id: Optional[str] = None
+    shared_reel_id: Optional[str] = None
 
     # Reply threading
     reply_to_message_id: Optional[str] = None
@@ -109,6 +111,7 @@ class MessageWithSender(BaseModel):
     image_url: Optional[str]
     shared_deck_id: Optional[str]
     shared_card_id: Optional[str]
+    shared_reel_id: Optional[str] = None
     is_read: bool
     read_at: Optional[datetime]
 
@@ -140,4 +143,5 @@ class MessageCreate(BaseModel):
     image_url: Optional[str] = None
     shared_deck_id: Optional[str] = None
     shared_card_id: Optional[str] = None
+    shared_reel_id: Optional[str] = None
     reply_to_message_id: Optional[str] = None

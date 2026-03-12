@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { messagesAPI } from '@/lib/api';
+import { messagesAPI, cardsAPI, authAPI } from '@/lib/api';
+import api from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 
@@ -13,6 +14,8 @@ interface MessageItem {
   receiver_id: string;
   content: string;
   message_type: string;
+  shared_card_id?: string;
+  shared_reel_id?: string;
   is_sent_by_current_user: boolean;
   sender_username?: string;
   sender_full_name?: string;
@@ -31,6 +34,24 @@ interface ConversationInfo {
   other_user_username?: string;
   other_user_full_name?: string;
   other_user_profile_picture?: string;
+  other_user_last_seen?: string;
+}
+
+// Online = last_seen within 2 minutes
+function isOnline(lastSeen?: string): boolean {
+  if (!lastSeen) return false;
+  return Date.now() - new Date(lastSeen).getTime() < 2 * 60 * 1000;
+}
+
+function lastSeenLabel(lastSeen?: string): string {
+  if (!lastSeen) return '';
+  const diff = Date.now() - new Date(lastSeen).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 2) return 'Online';
+  if (mins < 60) return `Active ${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `Active ${hrs}h ago`;
+  return `Active ${Math.floor(hrs / 24)}d ago`;
 }
 
 interface ReplyTarget {
@@ -65,6 +86,35 @@ function formatDateLabel(d: string) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+// ─── Read receipt checkmarks (WhatsApp-style) ──────────────────
+function ReadReceipt({ isRead, isOptimistic }: { isRead: boolean; isOptimistic: boolean }) {
+  if (isOptimistic) {
+    // Single gray clock = sending
+    return (
+      <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+      </svg>
+    );
+  }
+  if (isRead) {
+    // Double violet tick = read
+    return (
+      <svg className="w-4 h-3.5 text-violet-500" viewBox="0 0 20 14" fill="none">
+        <path d="M1 7l5 5L15 2" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M6 7l5 5L20 2" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    );
+  }
+  // Double gray tick = delivered (received but not opened)
+  return (
+    <svg className="w-4 h-3.5 text-gray-300" viewBox="0 0 20 14" fill="none">
+      <path d="M1 7l5 5L15 2" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M6 7l5 5L20 2" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
 function Avatar({ name, src, size = 'sm' }: { name?: string; src?: string; size?: 'sm' | 'md' }) {
   const [broken, setBroken] = useState(false);
   const sizes = { sm: 'w-8 h-8 text-xs', md: 'w-10 h-10 text-sm' };
@@ -91,10 +141,17 @@ export default function ConversationPage() {
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
   const [selectedMsgId, setSelectedMsgId] = useState<string | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerTab, setPickerTab] = useState<'cards' | 'reels'>('cards');
+  const [pickerCards, setPickerCards] = useState<{ id: string; question: string; subject?: string }[]>([]);
+  const [pickerReels, setPickerReels] = useState<{ id: string; title: string; thumbnail_url?: string; creator_username: string }[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const presencePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTapRef = useRef<Record<string, number>>({});
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
@@ -110,20 +167,32 @@ export default function ConversationPage() {
     if (!silent) setLoading(false);
   }, [conversationId]);
 
-  useEffect(() => {
-    messagesAPI.getConversations()
-      .then(convos => {
-        const found = convos.find((c: ConversationInfo) => c.id === conversationId);
-        if (found) setConvoInfo(found);
-      })
-      .catch(() => {});
+  const loadConvoInfo = useCallback(async () => {
+    try {
+      const convos = await messagesAPI.getConversations();
+      const found = convos.find((c: ConversationInfo) => c.id === conversationId);
+      if (found) setConvoInfo(found);
+    } catch {}
   }, [conversationId]);
+
+  useEffect(() => { loadConvoInfo(); }, [loadConvoInfo]);
 
   useEffect(() => {
     loadMessages(false);
+    // Poll messages every 5s
     pollRef.current = setInterval(() => loadMessages(true), 5000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [loadMessages]);
+    // Poll presence every 30s (to update "online" status of other user)
+    presencePollRef.current = setInterval(() => loadConvoInfo(), 30000);
+    // Send heartbeat immediately then every 30s
+    authAPI.heartbeat().catch(() => {});
+    heartbeatRef.current = setInterval(() => authAPI.heartbeat().catch(() => {}), 30000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      if (presencePollRef.current) clearInterval(presencePollRef.current);
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+    };
+  }, [loadMessages, loadConvoInfo]);
 
   useEffect(() => { scrollToBottom('smooth'); }, [messages, scrollToBottom]);
   useEffect(() => { if (!loading) scrollToBottom('instant' as ScrollBehavior); }, [loading, scrollToBottom]);
@@ -164,6 +233,73 @@ export default function ConversationPage() {
       if (replyId) setReplyTo(replyTo);
     }
     setSending(false);
+  };
+
+  // ── Load picker content ───────────────────────────────────────
+  const openPicker = async () => {
+    setShowPicker(true);
+    setShowEmoji(false);
+    setSelectedMsgId(null);
+    if (pickerCards.length > 0 || pickerReels.length > 0) return; // already loaded
+    setPickerLoading(true);
+    try {
+      const [cards, reelsRes] = await Promise.all([
+        cardsAPI.getTrendingCards(20).catch(() => []),
+        api.get('/api/reels/feed?limit=20').then(r => r.data).catch(() => []),
+      ]);
+      setPickerCards(cards);
+      setPickerReels(reelsRes.filter((r: { video_url?: string }) => r.video_url));
+    } finally {
+      setPickerLoading(false);
+    }
+  };
+
+  const handleSendCard = async (card: { id: string; question: string; subject?: string }) => {
+    setShowPicker(false);
+    const optimistic: MessageItem = {
+      id: `optimistic-${Date.now()}`,
+      conversation_id: conversationId,
+      sender_id: 'me',
+      receiver_id: '',
+      content: `Shared a card: "${card.question}"`,
+      message_type: 'card_share',
+      shared_card_id: card.id,
+      reactions: {},
+      is_read: false,
+      is_sent_by_current_user: true,
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimistic]);
+    try {
+      const sent = await messagesAPI.sendMessage(conversationId, `Shared a card: "${card.question}"`, 'card_share', undefined, card.id);
+      setMessages(prev => prev.map(m => m.id === optimistic.id ? { ...sent, shared_card_id: card.id } : m));
+    } catch {
+      setMessages(prev => prev.filter(m => m.id !== optimistic.id));
+    }
+  };
+
+  const handleSendReel = async (reel: { id: string; title: string; thumbnail_url?: string; creator_username: string }) => {
+    setShowPicker(false);
+    const optimistic: MessageItem = {
+      id: `optimistic-${Date.now()}`,
+      conversation_id: conversationId,
+      sender_id: 'me',
+      receiver_id: '',
+      content: `Shared a video: "${reel.title}"`,
+      message_type: 'reel_share',
+      shared_reel_id: reel.id,
+      reactions: {},
+      is_read: false,
+      is_sent_by_current_user: true,
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, optimistic]);
+    try {
+      const sent = await messagesAPI.sendMessage(conversationId, `Shared a video: "${reel.title}"`, 'reel_share', undefined, undefined, undefined, reel.id);
+      setMessages(prev => prev.map(m => m.id === optimistic.id ? { ...sent, shared_reel_id: reel.id } : m));
+    } catch {
+      setMessages(prev => prev.filter(m => m.id !== optimistic.id));
+    }
   };
 
   // ── Double-tap to react ───────────────────────────────────────
@@ -232,23 +368,28 @@ export default function ConversationPage() {
       <SideNav />
       <div
         className="fixed inset-0 lg:left-[72px] bg-white flex flex-col"
-        onClick={() => { setSelectedMsgId(null); setShowEmoji(false); }}
+        onClick={() => { setSelectedMsgId(null); setShowEmoji(false); setShowPicker(false); }}
       >
         {/* Header */}
         <div className="flex-shrink-0 flex items-center gap-3 px-3 h-14 border-b border-gray-100 bg-white z-10">
-          <button onClick={() => router.push('/messages')} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 flex-shrink-0">
+          <button onClick={() => router.push('/messages')} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 flex-shrink-0" aria-label="Back to Rooms">
             <svg className="w-5 h-5 text-zinc-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
-            <Avatar name={otherName} src={convoInfo?.other_user_profile_picture} size="sm" />
+            {/* Avatar with online ring */}
+            <div className="relative flex-shrink-0">
+              <Avatar name={otherName} src={convoInfo?.other_user_profile_picture} size="sm" />
+              {isOnline(convoInfo?.other_user_last_seen) && (
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white" />
+              )}
+            </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-bold text-zinc-900 truncate">{otherName}</p>
-                <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
-              </div>
-              {otherUsername && <p className="text-[11px] text-gray-400">@{otherUsername}</p>}
+              <p className="text-sm font-bold text-zinc-900 truncate">{otherName}</p>
+              <p className={`text-[11px] font-medium ${isOnline(convoInfo?.other_user_last_seen) ? 'text-emerald-500' : 'text-gray-400'}`}>
+                {lastSeenLabel(convoInfo?.other_user_last_seen) || (otherUsername ? `@${otherUsername}` : '')}
+              </p>
             </div>
           </div>
         </div>
@@ -337,6 +478,49 @@ export default function ConversationPage() {
                               <p className="truncate">{msg.reply_to_content}</p>
                             </div>
                           )}
+
+                          {/* Card share preview */}
+                          {msg.message_type === 'card_share' && msg.shared_card_id && (
+                            <a
+                              href={`/cards/${msg.shared_card_id}`}
+                              onClick={e => e.stopPropagation()}
+                              className={`block mb-2 rounded-xl overflow-hidden border ${isMine ? 'border-white/20 bg-white/10' : 'border-violet-200 bg-violet-50'}`}
+                            >
+                              <div className={`px-3 py-2.5 flex items-center gap-2`}>
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isMine ? 'bg-white/20' : 'bg-violet-100'}`}>
+                                  <svg className={`w-4 h-4 ${isMine ? 'text-white' : 'text-violet-500'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                </div>
+                                <div className="min-w-0">
+                                  <p className={`text-[10px] font-bold uppercase tracking-wide ${isMine ? 'text-white/60' : 'text-violet-400'}`}>Flash Card</p>
+                                  <p className={`text-xs font-semibold truncate ${isMine ? 'text-white' : 'text-violet-700'}`}>Tap to study</p>
+                                </div>
+                              </div>
+                            </a>
+                          )}
+
+                          {/* Reel share preview */}
+                          {msg.message_type === 'reel_share' && msg.shared_reel_id && (
+                            <a
+                              href={`/reels/${msg.shared_reel_id}`}
+                              onClick={e => e.stopPropagation()}
+                              className={`block mb-2 rounded-xl overflow-hidden border ${isMine ? 'border-white/20 bg-white/10' : 'border-violet-200 bg-violet-50'}`}
+                            >
+                              <div className="px-3 py-2.5 flex items-center gap-2">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isMine ? 'bg-white/20' : 'bg-violet-100'}`}>
+                                  <svg className={`w-4 h-4 ${isMine ? 'text-white' : 'text-violet-500'}`} fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
+                                  </svg>
+                                </div>
+                                <div className="min-w-0">
+                                  <p className={`text-[10px] font-bold uppercase tracking-wide ${isMine ? 'text-white/60' : 'text-violet-400'}`}>Video Clip</p>
+                                  <p className={`text-xs font-semibold truncate ${isMine ? 'text-white' : 'text-violet-700'}`}>Tap to watch</p>
+                                </div>
+                              </div>
+                            </a>
+                          )}
+
                           {msg.content}
                         </button>
 
@@ -353,10 +537,13 @@ export default function ConversationPage() {
                       </div>
                     </div>
 
-                    {/* Timestamp under last message */}
+                    {/* Timestamp + read receipt */}
                     {isLastInGroup && (
-                      <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} px-1 mb-2 mt-1`}>
+                      <div className={`flex items-center gap-1 ${isMine ? 'justify-end' : 'justify-start'} px-1 mb-2 mt-1`}>
                         <span className="text-[10px] text-gray-300">{formatTime(msg.created_at)}</span>
+                        {isMine && (
+                          <ReadReceipt isRead={msg.is_read} isOptimistic={msg.id.startsWith('optimistic-')} />
+                        )}
                       </div>
                     )}
                   </div>
@@ -366,6 +553,83 @@ export default function ConversationPage() {
             </div>
           )}
         </div>
+
+        {/* Content picker — cards & reels */}
+        {showPicker && (
+          <div className="flex-shrink-0 border-t border-gray-100 bg-white" onClick={e => e.stopPropagation()}>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-100 px-3 pt-2">
+              {(['cards', 'reels'] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setPickerTab(tab)}
+                  className={`px-4 py-2 text-xs font-bold capitalize border-b-2 transition-colors ${pickerTab === tab ? 'border-violet-600 text-violet-600' : 'border-transparent text-gray-400'}`}
+                >
+                  {tab === 'cards' ? 'Flash Cards' : 'Videos'}
+                </button>
+              ))}
+              <button onClick={() => setShowPicker(false)} className="ml-auto text-gray-300 hover:text-gray-500 p-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {pickerLoading ? (
+              <div className="flex justify-center py-6">
+                <div className="w-5 h-5 border-2 border-gray-200 border-t-violet-600 rounded-full animate-spin" />
+              </div>
+            ) : pickerTab === 'cards' ? (
+              <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
+                  {pickerCards.length === 0 ? (
+                    <p className="text-xs text-gray-400 px-2 py-4">No cards found</p>
+                  ) : pickerCards.map(card => (
+                    <button
+                      key={card.id}
+                      onClick={() => handleSendCard(card)}
+                      className="flex-shrink-0 w-40 text-left bg-gray-50 border border-gray-200 rounded-2xl p-3 active:scale-95 transition-transform"
+                    >
+                      {card.subject && (
+                        <span className="text-[9px] font-bold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full">{card.subject}</span>
+                      )}
+                      <p className="text-xs font-semibold text-zinc-800 mt-1.5 line-clamp-3 leading-snug">{card.question}</p>
+                      <p className="text-[10px] text-violet-500 font-bold mt-2">Tap to send</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex gap-2 px-3 py-3" style={{ width: 'max-content' }}>
+                  {pickerReels.length === 0 ? (
+                    <p className="text-xs text-gray-400 px-2 py-4">No videos found</p>
+                  ) : pickerReels.map(reel => (
+                    <button
+                      key={reel.id}
+                      onClick={() => handleSendReel(reel)}
+                      className="flex-shrink-0 w-28 text-left active:scale-95 transition-transform"
+                    >
+                      <div className="w-28 rounded-xl overflow-hidden bg-zinc-200" style={{ aspectRatio: '9/16' }}>
+                        {reel.thumbnail_url ? (
+                          <img src={reel.thumbnail_url.replace(/^https?:\/\/[^/]+/, '')} alt={reel.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-zinc-200">
+                            <svg className="w-6 h-6 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-semibold text-zinc-800 mt-1.5 line-clamp-2 leading-snug">{reel.title}</p>
+                      <p className="text-[10px] text-violet-500 font-bold mt-0.5">Tap to send</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Emoji picker */}
         {showEmoji && (
@@ -405,10 +669,21 @@ export default function ConversationPage() {
           <div className="flex items-center gap-2">
             {/* Emoji toggle */}
             <button
-              onClick={() => { setShowEmoji(v => !v); setSelectedMsgId(null); }}
+              onClick={() => { setShowEmoji(v => !v); setSelectedMsgId(null); setShowPicker(false); }}
               className={`w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0 transition-colors ${showEmoji ? 'bg-violet-100 text-violet-600' : 'text-zinc-400 hover:text-zinc-600'}`}
             >
               <span className="text-xl">😊</span>
+            </button>
+
+            {/* Share content button */}
+            <button
+              onClick={() => { openPicker(); setShowEmoji(false); }}
+              className={`w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0 transition-colors ${showPicker ? 'bg-violet-100 text-violet-600' : 'text-zinc-400 hover:text-zinc-600'}`}
+              title="Share a card or video"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
             </button>
 
             <input

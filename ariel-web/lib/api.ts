@@ -82,6 +82,10 @@ export const authAPI = {
     });
     return response.data;
   },
+
+  heartbeat: async () => {
+    await api.post('/api/auth/heartbeat');
+  },
 };
 
 // Progress API
@@ -393,8 +397,8 @@ export const socialAPI = {
     return response.data;
   },
 
-  // Personalized Feed
-  getPersonalizedFeed: async (limit: number = 50, offset: number = 0) => {
+  // Personalized Feed (deck posts for social feed page)
+  getSocialFeed: async (limit: number = 50, offset: number = 0) => {
     const response = await api.get(`/api/social/feed?limit=${limit}&offset=${offset}`);
     return response.data;
   },
@@ -649,12 +653,13 @@ export const messagesAPI = {
     return response.data;
   },
 
-  sendMessage: async (conversationId: string, content: string, messageType: string = 'text', sharedDeckId?: string, sharedCardId?: string, replyToMessageId?: string) => {
+  sendMessage: async (conversationId: string, content: string, messageType: string = 'text', sharedDeckId?: string, sharedCardId?: string, replyToMessageId?: string, sharedReelId?: string) => {
     const response = await api.post(`/api/messages/conversation/${conversationId}/send`, {
       content,
       message_type: messageType,
       shared_deck_id: sharedDeckId,
       shared_card_id: sharedCardId,
+      shared_reel_id: sharedReelId,
       reply_to_message_id: replyToMessageId,
     });
     return response.data;

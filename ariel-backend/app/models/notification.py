@@ -39,6 +39,9 @@ class NotificationType(str, Enum):
     TRENDING_DECK = "trending_deck"  # Your deck is trending
     LEADERBOARD_RANK = "leaderboard_rank"  # You moved up in leaderboard
 
+    # Duels
+    DUEL_CHALLENGE = "duel_challenge"  # Someone challenged you to a duel
+
 
 class Notification(BaseModel):
     """

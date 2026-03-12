@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import SideNav from '@/components/SideNav';
 import BottomNav from '@/components/BottomNav';
-import { cardsAPI, duelsAPI, socialAPI } from '@/lib/api';
+import { cardsAPI, duelsAPI, socialAPI, notificationsAPI } from '@/lib/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -78,11 +78,25 @@ export default function DuelsPage() {
   const [challengeSent, setChallengeSent] = useState('');
   const [matchmakingLoading, setMatchmakingLoading] = useState(false);
   const [wsError, setWsError] = useState('');
+  const gameStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const quickMatchInProgress = useRef(false);  // ref guard — immune to stale state
+
+  const [incomingChallenge, setIncomingChallenge] = useState<{ roomId: string; from: string; notifId: string } | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const botRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const challengePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const seenNotifIds = useRef<Set<string>>(new Set());
+
+  // Refs to avoid stale closures in async callbacks
+  const phaseRef = useRef<Phase>('lobby');
+  const userScoreRef = useRef(0);
+  const opponentScoreRef = useRef(0);
+
+  // Keep phaseRef in sync
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
 
   const currentCard = cards[currentIndex];
   const displayOpponent = mode === 'online' ? (opponentName || '...') : botName;
@@ -100,12 +114,44 @@ export default function DuelsPage() {
     if (timerRef.current) clearInterval(timerRef.current);
     if (botRef.current) clearTimeout(botRef.current);
     if (pollRef.current) clearInterval(pollRef.current);
+    if (gameStartTimeoutRef.current) clearTimeout(gameStartTimeoutRef.current);
   };
 
   useEffect(() => () => {
     clearTimers();
     wsRef.current?.close();
   }, []);
+
+  // Poll for incoming challenges every 5s while in lobby
+  useEffect(() => {
+    if (phase !== 'lobby') {
+      if (challengePollRef.current) clearInterval(challengePollRef.current);
+      return;
+    }
+    const checkChallenges = async () => {
+      try {
+        const data = await notificationsAPI.getNotifications(20, 0);
+        const notifs = Array.isArray(data) ? data : (data?.notifications || []);
+        const pending = notifs.find((n: any) =>
+          n.notification_type === 'duel_challenge' &&
+          !n.is_read &&
+          n.metadata?.room_id &&
+          !seenNotifIds.current.has(n.id)
+        );
+        if (pending) {
+          seenNotifIds.current.add(pending.id);
+          setIncomingChallenge({
+            roomId: pending.metadata.room_id,
+            from: pending.actor_username || 'Someone',
+            notifId: pending.id,
+          });
+        }
+      } catch {}
+    };
+    checkChallenges(); // immediate first check
+    challengePollRef.current = setInterval(checkChallenges, 5000);
+    return () => { if (challengePollRef.current) clearInterval(challengePollRef.current); };
+  }, [phase]);
 
   // ── Solo helpers ────────────────────────────────────────────────────────────
 
@@ -162,19 +208,31 @@ export default function DuelsPage() {
 
   const resolveRound = useCallback((userCorrect: boolean, opponentCorrect: boolean, nextIdx: number, allCards: DuelCard[]) => {
     clearTimers();
-    let result: 'win' | 'lose' | 'tie' = 'tie';
-    if (userCorrect && !opponentCorrect) { setUserScore(s => s + 1); result = 'win'; }
-    else if (opponentCorrect && !userCorrect) { setOpponentScore(s => s + 1); result = 'lose'; }
-    else if (userCorrect && opponentCorrect) {
-      setUserScore(s => s + 1);
-      setOpponentScore(s => s + 1);
+    let roundRes: 'win' | 'lose' | 'tie' = 'tie';
+
+    if (userCorrect && !opponentCorrect) {
+      userScoreRef.current += 1;
+      setUserScore(userScoreRef.current);
+      roundRes = 'win';
+    } else if (opponentCorrect && !userCorrect) {
+      opponentScoreRef.current += 1;
+      setOpponentScore(opponentScoreRef.current);
+      roundRes = 'lose';
+    } else if (userCorrect && opponentCorrect) {
+      userScoreRef.current += 1;
+      opponentScoreRef.current += 1;
+      setUserScore(userScoreRef.current);
+      setOpponentScore(opponentScoreRef.current);
     }
-    setRoundResult(result);
+    setRoundResult(roundRes);
     setPhase('reveal');
 
     setTimeout(() => {
       if (nextIdx >= ROUNDS) {
-        setFinalResult(result); // approximate, will be overwritten by game_over for online
+        // Compare total scores — NOT just the last round result
+        const u = userScoreRef.current;
+        const o = opponentScoreRef.current;
+        setFinalResult(u > o ? 'win' : o > u ? 'lose' : 'tie');
         setPhase('complete');
       } else {
         setCurrentIndex(nextIdx);
@@ -201,6 +259,8 @@ export default function DuelsPage() {
     const loaded = await loadSoloCards();
     setCards(loaded);
     setCurrentIndex(0);
+    userScoreRef.current = 0;
+    opponentScoreRef.current = 0;
     setUserScore(0);
     setOpponentScore(0);
     setPhase('countdown');
@@ -219,21 +279,24 @@ export default function DuelsPage() {
   // ── Online: Quick Match ──────────────────────────────────────────────────────
 
   const startQuickMatch = async () => {
+    if (quickMatchInProgress.current) return;  // ref guard — blocks even before state updates
+    quickMatchInProgress.current = true;
     setMatchmakingLoading(true);
     setWsError('');
     try {
       const data = await duelsAPI.quickMatch();
       setRoomId(data.room_id);
+      setPhase('waiting');
       if (data.status === 'joined' && data.opponent_username) {
         setOpponentName(data.opponent_username);
-        connectToRoom(data.room_id);
+        setMatchmakingStatus(`Found opponent! Connecting...`);
       } else {
-        setPhase('waiting');
         setMatchmakingStatus('Looking for an opponent...');
-        connectToRoom(data.room_id);
       }
+      connectToRoom(data.room_id);
     } catch {
       setWsError('Could not connect. Please try again.');
+      quickMatchInProgress.current = false;
     } finally {
       setMatchmakingLoading(false);
     }
@@ -305,7 +368,8 @@ export default function DuelsPage() {
 
     ws.onerror = () => setWsError('Connection error. Please try again.');
     ws.onclose = () => {
-      if (phase !== 'complete') setWsError('Disconnected from server.');
+      // Use ref — not stale closure — to check if game already finished
+      if (phaseRef.current !== 'complete') setWsError('Disconnected from server.');
     };
   };
 
@@ -322,10 +386,22 @@ export default function DuelsPage() {
 
       case 'player_joined':
         setOpponentName(msg.opponent_username || 'Opponent');
-        setMatchmakingStatus(`${msg.opponent_username} joined!`);
+        setMatchmakingStatus(`${msg.opponent_username} is ready! Starting soon...`);
+        // Fallback: if game_start never arrives within 10s, show error
+        if (gameStartTimeoutRef.current) clearTimeout(gameStartTimeoutRef.current);
+        gameStartTimeoutRef.current = setTimeout(() => {
+          if (phaseRef.current === 'waiting') {
+            setWsError('Game failed to start. Please try again.');
+          }
+        }, 10000);
+        break;
+
+      case 'error':
+        setWsError(msg.message || 'Something went wrong.');
         break;
 
       case 'game_start':
+        if (gameStartTimeoutRef.current) clearTimeout(gameStartTimeoutRef.current);
         setPhase('countdown');
         setUserScore(0);
         setOpponentScore(0);
@@ -399,9 +475,13 @@ export default function DuelsPage() {
 
       case 'game_over':
         clearTimers();
+        userScoreRef.current = msg.you_score;
+        opponentScoreRef.current = msg.opponent_score;
         setUserScore(msg.you_score);
         setOpponentScore(msg.opponent_score);
-        setFinalResult(msg.result);
+        setFinalResult(msg.result === 'win' ? 'win' : msg.result === 'lose' ? 'lose' : 'tie');
+        // Mark complete immediately via ref so ws.onclose doesn't fire error
+        phaseRef.current = 'complete';
         setTimeout(() => setPhase('complete'), 2200);
         break;
 
@@ -418,6 +498,9 @@ export default function DuelsPage() {
     clearTimers();
     wsRef.current?.close();
     wsRef.current = null;
+    userScoreRef.current = 0;
+    opponentScoreRef.current = 0;
+    quickMatchInProgress.current = false;
     setPhase('lobby');
     setCards([]);
     setCurrentIndex(0);
@@ -434,10 +517,53 @@ export default function DuelsPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
 
+  const handleAcceptChallenge = async () => {
+    if (!incomingChallenge) return;
+    setIncomingChallenge(null);
+    setMode('online');
+    await acceptChallenge(incomingChallenge.roomId);
+    // Mark notification as read
+    try { await notificationsAPI.markAsRead(incomingChallenge.notifId); } catch {}
+  };
+
+  const handleDeclineChallenge = () => {
+    if (incomingChallenge) {
+      try { notificationsAPI.markAsRead(incomingChallenge.notifId); } catch {}
+    }
+    setIncomingChallenge(null);
+  };
+
   return (
     <>
       <SideNav />
       <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-20 page-enter">
+        {/* Incoming challenge banner */}
+        {incomingChallenge && (
+          <div className="fixed top-0 left-0 right-0 lg:left-[72px] z-50 p-4 pt-safe">
+            <div className="max-w-2xl mx-auto bg-violet-600 rounded-2xl p-4 shadow-2xl flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-lg">⚔️</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-bold text-sm">Challenge from @{incomingChallenge.from}!</p>
+                <p className="text-violet-200 text-xs">Wants to duel you right now</p>
+              </div>
+              <div className="flex gap-2 flex-shrink-0">
+                <button
+                  onClick={handleDeclineChallenge}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 text-white text-xs font-bold"
+                >
+                  Decline
+                </button>
+                <button
+                  onClick={handleAcceptChallenge}
+                  className="px-3 py-1.5 rounded-xl bg-white text-violet-700 text-xs font-bold"
+                >
+                  Accept
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <header className="sticky top-0 bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/50 z-30">
           <div className="max-w-2xl mx-auto px-4 py-4">
             <h1 className="text-xl font-bold text-white">Study Duels</h1>
@@ -487,12 +613,31 @@ export default function DuelsPage() {
 
           {/* ─── WAITING ─────────────────────────────────────────────────────── */}
           {phase === 'waiting' && (
-            <WaitingRoom
-              status={matchmakingStatus}
-              roomId={roomId}
-              opponentName={opponentName}
-              onCancel={resetToLobby}
-            />
+            <>
+              {wsError ? (
+                <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
+                  <div className="w-14 h-14 rounded-full bg-red-900/30 border border-red-800/50 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold">{wsError}</p>
+                    <p className="text-zinc-500 text-sm mt-1">The opponent was found but the game couldn&apos;t start.</p>
+                  </div>
+                  <button onClick={resetToLobby} className="px-6 py-3 bg-violet-400 text-white font-bold rounded-xl">
+                    Try Again
+                  </button>
+                </div>
+              ) : (
+                <WaitingRoom
+                  status={matchmakingStatus}
+                  roomId={roomId}
+                  opponentName={opponentName}
+                  onCancel={resetToLobby}
+                />
+              )}
+            </>
           )}
 
           {/* ─── COUNTDOWN ─────────────────────────────────────────────────── */}
@@ -765,13 +910,11 @@ function GameRound({
       )}
 
       {/* Card */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+      <div className="bg-white rounded-2xl px-6 py-7 shadow-xl shadow-black/50">
         {card.subject && (
-          <span className="inline-block px-2 py-0.5 bg-zinc-800 text-zinc-400 text-xs font-semibold rounded-full mb-3">
-            {card.subject}
-          </span>
+          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">{card.subject}</p>
         )}
-        <h2 className="text-xl font-bold text-white leading-snug">{card.question}</h2>
+        <h2 className="text-2xl font-black text-zinc-900 leading-snug">{card.question}</h2>
       </div>
 
       {/* Opponent status */}
@@ -798,9 +941,9 @@ function GameRound({
               key={i}
               onClick={() => onChoiceSelect(choice)}
               disabled={userAnswered || phase === 'reveal'}
-              className={`p-3.5 rounded-xl border-2 text-sm font-semibold text-left transition-all leading-snug ${cls} disabled:cursor-default`}
+              className={`p-4 rounded-xl border-2 text-base font-bold text-left transition-all leading-snug ${cls} disabled:cursor-default`}
             >
-              <span className="text-xs font-bold opacity-60 mr-1.5">{String.fromCharCode(65 + i)}.</span>
+              <span className="text-xs font-bold opacity-50 mr-1.5">{String.fromCharCode(65 + i)}.</span>
               {choice}
             </button>
           );

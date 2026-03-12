@@ -42,6 +42,7 @@ export default function TikTokPlayer({
   onFollow,
   onShare,
   onComment,
+  onDMShare,
 }: {
   reels: TikTokReel[];
   startIndex: number;
@@ -50,6 +51,7 @@ export default function TikTokPlayer({
   onFollow: (creatorId: string) => void;
   onShare: (id: string) => void;
   onComment: (id: string) => void;
+  onDMShare?: (reel: TikTokReel) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
@@ -252,6 +254,17 @@ export default function TikTokPlayer({
                 </div>
                 <span className="text-white/50 text-[10px] font-medium">Share</span>
               </button>
+
+              {onDMShare && (
+                <button onClick={(e) => { e.stopPropagation(); onDMShare(reel); }} className="flex flex-col items-center gap-1">
+                  <div className="w-11 h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                    </svg>
+                  </div>
+                  <span className="text-white/50 text-[10px] font-medium">Send</span>
+                </button>
+              )}
             </div>
 
             {(reel.view_count || reel.like_count) && (

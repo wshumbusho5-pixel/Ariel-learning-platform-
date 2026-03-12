@@ -256,3 +256,17 @@ async def get_optional_user_dependency(
         return None
 
     return await UserRepository.get_user_by_id(token_data.user_id)
+
+
+@router.post("/heartbeat")
+async def heartbeat(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    Update user's last_seen timestamp.
+    Called every ~30s from the frontend while the user is active.
+    """
+    from datetime import datetime
+    token_data = AuthService.verify_token(credentials.credentials)
+    if not token_data or not token_data.user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    await UserRepository.update_user(token_data.user_id, {"last_seen": datetime.utcnow()})
+    return {"ok": True}

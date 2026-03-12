@@ -1,6 +1,7 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import List, Optional
+from bson import ObjectId
 
 logger = logging.getLogger(__name__)
 from app.models.card import Card, CardCreate, CardUpdate, DeckStats, BulkCardCreate, CardReview
@@ -146,41 +147,79 @@ async def search_cards(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/trending", response_model=List[Card])
+@router.get("/trending")
 async def get_trending_cards(
     limit: int = 50,
-    current_user: User = Depends(get_current_user_dependency)
+    current_user: User = Depends(get_current_user_dependency),
+    db = Depends(get_database)
 ):
-    """Get trending public cards (Explore feed)"""
+    """Get trending public cards enriched with creator info."""
     try:
         cards = await CardRepository.get_trending_cards(limit)
-        return cards
+        user_cache: dict = {}
+
+        async def get_user(uid: str):
+            if uid not in user_cache:
+                u = await db.users.find_one({"_id": ObjectId(uid)})
+                user_cache[uid] = u
+            return user_cache[uid]
+
+        enriched = []
+        for card in cards:
+            card_dict = card.dict()
+            creator = await get_user(card.user_id)
+            if creator:
+                card_dict["created_by"] = {
+                    "id": str(creator["_id"]),
+                    "username": creator.get("username", "unknown"),
+                    "full_name": creator.get("full_name"),
+                    "profile_picture": creator.get("profile_picture"),
+                    "is_verified": creator.get("is_verified", False),
+                }
+            enriched.append(card_dict)
+        return enriched
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/personalized-feed", response_model=List[Card])
+@router.get("/personalized-feed")
 async def get_personalized_feed(
     limit: int = 50,
     offset: int = 0,
-    current_user: User = Depends(get_current_user_dependency)
+    current_user: User = Depends(get_current_user_dependency),
+    db = Depends(get_database)
 ):
-    """
-    Get personalized feed for user based on their profile.
-
-    Feed Mix Algorithm:
-    - 50% User's enrolled subjects
-    - 20% Based on search/question history
-    - 15% Spaced repetition (due cards)
-    - 10% Trending in user's subjects
-    - 5% Discover (new topics)
-    """
+    """Get personalized feed enriched with creator info."""
     try:
         feed = await personalized_feed_service.get_personalized_feed(
             user=current_user,
             limit=limit,
             offset=offset
         )
-        return feed
+
+        # Cache user lookups
+        user_cache: dict = {}
+
+        async def get_user(uid: str):
+            if uid not in user_cache:
+                u = await db.users.find_one({"_id": ObjectId(uid)})
+                user_cache[uid] = u
+            return user_cache[uid]
+
+        enriched = []
+        for card in feed:
+            card_dict = card.dict()
+            creator = await get_user(card.user_id)
+            if creator:
+                card_dict["created_by"] = {
+                    "id": str(creator["_id"]),
+                    "username": creator.get("username", "unknown"),
+                    "full_name": creator.get("full_name"),
+                    "profile_picture": creator.get("profile_picture"),
+                    "is_verified": creator.get("is_verified", False),
+                }
+            enriched.append(card_dict)
+
+        return enriched
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -508,18 +508,22 @@ async def search_users(
         )
 
     db = db_service.get_db()
+    current_user_id = str(current_user.id)
 
     # Search in username, full_name, school
     search_regex = {"$regex": query, "$options": "i"}  # Case-insensitive
 
     results = []
     async for user in db.users.find({
-        "$or": [
-            {"username": search_regex},
-            {"full_name": search_regex},
-            {"school": search_regex}
-        ],
-        "is_active": {"$ne": False}
+        "$and": [
+            {"$or": [
+                {"username": search_regex},
+                {"full_name": search_regex},
+                {"school": search_regex}
+            ]},
+            {"is_active": {"$ne": False}},
+            {"_id": {"$ne": current_user.id}},  # exclude self
+        ]
     }).limit(limit):
         uid = str(user["_id"])
         results.append(FollowListItem(
@@ -528,7 +532,7 @@ async def search_users(
             full_name=user.get("full_name"),
             profile_picture=user.get("profile_picture"),
             bio=user.get("bio"),
-            is_following=uid in current_user.following,
+            is_following=uid in (current_user.following or []),
             follows_you=current_user_id in user.get("following", []),
             is_teacher=user.get("is_teacher", False),
             is_verified=user.get("is_verified", False)

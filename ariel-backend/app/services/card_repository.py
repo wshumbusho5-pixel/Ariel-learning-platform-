@@ -107,7 +107,7 @@ class CardRepository:
         subject: Optional[str] = None,
         topic: Optional[str] = None,
         tags: Optional[List[str]] = None,
-        limit: int = 100,
+        limit: int = 500,
         skip: int = 0
     ) -> List[Card]:
         """Get user's personal cards with filters"""
@@ -122,7 +122,8 @@ class CardRepository:
         if tags:
             query["tags"] = {"$in": tags}
 
-        cursor = db[CardRepository.collection_name].find(query).skip(skip).limit(limit)
+        # Sort newest first so newly created cards always appear at the top
+        cursor = db[CardRepository.collection_name].find(query).sort("created_at", -1).skip(skip).limit(limit)
 
         cards = []
         async for card_doc in cursor:

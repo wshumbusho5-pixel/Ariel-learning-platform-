@@ -70,6 +70,7 @@ class User(BaseModel):
     is_teacher: bool = False  # Teacher verification status
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: Optional[datetime] = None
+    last_seen: Optional[datetime] = None  # Updated every ~30s while active
     ai_settings: Optional[UserAISettings] = None
 
     model_config = ConfigDict(
