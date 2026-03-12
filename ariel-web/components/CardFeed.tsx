@@ -57,6 +57,26 @@ function sortByStatus(cards: Card[]): Card[] {
   });
 }
 
+// Optimistic local SM-2 simulation so badges + sort update instantly
+function applyRatingLocally(card: Card, quality: number): Partial<Card> {
+  const currentInterval = card.interval ?? 0;
+  const reviewCount = (card.review_count ?? 0) + 1;
+
+  let newInterval: number;
+  if (quality <= 2) {
+    newInterval = 1;                                              // Hard → back to 1 day
+  } else if (quality === 4) {
+    newInterval = currentInterval < 1 ? 4 : Math.round(currentInterval * 2);   // Easy
+  } else {
+    newInterval = currentInterval < 1 ? 6 : Math.round(currentInterval * 2.5); // Nailed
+  }
+
+  const next = new Date();
+  next.setDate(next.getDate() + newInterval);
+
+  return { interval: newInterval, next_review: next.toISOString(), review_count: reviewCount };
+}
+
 interface CardFeedProps {
   type: 'trending' | 'my-deck';
   onCardClick?: (card: Card) => void;
@@ -188,11 +208,15 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
     e.stopPropagation();
     const quality = rating === 'hard' ? 2 : rating === 'easy' ? 4 : 5;
 
-    // Increment the tally for this card
+    // Increment the visual tally
     setReviewCounts(prev => {
       const current = prev[card.id] ?? { hard: 0, easy: 0, nailed: 0 };
       return { ...prev, [card.id]: { ...current, [rating]: current[rating] + 1 } };
     });
+
+    // Update card status + interval locally, then re-sort
+    const updates = applyRatingLocally(card, quality);
+    setCards(prev => sortByStatus(prev.map(c => c.id === card.id ? { ...c, ...updates } : c)));
 
     try {
       await cardsAPI.reviewCard(card.id, quality);
