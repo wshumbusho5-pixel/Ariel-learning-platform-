@@ -18,6 +18,43 @@ interface Card {
   saves: number;
   visibility: string;
   created_at?: string;
+  // SRS fields
+  review_count?: number;
+  interval?: number;
+  next_review?: string | null;
+}
+
+type CardStatus = 'due' | 'new' | 'learning' | 'mastered';
+
+function getCardStatus(card: Card): CardStatus {
+  const count = card.review_count ?? 0;
+  if (count === 0) return 'new';
+  const interval = card.interval ?? 0;
+  if (interval >= 21) return 'mastered';
+  if (card.next_review && new Date(card.next_review) <= new Date()) return 'due';
+  return 'learning';
+}
+
+const STATUS_META: Record<CardStatus, { label: string; pill: string }> = {
+  due:      { label: 'Review',   pill: 'bg-orange-500/15 text-orange-400 border-orange-500/25' },
+  new:      { label: 'New',      pill: 'bg-sky-500/15 text-sky-400 border-sky-500/25' },
+  learning: { label: 'Learning', pill: 'bg-violet-500/15 text-violet-400 border-violet-500/25' },
+  mastered: { label: 'Mastered', pill: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25' },
+};
+
+const STATUS_ORDER: Record<CardStatus, number> = { due: 0, new: 1, learning: 2, mastered: 3 };
+
+function sortByStatus(cards: Card[]): Card[] {
+  return [...cards].sort((a, b) => {
+    const sa = getCardStatus(a);
+    const sb = getCardStatus(b);
+    if (STATUS_ORDER[sa] !== STATUS_ORDER[sb]) return STATUS_ORDER[sa] - STATUS_ORDER[sb];
+    // Within 'due': most overdue first
+    if (sa === 'due' && a.next_review && b.next_review) {
+      return new Date(a.next_review).getTime() - new Date(b.next_review).getTime();
+    }
+    return 0;
+  });
 }
 
 interface CardFeedProps {
@@ -59,6 +96,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
         data = await cardsAPI.getTrendingCards(50);
       } else {
         data = await cardsAPI.getMyDeck({ limit: 500 });
+        data = sortByStatus(data);
       }
       setCards(data);
     } catch (error) {
@@ -219,13 +257,22 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
         {/* Background */}
         <div className="absolute inset-0 bg-black" />
 
-        {/* Subject label above card */}
+        {/* Subject label + status badge above card */}
         <div className="absolute left-0 right-0 z-10 flex justify-center pointer-events-none" style={{ top: `${headerOffset + 16}px` }}>
           <div className="flex items-center gap-2">
             {card.subject && (
               <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">{card.subject}</span>
             )}
             {card.topic && <span className="text-[11px] text-zinc-600">· {card.topic}</span>}
+            {type === 'my-deck' && (() => {
+              const st = getCardStatus(card);
+              const m = STATUS_META[st];
+              return (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${m.pill}`}>
+                  {m.label}
+                </span>
+              );
+            })()}
           </div>
         </div>
 
@@ -377,13 +424,24 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
           }`}
           onClick={() => toggleExpanded(card.id)}
         >
-          {/* Subject tag top-left */}
-          {card.subject && (
-            <div className="px-4 pt-4 pb-0">
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{card.subject}</span>
+          {/* Subject + status badge top row */}
+          <div className="px-4 pt-4 pb-0 flex items-center justify-between gap-2">
+            <div>
+              {card.subject && (
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{card.subject}</span>
+              )}
               {card.topic && <span className="text-[10px] text-zinc-400 ml-2">· {card.topic}</span>}
             </div>
-          )}
+            {type === 'my-deck' && (() => {
+              const st = getCardStatus(card);
+              const m = STATUS_META[st];
+              return (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${m.pill}`}>
+                  {m.label}
+                </span>
+              );
+            })()}
+          </div>
 
           {/* Content */}
           <div className="flex-1 flex items-center justify-center px-5 py-6">
