@@ -9,6 +9,7 @@ import { useComments } from '@/lib/commentsContext';
 import BottomNav, { drawerItems } from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 import Onboarding from '@/components/Onboarding';
+import ArielIcon from '@/components/ArielIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -978,7 +979,9 @@ export default function Dashboard() {
                 >
                   <div className="flex items-start gap-3">
                     <div className="relative flex-shrink-0">
-                      <div className="w-10 h-10 rounded-xl bg-violet-400 flex items-center justify-center font-black text-white text-base">A</div>
+                      <div className="w-10 h-10 rounded-xl bg-[#0d0d18] border border-violet-500/30 flex items-center justify-center">
+                        <ArielIcon size={28} variant="dark" />
+                      </div>
                       <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-[#1e1e22]" />
                     </div>
                     <div className="flex-1 min-w-0">

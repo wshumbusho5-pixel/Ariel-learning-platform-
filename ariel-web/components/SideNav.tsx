@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
 import ArielLogo from '@/components/ArielLogo';
+import ArielIcon from '@/components/ArielIcon';
 
 type NavItem = {
   name: string;
@@ -234,9 +235,13 @@ export default function SideNav() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          {expanded && (
+          {expanded ? (
             <button onClick={() => navigate('/dashboard')} className="flex items-center overflow-hidden">
               <ArielLogo size={32} variant="dark" bgColor="#09090b" />
+            </button>
+          ) : (
+            <button onClick={() => navigate('/dashboard')} className="absolute bottom-[72px] left-0 w-[72px] flex items-center justify-center py-3 opacity-60 hover:opacity-100 transition-opacity">
+              <ArielIcon size={28} variant="dark" />
             </button>
           )}
         </div>
