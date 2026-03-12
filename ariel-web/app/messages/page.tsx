@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { messagesAPI, authAPI } from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
@@ -20,6 +20,8 @@ interface Conversation {
   unread_count: number;
   is_archived: boolean;
 }
+
+type Tab = 'all' | 'unread' | 'buddies';
 
 function timeAgo(d?: string) {
   if (!d) return '';
@@ -49,6 +51,17 @@ export default function MessagesPage() {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>('all');
+  const [search, setSearch] = useState('');
+  const [buddies, setBuddies] = useState<Set<string>>(new Set());
+
+  // Load buddies from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('ariel_buddies');
+      if (stored) setBuddies(new Set(JSON.parse(stored)));
+    } catch {}
+  }, []);
 
   useEffect(() => {
     authAPI.heartbeat().catch(() => {});
@@ -58,32 +71,106 @@ export default function MessagesPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const toggleBuddy = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setBuddies(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      try { localStorage.setItem('ariel_buddies', JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
+
+  const filtered = useMemo(() => {
+    let list = conversations;
+    if (tab === 'unread') list = list.filter(c => c.unread_count > 0);
+    if (tab === 'buddies') list = list.filter(c => buddies.has(c.id));
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(c =>
+        (c.other_user_full_name || '').toLowerCase().includes(q) ||
+        (c.other_user_username || '').toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [conversations, tab, search, buddies]);
+
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'unread', label: 'Unread' },
+    { key: 'buddies', label: 'Buddies' },
+  ];
+
   return (
     <>
       <SideNav />
       <div className="min-h-screen bg-[#09090b] pb-24 lg:pl-[72px]">
+
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-[#09090b] border-b border-zinc-800 flex items-center justify-between px-4 h-14">
-          <button
-            onClick={() => router.back()}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
-          >
-            <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+        <div className="sticky top-0 z-20 bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-800/60">
+          <div className="flex items-center justify-between px-4 h-14">
+            <button
+              onClick={() => router.back()}
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
+            >
+              <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="text-base font-bold text-white">Rooms</h1>
+            <button
+              onClick={() => router.push('/search?dm=1')}
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
+            >
+              <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+          </div>
 
-          <h1 className="text-base font-bold text-white">Rooms</h1>
+          {/* Glass search bar */}
+          <div className="px-4 pb-3">
+            <div className="flex items-center gap-2.5 bg-white/8 backdrop-blur-md border border-white/10 rounded-2xl px-4 h-10">
+              <svg className="w-4 h-4 text-zinc-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search rooms..."
+                className="flex-1 bg-transparent text-sm text-white placeholder:text-zinc-500 outline-none"
+              />
+              {search && (
+                <button onClick={() => setSearch('')}>
+                  <svg className="w-4 h-4 text-zinc-500" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
 
-          <button
-            onClick={() => router.push('/search?dm=1')}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
-            title="New message"
-          >
-            <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
+          {/* Tabs */}
+          <div className="flex gap-2 px-4 pb-3">
+            {tabs.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                  tab === t.key
+                    ? 'bg-white text-zinc-900'
+                    : 'bg-white/8 text-zinc-400 hover:bg-white/12'
+                }`}
+              >
+                {t.label}
+                {t.key === 'unread' && conversations.filter(c => c.unread_count > 0).length > 0 && (
+                  <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-black ${tab === 'unread' ? 'bg-zinc-900 text-white' : 'bg-violet-600 text-white'}`}>
+                    {conversations.filter(c => c.unread_count > 0).length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Content */}
@@ -99,32 +186,45 @@ export default function MessagesPage() {
               </div>
             ))}
           </div>
-        ) : conversations.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
-              <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
+              {tab === 'buddies' ? (
+                <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                </svg>
+              ) : (
+                <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+              )}
             </div>
-            <p className="text-sm font-semibold text-white">No conversations yet</p>
-            <p className="text-xs text-zinc-500 mt-1">Start messaging someone you follow</p>
-            <button
-              onClick={() => router.push('/search')}
-              className="mt-5 px-5 py-2.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors"
-            >
-              Start a conversation
-            </button>
+            <p className="text-sm font-semibold text-white">
+              {tab === 'buddies' ? 'No buddies yet' : tab === 'unread' ? 'All caught up' : search ? `No results for "${search}"` : 'No conversations yet'}
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">
+              {tab === 'buddies' ? 'Star a conversation to add them as a buddy' : tab === 'unread' ? 'You\'ve read everything' : 'Start messaging someone you follow'}
+            </p>
+            {tab === 'all' && !search && (
+              <button
+                onClick={() => router.push('/search')}
+                className="mt-5 px-5 py-2.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors"
+              >
+                Start a conversation
+              </button>
+            )}
           </div>
         ) : (
           <div>
-            {conversations.map((convo) => {
+            {filtered.map((convo) => {
               const name = convo.other_user_full_name || convo.other_user_username || '?';
               const isUnread = convo.unread_count > 0;
+              const isBuddy = buddies.has(convo.id);
               return (
                 <button
                   key={convo.id}
                   onClick={() => router.push(`/messages/${convo.id}`)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-900 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-900/60 active:bg-zinc-900 transition-colors text-left"
                 >
                   <div className="relative flex-shrink-0">
                     {convo.other_user_profile_picture ? (
@@ -165,6 +265,22 @@ export default function MessagesPage() {
                       )}
                     </p>
                   </div>
+
+                  {/* Star / Buddy toggle */}
+                  <button
+                    onClick={(e) => toggleBuddy(e, convo.id)}
+                    className="flex-shrink-0 p-1.5 rounded-full hover:bg-zinc-800 transition-colors"
+                  >
+                    <svg
+                      className={`w-4 h-4 transition-colors ${isBuddy ? 'text-amber-400 fill-amber-400' : 'text-zinc-700'}`}
+                      fill={isBuddy ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      strokeWidth={1.8}
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                    </svg>
+                  </button>
                 </button>
               );
             })}
