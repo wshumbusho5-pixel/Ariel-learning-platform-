@@ -284,6 +284,15 @@ export default function DeckPage() {
           {/* Title row */}
           <div className="flex items-center justify-between mb-3 pointer-events-auto">
             <h1 className="text-lg font-bold text-white drop-shadow">My Deck</h1>
+            {stats && stats.due_today > 0 && activeTab === 'cards' && (
+              <button
+                onClick={() => router.push('/review')}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-violet-500 hover:bg-violet-400 text-white text-xs font-bold rounded-full transition-colors shadow shadow-violet-500/30"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse" />
+                Review {stats.due_today} due
+              </button>
+            )}
           </div>
 
           {/* Tabs: Cards | Clips */}

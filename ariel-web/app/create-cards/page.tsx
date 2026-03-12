@@ -16,6 +16,49 @@ const SUBJECTS = [
   'Gospel & Theology', 'Other',
 ];
 
+// Parse bulk-pasted Q&A text (tab-separated or blank-line-separated)
+function parseBulkText(raw: string): { question: string; answer: string }[] {
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const pairs: { question: string; answer: string }[] = [];
+
+  // Try tab-separated: "Question\tAnswer"
+  if (lines.some(l => l.includes('\t'))) {
+    for (const line of lines) {
+      const [q, ...rest] = line.split('\t');
+      if (q && rest.length > 0) {
+        pairs.push({ question: q.trim(), answer: rest.join('\t').trim() });
+      }
+    }
+    return pairs;
+  }
+
+  // Try "Q: ... / A: ..." or alternating lines
+  const qPrefix = /^[Qq][:.]\s*/;
+  const aPrefix = /^[Aa][:.]\s*/;
+  if (lines.some(l => qPrefix.test(l))) {
+    let i = 0;
+    while (i < lines.length) {
+      if (qPrefix.test(lines[i])) {
+        const q = lines[i].replace(qPrefix, '').trim();
+        const next = lines[i + 1];
+        if (next && aPrefix.test(next)) {
+          pairs.push({ question: q, answer: next.replace(aPrefix, '').trim() });
+          i += 2;
+          continue;
+        }
+      }
+      i++;
+    }
+    if (pairs.length > 0) return pairs;
+  }
+
+  // Fallback: alternating lines (odd=question, even=answer)
+  for (let i = 0; i + 1 < lines.length; i += 2) {
+    pairs.push({ question: lines[i], answer: lines[i + 1] });
+  }
+  return pairs;
+}
+
 interface CardDraft {
   id: string;
   question: string;
@@ -37,7 +80,37 @@ export default function CreateCardsPage() {
 
   // ── Deck metadata ─────────────────────────────────────────────
   const [subject, setSubject] = useState('');
+  const [customSubject, setCustomSubject] = useState('');
   const [topic, setTopic] = useState('');
+  const [showBulkPaste, setShowBulkPaste] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [bulkError, setBulkError] = useState('');
+
+  const effectiveSubject = subject === 'Other' && customSubject.trim()
+    ? customSubject.trim()
+    : subject;
+
+  const handleBulkImport = () => {
+    const pairs = parseBulkText(bulkText);
+    if (pairs.length === 0) {
+      setBulkError('Could not parse any Q&A pairs. Try "Question\\tAnswer" per line, or alternating lines.');
+      return;
+    }
+    setBulkError('');
+    const newCards: CardDraft[] = pairs.map((p, i) => ({
+      id: `bulk-${Date.now()}-${i}`,
+      question: p.question,
+      answer: p.answer,
+      explanation: '',
+    }));
+    setCards(prev => {
+      // Replace the single empty starter card if it's blank
+      const hasBlank = prev.length === 1 && !prev[0].question && !prev[0].answer;
+      return hasBlank ? newCards : [...prev, ...newCards];
+    });
+    setBulkText('');
+    setShowBulkPaste(false);
+  };
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
 
   // ── Cards ──────────────────────────────────────────────────────
@@ -79,11 +152,11 @@ export default function CreateCardsPage() {
           question: c.question.trim(),
           answer: c.answer.trim(),
           explanation: c.explanation.trim() || undefined,
-          subject: subject || undefined,
+          subject: effectiveSubject || undefined,
           topic: topic || undefined,
           tags: [],
         })),
-        subject || undefined,
+        effectiveSubject || undefined,
         topic || undefined,
         [],
         visibility
@@ -184,6 +257,16 @@ export default function CreateCardsPage() {
                     <option value="">— Select subject —</option>
                     {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
+                  {subject === 'Other' && (
+                    <input
+                      type="text"
+                      value={customSubject}
+                      onChange={e => setCustomSubject(e.target.value)}
+                      placeholder="Enter your subject…"
+                      autoFocus
+                      className="mt-2 w-full bg-zinc-800 border border-violet-500/40 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                    />
+                  )}
                 </div>
 
                 {/* Topic */}
@@ -307,15 +390,61 @@ export default function CreateCardsPage() {
               </div>
 
               {/* Add card button */}
-              <button
-                onClick={addCard}
-                className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-zinc-700 hover:border-violet-500/50 hover:bg-violet-500/5 text-zinc-500 hover:text-violet-400 text-sm font-semibold transition-all group"
-              >
-                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Add another card
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={addCard}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-zinc-700 hover:border-violet-500/50 hover:bg-violet-500/5 text-zinc-500 hover:text-violet-400 text-sm font-semibold transition-all group"
+                >
+                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add card
+                </button>
+                <button
+                  onClick={() => setShowBulkPaste(v => !v)}
+                  className={`flex items-center justify-center gap-2 px-4 py-4 rounded-2xl border-2 border-dashed text-sm font-semibold transition-all ${
+                    showBulkPaste
+                      ? 'border-violet-500/50 bg-violet-500/5 text-violet-400'
+                      : 'border-zinc-700 text-zinc-500 hover:border-zinc-600 hover:text-zinc-400'
+                  }`}
+                  title="Bulk paste multiple cards"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  Bulk
+                </button>
+              </div>
+
+              {/* Bulk paste panel */}
+              {showBulkPaste && (
+                <div className="bg-zinc-900 border border-zinc-700 rounded-2xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-zinc-800">
+                    <p className="text-xs font-bold text-white">Bulk paste cards</p>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                      One card per line: <span className="text-zinc-400">Question[tab]Answer</span>
+                      {' '}· or alternating lines Q / A · or prefix with <span className="text-zinc-400">Q:</span> / <span className="text-zinc-400">A:</span>
+                    </p>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    <textarea
+                      value={bulkText}
+                      onChange={e => { setBulkText(e.target.value); setBulkError(''); }}
+                      placeholder={`What is photosynthesis?\tProcess plants use to convert light to energy\nWhat is mitosis?\tCell division producing identical daughter cells`}
+                      rows={6}
+                      className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-none leading-relaxed font-mono text-xs"
+                    />
+                    {bulkError && <p className="text-xs text-red-400 font-semibold">{bulkError}</p>}
+                    <button
+                      onClick={handleBulkImport}
+                      disabled={!bulkText.trim()}
+                      className="w-full py-2.5 bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-sm font-bold rounded-xl transition-colors"
+                    >
+                      Import cards
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Error */}
               {error && (
