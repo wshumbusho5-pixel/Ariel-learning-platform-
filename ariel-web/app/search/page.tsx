@@ -37,7 +37,11 @@ function Avatar({ person }: { person: Person }) {
   );
 }
 
-function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onToggleFollow: (id: string) => void; onOpenDM?: (id: string) => void }) {
+function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onToggleFollow: (id: string) => void; onOpenDM: (id: string) => void }) {
+  // In DM mode, or already following → show Message button
+  // Not yet following → show Follow button
+  const showMessage = !!person.is_following;
+
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <Avatar person={person} />
@@ -58,7 +62,7 @@ function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onTog
         <p className="text-xs text-zinc-400 truncate">@{person.username}</p>
         {person.bio && <p className="text-xs text-zinc-400 truncate mt-0.5">{person.bio}</p>}
       </div>
-      {onOpenDM ? (
+      {showMessage ? (
         <button
           onClick={() => onOpenDM(person.id)}
           className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white transition-colors"
@@ -69,14 +73,12 @@ function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onTog
         <button
           onClick={() => onToggleFollow(person.id)}
           className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
-            person.is_following
-              ? 'bg-gray-100 text-zinc-500 border border-gray-200'
-              : person.follows_you
+            person.follows_you
               ? 'bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700'
               : 'bg-violet-600 hover:bg-violet-500 text-white'
           }`}
         >
-          {person.is_following ? 'Following' : person.follows_you ? 'Follow Back' : 'Follow'}
+          {person.follows_you ? 'Follow Back' : 'Follow'}
         </button>
       )}
     </div>
@@ -230,7 +232,7 @@ export default function SearchPage() {
           {!isLoading && displayList.length > 0 && (
             <div className="divide-y divide-gray-100">
               {displayList.map(person => (
-                <PersonRow key={person.id} person={person} onToggleFollow={toggleFollow} onOpenDM={isDM ? openDM : undefined} />
+                <PersonRow key={person.id} person={person} onToggleFollow={toggleFollow} onOpenDM={openDM} />
               ))}
             </div>
           )}
