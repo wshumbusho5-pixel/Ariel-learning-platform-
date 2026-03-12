@@ -41,7 +41,7 @@ export default function ArielWordmark({
       : 'rgba(255,255,255,0.1)';
 
   const taglineColor =
-    variant === 'light' ? '#9a9490' : variant === 'purple' ? 'rgba(255,255,255,0.38)' : '#4a4a60';
+    variant === 'light' ? '#6b6760' : variant === 'purple' ? 'rgba(255,255,255,0.6)' : '#8888a0';
 
   const wordStyle: React.CSSProperties = {
     fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
