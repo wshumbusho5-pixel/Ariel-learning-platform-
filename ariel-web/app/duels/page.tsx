@@ -325,11 +325,32 @@ export default function DuelsPage() {
     setWsError('');
     try {
       const data = await duelsAPI.challenge(username);
-      setRoomId(data.room_id);
+      const rid = data.room_id;
+      setRoomId(rid);
       setChallengeSent(username);
       setPhase('waiting');
       setMatchmakingStatus(`Waiting for ${username} to accept...`);
-      connectToRoom(data.room_id);
+      // Poll room status — connect WS only when p2 has actually joined
+      // (avoids idle WS timeout while waiting for the other person)
+      if (pollRef.current) clearInterval(pollRef.current);
+      pollRef.current = setInterval(async () => {
+        try {
+          const room = await duelsAPI.getRoom(rid);
+          if (room.p2_username) {
+            clearInterval(pollRef.current!);
+            pollRef.current = null;
+            setOpponentName(room.p2_username);
+            setMatchmakingStatus(`${room.p2_username} accepted! Connecting...`);
+            connectToRoom(rid);
+          }
+        } catch {
+          // room expired or server error — stop polling
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setWsError('Challenge expired. Please try again.');
+          setPhase('lobby');
+        }
+      }, 2000);
     } catch (e: any) {
       setWsError(e?.response?.data?.detail || 'Could not send challenge.');
     } finally {
