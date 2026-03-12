@@ -132,9 +132,6 @@ export default function Home() {
         {/* Middle: live preview */}
         <div className="flex flex-col items-center gap-6 w-full">
           <PreviewStack />
-          <p className="text-zinc-400 text-sm text-center font-medium">
-            Learn smarter. One card at a time.
-          </p>
         </div>
 
         {/* Bottom: CTAs */}

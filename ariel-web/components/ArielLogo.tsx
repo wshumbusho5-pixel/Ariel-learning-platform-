@@ -61,13 +61,13 @@ export default function ArielLogo({
       : '0 0 8px rgba(201,169,110,0.9), 0 0 20px rgba(201,169,110,0.5), 0 0 40px rgba(201,169,110,0.2)';
   const nodeWhiteCore = variant === 'light' ? 'rgba(242,240,237,0.7)' : 'rgba(255,255,255,0.9)';
 
-  // Tagline colour
+  // Tagline colour — intentionally visible
   const taglineColor =
     variant === 'purple'
-      ? 'rgba(255,255,255,0.28)'
+      ? 'rgba(255,255,255,0.5)'
       : variant === 'light'
-      ? '#b8b4aa'
-      : '#2a2a3a';
+      ? '#7a7570'
+      : '#6a6a7a';
 
   // Scaled ring dimensions (baseline at 96px font-size)
   // Ring width kept tight — "ariel" at 96px is ~280px wide, ring extends ~30px each side
