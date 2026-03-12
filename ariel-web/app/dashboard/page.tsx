@@ -10,6 +10,7 @@ import BottomNav, { drawerItems } from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 import Onboarding from '@/components/Onboarding';
 import ArielIcon from '@/components/ArielIcon';
+import ArielWordmark from '@/components/ArielWordmark';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -801,7 +802,7 @@ export default function Dashboard() {
 
                 {/* Name + status */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-black tracking-[0.2em] text-zinc-600 uppercase leading-none mb-1">ariel</p>
+                  <ArielWordmark size={14} variant="dark" className="mb-1 !items-start" />
                   <div className="flex items-center gap-2.5">
                     <h1 className="text-2xl font-black text-white leading-none truncate tracking-tight">{firstName || 'there'}</h1>
                     {!dataLoading && streakDays > 0 && (

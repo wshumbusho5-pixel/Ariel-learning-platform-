@@ -33,6 +33,10 @@ export default function ArielWordmark({
   const wordColor =
     variant === 'light' ? '#0e0e13' : '#ffffff';
 
+  // The i is violet — a quiet signature within the letterform
+  const iColor =
+    variant === 'light' ? '#6B3FD4' : variant === 'purple' ? 'rgba(255,255,255,0.55)' : '#9B7FFF';
+
   const dividerColor =
     variant === 'light'
       ? 'rgba(0,0,0,0.12)'
@@ -51,9 +55,9 @@ export default function ArielWordmark({
     lineHeight: 1,
     letterSpacing: `${Math.max(1, 12 * s)}px`,
     textTransform: 'lowercase',
-    color: wordColor,
     userSelect: 'none',
     animation: animate ? 'ariel-fade 1s 0.1s ease both' : undefined,
+    display: 'inline',
   };
 
   const taglineStyle: React.CSSProperties = {
@@ -77,7 +81,11 @@ export default function ArielWordmark({
         `}</style>
       )}
 
-      <div style={wordStyle}>ariel</div>
+      <div style={{ animation: wordStyle.animation }}>
+        <span style={{ ...wordStyle, animation: undefined, color: wordColor }}>ar</span>
+        <span style={{ ...wordStyle, animation: undefined, color: iColor }}>i</span>
+        <span style={{ ...wordStyle, animation: undefined, color: wordColor }}>el</span>
+      </div>
 
       {showTagline && (
         <>
