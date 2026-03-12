@@ -70,10 +70,11 @@ export default function ArielLogo({
       : '#2a2a3a';
 
   // Scaled ring dimensions (baseline at 96px font-size)
-  const ringW = 520 * s;
-  const ringH = 80 * s;
+  // Ring width kept tight — "ariel" at 96px is ~280px wide, ring extends ~30px each side
+  const ringW = 340 * s;
+  const ringH = 72 * s;
   const ringTop = 68 * s; // center of ring from top of .logo-wrap
-  const ringLeft = -18 * s;
+  const ringLeft = -38 * s; // centered around the word
   const ringThick = Math.max(1.5, 2 * s); // keep visible at small sizes
 
   // Ring position: top edge = ringTop - ringH/2
