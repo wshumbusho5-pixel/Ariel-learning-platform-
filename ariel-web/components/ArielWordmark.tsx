@@ -62,7 +62,7 @@ export default function ArielWordmark({
 
   const taglineStyle: React.CSSProperties = {
     fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-    fontSize: Math.max(8, 10 * s),
+    fontSize: Math.max(12, 11 * s),
     fontWeight: 200,
     letterSpacing: `${Math.max(2, 6 * s)}px`,
     textTransform: 'lowercase',
