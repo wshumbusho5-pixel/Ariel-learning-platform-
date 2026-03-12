@@ -26,8 +26,8 @@ const QUICK_CHIPS = [
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-2 mb-3">
-      <div className="w-7 h-7 rounded-full bg-violet-400 flex items-center justify-center flex-shrink-0 font-black text-white text-xs">
-        A
+      <div className="w-7 h-7 rounded-full bg-[#0d0d18] border border-violet-500/20 flex items-center justify-center flex-shrink-0">
+        <span style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: '#9B7FFF', lineHeight: 1 }}>a</span>
       </div>
       <div className="px-4 py-3 rounded-2xl rounded-bl-sm bg-zinc-900 border border-zinc-800">
         <div className="flex items-center gap-1.5">
