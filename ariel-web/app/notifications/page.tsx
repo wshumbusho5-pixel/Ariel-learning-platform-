@@ -18,6 +18,8 @@ interface Notification {
   actor_profile_picture?: string;
   is_read: boolean;
   created_at: string;
+  metadata?: Record<string, any>;
+  action_url?: string;
 }
 
 function timeAgo(dateStr: string) {
@@ -82,11 +84,23 @@ function FollowBackButton({ actorId }: { actorId: string }) {
 }
 
 function NotificationRow({ n }: { n: Notification }) {
+  const router = useRouter();
   const isFollow = n.notification_type === 'new_follower';
+  const isDuel = n.notification_type === 'duel_challenge';
   const name = n.actor_full_name || n.actor_username;
+  const roomId = n.metadata?.room_id;
+
+  const handleTap = () => {
+    if (isDuel && roomId) {
+      router.push(`/duels?join=${roomId}`);
+    }
+  };
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-3.5 ${!n.is_read ? 'bg-violet-500/10' : ''}`}>
+    <div
+      onClick={isDuel ? handleTap : undefined}
+      className={`flex items-center gap-3 px-4 py-3.5 ${!n.is_read ? 'bg-violet-500/10' : ''} ${isDuel ? 'cursor-pointer active:bg-zinc-800/50' : ''}`}
+    >
       <div className="relative flex-shrink-0">
         <NotifAvatar n={n} />
         {!n.is_read && (
@@ -101,6 +115,14 @@ function NotificationRow({ n }: { n: Notification }) {
       </p>
 
       {isFollow && n.actor_id && <FollowBackButton actorId={n.actor_id} />}
+      {isDuel && roomId && (
+        <button
+          onClick={handleTap}
+          className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold bg-violet-600 text-white hover:bg-violet-500 active:bg-violet-700"
+        >
+          Accept
+        </button>
+      )}
     </div>
   );
 }
