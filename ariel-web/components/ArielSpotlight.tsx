@@ -373,7 +373,9 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                     {/* Avatar */}
                     {isAriel ? (
                       <div className={`w-7 h-7 flex-shrink-0 ${hasTail ? '' : 'invisible'}`}>
-                        <div className="w-7 h-7 rounded-full bg-violet-400 flex items-center justify-center font-black text-white text-xs">A</div>
+                        <div className="w-7 h-7 rounded-full bg-[#0d0d18] border border-violet-500/20 flex items-center justify-center">
+                          <span style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: '#9B7FFF', lineHeight: 1 }}>a</span>
+                        </div>
                       </div>
                     ) : (
                       <div className="w-7 h-7 flex-shrink-0" />
@@ -472,7 +474,9 @@ export default function ArielSpotlight({ onClose }: { onClose?: () => void }) {
                 {!isAriel && msg.id === seenMsgId && (
                   <div className="flex justify-end items-center gap-1 pr-1 mt-1">
                     <span className="text-[9px] text-zinc-600">Seen</span>
-                    <div className="w-3.5 h-3.5 rounded-full bg-violet-400 flex items-center justify-center font-black text-white" style={{ fontSize: '7px' }}>A</div>
+                    <div className="w-3.5 h-3.5 rounded-full bg-[#0d0d18] border border-violet-500/20 flex items-center justify-center">
+                      <span style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 9, color: '#9B7FFF', lineHeight: 1 }}>a</span>
+                    </div>
                   </div>
                 )}
 
