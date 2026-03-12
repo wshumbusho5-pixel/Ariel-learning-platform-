@@ -603,13 +603,13 @@ export const commentsAPI = {
 
 // Duels API - Multiplayer flashcard battles
 export const duelsAPI = {
-  quickMatch: async () => {
-    const response = await api.post('/api/duels/quick-match');
+  quickMatch: async (body?: { subject?: string; round_count?: number; max_players?: number }) => {
+    const response = await api.post('/api/duels/quick-match', body || {});
     return response.data;
   },
 
-  challenge: async (username: string) => {
-    const response = await api.post(`/api/duels/challenge/${username}`);
+  challenge: async (username: string, body?: { subject?: string; round_count?: number }) => {
+    const response = await api.post(`/api/duels/challenge/${username}`, body || {});
     return response.data;
   },
 
@@ -621,6 +621,11 @@ export const duelsAPI = {
   getRoom: async (roomId: string) => {
     const response = await api.get(`/api/duels/${roomId}`);
     return response.data;
+  },
+
+  getMySubjects: async () => {
+    const response = await api.get('/api/duels/my-subjects');
+    return response.data as string[];
   },
 };
 

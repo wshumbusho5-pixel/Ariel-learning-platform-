@@ -24,7 +24,7 @@ type Phase = 'lobby' | 'matchmaking' | 'waiting' | 'countdown' | 'question' | 'r
 
 const BOT_NAMES = ['Alex', 'Jordan', 'Sam', 'Morgan', 'Riley'];
 const BOT_DELAYS = [2800, 4200, 6000, 8500, 12000];
-const ROUNDS = 5;
+const ROUND_OPTIONS = [5, 10, 15, 20];
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 const WS_URL = API_URL.replace(/^http/, 'ws');
 
@@ -78,6 +78,18 @@ export default function DuelsPage() {
   const [challengeSent, setChallengeSent] = useState('');
   const [matchmakingLoading, setMatchmakingLoading] = useState(false);
   const [wsError, setWsError] = useState('');
+
+  // Setup / game config
+  const [setupSubject, setSetupSubject] = useState('any');
+  const [setupRoundCount, setSetupRoundCount] = useState(5);
+  const [setupMaxPlayers, setSetupMaxPlayers] = useState(2);
+  const [mySubjects, setMySubjects] = useState<string[]>([]);
+  const [totalRounds, setTotalRounds] = useState(5);
+  const totalRoundsRef = useRef(5);
+
+  // N-player scoreboard
+  const [allPlayers, setAllPlayers] = useState<{ username: string; score: number }[]>([]);
+  const [gameRanking, setGameRanking] = useState<{ username: string; score: number }[]>([]);
   const gameStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickMatchInProgress = useRef(false);  // ref guard — immune to stale state
 
@@ -120,6 +132,11 @@ export default function DuelsPage() {
   useEffect(() => () => {
     clearTimers();
     wsRef.current?.close();
+  }, []);
+
+  // Load user's card subjects for setup panel
+  useEffect(() => {
+    duelsAPI.getMySubjects().then(s => setMySubjects(s)).catch(() => {});
   }, []);
 
   // Poll for incoming challenges every 5s while in lobby
@@ -228,11 +245,14 @@ export default function DuelsPage() {
     setPhase('reveal');
 
     setTimeout(() => {
-      if (nextIdx >= ROUNDS) {
-        // Compare total scores — NOT just the last round result
+      if (nextIdx >= totalRoundsRef.current) {
         const u = userScoreRef.current;
         const o = opponentScoreRef.current;
         setFinalResult(u > o ? 'win' : o > u ? 'lose' : 'tie');
+        setGameRanking([
+          { username: 'You', score: u },
+          { username: displayOpponent, score: o },
+        ]);
         setPhase('complete');
       } else {
         setCurrentIndex(nextIdx);
@@ -257,12 +277,16 @@ export default function DuelsPage() {
 
   const startSoloDuel = async () => {
     const loaded = await loadSoloCards();
+    const rounds = setupRoundCount;
+    totalRoundsRef.current = rounds;
+    setTotalRounds(rounds);
     setCards(loaded);
     setCurrentIndex(0);
     userScoreRef.current = 0;
     opponentScoreRef.current = 0;
     setUserScore(0);
     setOpponentScore(0);
+    setAllPlayers([{ username: 'You', score: 0 }, { username: botName, score: 0 }]);
     setPhase('countdown');
     let c = 3;
     setCountdown(c);
@@ -279,12 +303,16 @@ export default function DuelsPage() {
   // ── Online: Quick Match ──────────────────────────────────────────────────────
 
   const startQuickMatch = async () => {
-    if (quickMatchInProgress.current) return;  // ref guard — blocks even before state updates
+    if (quickMatchInProgress.current) return;
     quickMatchInProgress.current = true;
     setMatchmakingLoading(true);
     setWsError('');
     try {
-      const data = await duelsAPI.quickMatch();
+      const data = await duelsAPI.quickMatch({
+        subject: setupSubject === 'any' ? undefined : setupSubject,
+        round_count: setupRoundCount,
+        max_players: setupMaxPlayers,
+      });
       setRoomId(data.room_id);
       setPhase('waiting');
       if (data.status === 'joined' && data.opponent_username) {
@@ -324,7 +352,10 @@ export default function DuelsPage() {
     setChallengeSending(username);
     setWsError('');
     try {
-      const data = await duelsAPI.challenge(username);
+      const data = await duelsAPI.challenge(username, {
+        subject: setupSubject === 'any' ? undefined : setupSubject,
+        round_count: setupRoundCount,
+      });
       const rid = data.room_id;
       setRoomId(rid);
       setChallengeSent(username);
@@ -421,8 +452,14 @@ export default function DuelsPage() {
         setWsError(msg.message || 'Something went wrong.');
         break;
 
-      case 'game_start':
+      case 'game_start': {
         if (gameStartTimeoutRef.current) clearTimeout(gameStartTimeoutRef.current);
+        const rounds = msg.round_count || setupRoundCount;
+        totalRoundsRef.current = rounds;
+        setTotalRounds(rounds);
+        if (msg.players) {
+          setAllPlayers((msg.players as { username: string }[]).map(p => ({ username: p.username, score: 0 })));
+        }
         setPhase('countdown');
         setUserScore(0);
         setOpponentScore(0);
@@ -435,6 +472,7 @@ export default function DuelsPage() {
           if (c === 0) clearInterval(cd);
         }, 1000);
         break;
+      }
 
       case 'round_start':
         setPhase('question');
@@ -477,7 +515,12 @@ export default function DuelsPage() {
         setUserScore(msg.you_score);
         setOpponentScore(msg.opponent_score);
         setRoundResult(msg.result);
-        // Reveal correct answer
+        if (msg.scores) {
+          setAllPlayers(prev => prev.map(p => ({
+            ...p,
+            score: msg.scores[p.username] ?? p.score,
+          })));
+        }
         setCards(prev => {
           const updated = [...prev];
           const idx = (msg.round || 1) - 1;
@@ -486,7 +529,7 @@ export default function DuelsPage() {
         });
         setPhase('reveal');
         setTimeout(() => {
-          if (msg.round >= ROUNDS) {
+          if (msg.round >= totalRoundsRef.current) {
             // game_over will arrive shortly
           } else {
             setCurrentIndex(msg.round);
@@ -501,7 +544,7 @@ export default function DuelsPage() {
         setUserScore(msg.you_score);
         setOpponentScore(msg.opponent_score);
         setFinalResult(msg.result === 'win' ? 'win' : msg.result === 'lose' ? 'lose' : 'tie');
-        // Mark complete immediately via ref so ws.onclose doesn't fire error
+        if (msg.ranking) setGameRanking(msg.ranking);
         phaseRef.current = 'complete';
         setTimeout(() => setPhase('complete'), 2200);
         break;
@@ -521,6 +564,7 @@ export default function DuelsPage() {
     wsRef.current = null;
     userScoreRef.current = 0;
     opponentScoreRef.current = 0;
+    totalRoundsRef.current = setupRoundCount;
     quickMatchInProgress.current = false;
     setPhase('lobby');
     setCards([]);
@@ -534,6 +578,8 @@ export default function DuelsPage() {
     setChallengeSent('');
     setChallengeQuery('');
     setWsError('');
+    setAllPlayers([]);
+    setGameRanking([]);
   };
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -613,7 +659,12 @@ export default function DuelsPage() {
 
           {/* ─── LOBBY ─────────────────────────────────────────────────────── */}
           {phase === 'lobby' && mode === 'solo' && (
-            <SoloLobby opponent={botName} onStart={startSoloDuel} />
+            <SoloLobby
+              opponent={botName}
+              onStart={startSoloDuel}
+              roundCount={setupRoundCount}
+              setRoundCount={setSetupRoundCount}
+            />
           )}
 
           {phase === 'lobby' && mode === 'online' && (
@@ -629,6 +680,13 @@ export default function DuelsPage() {
               onQuickMatch={startQuickMatch}
               matchmakingLoading={matchmakingLoading}
               wsError={wsError}
+              mySubjects={mySubjects}
+              setupSubject={setupSubject}
+              setSetupSubject={setSetupSubject}
+              setupRoundCount={setupRoundCount}
+              setSetupRoundCount={setSetupRoundCount}
+              setupMaxPlayers={setupMaxPlayers}
+              setSetupMaxPlayers={setSetupMaxPlayers}
             />
           )}
 
@@ -682,6 +740,7 @@ export default function DuelsPage() {
               phase={phase}
               timeLeft={timeLeft}
               currentIndex={currentIndex}
+              totalRounds={totalRounds}
               userScore={userScore}
               opponentScore={opponentScore}
               opponentName={displayOpponent}
@@ -690,6 +749,7 @@ export default function DuelsPage() {
               opponentAnswered={opponentAnswered}
               roundResult={roundResult}
               onChoiceSelect={handleChoiceSelect}
+              allPlayers={allPlayers}
             />
           )}
 
@@ -700,6 +760,7 @@ export default function DuelsPage() {
               userScore={userScore}
               opponentScore={opponentScore}
               opponentName={displayOpponent}
+              ranking={gameRanking}
               onRematch={resetToLobby}
               onLeaderboard={() => router.push('/leaderboard')}
             />
@@ -713,16 +774,24 @@ export default function DuelsPage() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SoloLobby({ opponent, onStart }: { opponent: string; onStart: () => void }) {
+function SoloLobby({ opponent, onStart, roundCount, setRoundCount }: {
+  opponent: string;
+  onStart: () => void;
+  roundCount: number;
+  setRoundCount: (n: number) => void;
+}) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
         <div className="flex items-center justify-center gap-8 mb-6">
           <PlayerAvatar label="You" letter="Y" color="sky" />
           <div className="text-zinc-600 font-bold text-lg">VS</div>
           <PlayerAvatar label={opponent} letter={opponent[0]} color="zinc" />
         </div>
-        <RulesList />
+        <SetupPanel
+          roundCount={roundCount}
+          setRoundCount={setRoundCount}
+        />
         <button
           onClick={onStart}
           className="w-full py-4 bg-violet-400 hover:bg-violet-400 text-white font-bold rounded-xl transition-colors"
@@ -737,6 +806,8 @@ function SoloLobby({ opponent, onStart }: { opponent: string; onStart: () => voi
 function OnlineLobby({
   tab, onTabChange, challengeQuery, setChallengeQuery, challengeResults,
   challengeSending, challengeSent, onChallenge, onQuickMatch, matchmakingLoading, wsError,
+  mySubjects, setupSubject, setSetupSubject, setupRoundCount, setSetupRoundCount,
+  setupMaxPlayers, setSetupMaxPlayers,
 }: {
   tab: OnlineTab;
   onTabChange: (t: OnlineTab) => void;
@@ -749,6 +820,13 @@ function OnlineLobby({
   onQuickMatch: () => void;
   matchmakingLoading: boolean;
   wsError: string;
+  mySubjects: string[];
+  setupSubject: string;
+  setSetupSubject: (s: string) => void;
+  setupRoundCount: number;
+  setSetupRoundCount: (n: number) => void;
+  setupMaxPlayers: number;
+  setSetupMaxPlayers: (n: number) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -773,30 +851,34 @@ function OnlineLobby({
         </div>
       )}
 
+      {/* Setup panel — shared by both tabs */}
+      <SetupPanel
+        mySubjects={mySubjects}
+        subject={setupSubject}
+        setSubject={setSetupSubject}
+        roundCount={setupRoundCount}
+        setRoundCount={setSetupRoundCount}
+        maxPlayers={tab === 'quick-match' ? setupMaxPlayers : undefined}
+        setMaxPlayers={tab === 'quick-match' ? setSetupMaxPlayers : undefined}
+      />
+
       {tab === 'quick-match' && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center space-y-4">
-          <div className="text-4xl">
-            <svg className="w-12 h-12 mx-auto text-violet-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75V16.5zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
-            </svg>
-          </div>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-center space-y-4">
           <div>
             <p className="text-white font-semibold mb-1">Find a Random Opponent</p>
-            <p className="text-zinc-400 text-sm">Get matched with someone studying right now. Win to earn followers.</p>
+            <p className="text-zinc-400 text-sm">Get matched with someone studying right now.</p>
           </div>
-          <RulesList />
           <button
             onClick={onQuickMatch}
             disabled={matchmakingLoading}
-            className="w-full py-4 bg-violet-400 hover:bg-violet-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 bg-violet-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
           >
             {matchmakingLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Finding opponent...
               </>
-            ) : 'Find Opponent'}
+            ) : `Find ${setupMaxPlayers === 4 ? '4-Player ' : ''}Match`}
           </button>
         </div>
       )}
@@ -811,7 +893,7 @@ function OnlineLobby({
             </div>
           ) : (
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
-              <p className="text-white font-medium text-sm">Challenge anyone — even if they don&apos;t follow you</p>
+              <p className="text-white font-medium text-sm">Challenge a friend — questions from your deck</p>
               <input
                 type="text"
                 placeholder="Search by username..."
@@ -830,7 +912,7 @@ function OnlineLobby({
                       <button
                         onClick={() => onChallenge(user.username)}
                         disabled={challengeSending === user.username}
-                        className="px-4 py-1.5 bg-violet-400 hover:bg-violet-400 disabled:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+                        className="px-4 py-1.5 bg-violet-400 disabled:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
                       >
                         {challengeSending === user.username ? (
                           <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -882,14 +964,15 @@ function WaitingRoom({
 }
 
 function GameRound({
-  card, choices, phase, timeLeft, currentIndex, userScore, opponentScore,
-  opponentName, userAnswer, userAnswered, opponentAnswered, roundResult, onChoiceSelect,
+  card, choices, phase, timeLeft, currentIndex, totalRounds, userScore, opponentScore,
+  opponentName, userAnswer, userAnswered, opponentAnswered, roundResult, onChoiceSelect, allPlayers,
 }: {
   card: DuelCard;
   choices: string[];
   phase: Phase;
   timeLeft: number;
   currentIndex: number;
+  totalRounds: number;
   userScore: number;
   opponentScore: number;
   opponentName: string;
@@ -898,24 +981,42 @@ function GameRound({
   opponentAnswered: boolean;
   roundResult: 'win' | 'lose' | 'tie' | null;
   onChoiceSelect: (choice: string) => void;
+  allPlayers: { username: string; score: number }[];
 }) {
+  const isMulti = allPlayers.length > 2;
   return (
     <div className="space-y-4">
       {/* Scoreboard */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-4">
-        <div className="flex-1 text-center">
-          <p className="text-xs text-zinc-500 mb-1">You</p>
-          <p className="text-2xl font-black text-violet-300">{userScore}</p>
+      {isMulti ? (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs text-zinc-500">Round {currentIndex + 1} / {totalRounds}</p>
+          </div>
+          <div className="grid grid-cols-4 gap-1">
+            {allPlayers.map((p, i) => (
+              <div key={i} className={`text-center p-2 rounded-lg ${p.username === 'You' ? 'bg-violet-900/30' : 'bg-zinc-800/50'}`}>
+                <p className="text-[10px] text-zinc-500 truncate mb-0.5">{p.username}</p>
+                <p className={`text-lg font-black ${p.username === 'You' ? 'text-violet-300' : 'text-zinc-300'}`}>{p.score}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="text-center">
-          <p className="text-xs text-zinc-500 mb-1">Round</p>
-          <p className="text-sm font-bold text-zinc-300">{currentIndex + 1} / {ROUNDS}</p>
+      ) : (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center gap-4">
+          <div className="flex-1 text-center">
+            <p className="text-xs text-zinc-500 mb-1">You</p>
+            <p className="text-2xl font-black text-violet-300">{userScore}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-zinc-500 mb-1">Round</p>
+            <p className="text-sm font-bold text-zinc-300">{currentIndex + 1} / {totalRounds}</p>
+          </div>
+          <div className="flex-1 text-center">
+            <p className="text-xs text-zinc-500 mb-1">{opponentName}</p>
+            <p className="text-2xl font-black text-zinc-400">{opponentScore}</p>
+          </div>
         </div>
-        <div className="flex-1 text-center">
-          <p className="text-xs text-zinc-500 mb-1">{opponentName}</p>
-          <p className="text-2xl font-black text-zinc-400">{opponentScore}</p>
-        </div>
-      </div>
+      )}
 
       {/* Timer */}
       {phase === 'question' && (
@@ -993,32 +1094,51 @@ function GameRound({
   );
 }
 
+const RANK_MEDALS = ['🥇', '🥈', '🥉', '4️⃣'];
+
 function GameComplete({
-  finalResult, userScore, opponentScore, opponentName, onRematch, onLeaderboard,
+  finalResult, userScore, opponentScore, opponentName, ranking, onRematch, onLeaderboard,
 }: {
   finalResult: 'win' | 'lose' | 'tie';
   userScore: number;
   opponentScore: number;
   opponentName: string;
+  ranking: { username: string; score: number }[];
   onRematch: () => void;
   onLeaderboard: () => void;
 }) {
   return (
     <div className="space-y-4">
-      <div className={`rounded-xl p-8 border text-center ${
+      <div className={`rounded-xl p-6 border text-center ${
         finalResult === 'win' ? 'bg-violet-900/20 border-violet-700/40' :
         finalResult === 'lose' ? 'bg-red-900/20 border-red-800/40' :
         'bg-zinc-900 border-zinc-800'
       }`}>
-        <p className="text-5xl font-black mb-3 text-white">
+        <p className="text-5xl font-black mb-1 text-white">
           {finalResult === 'win' ? 'You won!' : finalResult === 'lose' ? 'You lost' : 'Draw'}
         </p>
-        <p className={`text-lg font-bold mb-6 ${
+        <p className={`text-base font-bold mb-5 ${
           finalResult === 'win' ? 'text-violet-300' :
           finalResult === 'lose' ? 'text-red-400' : 'text-zinc-400'
         }`}>
-          {userScore} – {opponentScore} vs {opponentName}
+          {ranking.length <= 2
+            ? `${userScore} – ${opponentScore} vs ${opponentName}`
+            : `Your score: ${userScore}`}
         </p>
+
+        {/* Ranking list (for 3+ players) */}
+        {ranking.length > 2 && (
+          <div className="space-y-2 mb-5">
+            {ranking.map((p, i) => (
+              <div key={i} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl ${i === 0 ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-zinc-800/40'}`}>
+                <span className="text-xl">{RANK_MEDALS[i] || `${i + 1}.`}</span>
+                <span className={`flex-1 text-sm font-bold text-left ${i === 0 ? 'text-amber-300' : 'text-zinc-300'}`}>{p.username}</span>
+                <span className={`text-sm font-black ${i === 0 ? 'text-amber-300' : 'text-zinc-400'}`}>{p.score}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-3">
           <button
             onClick={onRematch}
@@ -1028,7 +1148,7 @@ function GameComplete({
           </button>
           <button
             onClick={onLeaderboard}
-            className="flex-1 py-3 bg-violet-400 hover:bg-violet-400 text-white font-bold rounded-xl transition-colors"
+            className="flex-1 py-3 bg-violet-400 text-white font-bold rounded-xl transition-colors"
           >
             Leaderboard
           </button>
@@ -1051,21 +1171,76 @@ function PlayerAvatar({ label, letter, color }: { label: string; letter: string;
   );
 }
 
-function RulesList() {
-  const rules = [
-    `${ROUNDS} rounds · 15 seconds per question`,
-    'Choose the correct answer from 4 options',
-    'Fastest correct answer wins the round',
-    'Most rounds won takes the duel',
-  ];
+function SetupPanel({
+  mySubjects, subject, setSubject, roundCount, setRoundCount, maxPlayers, setMaxPlayers,
+}: {
+  mySubjects?: string[];
+  subject?: string;
+  setSubject?: (s: string) => void;
+  roundCount: number;
+  setRoundCount: (n: number) => void;
+  maxPlayers?: number;
+  setMaxPlayers?: (n: number) => void;
+}) {
   return (
-    <div className="space-y-2 text-left mb-6">
-      {rules.map((rule, i) => (
-        <div key={i} className="flex items-center gap-2 text-sm text-zinc-400">
-          <div className="w-1.5 h-1.5 bg-zinc-600 rounded-full flex-shrink-0" />
-          {rule}
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-4">
+      {/* Subject picker */}
+      {mySubjects && setSubject && subject !== undefined && (
+        <div>
+          <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Subject</p>
+          <div className="flex flex-wrap gap-2">
+            {['any', ...(mySubjects || [])].map(s => (
+              <button
+                key={s}
+                onClick={() => setSubject(s)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                  subject === s ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                }`}
+              >
+                {s === 'any' ? 'Any subject' : s}
+              </button>
+            ))}
+          </div>
         </div>
-      ))}
+      )}
+
+      {/* Question count */}
+      <div>
+        <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Questions</p>
+        <div className="flex gap-2">
+          {ROUND_OPTIONS.map(n => (
+            <button
+              key={n}
+              onClick={() => setRoundCount(n)}
+              className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
+                roundCount === n ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Players (only for quick match) */}
+      {maxPlayers !== undefined && setMaxPlayers && (
+        <div>
+          <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">Players</p>
+          <div className="flex gap-2">
+            {[2, 4].map(n => (
+              <button
+                key={n}
+                onClick={() => setMaxPlayers(n)}
+                className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
+                  maxPlayers === n ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                }`}
+              >
+                {n === 2 ? '1v1' : '4 Players'}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
