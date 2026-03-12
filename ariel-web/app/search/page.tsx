@@ -38,9 +38,8 @@ function Avatar({ person }: { person: Person }) {
 }
 
 function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onToggleFollow: (id: string) => void; onOpenDM: (id: string) => void }) {
-  // In DM mode, or already following → show Message button
-  // Not yet following → show Follow button
-  const showMessage = !!person.is_following;
+  const mutual = person.is_following && person.follows_you;
+  const waitingFollowBack = person.is_following && !person.follows_you;
 
   return (
     <div className="flex items-center gap-3 px-4 py-3">
@@ -61,14 +60,21 @@ function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onTog
         </div>
         <p className="text-xs text-zinc-400 truncate">@{person.username}</p>
         {person.bio && <p className="text-xs text-zinc-400 truncate mt-0.5">{person.bio}</p>}
+        {waitingFollowBack && (
+          <p className="text-[10px] text-zinc-400 mt-0.5">Follow back to message</p>
+        )}
       </div>
-      {showMessage ? (
+      {mutual ? (
         <button
           onClick={() => onOpenDM(person.id)}
           className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white transition-colors"
         >
           Message
         </button>
+      ) : waitingFollowBack ? (
+        <span className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-zinc-400 border border-gray-200">
+          Following
+        </span>
       ) : (
         <button
           onClick={() => onToggleFollow(person.id)}
