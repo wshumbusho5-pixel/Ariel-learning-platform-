@@ -397,14 +397,11 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       <div className="px-4 pb-4">
         {/* Comments — Twitter style */}
         {cardComments.length > 0 && (
-          <div className="space-y-3 mb-3">
-            {cardComments.slice(0, 5).map(c => (
-              <div key={c.id} className="flex items-start gap-2">
-                {/* Avatar — tappable → profile */}
-                <button
-                  onClick={() => c.author_username && window.location.assign(`/profile/${c.user_id}`)}
-                  className="flex-shrink-0 mt-0.5"
-                >
+          <div className="mb-3">
+            {cardComments.slice(0, 5).map((c, i) => (
+              <div key={c.id} className={`flex items-start gap-2.5 ${i > 0 ? 'mt-3' : ''}`}>
+                {/* Avatar → profile */}
+                <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0">
                   <div className="w-7 h-7 rounded-full bg-zinc-700 overflow-hidden flex items-center justify-center">
                     {c.author_profile_picture ? (
                       <img src={c.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')} className="w-7 h-7 object-cover" />
@@ -415,31 +412,32 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                 </button>
 
                 <div className="flex-1 min-w-0">
-                  {/* Username inline — Twitter style */}
-                  <div>
+                  {/* Username underlined tap-to-reply + comment text */}
+                  <p className="text-[12.5px] leading-snug text-zinc-300 break-words">
                     <button
-                      onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)}
-                      className="text-[12px] font-bold text-white mr-1.5 hover:underline"
+                      onClick={() => {
+                        setReplyingTo({ id: c.id, username: c.author_username || 'user' });
+                        setTimeout(() => inputRef.current?.focus(), 50);
+                      }}
+                      className="font-bold text-white underline decoration-zinc-600 underline-offset-2 mr-1.5"
                     >
                       {c.author_username || 'user'}
                     </button>
-                    <span className="text-[12px] text-zinc-300 leading-snug break-words">{c.content}</span>
-                  </div>
-                  {/* Reply button */}
-                  <button
-                    onClick={() => {
-                      setReplyingTo({ id: c.id, username: c.author_username || 'user' });
-                      setTimeout(() => inputRef.current?.focus(), 50);
-                    }}
-                    className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors mt-0.5"
-                  >
-                    Reply
-                  </button>
+                    {c.content}
+                  </p>
                 </div>
+
+                {/* Purple like thumb */}
+                <button className="flex-shrink-0 flex flex-col items-center gap-0.5 ml-1">
+                  <svg className="w-4 h-4 text-zinc-600 hover:text-violet-400 transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                  </svg>
+                  {c.likes > 0 && <span className="text-[9px] text-zinc-600">{c.likes}</span>}
+                </button>
               </div>
             ))}
             {commentCount > 5 && (
-              <button onClick={() => onComment(card.id)} className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">
+              <button onClick={() => onComment(card.id)} className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors mt-2.5 block">
                 View all {commentCount} answers
               </button>
             )}

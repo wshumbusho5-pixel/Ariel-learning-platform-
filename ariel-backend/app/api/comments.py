@@ -2,6 +2,7 @@
 Comments API - Comments and discussions on decks
 """
 from fastapi import APIRouter, Depends, HTTPException, status
+from bson import ObjectId
 from typing import List, Optional
 from datetime import datetime
 
@@ -404,7 +405,10 @@ async def get_card_comments(
     async for comment in db.comments.find(
         {"deck_id": card_id, "is_deleted": False, "parent_comment_id": None}
     ).sort("created_at", -1).skip(offset).limit(limit):
-        author = await db.users.find_one({"_id": comment["user_id"]})
+        try:
+            author = await db.users.find_one({"_id": ObjectId(comment["user_id"])})
+        except Exception:
+            author = await db.users.find_one({"_id": comment["user_id"]})
         if not author:
             continue
         reply_count = await db.comments.count_documents({"parent_comment_id": str(comment["_id"]), "is_deleted": False})
