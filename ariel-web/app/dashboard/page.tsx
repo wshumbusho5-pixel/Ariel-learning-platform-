@@ -296,7 +296,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   useEffect(() => { loadComments(); }, []);
 
   return (
-    <div className="mb-5 relative -mx-4">
+    <div className="mb-5 relative -mx-4 overflow-hidden rounded-2xl">
       {/* Toasts */}
       {(saveToast || shareToast) && (
         <div className="animate-toast absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
