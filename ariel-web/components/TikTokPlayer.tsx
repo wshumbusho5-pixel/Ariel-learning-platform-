@@ -182,8 +182,34 @@ export default function TikTokPlayer({
 
   const hasMore = activeIndex < reels.length - 1;
 
+  const goToNext = useCallback(() => {
+    const c = containerRef.current;
+    if (c) c.scrollTo({ top: (activeIndex + 1) * c.clientHeight, behavior: 'smooth' });
+  }, [activeIndex]);
+
+  const goToPrev = useCallback(() => {
+    if (activeIndex === 0) return;
+    const c = containerRef.current;
+    if (c) c.scrollTo({ top: (activeIndex - 1) * c.clientHeight, behavior: 'smooth' });
+  }, [activeIndex]);
+
+  // Arrow key navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') goToNext();
+      if (e.key === 'ArrowUp') goToPrev();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [goToNext, goToPrev]);
+
+  // Current active reel (for desktop sidebar)
+  const activeReel = reels[activeIndex];
+  const activeSaved = activeReel ? savedReels.has(activeReel.id) : false;
+  const activeFollowing = activeReel ? followingCreators.has(activeReel.creator_id) : false;
+
   return (
-    <div className="fixed inset-0 z-[300] bg-black">
+    <div className="fixed inset-0 z-[300] bg-black lg:flex lg:items-center lg:justify-center">
 
       {/* Mute toast */}
       {muteToast && (
@@ -192,37 +218,46 @@ export default function TikTokPlayer({
         </div>
       )}
 
-      {/* Close */}
-      <button
-        onClick={onClose}
-        className="absolute top-12 left-4 z-50 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
-      >
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+      {/* ── Mobile-only: floating close + mute ── */}
+      <button onClick={onClose} className="lg:hidden absolute top-12 left-4 z-50 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform">
+        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+      <button onClick={toggleMute} className="lg:hidden absolute top-12 right-4 z-50 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform">
+        {muted
+          ? <svg className="w-[18px] h-[18px] text-white/60" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+          : <svg className="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6L5.586 9H4a1 1 0 00-1 1v4a1 1 0 001 1h1.586L12 18V6z" /></svg>
+        }
       </button>
 
-      {/* Mute */}
-      <button
-        onClick={toggleMute}
-        className="absolute top-12 right-4 z-50 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
-      >
-        {muted ? (
-          <svg className="w-[18px] h-[18px] text-white/60" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-          </svg>
-        ) : (
-          <svg className="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6L5.586 9H4a1 1 0 00-1 1v4a1 1 0 001 1h1.586L12 18V6z" />
-          </svg>
-        )}
-      </button>
+      {/* ── Desktop left panel: close · mute · nav ── */}
+      <div className="hidden lg:flex flex-col items-center justify-between h-full py-10 w-20 flex-shrink-0 z-50">
+        <div className="flex flex-col items-center gap-3">
+          <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+          <button onClick={toggleMute} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+            {muted
+              ? <svg className="w-[18px] h-[18px] text-white/50" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+              : <svg className="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6L5.586 9H4a1 1 0 00-1 1v4a1 1 0 001 1h1.586L12 18V6z" /></svg>
+            }
+          </button>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <button onClick={goToPrev} disabled={activeIndex === 0} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-20 flex items-center justify-center transition-colors">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+          </button>
+          <span className="text-white/30 text-[11px] font-semibold tabular-nums">{activeIndex + 1}/{reels.length}</span>
+          <button onClick={goToNext} disabled={activeIndex >= reels.length - 1} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 disabled:opacity-20 flex items-center justify-center transition-colors">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+          </button>
+        </div>
+      </div>
 
-      {/* Vertical snap scroll */}
+      {/* ── Portrait scroll container (shared mobile + desktop) ── */}
       <div
         ref={containerRef}
-        className="h-full overflow-y-scroll"
-        style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+        className="h-full overflow-y-scroll flex-shrink-0"
+        style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none', width: 'min(100vw, calc(100dvh * 9 / 16))' } as React.CSSProperties}
       >
         {reels.map((reel, index) => {
           const isSaved = savedReels.has(reel.id);
@@ -339,8 +374,8 @@ export default function TikTokPlayer({
                 </div>
               </div>
 
-              {/* Right-side action buttons */}
-              <div className="absolute bottom-[80px] right-3 z-20 flex flex-col items-center gap-5">
+              {/* Right-side action buttons — mobile only; desktop uses sidebar */}
+              <div className="lg:hidden absolute bottom-[80px] right-3 z-20 flex flex-col items-center gap-5">
 
                 {/* Discuss */}
                 <button onClick={(e) => { e.stopPropagation(); onComment(reel.id); }} className="flex flex-col items-center gap-1.5">
@@ -435,6 +470,51 @@ export default function TikTokPlayer({
           </div>
         </div>
       </div>
+
+      {/* ── Desktop right sidebar: actions for active reel ── */}
+      {activeReel && (
+        <div className="hidden lg:flex flex-col items-center justify-end pb-20 px-5 gap-6 h-full w-28 flex-shrink-0">
+          {/* Discuss */}
+          <button onClick={(e) => { e.stopPropagation(); onComment(activeReel.id); }} className="flex flex-col items-center gap-1.5 group">
+            <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+              <svg className="w-[22px] h-[22px] text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z" />
+              </svg>
+            </div>
+            <span className="text-white/70 text-[10px] font-semibold">Discuss</span>
+          </button>
+
+          {/* Save */}
+          <button onClick={e => handleSave(e, activeReel.id)} className="flex flex-col items-center gap-1.5">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${activeSaved ? 'bg-violet-500/40 hover:bg-violet-500/60' : 'bg-white/10 hover:bg-white/20'} ${poppedSave === activeReel.id ? 'animate-heart-pop' : ''}`}>
+              <svg
+                className={`w-[22px] h-[22px] transition-colors ${activeSaved ? 'text-violet-300' : 'text-white'}`}
+                fill={activeSaved ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                strokeWidth={1.75}
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </div>
+            <span className={`text-[10px] font-semibold transition-colors ${activeSaved ? 'text-violet-300' : 'text-white/70'}`}>
+              {activeSaved ? 'Saved' : 'Save'}
+            </span>
+          </button>
+
+          {/* Send */}
+          {onDMShare && (
+            <button onClick={(e) => { e.stopPropagation(); onDMShare(activeReel); }} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+                <svg className="w-[22px] h-[22px] text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              </div>
+              <span className="text-white/70 text-[10px] font-semibold">Send</span>
+            </button>
+          )}
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes swipeBounce {
