@@ -918,27 +918,24 @@ export default function Dashboard() {
             </div>
           ) : (
             <>
-              {/* Main row */}
-              {/* ── Single row: avatar+name left | ariel center | icons right ── */}
+              {/* ── Single row: avatar+name left | icons+ariel right ── */}
               <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
-                {/* Left: avatar on top, name below */}
+                {/* Left: avatar + name below */}
                 <button onClick={() => router.push('/profile')} className="flex flex-col items-start flex-shrink-0">
                   <div className="relative">
-                    <div className="p-[2px] rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500">
-                      {user?.profile_picture ? (
-                        <img
-                          src={user.profile_picture}
-                          alt={user.username}
-                          className="w-9 h-9 rounded-full object-cover block"
-                        />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-[#09090b] flex items-center justify-center">
-                          <span className="text-sm font-black text-white">
-                            {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                    {user?.profile_picture ? (
+                      <img
+                        src={user.profile_picture}
+                        alt={user.username}
+                        className="w-9 h-9 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center">
+                        <span className="text-sm font-black text-white">
+                          {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                     {streakDays > 0 && (
                       <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none bg-[#09090b] rounded-full px-0.5">🔥</span>
                     )}
@@ -950,21 +947,18 @@ export default function Dashboard() {
                   )}
                 </button>
 
-                {/* Center: italic 'a' monogram */}
-                <div className="absolute left-1/2 -translate-x-1/2 select-none">
-                  <span style={{
+                {/* Right: ariel wordmark above icons */}
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span className="select-none" style={{
                     fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
-                    fontSize: 48,
+                    fontSize: 22,
                     fontWeight: 700,
                     fontStyle: 'italic',
                     lineHeight: 1,
                     color: '#9B7FFF',
-                    letterSpacing: '-1px',
-                  }}>a</span>
-                </div>
-
-                {/* Right: action icons */}
-                <div className="flex items-center gap-0.5 flex-shrink-0">
+                    letterSpacing: '1px',
+                  }}>ariel</span>
+                  <div className="flex items-center gap-0.5">
                   <button onClick={() => router.push('/search')} className="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
                     <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1000,6 +994,7 @@ export default function Dashboard() {
                       <circle cx="12" cy="19" r="1.5" />
                     </svg>
                   </button>
+                  </div>
                 </div>
               </div>
 
