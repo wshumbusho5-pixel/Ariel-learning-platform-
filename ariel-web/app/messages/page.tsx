@@ -41,7 +41,7 @@ function Avatar({ name, size = 'md' }: { name?: string; size?: 'sm' | 'md' | 'lg
   const letter = name?.[0]?.toUpperCase() ?? '?';
   const sizes = { sm: 'w-9 h-9 text-sm', md: 'w-11 h-11 text-base', lg: 'w-14 h-14 text-lg' };
   return (
-    <div className={`${sizes[size]} rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center font-bold text-white flex-shrink-0`}>
+    <div className={`${sizes[size]} rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-zinc-300 flex-shrink-0`}>
       {letter}
     </div>
   );
@@ -122,9 +122,7 @@ export default function MessagesPage() {
               onClick={() => router.push('/search?dm=1')}
               className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
             >
-              <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
+              <svg className="w-5 h-5 text-zinc-400" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
             </button>
           </div>
 
@@ -188,13 +186,13 @@ export default function MessagesPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 px-6 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-zinc-900/60 border border-zinc-800/60 flex items-center justify-center mb-4">
               {tab === 'buddies' ? (
-                <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <svg className="w-7 h-7 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                 </svg>
               ) : (
-                <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <svg className="w-7 h-7 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               )}
@@ -208,7 +206,7 @@ export default function MessagesPage() {
             {tab === 'all' && !search && (
               <button
                 onClick={() => router.push('/search')}
-                className="mt-5 px-5 py-2.5 rounded-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-colors"
+                className="mt-5 px-5 py-2.5 rounded-full bg-violet-500 hover:bg-violet-600 text-white text-sm font-semibold transition-colors"
               >
                 Start a conversation
               </button>
@@ -224,7 +222,7 @@ export default function MessagesPage() {
                 <button
                   key={convo.id}
                   onClick={() => router.push(`/messages/${convo.id}`)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-900/60 active:bg-zinc-900 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-zinc-900 active:bg-zinc-800/80 transition-colors text-left"
                 >
                   <div className="relative flex-shrink-0">
                     {convo.other_user_profile_picture ? (
@@ -250,14 +248,14 @@ export default function MessagesPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className={`text-sm truncate ${isUnread ? 'font-bold text-white' : 'font-medium text-zinc-300'}`}>
+                      <p className={`text-sm truncate ${isUnread ? 'font-bold text-white' : 'font-semibold text-zinc-300'}`}>
                         {name}
                       </p>
-                      <span className="text-[11px] text-zinc-600 flex-shrink-0">
+                      <span className="text-[11px] text-zinc-500 flex-shrink-0">
                         {timeAgo(convo.last_message_at)}
                       </span>
                     </div>
-                    <p className={`text-xs mt-0.5 truncate ${isUnread ? 'font-semibold text-zinc-300' : 'text-zinc-600'}`}>
+                    <p className={`text-xs mt-0.5 truncate ${isUnread ? 'font-semibold text-zinc-300' : 'text-zinc-500'}`}>
                       {isOnline(convo.other_user_last_seen) && !convo.last_message_content ? (
                         <span className="text-emerald-400 font-semibold">● Online</span>
                       ) : (
