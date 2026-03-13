@@ -975,9 +975,11 @@ export default function Dashboard() {
                     )}
                   </button>
                   <button onClick={() => setDrawerOpen(true)} className="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors lg:hidden">
-                    {/* Classic 3-line hamburger */}
-                    <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                    {/* Three vertical dots */}
+                    <svg className="w-[20px] h-[20px]" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="5" r="1.5" />
+                      <circle cx="12" cy="12" r="1.5" />
+                      <circle cx="12" cy="19" r="1.5" />
                     </svg>
                   </button>
                 </div>
