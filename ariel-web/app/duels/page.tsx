@@ -439,14 +439,29 @@ export default function DuelsPage() {
 
       case 'player_joined':
         setOpponentName(msg.opponent_username || 'Opponent');
-        setMatchmakingStatus(`${msg.opponent_username} is ready! Starting soon...`);
-        // Fallback: if game_start never arrives within 10s, show error
+        setMatchmakingStatus(`${msg.opponent_username} is ready!`);
+        // Start the visual countdown immediately — don't wait for server's game_start
+        setPhase('countdown');
+        setCountdown(3);
+        setUserScore(0);
+        setOpponentScore(0);
+        setCurrentIndex(0);
+        {
+          let c = 3;
+          const cd = setInterval(() => {
+            c -= 1;
+            setCountdown(c);
+            if (c === 0) clearInterval(cd);
+          }, 1000);
+        }
+        // Safety: if game never starts after 8s, show error
         if (gameStartTimeoutRef.current) clearTimeout(gameStartTimeoutRef.current);
         gameStartTimeoutRef.current = setTimeout(() => {
-          if (phaseRef.current === 'waiting') {
+          if (phaseRef.current !== 'question' && phaseRef.current !== 'complete') {
             setWsError('Game failed to start. Please try again.');
+            setPhase('waiting');
           }
-        }, 10000);
+        }, 8000);
         break;
 
       case 'error':
@@ -454,18 +469,8 @@ export default function DuelsPage() {
         break;
 
       case 'game_start':
+        // Countdown already started from player_joined — just clear the safety timeout
         if (gameStartTimeoutRef.current) clearTimeout(gameStartTimeoutRef.current);
-        setPhase('countdown');
-        setUserScore(0);
-        setOpponentScore(0);
-        setCurrentIndex(0);
-        let c = msg.countdown || 3;
-        setCountdown(c);
-        const cd = setInterval(() => {
-          c -= 1;
-          setCountdown(c);
-          if (c === 0) clearInterval(cd);
-        }, 1000);
         break;
 
       case 'round_start':

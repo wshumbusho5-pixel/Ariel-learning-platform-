@@ -1,14 +1,12 @@
 """
-Duels API - Real-time multiplayer flashcard battles (up to 4 players)
+Duels API - Real-time multiplayer flashcard battles
 """
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from typing import List, Optional, Dict
 from datetime import datetime
-from pydantic import BaseModel
 import asyncio
 import secrets
 import random
-from bson import ObjectId
 
 from app.services.database_service import db_service
 from app.services.auth_service import AuthService
@@ -18,131 +16,49 @@ from app.models.user import User
 
 router = APIRouter(prefix="/api/duels", tags=["duels"])
 
+ROUND_COUNT = 5
 ROUND_TIMEOUT = 15.0  # seconds per round
-MAX_ROUND_COUNT = 20
-MIN_ROUND_COUNT = 5
-
-
-# ── Request models ────────────────────────────────────────────────────────────
-
-class QuickMatchRequest(BaseModel):
-    subject: Optional[str] = None   # None or "any" = mixed
-    round_count: int = 5
-    max_players: int = 2            # 2 or 4
-
-
-class ChallengeRequest(BaseModel):
-    subject: Optional[str] = None
-    round_count: int = 5
 
 
 # ── In-memory game state ──────────────────────────────────────────────────────
 
 class DuelRoom:
-    def __init__(
-        self,
-        room_id: str,
-        creator_id: str,
-        creator_username: str,
-        subject: Optional[str] = None,
-        round_count: int = 5,
-        max_players: int = 2,
-    ):
+    def __init__(self, room_id: str, creator_id: str, creator_username: str):
         self.room_id = room_id
-        self.creator_id = creator_id          # whose deck to use for questions
-        self.subject = subject                 # subject filter (None = any)
-        self.round_count = max(MIN_ROUND_COUNT, min(MAX_ROUND_COUNT, round_count))
-        self.max_players = max(2, min(4, max_players))
-
-        self.status = "waiting"               # waiting | playing | finished
-        self.cards: List[dict] = []
-        self.current_round = 0
-        self.round_answers: Dict[str, Optional[str]] = {}  # player_id -> answer
-
-        # Flexible N-player tracking
-        self.players: Dict[str, str] = {creator_id: creator_username}  # id -> username
-        self.scores: Dict[str, int] = {creator_id: 0}
-        self.connections: Dict[str, WebSocket] = {}
-
-        # Keep 2-player compat fields
         self.p1_id = creator_id
         self.p1_username = creator_username
         self.p2_id: Optional[str] = None
         self.p2_username: Optional[str] = None
+        self.status = "waiting"  # waiting | playing | finished
+        self.cards: List[dict] = []
+        self.current_round = 0
+        self.p1_answers: List[Optional[str]] = []
+        self.p2_answers: List[Optional[str]] = []
+        self.p1_score = 0
+        self.p2_score = 0
+        self.connections: Dict[str, WebSocket] = {}
 
 
 rooms: Dict[str, DuelRoom] = {}
-# queue entry: (user_id, username, room_id, max_players)
-matchmaking_queue: List[tuple] = []
+matchmaking_queue: List[tuple] = []  # (user_id, username, room_id)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-async def _fetch_cards_for_room(db, room: DuelRoom) -> List[dict]:
-    """
-    Fetch cards from the creator's deck (filtered by subject), then
-    supplement with public cards if not enough.
-    """
-    need = room.round_count + 6   # extras for distractor generation
-    subject = room.subject
-    cards: List[dict] = []
-    seen: set = set()
-
-    def _row(card: dict) -> dict:
-        return {
+async def _fetch_cards(db, count: int) -> List[dict]:
+    pipeline = [
+        {"$match": {"visibility": "public"}},
+        {"$sample": {"size": count}},
+    ]
+    cards = []
+    async for card in db.cards.aggregate(pipeline):
+        cards.append({
             "id": str(card["_id"]),
             "question": card["question"],
             "answer": card["answer"],
             "subject": card.get("subject", ""),
-        }
-
-    # 1. Creator's own cards
-    q: dict = {"user_id": room.creator_id}
-    if subject and subject.lower() != "any":
-        q["subject"] = {"$regex": subject, "$options": "i"}
-    async for card in db.cards.aggregate([{"$match": q}, {"$sample": {"size": need}}]):
-        cid = str(card["_id"])
-        if cid not in seen:
-            seen.add(cid)
-            cards.append(_row(card))
-
-    # 2. Public cards of same subject (supplement)
-    if len(cards) < need:
-        pub_q: dict = {"visibility": "public", "_id": {"$nin": [ObjectId(i) for i in seen]}}
-        if subject and subject.lower() != "any":
-            pub_q["subject"] = {"$regex": subject, "$options": "i"}
-        async for card in db.cards.aggregate([{"$match": pub_q}, {"$sample": {"size": need - len(cards)}}]):
-            cid = str(card["_id"])
-            if cid not in seen:
-                seen.add(cid)
-                cards.append(_row(card))
-
-    # 3. Any public cards (last resort)
-    if len(cards) < need:
-        async for card in db.cards.aggregate([
-            {"$match": {"visibility": "public", "_id": {"$nin": [ObjectId(i) for i in seen]}}},
-            {"$sample": {"size": need - len(cards)}}
-        ]):
-            cid = str(card["_id"])
-            if cid not in seen:
-                seen.add(cid)
-                cards.append(_row(card))
-
-    return cards[:need]
-
-
-FALLBACK_CARDS = [
-    {"id": "f1", "question": "What is the powerhouse of the cell?", "answer": "Mitochondria", "subject": "Biology"},
-    {"id": "f2", "question": "What is H₂O?", "answer": "Water", "subject": "Chemistry"},
-    {"id": "f3", "question": "What year did WW2 end?", "answer": "1945", "subject": "History"},
-    {"id": "f4", "question": "What is the speed of light (approx)?", "answer": "300,000 km/s", "subject": "Physics"},
-    {"id": "f5", "question": "Who painted the Mona Lisa?", "answer": "Leonardo da Vinci", "subject": "Art"},
-    {"id": "f6", "question": "What is Newton's second law?", "answer": "F = ma", "subject": "Physics"},
-    {"id": "f7", "question": "What is the capital of France?", "answer": "Paris", "subject": "Geography"},
-    {"id": "f8", "question": "What is the Pythagorean theorem?", "answer": "a² + b² = c²", "subject": "Mathematics"},
-    {"id": "f9", "question": "What is the chemical symbol for gold?", "answer": "Au", "subject": "Chemistry"},
-    {"id": "f10", "question": "How many sides does a hexagon have?", "answer": "6", "subject": "Mathematics"},
-]
+        })
+    return cards
 
 
 def _build_choices(card: dict, pool: List[dict]) -> List[str]:
@@ -174,14 +90,13 @@ async def _send_player(room: DuelRoom, player_id: str, msg: dict):
     await _send(room.connections.get(player_id), msg)
 
 
-async def _create_challenge_notification(db, challenger: User, challenged_id: str, room_id: str, subject: Optional[str], round_count: int):
+async def _create_challenge_notification(db, challenger: User, challenged_id: str, room_id: str):
     name = challenger.username or challenger.full_name or "Someone"
-    subj_str = f" on {subject}" if subject and subject.lower() != "any" else ""
     await db.notifications.insert_one({
         "user_id": challenged_id,
         "notification_type": "duel_challenge",
         "title": "Duel Challenge!",
-        "message": f"{name} challenged you to a {round_count}-question duel{subj_str}!",
+        "message": f"{name} challenged you to a study duel!",
         "icon": "swords",
         "actor_id": str(challenger.id),
         "actor_username": challenger.username,
@@ -196,200 +111,193 @@ async def _create_challenge_notification(db, challenger: User, challenged_id: st
 # ── Game loop ─────────────────────────────────────────────────────────────────
 
 async def _run_game(room: DuelRoom):
-    required = room.max_players
-    if room.status != "waiting" or len(room.connections) < required:
-        print(f"[DUEL] _run_game skipped: status={room.status} connections={len(room.connections)}/{required}")
+    """Runs after both players connect."""
+    if room.status != "waiting" or len(room.connections) < 2:
+        print(f"[DUEL] _run_game skipped: status={room.status} connections={len(room.connections)}")
         return
     try:
-        print(f"[DUEL] Starting game room={room.room_id} players={list(room.players.values())} rounds={room.round_count} subject={room.subject}")
+        print(f"[DUEL] Starting game for room {room.room_id}")
         await _run_game_inner(room)
-        print(f"[DUEL] Game finished room={room.room_id}")
+        print(f"[DUEL] Game finished for room {room.room_id}")
     except Exception as e:
         import traceback
-        print(f"[DUEL] CRASH room={room.room_id}: {e}")
+        print(f"[DUEL] CRASH in room {room.room_id}: {e}")
         traceback.print_exc()
         room.status = "finished"
         await _broadcast(room, {"type": "error", "message": "Game failed to start. Please try again."})
 
 
+FALLBACK_CARDS_DATA = [
+    ("What is the powerhouse of the cell?", "Mitochondria", "Biology"),
+    ("What is H2O?", "Water", "Chemistry"),
+    ("What year did WW2 end?", "1945", "History"),
+    ("What is the speed of light (approx)?", "300,000 km/s", "Physics"),
+    ("Who painted the Mona Lisa?", "Leonardo da Vinci", "Art"),
+    ("What is Newton's second law?", "F = ma", "Physics"),
+    ("What is the capital of France?", "Paris", "Geography"),
+    ("What is the Pythagorean theorem?", "a² + b² = c²", "Mathematics"),
+]
+
+
 async def _run_game_inner(room: DuelRoom):
+    """Inner game loop — separated so exceptions bubble to _run_game."""
     room.status = "playing"
     db = db_service.get_db()
 
-    # Fetch cards
-    pool = await _fetch_cards_for_room(db, room)
-    if len(pool) < room.round_count:
-        # Pad with fallback cards
-        extra = [c for c in FALLBACK_CARDS if c["id"] not in {x["id"] for x in pool}]
-        pool = pool + extra
-    if not pool:
-        await _broadcast(room, {"type": "error", "message": "No cards found. Add some public flashcards first!"})
-        room.status = "finished"
-        return
+    # Fire game_start IMMEDIATELY — don't make players wait for card fetch.
+    # Fetch cards in parallel with the countdown so round 1 is ready on time.
+    await _broadcast(room, {"type": "game_start", "countdown": 3})
 
-    game_cards = pool[:room.round_count]
+    # Start card fetch as a concurrent task during the 3-second countdown
+    fetch_task = asyncio.create_task(_fetch_cards(db, ROUND_COUNT * 4))
+    await asyncio.sleep(3)
+
+    pool = await fetch_task
+    if len(pool) < ROUND_COUNT:
+        pool = [
+            {"id": str(i), "question": q, "answer": a, "subject": s}
+            for i, (q, a, s) in enumerate(FALLBACK_CARDS_DATA)
+        ]
+
+    game_cards = pool[:ROUND_COUNT]
     for card in game_cards:
         card["choices"] = _build_choices(card, pool)
     room.cards = game_cards
+    room.p1_answers = [None] * ROUND_COUNT
+    room.p2_answers = [None] * ROUND_COUNT
 
-    player_list = [{"username": room.players[p], "id": p} for p in room.players]
-    await _broadcast(room, {
-        "type": "game_start",
-        "countdown": 3,
-        "round_count": room.round_count,
-        "subject": room.subject or "Mixed",
-        "players": player_list,
-    })
-    await asyncio.sleep(3)
-
-    for i in range(room.round_count):
+    # Rounds
+    for i in range(ROUND_COUNT):
         if room.status != "playing":
             break
+        room.current_round = i
         await _play_round(room, i)
-        if i < room.round_count - 1:
-            await asyncio.sleep(2.5)
+        if i < ROUND_COUNT - 1:
+            await asyncio.sleep(2.5)  # brief pause before next round
 
+    # Game over
     if room.status == "playing":
         room.status = "finished"
-        ranking = sorted(room.players.items(), key=lambda x: room.scores.get(x[0], 0), reverse=True)
-        ranking_list = [{"username": room.players[p], "score": room.scores.get(p, 0)} for p, _ in ranking]
-
-        for pid in list(room.connections.keys()):
-            my_score = room.scores.get(pid, 0)
-            rank = next((i + 1 for i, (p, _) in enumerate(ranking) if p == pid), 1)
-            # For 2-player compat: find "opponent" score
-            others = [room.scores.get(p, 0) for p in room.players if p != pid]
-            opp_score = others[0] if others else 0
-            result = "win" if rank == 1 else ("tie" if my_score == ranking[0][1] else "lose")
-            # Handle tie for first place
-            top_score = room.scores.get(ranking[0][0], 0)
-            result = "win" if my_score == top_score and my_score > 0 else ("lose" if my_score < top_score else "tie")
-
-            await _send_player(room, pid, {
+        await _send_player(room, room.p1_id, {
+            "type": "game_over",
+            "you_score": room.p1_score,
+            "opponent_score": room.p2_score,
+            "result": _result(room.p1_score, room.p2_score),
+        })
+        if room.p2_id:
+            await _send_player(room, room.p2_id, {
                 "type": "game_over",
-                "you_score": my_score,
-                "opponent_score": opp_score,
-                "result": result,
-                "ranking": ranking_list,
+                "you_score": room.p2_score,
+                "opponent_score": room.p1_score,
+                "result": _result(room.p2_score, room.p1_score),
             })
 
 
 async def _play_round(room: DuelRoom, idx: int):
     card = room.cards[idx]
-    room.current_round = idx
-    room.round_answers = {pid: None for pid in room.players}
-
     await _broadcast(room, {
         "type": "round_start",
         "round": idx + 1,
-        "total": room.round_count,
+        "total": ROUND_COUNT,
         "question": card["question"],
         "subject": card["subject"],
         "choices": card["choices"],
     })
 
-    # Wait for all connected players to answer or timeout
+    # Poll until both answer or timeout
     loop = asyncio.get_running_loop()
     deadline = loop.time() + ROUND_TIMEOUT
     while loop.time() < deadline:
-        connected_players = set(room.connections.keys()) & set(room.round_answers.keys())
-        if connected_players and all(room.round_answers.get(p) is not None for p in connected_players):
+        if room.p1_answers[idx] is not None and room.p2_answers[idx] is not None:
             break
         await asyncio.sleep(0.1)
 
     correct = card["answer"].strip().lower()
-    for pid in room.players:
-        ans = room.round_answers.get(pid)
-        if ans is not None and ans.strip().lower() == correct:
-            room.scores[pid] = room.scores.get(pid, 0) + 1
+    p1_ok = room.p1_answers[idx] is not None and room.p1_answers[idx].strip().lower() == correct
+    p2_ok = room.p2_answers[idx] is not None and room.p2_answers[idx].strip().lower() == correct
 
-    # Send personalised result to each player
-    for pid in list(room.connections.keys()):
-        my_ans = room.round_answers.get(pid)
-        my_correct = bool(my_ans and my_ans.strip().lower() == correct)
-        others_correct = {
-            room.players[p]: room.round_answers.get(p) is not None and room.round_answers.get(p, "").strip().lower() == correct
-            for p in room.players if p != pid
-        }
-        # 2-player compat
-        opp_ids = [p for p in room.players if p != pid]
-        opp_correct = bool(room.round_answers.get(opp_ids[0], None) and room.round_answers.get(opp_ids[0], "").strip().lower() == correct) if opp_ids else False
-        opp_score = room.scores.get(opp_ids[0], 0) if opp_ids else 0
+    if p1_ok:
+        room.p1_score += 1
+    if p2_ok:
+        room.p2_score += 1
 
-        def _rnd_result(me: bool, opp: bool) -> str:
-            if me and not opp: return "win"
-            if opp and not me: return "lose"
-            return "tie"
-
-        await _send_player(room, pid, {
-            "type": "round_result",
-            "round": idx + 1,
-            "correct_answer": card["answer"],
-            "you_correct": my_correct,
-            "opponent_correct": opp_correct,
-            "you_score": room.scores.get(pid, 0),
-            "opponent_score": opp_score,
-            "result": _rnd_result(my_correct, opp_correct),
-            "scores": {room.players[p]: room.scores.get(p, 0) for p in room.players},
-            "others_correct": others_correct,
+    payload_base = {
+        "type": "round_result",
+        "round": idx + 1,
+        "correct_answer": card["answer"],
+    }
+    await _send_player(room, room.p1_id, {
+        **payload_base,
+        "you_correct": p1_ok,
+        "opponent_correct": p2_ok,
+        "you_score": room.p1_score,
+        "opponent_score": room.p2_score,
+        "result": _result_round(p1_ok, p2_ok),
+    })
+    if room.p2_id:
+        await _send_player(room, room.p2_id, {
+            **payload_base,
+            "you_correct": p2_ok,
+            "opponent_correct": p1_ok,
+            "you_score": room.p2_score,
+            "opponent_score": room.p1_score,
+            "result": _result_round(p2_ok, p1_ok),
         })
+
+
+def _result_round(me: bool, opp: bool) -> str:
+    if me and not opp:
+        return "win"
+    if opp and not me:
+        return "lose"
+    return "tie"
+
+
+def _result(my_score: int, opp_score: int) -> str:
+    if my_score > opp_score:
+        return "win"
+    if opp_score > my_score:
+        return "lose"
+    return "tie"
 
 
 # ── HTTP Endpoints ────────────────────────────────────────────────────────────
 
 @router.post("/quick-match")
-async def quick_match(
-    body: QuickMatchRequest = QuickMatchRequest(),
-    current_user: User = Depends(get_current_user_dependency),
-):
-    """Join matchmaking queue. Pairs players by max_players preference."""
+async def quick_match(current_user: User = Depends(get_current_user_dependency)):
+    """Join matchmaking. Pairs with waiting player or creates a new room."""
     user_id = str(current_user.id)
     uname = current_user.username or "Player"
-    max_players = max(2, min(4, body.max_players))
-    round_count = max(MIN_ROUND_COUNT, min(MAX_ROUND_COUNT, body.round_count))
-    subject = body.subject if body.subject and body.subject.lower() != "any" else None
 
     global matchmaking_queue
 
-    # Dedup: if user already in queue, return their room
-    for entry in matchmaking_queue:
-        if entry[0] == user_id:
-            return {"room_id": entry[2], "status": "waiting", "opponent_username": None}
+    # If user already has a waiting room, return it (prevents double-call creating two rooms)
+    for uid, un, rid in matchmaking_queue:
+        if uid == user_id:
+            return {"room_id": rid, "status": "waiting", "opponent_username": None}
 
-    # Find an existing open room with same max_players
-    for entry in list(matchmaking_queue):
-        e_uid, e_uname, e_rid, e_max = entry
-        room = rooms.get(e_rid)
-        if not room or room.status != "waiting":
-            matchmaking_queue.remove(entry)
-            continue
-        if e_max == max_players and len(room.players) < max_players and e_uid != user_id:
-            # Join this room
-            room.players[user_id] = uname
-            room.scores[user_id] = 0
-            if room.p2_id is None:
-                room.p2_id = user_id
-                room.p2_username = uname
-            # Remove from queue if now full
-            if len(room.players) >= max_players:
-                matchmaking_queue.remove(entry)
-            first_username = e_uname
-            return {"room_id": e_rid, "status": "joined", "opponent_username": first_username}
+    # Try to match with someone waiting
+    while matchmaking_queue:
+        waiting_uid, waiting_uname, room_id = matchmaking_queue.pop(0)
+        room = rooms.get(room_id)
+        if room and room.status == "waiting" and waiting_uid != user_id:
+            room.p2_id = user_id
+            room.p2_username = uname
+            return {"room_id": room_id, "status": "joined", "opponent_username": waiting_uname}
 
-    # Create a new room and wait
+    # Create room and wait
     room_id = secrets.token_urlsafe(8)
-    rooms[room_id] = DuelRoom(room_id, user_id, uname, subject=subject, round_count=round_count, max_players=max_players)
-    matchmaking_queue.append((user_id, uname, room_id, max_players))
+    rooms[room_id] = DuelRoom(room_id, user_id, uname)
+    matchmaking_queue.append((user_id, uname, room_id))
     return {"room_id": room_id, "status": "waiting", "opponent_username": None}
 
 
 @router.post("/challenge/{username}")
 async def challenge_user(
     username: str,
-    body: ChallengeRequest = ChallengeRequest(),
     current_user: User = Depends(get_current_user_dependency),
 ):
-    """Challenge a specific user. Questions come from challenger's deck."""
+    """Challenge any user by username. Sends them a notification."""
     db = db_service.get_db()
     target = await db.users.find_one({"username": username})
     if not target:
@@ -399,24 +307,17 @@ async def challenge_user(
     if target_id == str(current_user.id):
         raise HTTPException(status_code=400, detail="Can't challenge yourself")
 
-    subject = body.subject if body.subject and body.subject.lower() != "any" else None
-    round_count = max(MIN_ROUND_COUNT, min(MAX_ROUND_COUNT, body.round_count))
-
     room_id = secrets.token_urlsafe(8)
-    rooms[room_id] = DuelRoom(
-        room_id, str(current_user.id), current_user.username or "Player",
-        subject=subject, round_count=round_count, max_players=2
-    )
+    rooms[room_id] = DuelRoom(room_id, str(current_user.id), current_user.username or "Player")
+    # Persist to DB so room survives server restarts
     await db.duel_rooms.insert_one({
         "room_id": room_id,
         "p1_id": str(current_user.id),
         "p1_username": current_user.username or "Player",
-        "subject": subject,
-        "round_count": round_count,
         "status": "waiting",
         "created_at": datetime.utcnow(),
     })
-    await _create_challenge_notification(db, current_user, target_id, room_id, subject, round_count)
+    await _create_challenge_notification(db, current_user, target_id, room_id)
     return {"room_id": room_id, "challenged_username": username}
 
 
@@ -425,26 +326,21 @@ async def join_room(room_id: str, current_user: User = Depends(get_current_user_
     """Accept a challenge or join a waiting room."""
     room = rooms.get(room_id)
     if not room:
+        # Try to restore from DB (handles server restart case)
         db = db_service.get_db()
         stored = await db.duel_rooms.find_one({"room_id": room_id, "status": "waiting"})
         if not stored:
             raise HTTPException(status_code=404, detail="Challenge has expired. Ask them to send a new one.")
-        room = DuelRoom(
-            room_id, stored["p1_id"], stored["p1_username"],
-            subject=stored.get("subject"), round_count=stored.get("round_count", 5)
-        )
+        room = DuelRoom(room_id, stored["p1_id"], stored["p1_username"])
         rooms[room_id] = room
     if room.status != "waiting":
         raise HTTPException(status_code=400, detail="Room is not open")
     if room.p1_id == str(current_user.id):
+        # Challenger polling their own room
         return {"room_id": room_id, "status": "waiting", "opponent_username": None}
 
-    uid = str(current_user.id)
-    uname = current_user.username or "Player"
-    room.players[uid] = uname
-    room.scores[uid] = 0
-    room.p2_id = uid
-    room.p2_username = uname
+    room.p2_id = str(current_user.id)
+    room.p2_username = current_user.username or "Player"
     return {"room_id": room_id, "status": "ready", "opponent_username": room.p1_username}
 
 
@@ -458,26 +354,16 @@ async def get_room(room_id: str, current_user: User = Depends(get_current_user_d
         "status": room.status,
         "p1_username": room.p1_username,
         "p2_username": room.p2_username,
-        "subject": room.subject,
-        "round_count": room.round_count,
-        "max_players": room.max_players,
-        "players": room.players,
-        "scores": room.scores,
+        "p1_score": room.p1_score,
+        "p2_score": room.p2_score,
     }
-
-
-@router.get("/my-subjects")
-async def get_my_subjects(current_user: User = Depends(get_current_user_dependency)):
-    """Return distinct subjects from the current user's cards."""
-    db = db_service.get_db()
-    subjects = await db.cards.distinct("subject", {"user_id": str(current_user.id)})
-    return [s for s in subjects if s]
 
 
 # ── WebSocket ─────────────────────────────────────────────────────────────────
 
 @router.websocket("/{room_id}/ws")
 async def duel_ws(websocket: WebSocket, room_id: str, token: str):
+    """Real-time duel WebSocket. Auth via ?token=<jwt>"""
     token_data = AuthService.verify_token(token)
     if not token_data or not token_data.user_id:
         await websocket.close(code=4001)
@@ -496,98 +382,70 @@ async def duel_ws(websocket: WebSocket, room_id: str, token: str):
         await websocket.close(code=4004)
         return
 
-    # Allow: existing player reconnecting, or new slot open
-    if user_id not in room.players:
-        if len(room.players) < room.max_players:
-            room.players[user_id] = username
-            room.scores[user_id] = 0
-            if room.p2_id is None:
-                room.p2_id = user_id
-                room.p2_username = username
-        else:
-            await websocket.close(code=4003)
-            return
+    # Allow p1 reconnect, p2 join (if slot open), or existing p2
+    if user_id == room.p1_id:
+        pass  # p1 reconnecting
+    elif room.p2_id is None and user_id != room.p1_id:
+        room.p2_id = user_id
+        room.p2_username = username
+    elif user_id == room.p2_id:
+        pass  # p2 reconnecting
+    else:
+        await websocket.close(code=4003)
+        return
 
     await websocket.accept()
     room.connections[user_id] = websocket
 
-    # Notify this player of current room state
+    opponent_id = room.p2_id if user_id == room.p1_id else room.p1_id
+    opponent_username = room.p2_username if user_id == room.p1_id else room.p1_username
+
     await websocket.send_json({
         "type": "connected",
         "room_id": room_id,
         "your_username": username,
-        "players": {pid: room.players[pid] for pid in room.connections},
-        "max_players": room.max_players,
-        "round_count": room.round_count,
-        "subject": room.subject or "Mixed",
-        # 2-player compat
-        "opponent_username": next((room.players[p] for p in room.players if p != user_id), None),
+        "opponent_username": opponent_username,
     })
 
-    connected_count = len(room.connections)
-
-    if connected_count >= room.max_players:
+    # If both players now connected
+    if opponent_id and opponent_id in room.connections:
         if room.status == "waiting":
-            # All players in — notify everyone and start
-            for pid in room.connections:
-                others = [room.players[p] for p in room.connections if p != pid]
-                await _send_player(room, pid, {
-                    "type": "player_joined",
-                    "opponent_username": others[0] if others else "",
-                    "players": list(room.players.values()),
-                    "players_connected": connected_count,
-                    "max_players": room.max_players,
-                })
+            # Fresh start — notify both and launch game
+            await _send_player(room, user_id, {"type": "player_joined", "opponent_username": opponent_username})
+            await _send_player(room, opponent_id, {"type": "player_joined", "opponent_username": username})
             asyncio.create_task(_run_game(room))
         elif room.status == "playing":
-            # Reconnect mid-game
+            # Reconnect mid-game — resync this player with current round
+            await _send_player(room, user_id, {"type": "player_joined", "opponent_username": opponent_username})
             idx = room.current_round
             if idx < len(room.cards):
                 card = room.cards[idx]
                 await websocket.send_json({
                     "type": "round_start",
                     "round": idx + 1,
-                    "total": room.round_count,
+                    "total": ROUND_COUNT,
                     "question": card["question"],
                     "subject": card["subject"],
                     "choices": card["choices"],
                 })
-    elif connected_count > 1:
-        # Notify existing players someone new joined
-        for pid in room.connections:
-            if pid != user_id:
-                await _send_player(room, pid, {
-                    "type": "player_joined",
-                    "opponent_username": username,
-                    "players": list(room.players.values()),
-                    "players_connected": connected_count,
-                    "max_players": room.max_players,
-                })
-        await websocket.send_json({
-            "type": "waiting",
-            "message": f"Waiting for more players... ({connected_count}/{room.max_players})",
-            "players_connected": connected_count,
-            "max_players": room.max_players,
-        })
     else:
-        await websocket.send_json({
-            "type": "waiting",
-            "message": "Waiting for opponent..." if room.max_players == 2 else f"Waiting for players... (1/{room.max_players})",
-            "players_connected": 1,
-            "max_players": room.max_players,
-        })
+        await websocket.send_json({"type": "waiting", "message": "Waiting for opponent..."})
 
     try:
         while True:
             data = await websocket.receive_json()
             if data.get("type") == "submit_answer" and room.status == "playing":
                 answer = data.get("answer", "")
-                if room.round_answers.get(user_id) is None:
-                    room.round_answers[user_id] = answer
-                    # Notify others that someone answered
-                    for pid in room.connections:
-                        if pid != user_id:
-                            await _send_player(room, pid, {"type": "opponent_answered"})
+                idx = room.current_round
+                if idx < len(room.p1_answers):
+                    if user_id == room.p1_id and room.p1_answers[idx] is None:
+                        room.p1_answers[idx] = answer
+                    elif user_id == room.p2_id and room.p2_answers[idx] is None:
+                        room.p2_answers[idx] = answer
+                    # Notify opponent that someone answered
+                    opp = room.p2_id if user_id == room.p1_id else room.p1_id
+                    if opp:
+                        await _send_player(room, opp, {"type": "opponent_answered"})
     except WebSocketDisconnect:
         room.connections.pop(user_id, None)
         if room.status == "playing":

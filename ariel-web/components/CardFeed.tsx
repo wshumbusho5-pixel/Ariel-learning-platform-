@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { cardsAPI } from '@/lib/api';
 import { useComments } from '@/lib/commentsContext';
 import ShareSheet from '@/components/ShareSheet';
+import ArielLoader from '@/components/ArielLoader';
 
 interface Card {
   id: string;
@@ -403,8 +404,8 @@ export default function CardFeed({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-zinc-800 border-t-violet-300" />
+      <div className="fixed inset-0 lg:left-[72px] flex items-center justify-center bg-black">
+        <ArielLoader size={52} />
       </div>
     );
   }
