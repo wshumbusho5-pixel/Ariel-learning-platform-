@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import ClientProviders from "@/components/ClientProviders";
-import { Syne, DM_Sans, Cormorant_Garamond, Kalam } from "next/font/google";
+import { Plus_Jakarta_Sans, Syne, DM_Sans, Cormorant_Garamond, Kalam } from "next/font/google";
 
+const plusJakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-jakarta", display: "swap" });
 const syne = Syne({ subsets: ["latin"], weight: ["800"], variable: "--font-syne", display: "swap" });
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["200", "300"], variable: "--font-dm-sans", display: "swap" });
-const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["300"], style: ["italic"], variable: "--font-cormorant", display: "swap" });
+const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["300", "500", "700"], style: ["italic"], variable: "--font-cormorant", display: "swap" });
 const kalam = Kalam({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-caveat", display: "swap" });
 
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${GeistSans.className} ${syne.variable} ${dmSans.variable} ${cormorant.variable} ${kalam.variable} antialiased`}>
+      <body className={`${plusJakarta.className} ${syne.variable} ${dmSans.variable} ${cormorant.variable} ${kalam.variable} antialiased`} style={{ fontFamily: 'var(--font-jakarta), system-ui, sans-serif' }}>
         <ClientProviders>
           {children}
         </ClientProviders>

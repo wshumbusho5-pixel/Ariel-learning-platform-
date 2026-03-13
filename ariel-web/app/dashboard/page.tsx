@@ -398,15 +398,15 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         {/* Name + subject */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[13px] font-semibold text-white leading-none truncate">
+            <span className="text-[14px] font-bold text-white leading-none truncate">
               {card.author_full_name || card.author_username || 'Ariel User'}
             </span>
-            <span className="text-[11px] text-zinc-500">·</span>
-            <span className="text-[11px] text-zinc-500 truncate">
-              {card.subject ?? meta.short}{card.topic ? ` · ${card.topic}` : ''}
+            <span className="text-[12px] text-zinc-500">·</span>
+            <span className="text-[12px] text-zinc-500 truncate">
+              {card.subject ?? meta.short}
             </span>
             {card.created_at && (
-              <span className="text-[11px] text-zinc-600">{timeAgo(card.created_at)}</span>
+              <span className="text-[12px] text-zinc-600">{timeAgo(card.created_at)}</span>
             )}
           </div>
         </div>
@@ -463,42 +463,43 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
             {cardComments.slice(0, 5).map((c, i) => (
               <div
                 key={c.id}
-                className={`flex items-start gap-2.5 ${i > 0 ? 'mt-3' : ''} select-none`}
+                className={`flex items-start gap-3 ${i > 0 ? 'mt-4' : ''} select-none`}
                 onPointerDown={() => startLongPress(c.id)}
                 onPointerUp={() => cancelLongPress(c.id)}
                 onPointerLeave={() => cancelLongPress()}
                 onPointerCancel={() => cancelLongPress(c.id)}
               >
                 {/* Avatar → profile */}
-                <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0">
+                <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0 mt-0.5">
                   <div className="w-7 h-7 rounded-full bg-zinc-700 overflow-hidden flex items-center justify-center">
                     {c.author_profile_picture ? (
                       <img src={c.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')} className="w-7 h-7 object-cover" />
                     ) : (
-                      <span className="text-[10px] font-bold text-zinc-300">{(c.author_username || 'U')[0].toUpperCase()}</span>
+                      <span className="text-[11px] font-bold text-zinc-300">{(c.author_username || 'U')[0].toUpperCase()}</span>
                     )}
                   </div>
                 </button>
 
                 <div className="flex-1 min-w-0">
-                  {/* Username + comment text + inline like pill */}
-                  <p className="text-[12.5px] leading-snug text-zinc-300 break-words">
-                    <button
-                      onClick={() => {
-                        setReplyingTo({ id: c.id, username: c.author_username || 'user' });
-                        setTimeout(() => inputRef.current?.focus(), 50);
-                      }}
-                      className="font-bold text-white underline decoration-zinc-600 underline-offset-2 mr-1.5"
-                    >
-                      {c.author_username || 'user'}
-                    </button>
+                  {/* Username on its own line */}
+                  <button
+                    onClick={() => {
+                      setReplyingTo({ id: c.id, username: c.author_username || 'user' });
+                      setTimeout(() => inputRef.current?.focus(), 50);
+                    }}
+                    className="text-[13px] font-bold text-white leading-none mb-1 block"
+                  >
+                    {c.author_username || 'user'}
+                  </button>
+                  {/* Comment text on its own line */}
+                  <p className="text-[14px] leading-relaxed text-zinc-300 break-words">
                     {c.content}
                     {(c.likes > 0 || likedComments[c.id]) && (
                       <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
                         <svg className="w-3 h-3 text-violet-400 inline" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                         </svg>
-                        {c.likes > 0 && <span className="text-[10px] text-violet-400 font-semibold">{c.likes}</span>}
+                        {c.likes > 0 && <span className="text-[11px] text-violet-400 font-semibold">{c.likes}</span>}
                       </span>
                     )}
                   </p>
@@ -528,7 +529,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
               onChange={e => setCommentInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && submitComment()}
               placeholder={replyingTo ? `Reply to @${replyingTo.username}…` : 'Add your answer…'}
-              className="w-full bg-transparent text-[13px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none"
+              className="w-full bg-transparent text-[14px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none"
             />
           </div>
           {commentInput.trim() && (
