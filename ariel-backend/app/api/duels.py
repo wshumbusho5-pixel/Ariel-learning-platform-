@@ -434,6 +434,8 @@ async def duel_ws(websocket: WebSocket, room_id: str, token: str):
     try:
         while True:
             data = await websocket.receive_json()
+            if data.get("type") == "ping":
+                continue  # keepalive — ignore
             if data.get("type") == "submit_answer" and room.status == "playing":
                 answer = data.get("answer", "")
                 idx = room.current_round

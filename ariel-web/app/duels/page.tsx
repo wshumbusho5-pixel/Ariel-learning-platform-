@@ -88,6 +88,7 @@ export default function DuelsPage() {
   const botRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const challengePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const seenNotifIds = useRef<Set<string>>(new Set());
 
   // Refs to avoid stale closures in async callbacks
@@ -120,6 +121,7 @@ export default function DuelsPage() {
     if (botRef.current) clearTimeout(botRef.current);
     if (pollRef.current) clearInterval(pollRef.current);
     if (gameStartTimeoutRef.current) clearTimeout(gameStartTimeoutRef.current);
+    if (pingRef.current) clearInterval(pingRef.current);
   };
 
   useEffect(() => () => {
@@ -354,28 +356,30 @@ export default function DuelsPage() {
       setChallengeSent(username);
       setPhase('waiting');
       setMatchmakingStatus(`Waiting for ${username} to accept...`);
-      // Poll room status — connect WS only when p2 has actually joined
-      // (avoids idle WS timeout while waiting for the other person)
+
+      // Connect WS immediately — server holds the connection open until opponent joins.
+      // This ensures we're already connected when opponent arrives so player_joined fires instantly.
+      connectToRoom(rid);
+
+      // Poll only to update the opponent name label in the UI (not for game start)
       if (pollRef.current) clearInterval(pollRef.current);
-      let didConnect = false; // guard against async race on slow networks
       pollRef.current = setInterval(async () => {
-        if (didConnect) return;
         try {
           const room = await duelsAPI.getRoom(rid);
-          if (room.p2_username && !didConnect) {
-            didConnect = true;
+          if (room.p2_username) {
             clearInterval(pollRef.current!);
             pollRef.current = null;
             setOpponentName(room.p2_username);
-            setMatchmakingStatus(`${room.p2_username} accepted! Connecting...`);
-            connectToRoom(rid);
+            setMatchmakingStatus(`${room.p2_username} accepted!`);
+          }
+          // If room no longer exists or is finished, bail
+          if (room.status === 'finished') {
+            clearInterval(pollRef.current!);
+            pollRef.current = null;
           }
         } catch {
-          // room expired or server error — stop polling
           clearInterval(pollRef.current!);
           pollRef.current = null;
-          setWsError('Challenge expired. Please try again.');
-          setPhase('lobby');
         }
       }, 2000);
     } catch (e: any) {
@@ -414,15 +418,34 @@ export default function DuelsPage() {
     const ws = new WebSocket(`${WS_URL}/api/duels/${rid}/ws?token=${token}`);
     wsRef.current = ws;
 
+    ws.onopen = () => {
+      // Keepalive ping every 20s so the connection doesn't time out while waiting
+      if (pingRef.current) clearInterval(pingRef.current);
+      pingRef.current = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          try { ws.send(JSON.stringify({ type: 'ping' })); } catch {}
+        }
+      }, 20000);
+    };
+
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
       handleWsMessage(msg);
     };
 
-    ws.onerror = () => setWsError('Connection error. Please try again.');
-    ws.onclose = () => {
-      // Use ref — not stale closure — to check if game already finished
-      if (phaseRef.current !== 'complete') setWsError('Disconnected from server.');
+    ws.onerror = () => {
+      if (phaseRef.current === 'waiting' || phaseRef.current === 'lobby') {
+        // Silently ignore errors while waiting — onclose will handle reconnect
+      } else {
+        setWsError('Connection error. Please try again.');
+      }
+    };
+    ws.onclose = (event) => {
+      if (pingRef.current) { clearInterval(pingRef.current); pingRef.current = null; }
+      // Only show error if game was in progress and not cleanly finished
+      if (phaseRef.current === 'question' || phaseRef.current === 'reveal') {
+        setWsError('Disconnected from server.');
+      }
     };
   };
 
