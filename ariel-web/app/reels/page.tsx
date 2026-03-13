@@ -156,7 +156,9 @@ function HeroCard({ reel, onTap }: { reel: Reel; onTap: () => void }) {
             className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-950" />
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-950 flex items-center justify-center">
+            <span className="text-white/10 font-black text-8xl">{reel.title[0]?.toUpperCase()}</span>
+          </div>
         )}
 
         {/* Cinematic gradient overlay */}
@@ -171,10 +173,10 @@ function HeroCard({ reel, onTap }: { reel: Reel; onTap: () => void }) {
           </div>
         )}
 
-        {/* Centered play button */}
+        {/* Subtle play button */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-            <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+          <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm border border-white/15 flex items-center justify-center group-hover:bg-black/50 group-hover:scale-105 transition-all duration-200">
+            <svg className="w-5 h-5 text-white/80 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
           </div>
@@ -206,12 +208,10 @@ function ReelCard({
   reel,
   onTap,
   isNew,
-  onDMShare,
 }: {
   reel: Reel;
   onTap: () => void;
   isNew?: boolean;
-  onDMShare?: (reel: Reel) => void;
 }) {
   return (
     <button
@@ -226,14 +226,20 @@ function ReelCard({
             className="absolute inset-0 w-full h-full object-cover"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-950" />
+          <div className={`absolute inset-0 flex items-center justify-center ${
+            reel.category?.toLowerCase().includes('tech') ? 'bg-gradient-to-br from-blue-950 to-zinc-950' :
+            reel.category?.toLowerCase().includes('health') || reel.category?.toLowerCase().includes('bio') ? 'bg-gradient-to-br from-emerald-950 to-zinc-950' :
+            reel.category?.toLowerCase().includes('math') ? 'bg-gradient-to-br from-violet-950 to-zinc-950' :
+            reel.category?.toLowerCase().includes('history') ? 'bg-gradient-to-br from-amber-950 to-zinc-950' :
+            reel.category?.toLowerCase().includes('law') ? 'bg-gradient-to-br from-red-950 to-zinc-950' :
+            'bg-gradient-to-br from-zinc-800 to-zinc-950'
+          }`}>
+            <span className="text-white/10 font-black text-5xl">{reel.title[0]?.toUpperCase()}</span>
+          </div>
         )}
 
         {/* Bottom gradient for text legibility */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
-
-        {/* Violet top accent */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-violet-500" />
 
         {/* New badge */}
         {isNew && (
@@ -242,18 +248,6 @@ function ReelCard({
               NEW
             </span>
           </div>
-        )}
-
-        {/* DM share button */}
-        {onDMShare && (
-          <button
-            onClick={e => { e.stopPropagation(); onDMShare(reel); }}
-            className="absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
-          >
-            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-            </svg>
-          </button>
         )}
 
         {/* Centered play on hover */}
@@ -287,7 +281,6 @@ function SectionRow({
   isNew: isFreshSection,
   heroLayout,
   onTap,
-  onDMShare,
 }: {
   label: string;
   subjectKey: string;
@@ -296,17 +289,16 @@ function SectionRow({
   isNew?: boolean;
   heroLayout?: boolean;
   onTap: (reel: Reel) => void;
-  onDMShare?: (reel: Reel) => void;
 }) {
   const router = useRouter();
 
   return (
     <section className="mb-1">
       {/* YouTube-style section header: bold label left, See all right, generous air above */}
-      <div className="px-4 pt-7 pb-3 flex items-center justify-between">
+      <div className={`px-4 pt-7 pb-3 flex items-center justify-between ${isUserTopic ? 'bg-violet-500/[0.04]' : ''}`}>
         <div className="flex items-center gap-2.5">
-          <div className={`w-[3px] h-5 rounded-full flex-shrink-0 ${isUserTopic ? 'bg-violet-400' : 'bg-zinc-600'}`} />
-          <h2 className="text-[15px] font-black text-white leading-none">{label}</h2>
+          <div className={`rounded-full flex-shrink-0 ${isUserTopic ? 'w-1 h-6 bg-violet-400' : 'w-[3px] h-5 bg-zinc-600'}`} />
+          <h2 className={`font-black leading-none ${isUserTopic ? 'text-[16px] text-white' : 'text-[15px] text-zinc-200'}`}>{label}</h2>
           {isUserTopic && (
             <span className="text-[10px] font-bold text-violet-400 bg-violet-400/10 px-1.5 py-0.5 rounded-full">
               For you
@@ -343,7 +335,7 @@ function SectionRow({
               >
                 {reels.slice(1).map(reel => (
                   <div key={reel.id} className="flex-shrink-0 w-44">
-                    <ReelCard reel={reel} onTap={() => onTap(reel)} onDMShare={onDMShare} />
+                    <ReelCard reel={reel} onTap={() => onTap(reel)} />
                   </div>
                 ))}
               </div>
@@ -357,7 +349,7 @@ function SectionRow({
         >
           {reels.map(reel => (
             <div key={reel.id} className="flex-shrink-0 w-44">
-              <ReelCard reel={reel} onTap={() => onTap(reel)} onDMShare={onDMShare} />
+              <ReelCard reel={reel} onTap={() => onTap(reel)} />
             </div>
           ))}
         </div>
@@ -687,7 +679,6 @@ export default function ReelsPage() {
                   isNew
                   heroLayout
                   onTap={setActiveReel}
-                  onDMShare={setShareReel}
                 />
               )}
               {/* Subject sections — user topics get hero, others get grid */}
@@ -700,7 +691,6 @@ export default function ReelsPage() {
                   isUserTopic={section.isUserTopic}
                   heroLayout={section.isUserTopic}
                   onTap={setActiveReel}
-                  onDMShare={setShareReel}
                 />
               ))}
 

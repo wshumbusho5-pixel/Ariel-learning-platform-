@@ -379,6 +379,28 @@ export default function TikTokPlayer({
             </div>
           );
         })}
+
+        {/* End of feed */}
+        <div
+          className="relative w-full flex-shrink-0 flex items-center justify-center bg-black"
+          style={{ height: '100dvh', scrollSnapAlign: 'start' }}
+        >
+          <div className="flex flex-col items-center gap-4 px-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-violet-500/20 border border-violet-400/30 flex items-center justify-center mb-2">
+              <svg className="w-7 h-7 text-violet-400" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-white font-bold text-[18px] leading-snug">You're all caught up</p>
+            <p className="text-white/40 text-[13px] leading-relaxed">Come back later for new clips from your subjects.</p>
+            <button
+              onClick={onClose}
+              className="mt-2 px-6 py-2.5 bg-white/10 backdrop-blur-sm border border-white/15 text-white text-[13px] font-bold rounded-full active:scale-95 transition-transform"
+            >
+              Back to browse
+            </button>
+          </div>
+        </div>
       </div>
 
       <style jsx global>{`
