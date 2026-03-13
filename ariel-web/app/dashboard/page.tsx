@@ -940,9 +940,9 @@ export default function Dashboard() {
                   )}
                 </button>
 
-                {/* Center: ariel wordmark alone */}
+                {/* Center: Ariel icon mark */}
                 <div className="absolute left-1/2 -translate-x-1/2">
-                  <ArielWordmark size={32} variant="dark" />
+                  <ArielIcon size={36} variant="dark" />
                 </div>
 
                 {/* Right: action icons */}
