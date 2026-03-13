@@ -921,6 +921,29 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ── Due cards banner ── */}
+          {!searchQuery && !dataLoading && dueCards.length > 0 && (
+            <button
+              onClick={() => router.push('/deck')}
+              className="w-full mt-4 flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/25 rounded-2xl group active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl">📚</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-black text-white">
+                    {dueCards.length} card{dueCards.length !== 1 ? 's' : ''} ready for review
+                  </p>
+                  <p className="text-xs text-orange-400/70 mt-0.5">Open your deck to go through them</p>
+                </div>
+              </div>
+              <svg className="w-4 h-4 text-orange-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+
           {/* Search results label */}
           {searchQuery.trim().length >= 2 && (
             <div className="flex items-center justify-between pt-3 mb-4">
