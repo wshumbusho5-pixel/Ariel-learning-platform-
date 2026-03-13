@@ -128,6 +128,19 @@ function Avatar({ name, src, size = 'sm' }: { name?: string; src?: string; size?
   );
 }
 
+function TypingIndicator() {
+  return (
+    <div className="flex items-end gap-2 mb-3">
+      <div className="w-8 flex-shrink-0" />
+      <div className="flex items-center gap-1 bg-zinc-800 px-4 py-3" style={{ borderRadius: '18px 18px 18px 4px' }}>
+        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1s' }} />
+        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1s' }} />
+        <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: '400ms', animationDuration: '1s' }} />
+      </div>
+    </div>
+  );
+}
+
 export default function ConversationPage() {
   const params = useParams();
   const router = useRouter();
@@ -142,6 +155,7 @@ export default function ConversationPage() {
   const [selectedMsgId, setSelectedMsgId] = useState<string | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [showTyping, setShowTyping] = useState(false);
   const [pickerTab, setPickerTab] = useState<'cards' | 'reels'>('cards');
   const [pickerCards, setPickerCards] = useState<{ id: string; question: string; subject?: string }[]>([]);
   const [pickerReels, setPickerReels] = useState<{ id: string; title: string; thumbnail_url?: string; creator_username: string }[]>([]);
@@ -395,7 +409,7 @@ export default function ConversationPage() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-3 py-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-y-auto px-3 py-4" style={{ WebkitOverflowScrolling: 'touch', backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.022) 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
           {loading ? (
             <div className="flex justify-center py-16">
               <div className="w-6 h-6 border-2 border-zinc-700 border-t-violet-500 rounded-full animate-spin" />
@@ -439,6 +453,12 @@ export default function ConversationPage() {
 
                     {/* Message row */}
                     <div className={`flex items-end gap-1.5 ${isMine ? 'flex-row-reverse' : 'flex-row'} ${isLastInGroup ? 'mb-1' : 'mb-0.5'}`}>
+                      {/* Avatar slot for received messages */}
+                      {!isMine && (
+                        isLastInGroup
+                          ? <Avatar name={otherName} src={convoInfo?.other_user_profile_picture} size="sm" />
+                          : <div className="w-8 flex-shrink-0" />
+                      )}
                       {/* Bubble */}
                       <div className="relative max-w-[75%]">
                         {/* Action bar on select */}
@@ -462,14 +482,17 @@ export default function ConversationPage() {
 
                         <button
                           onClick={e => { e.stopPropagation(); handleTap(msg); }}
-                          className={`
-                            block w-full text-left px-3.5 py-2 text-sm leading-relaxed break-words animate-fadeIn
-                            ${isMine ? 'bg-gradient-to-br from-violet-500 to-violet-700 text-white' : 'bg-zinc-800 text-zinc-100'}
-                            ${isFirstInGroup && isLastInGroup ? 'rounded-2xl'
-                              : isFirstInGroup ? isMine ? 'rounded-2xl rounded-br-sm' : 'rounded-2xl rounded-bl-sm'
-                              : isLastInGroup ? isMine ? 'rounded-2xl rounded-tr-sm' : 'rounded-2xl rounded-tl-sm'
-                              : isMine ? 'rounded-l-2xl rounded-r-sm' : 'rounded-r-2xl rounded-l-sm'}
-                          `}
+                          className={`block w-full text-left px-3.5 py-2 text-sm leading-relaxed break-words animate-fadeIn ${isMine ? 'bg-gradient-to-b from-violet-500 to-violet-700 text-white' : 'bg-zinc-800 text-zinc-100'}`}
+                          style={{ borderRadius: isMine
+                            ? isFirstInGroup && isLastInGroup ? '18px 18px 4px 18px'
+                              : isFirstInGroup ? '18px 18px 6px 18px'
+                              : isLastInGroup ? '18px 6px 4px 18px'
+                              : '18px 6px 6px 18px'
+                            : isFirstInGroup && isLastInGroup ? '18px 18px 18px 4px'
+                              : isFirstInGroup ? '18px 18px 18px 6px'
+                              : isLastInGroup ? '6px 18px 18px 4px'
+                              : '6px 18px 18px 6px'
+                          }}
                         >
                           {/* Reply preview */}
                           {msg.reply_to_content && (
@@ -549,6 +572,7 @@ export default function ConversationPage() {
                   </div>
                 );
               })}
+              {showTyping && <TypingIndicator />}
               <div ref={bottomRef} />
             </div>
           )}
