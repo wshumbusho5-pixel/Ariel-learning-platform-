@@ -373,7 +373,7 @@ export default function ConversationPage() {
         {/* Header */}
         <div className="flex-shrink-0 flex items-center gap-3 px-3 h-14 border-b border-zinc-800 bg-[#09090b] z-10">
           <button onClick={() => router.push('/messages')} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800/60 flex-shrink-0" aria-label="Back to Rooms">
-            <svg className="w-5 h-5 text-zinc-800" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
@@ -382,7 +382,7 @@ export default function ConversationPage() {
             <div className="relative flex-shrink-0">
               <Avatar name={otherName} src={convoInfo?.other_user_profile_picture} size="sm" />
               {isOnline(convoInfo?.other_user_last_seen) && (
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#09090b]" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#09090b] animate-pulse" />
               )}
             </div>
             <div className="min-w-0">
@@ -463,8 +463,8 @@ export default function ConversationPage() {
                         <button
                           onClick={e => { e.stopPropagation(); handleTap(msg); }}
                           className={`
-                            block w-full text-left px-3.5 py-2 text-sm leading-relaxed break-words
-                            ${isMine ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-100'}
+                            block w-full text-left px-3.5 py-2 text-sm leading-relaxed break-words animate-fadeIn
+                            ${isMine ? 'bg-gradient-to-br from-violet-500 to-violet-700 text-white' : 'bg-zinc-800 text-zinc-100'}
                             ${isFirstInGroup && isLastInGroup ? 'rounded-2xl'
                               : isFirstInGroup ? isMine ? 'rounded-2xl rounded-br-sm' : 'rounded-2xl rounded-bl-sm'
                               : isLastInGroup ? isMine ? 'rounded-2xl rounded-tr-sm' : 'rounded-2xl rounded-tl-sm'
@@ -473,7 +473,7 @@ export default function ConversationPage() {
                         >
                           {/* Reply preview */}
                           {msg.reply_to_content && (
-                            <div className={`mb-1.5 px-2.5 py-1.5 rounded-xl text-xs border-l-2 ${isMine ? 'bg-violet-500/40 border-white/60 text-white/80' : 'bg-zinc-700/60 border-violet-400 text-zinc-400'}`}>
+                            <div className={`mb-1.5 px-2.5 py-1.5 rounded-xl text-xs border-l-2 ${isMine ? 'bg-black/25 border-white/50 text-white/75' : 'bg-zinc-900 border-violet-400 text-zinc-400'}`}>
                               <p className="font-bold mb-0.5">{msg.reply_to_sender_username || 'Unknown'}</p>
                               <p className="truncate">{msg.reply_to_content}</p>
                             </div>
@@ -693,13 +693,14 @@ export default function ConversationPage() {
               onKeyDown={handleKeyDown}
               onFocus={() => setShowEmoji(false)}
               placeholder="Message..."
-              className="flex-1 bg-zinc-800/80 rounded-full px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              className="flex-1 bg-zinc-800 rounded-full px-4 py-2.5 text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+              style={{ color: 'white', caretColor: 'white' }}
             />
 
             <button
               onClick={handleSend}
               disabled={!input.trim() || sending}
-              className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${input.trim() && !sending ? 'bg-violet-600 hover:bg-violet-700' : 'bg-zinc-800'}`}
+              className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all active:scale-95 ${input.trim() && !sending ? 'bg-violet-600 hover:bg-violet-700 active:bg-violet-800' : 'bg-zinc-800'}`}
             >
               {sending ? (
                 <div className="w-4 h-4 border-2 border-zinc-600 border-t-violet-600 rounded-full animate-spin" />
