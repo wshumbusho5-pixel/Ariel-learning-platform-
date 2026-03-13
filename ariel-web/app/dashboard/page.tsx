@@ -909,8 +909,13 @@ export default function Dashboard() {
           ) : (
             <>
               {/* Main row */}
-              {/* ── Top row: identity left | brand center | icons right ── */}
-              <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
+              {/* ── Row 1: ariel wordmark alone, centered ── */}
+              <div className="max-w-3xl mx-auto px-4 pt-3 pb-1 flex items-center justify-center">
+                <ArielWordmark size={32} variant="dark" />
+              </div>
+
+              {/* ── Row 2: avatar + name left | icons right ── */}
+              <div className="max-w-3xl mx-auto px-4 pb-2 flex items-center justify-between">
                 {/* Left: avatar + name */}
                 <button onClick={() => router.push('/profile')} className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
                   <div className="relative flex-shrink-0">
@@ -939,11 +944,6 @@ export default function Dashboard() {
                     <span className="text-[20px] font-black text-white leading-none tracking-tight truncate">{firstName || 'there'}</span>
                   )}
                 </button>
-
-                {/* Center: Ariel wordmark alone — no name nearby */}
-                <div className="absolute left-1/2 -translate-x-1/2">
-                  <ArielWordmark size={28} variant="dark" />
-                </div>
 
                 {/* Right: action icons */}
                 <div className="flex items-center gap-0.5 flex-shrink-0">

@@ -74,7 +74,7 @@ export default function ArielWordmark({
   const wordStyle: React.CSSProperties = {
     fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
     fontSize: size,
-    fontWeight: 500,
+    fontWeight: 700,
     fontStyle: 'italic',
     lineHeight: 1,
     letterSpacing: `${Math.max(1, 12 * s)}px`,
