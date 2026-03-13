@@ -909,45 +909,43 @@ export default function Dashboard() {
           ) : (
             <>
               {/* Main row */}
-              <div className="max-w-3xl mx-auto px-4 pt-4 pb-2 flex items-center gap-3">
-                {/* Avatar */}
+              {/* ── Top row: Ariel logo centered + icons flanking ── */}
+              <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
+                {/* Left: profile avatar */}
                 <button onClick={() => router.push('/profile')} className="flex-shrink-0 relative">
-                  {user?.profile_picture ? (
-                    <img
-                      src={user.profile_picture}
-                      alt={user.username}
-                      className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-800 hover:ring-violet-400/50 transition-all"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-violet-500 flex items-center justify-center ring-2 ring-zinc-800 hover:ring-violet-400/50 transition-all">
-                      <span className="text-base font-black text-white">
-                        {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
-                      </span>
-                    </div>
+                  <div className="p-[2px] rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500">
+                    {user?.profile_picture ? (
+                      <img
+                        src={user.profile_picture}
+                        alt={user.username}
+                        className="w-9 h-9 rounded-full object-cover block"
+                      />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-[#09090b] flex items-center justify-center">
+                        <span className="text-sm font-black text-white">
+                          {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {streakDays > 0 && (
+                    <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none bg-[#09090b] rounded-full px-0.5">🔥</span>
                   )}
                 </button>
 
-                {/* Name + status */}
-                <div className="flex-1 min-w-0">
-                  <ArielWordmark size={14} variant="dark" className="mb-1 !items-start" />
-                  <div className="flex items-center gap-2.5">
-                    <h1 className="text-2xl font-black text-white leading-none truncate tracking-tight">{firstName || 'there'}</h1>
-                    {!dataLoading && streakDays > 0 && (
-                      <span className="text-[11px] font-bold text-orange-400 leading-none flex-shrink-0">🔥 {streakDays}d</span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-zinc-500 mt-1 leading-none">
+                {/* Center: Ariel wordmark */}
+                <div className="flex flex-col items-center gap-0.5">
+                  <ArielWordmark size={18} variant="dark" />
+                  <p className="text-[11px] text-zinc-500 leading-none">
                     {dataLoading ? (
-                      <span className="inline-block w-28 h-2.5 bg-zinc-800 rounded-full animate-pulse" />
-                    ) : feedCards.length > 0 ? (
-                      <><span className="text-zinc-300 font-semibold">{feedCards.length} card{feedCards.length !== 1 ? 's' : ''}</span> in your feed</>
+                      <span className="inline-block w-20 h-2 bg-zinc-800 rounded-full animate-pulse" />
                     ) : (
-                      <span className="text-zinc-600">All caught up · keep it going</span>
+                      <span>Good to see you, <span className="text-zinc-300 font-semibold">{firstName || 'there'}</span></span>
                     )}
                   </p>
                 </div>
 
-                {/* Action icons */}
+                {/* Right: action icons */}
                 <div className="flex items-center gap-0.5 flex-shrink-0">
                   <button onClick={() => router.push('/search')} className="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
                     <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
