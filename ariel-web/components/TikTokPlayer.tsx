@@ -64,6 +64,7 @@ export default function TikTokPlayer({
   const [bufferingIndex, setBufferingIndex] = useState<number | null>(null);
   const [poppedSave, setPoppedSave] = useState<string | null>(null);
   const [poppedFollow, setPoppedFollow] = useState<string | null>(null);
+  const [expandedCaption, setExpandedCaption] = useState<string | null>(null);
 
   // Swipe hint — only show if never seen before
   const [showSwipeHint, setShowSwipeHint] = useState(() => {
@@ -108,6 +109,7 @@ export default function TikTokPlayer({
             setActiveIndex(idx);
             setProgress(0);
             setPaused(false);
+            setExpandedCaption(null);
             if (video) {
               video.muted = mutedRef.current;
               video.play().catch(() => {});
@@ -273,11 +275,26 @@ export default function TikTokPlayer({
 
                 {/* Title */}
                 <p
-                  className="text-white font-bold text-[15px] leading-snug line-clamp-2 mb-2.5"
+                  className="text-white font-bold text-[15px] leading-snug line-clamp-2 mb-1.5"
                   style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}
                 >
                   {reel.title}
                 </p>
+
+                {/* Caption */}
+                {reel.description && (
+                  <div className="mb-2.5" onClick={e => { e.stopPropagation(); setExpandedCaption(expandedCaption === reel.id ? null : reel.id); }}>
+                    <p
+                      className={`text-white/65 text-[12px] leading-relaxed ${expandedCaption === reel.id ? '' : 'line-clamp-1'}`}
+                      style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
+                    >
+                      {reel.description}
+                      {expandedCaption !== reel.id && reel.description.length > 60 && (
+                        <span className="text-white/40 font-semibold"> more</span>
+                      )}
+                    </p>
+                  </div>
+                )}
 
                 {/* Creator row */}
                 <div className="flex items-center gap-2.5">
