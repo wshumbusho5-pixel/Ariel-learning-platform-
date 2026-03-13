@@ -613,7 +613,7 @@ export default function Dashboard() {
 
     Promise.all([
       gamificationAPI.getStats().catch(() => null),
-      cardsAPI.getDueCards(5).catch(() => []),
+      cardsAPI.getDueCards(50).catch(() => []),
       cardsAPI.getPersonalizedFeed(40).catch(() => []),
       api.get('/api/reels/feed').catch(() => ({ data: [] })),
     ]).then(([gam, due, feed, reelsRes]) => {

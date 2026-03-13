@@ -142,7 +142,12 @@ class CardRepository:
 
         cursor = db[CardRepository.collection_name].find({
             "user_id": user_id,
-            "next_review": {"$lte": now}
+            "$or": [
+                {"next_review": {"$lte": now}},
+                {"next_review": {"$exists": False}},
+                {"review_count": {"$exists": False}},
+                {"review_count": 0},
+            ]
         }).limit(limit)
 
         cards = []
