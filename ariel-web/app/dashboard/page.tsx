@@ -817,14 +817,24 @@ export default function Dashboard() {
 
   useEffect(() => {
     let prev = window.scrollY;
+    let autoShowTimer: ReturnType<typeof setTimeout> | null = null;
     const onScroll = () => {
       const curr = window.scrollY;
-      if (curr > prev && curr > 60) setHeaderScrolled(true);   // scrolling down
-      else if (curr < prev) setHeaderScrolled(false);           // scrolling up
+      if (autoShowTimer) clearTimeout(autoShowTimer);
+      if (curr > prev && curr > 60) {
+        setHeaderScrolled(true);
+        // Auto-restore header after 3s of no scrolling
+        autoShowTimer = setTimeout(() => setHeaderScrolled(false), 3000);
+      } else if (curr < prev) {
+        setHeaderScrolled(false);
+      }
       prev = curr;
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (autoShowTimer) clearTimeout(autoShowTimer);
+    };
   }, []);
 
   const addSubject = useCallback(async (key: string) => {
@@ -1045,7 +1055,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 overflow-x-auto px-4 pb-3 pt-2" style={{ scrollbarWidth: 'none' }}>
                   <button
                     onClick={() => { setActiveSubject(null); setActiveTopic(null); }}
-                    className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wide transition-all ${!activeSubject ? 'bg-violet-500 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wide transition-all ${!activeSubject ? 'bg-violet-500 text-white shadow-[0_0_10px_rgba(139,92,246,0.3)]' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'}`}
                   >
                     All
                   </button>
@@ -1057,7 +1067,7 @@ export default function Dashboard() {
                         key={key}
                         onClick={() => handleStoryTap(key)}
                         className={`flex-shrink-0 flex items-center gap-1 px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wide transition-all whitespace-nowrap ${
-                          isActive ? 'bg-violet-500 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                          isActive ? 'bg-violet-500 text-white shadow-[0_0_10px_rgba(139,92,246,0.3)]' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
                         }`}
                       >
                         <span>{m.icon}</span>
@@ -1101,9 +1111,30 @@ export default function Dashboard() {
           )}
 
 
+          {/* ── Stats banner ── */}
+          {!searchQuery && !dataLoading && gamification && (
+            <div className="flex items-center gap-2 mt-5 mb-1 flex-wrap">
+              {streakDays > 0 && (
+                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full">
+                  <span className="text-sm leading-none">🔥</span>
+                  <span className="text-[11px] font-bold text-amber-400">{streakDays} day streak</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 bg-violet-500/10 border border-violet-500/20 px-3 py-1.5 rounded-full">
+                <svg className="w-3 h-3 text-violet-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <span className="text-[11px] font-bold text-violet-400">Level {level}</span>
+              </div>
+              {gamification?.xp_points > 0 && (
+                <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-full">
+                  <span className="text-[11px] font-bold text-zinc-300">{gamification.xp_points.toLocaleString()} XP</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── Feed tabs ── */}
           {!searchQuery && (
-            <div className="flex items-center gap-6 mt-6 mb-1 px-1">
+            <div className="flex items-center gap-6 mt-5 mb-1 px-1 border-b border-zinc-800/60">
               <button
                 onClick={() => setFeedTab('foryou')}
                 className={`relative text-[15px] font-black tracking-tight transition-all pb-2.5 ${feedTab === 'foryou' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
@@ -1169,6 +1200,15 @@ export default function Dashboard() {
             </div>
           ) : displayCards.length > 0 ? (
             <>
+              {/* Section label */}
+              {!searchQuery && (
+                <div className="flex items-center gap-3 mt-5 mb-4">
+                  <p className="text-[12px] font-black text-zinc-500 uppercase tracking-widest">
+                    {activeSubject ? (SUBJECT_META[activeSubject]?.label ?? 'Cards') : greeting}
+                  </p>
+                  <div className="flex-1 h-px bg-zinc-800" />
+                </div>
+              )}
               {/* Due for review — elegant strip */}
               {dueCards.length > 0 && !searchQuery && (
                 <div className="mt-5 mb-3">
