@@ -326,6 +326,20 @@ export default function CardFeed({
     } catch {}
   };
 
+  // Challenge to duel using session cards
+  const handleDuelChallenge = useCallback(() => {
+    const duelCards = filteredCards.map(c => ({
+      id: c.id,
+      question: c.question,
+      answer: c.answer,
+      subject: c.subject,
+    }));
+    try {
+      sessionStorage.setItem('ariel_deck_challenge_cards', JSON.stringify(duelCards));
+    } catch {}
+    router.push('/duels?deckChallenge=1');
+  }, [filteredCards, router]);
+
   // Session restart — nailed cards go to end
   const handleRestartSession = useCallback(() => {
     const nonNailed = filteredCards.filter(c => !nailedInSession.has(c.id));
@@ -585,12 +599,37 @@ export default function CardFeed({
             </p>
           )}
 
-          <button
-            onClick={handleRestartSession}
-            className="w-full py-3.5 bg-white/10 hover:bg-white/15 border border-white/15 text-white text-sm font-bold rounded-2xl active:scale-95 transition-all"
-          >
-            Restart session
-          </button>
+          {/* Challenge to duel */}
+          <div className="w-full bg-zinc-900/60 border border-zinc-800 rounded-2xl p-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-orange-500/15 border border-orange-500/25 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-5 h-5 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14.5 2.5c0 1.5-1.5 4-1.5 4h-2S9 4 9 2.5a2.5 2.5 0 015 0zM12 8c-1.1 0-2 .9-2 2v1H7l-1 2h2v8h6v-8h2l-1-2h-3v-1c0-1.1-.9-2-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm">Get challenged?</p>
+                <p className="text-zinc-500 text-xs mt-0.5 leading-relaxed">Take these cards straight to a duel — the duel picks the order, not you.</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleDuelChallenge}
+                className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-400 text-white text-sm font-bold rounded-xl active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5zm-5 0c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5S11 2.67 11 3.5v5c0 .83-.67 1.5-1.5 1.5zm9-1H17v-1.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 2.21-1.79 4-4 4H8a4 4 0 01-4-4V7.5C4 6.67 4.67 6 5.5 6S7 6.67 7 7.5V9h1V3.5C8 2.67 8.67 2 9.5 2S11 2.67 11 3.5V9h1V1.5c0-.83.67-1.5 1.5-1.5S15 .67 15 1.5V9h1V2.5c0-.83.67-1.5 1.5-1.5S19 1.67 19 2.5V12c0 3.31-2.69 6-6 6H8c-3.31 0-6-2.69-6-6V7.5A3.5 3.5 0 015.5 4" />
+                </svg>
+                Let&apos;s duel
+              </button>
+              <button
+                onClick={handleRestartSession}
+                className="flex-1 py-2.5 bg-white/8 border border-white/12 text-zinc-400 text-sm font-semibold rounded-xl active:scale-95 transition-all"
+              >
+                Restart
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

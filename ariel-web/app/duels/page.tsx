@@ -108,6 +108,11 @@ export default function DuelsPage() {
       setMode('online');
       acceptChallenge(joinRoomId);
     }
+    // If launched as deck challenge, default to online challenge tab
+    if (searchParams.get('deckChallenge') === '1') {
+      setMode('online');
+      setOnlineTab('challenge');
+    }
   }, []); // eslint-disable-line
 
   const clearTimers = () => {
@@ -169,7 +174,23 @@ export default function DuelsPage() {
     setChoices([correct, ...shuffled].sort(() => Math.random() - 0.5));
   }, []);
 
+  // Deck challenge — cards passed from the session complete screen
+  const isDeckChallenge = searchParams.get('deckChallenge') === '1';
+
   const loadSoloCards = async (): Promise<DuelCard[]> => {
+    // If launched from deck session, use those cards (shuffled by duel)
+    if (isDeckChallenge) {
+      try {
+        const raw = sessionStorage.getItem('ariel_deck_challenge_cards');
+        if (raw) {
+          const parsed: DuelCard[] = JSON.parse(raw);
+          if (parsed.length >= ROUNDS) {
+            // Shuffle — duel owns the order, not the user
+            return [...parsed].sort(() => Math.random() - 0.5);
+          }
+        }
+      } catch {}
+    }
     try {
       const data = await cardsAPI.getTrendingCards(20);
       return data.length >= ROUNDS ? data : [...data, ...FALLBACK_CARDS].slice(0, Math.max(data.length, ROUNDS + 3));
@@ -613,7 +634,7 @@ export default function DuelsPage() {
 
           {/* ─── LOBBY ─────────────────────────────────────────────────────── */}
           {phase === 'lobby' && mode === 'solo' && (
-            <SoloLobby opponent={botName} onStart={startSoloDuel} />
+            <SoloLobby opponent={botName} onStart={startSoloDuel} isDeckChallenge={isDeckChallenge} />
           )}
 
           {phase === 'lobby' && mode === 'online' && (
@@ -629,6 +650,7 @@ export default function DuelsPage() {
               onQuickMatch={startQuickMatch}
               matchmakingLoading={matchmakingLoading}
               wsError={wsError}
+              isDeckChallenge={isDeckChallenge}
             />
           )}
 
@@ -713,9 +735,17 @@ export default function DuelsPage() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SoloLobby({ opponent, onStart }: { opponent: string; onStart: () => void }) {
+function SoloLobby({ opponent, onStart, isDeckChallenge }: { opponent: string; onStart: () => void; isDeckChallenge?: boolean }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {isDeckChallenge && (
+        <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/25 rounded-xl px-4 py-3">
+          <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+          <p className="text-orange-300 text-sm font-semibold">Using your deck cards · shuffled by the duel</p>
+        </div>
+      )}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
         <div className="flex items-center justify-center gap-8 mb-6">
           <PlayerAvatar label="You" letter="Y" color="sky" />
@@ -737,6 +767,7 @@ function SoloLobby({ opponent, onStart }: { opponent: string; onStart: () => voi
 function OnlineLobby({
   tab, onTabChange, challengeQuery, setChallengeQuery, challengeResults,
   challengeSending, challengeSent, onChallenge, onQuickMatch, matchmakingLoading, wsError,
+  isDeckChallenge,
 }: {
   tab: OnlineTab;
   onTabChange: (t: OnlineTab) => void;
@@ -749,9 +780,18 @@ function OnlineLobby({
   onQuickMatch: () => void;
   matchmakingLoading: boolean;
   wsError: string;
+  isDeckChallenge?: boolean;
 }) {
   return (
     <div className="space-y-4">
+      {isDeckChallenge && (
+        <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/25 rounded-xl px-4 py-3">
+          <svg className="w-4 h-4 text-orange-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+          <p className="text-orange-300 text-sm font-semibold">Challenge with your deck cards · duel shuffles them</p>
+        </div>
+      )}
       {/* Sub-tabs */}
       <div className="flex gap-1 bg-zinc-900 rounded-xl p-1">
         {(['quick-match', 'challenge'] as const).map(t => (
