@@ -948,7 +948,7 @@ export default function Dashboard() {
                     fontWeight: 700,
                     fontStyle: 'italic',
                     lineHeight: 1,
-                    color: '#ffffff',
+                    color: '#9B7FFF',
                     letterSpacing: '-1px',
                   }}>a</span>
                 </div>
