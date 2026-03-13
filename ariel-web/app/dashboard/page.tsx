@@ -816,7 +816,13 @@ export default function Dashboard() {
   }, [searchQuery]);
 
   useEffect(() => {
-    const onScroll = () => setHeaderScrolled(window.scrollY > 40);
+    let prev = window.scrollY;
+    const onScroll = () => {
+      const curr = window.scrollY;
+      if (curr > prev && curr > 60) setHeaderScrolled(true);   // scrolling down
+      else if (curr < prev) setHeaderScrolled(false);           // scrolling up
+      prev = curr;
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -915,7 +921,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-24 page-enter">
 
         {/* ── Sticky header ─────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800">
+        <header className={`sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 transition-transform duration-300 ease-in-out ${headerScrolled ? '-translate-y-full' : 'translate-y-0'}`}>
 
           {/* Ariel violet crown line */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
@@ -955,8 +961,8 @@ export default function Dashboard() {
             <>
               {/* ── Single row: avatar+name left | icons+ariel right ── */}
               <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
-                {/* Left: avatar + name below — collapses on scroll */}
-                <button onClick={() => router.push('/profile')} className={`flex flex-col items-start flex-shrink-0 transition-all duration-300 ease-in-out ${headerScrolled ? 'opacity-0 -translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
+                {/* Left: avatar + name below */}
+                <button onClick={() => router.push('/profile')} className="flex flex-col items-start flex-shrink-0">
                   <div className="relative">
                     {user?.profile_picture ? (
                       <img
