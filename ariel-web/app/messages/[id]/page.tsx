@@ -163,6 +163,8 @@ export default function ConversationPage() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const presencePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -208,7 +210,9 @@ export default function ConversationPage() {
     };
   }, [loadMessages, loadConvoInfo]);
 
-  useEffect(() => { scrollToBottom('smooth'); }, [messages, scrollToBottom]);
+  // Only auto-scroll if user is already near the bottom
+  useEffect(() => { if (isNearBottomRef.current) scrollToBottom('smooth'); }, [messages, scrollToBottom]);
+  // Always scroll to bottom on initial load
   useEffect(() => { if (!loading) scrollToBottom('instant' as ScrollBehavior); }, [loading, scrollToBottom]);
 
   // ── Send ──────────────────────────────────────────────────────
@@ -384,8 +388,8 @@ export default function ConversationPage() {
         className="fixed inset-0 lg:left-[72px] bg-[#09090b] flex flex-col"
         onClick={() => { setSelectedMsgId(null); setShowEmoji(false); setShowPicker(false); }}
       >
-        {/* Header */}
-        <div className="flex-shrink-0 flex items-center gap-3 px-3 h-14 border-b border-zinc-800 bg-[#09090b] z-10">
+        {/* Header — bleeds into status bar */}
+        <div className="flex-shrink-0 flex items-end gap-3 px-3 pb-3 border-b border-zinc-800 bg-[#09090b] z-10" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}>
           <button onClick={() => router.push('/messages')} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800/60 flex-shrink-0" aria-label="Back to Rooms">
             <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -409,7 +413,15 @@ export default function ConversationPage() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-3 py-4" style={{ WebkitOverflowScrolling: 'touch', backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.022) 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-3 py-4"
+          style={{ WebkitOverflowScrolling: 'touch', backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.022) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+          onScroll={e => {
+            const el = e.currentTarget;
+            isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+          }}
+        >
           {loading ? (
             <div className="flex justify-center py-16">
               <div className="w-6 h-6 border-2 border-zinc-700 border-t-violet-500 rounded-full animate-spin" />
@@ -689,7 +701,7 @@ export default function ConversationPage() {
         )}
 
         {/* Input bar */}
-        <div className="flex-shrink-0 px-3 py-2 pb-[84px] lg:pb-3 border-t border-zinc-800 bg-[#09090b]" onClick={e => e.stopPropagation()}>
+        <div className="flex-shrink-0 px-3 pt-2 border-t border-zinc-800 bg-[#09090b]" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }} onClick={e => e.stopPropagation()}>
           <div className="flex items-center gap-2">
             {/* Emoji toggle */}
             <button
@@ -735,7 +747,6 @@ export default function ConversationPage() {
           </div>
         </div>
       </div>
-      <BottomNav />
     </>
   );
 }
