@@ -909,16 +909,11 @@ export default function Dashboard() {
           ) : (
             <>
               {/* Main row */}
-              {/* ── Row 1: ariel wordmark alone, centered ── */}
-              <div className="max-w-3xl mx-auto px-4 pt-3 pb-1 flex items-center justify-center">
-                <ArielWordmark size={32} variant="dark" />
-              </div>
-
-              {/* ── Row 2: avatar + name left | icons right ── */}
-              <div className="max-w-3xl mx-auto px-4 pb-2 flex items-center justify-between">
-                {/* Left: avatar + name */}
-                <button onClick={() => router.push('/profile')} className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
-                  <div className="relative flex-shrink-0">
+              {/* ── Single row: avatar+name left | ariel center | icons right ── */}
+              <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
+                {/* Left: avatar on top, name below */}
+                <button onClick={() => router.push('/profile')} className="flex flex-col items-start flex-shrink-0">
+                  <div className="relative">
                     <div className="p-[2px] rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500">
                       {user?.profile_picture ? (
                         <img
@@ -939,11 +934,16 @@ export default function Dashboard() {
                     )}
                   </div>
                   {dataLoading ? (
-                    <span className="inline-block w-14 h-4 bg-zinc-800 rounded-full animate-pulse" />
+                    <span className="inline-block w-10 h-3 bg-zinc-800 rounded-full animate-pulse mt-1" />
                   ) : (
-                    <span className="text-[20px] font-black text-white leading-none tracking-tight truncate">{firstName || 'there'}</span>
+                    <span className="text-[13px] font-black text-white leading-none tracking-tight mt-1">{firstName || 'there'}</span>
                   )}
                 </button>
+
+                {/* Center: ariel wordmark alone */}
+                <div className="absolute left-1/2 -translate-x-1/2">
+                  <ArielWordmark size={32} variant="dark" />
+                </div>
 
                 {/* Right: action icons */}
                 <div className="flex items-center gap-0.5 flex-shrink-0">
