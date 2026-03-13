@@ -205,6 +205,28 @@ async def get_personalized_feed(
                 user_cache[uid] = u
             return user_cache[uid]
 
+        # Gather all card ids for a single community-stats aggregation
+        card_ids = [str(card.id) for card in feed]
+
+        # Aggregate review stats across all users for these cards
+        stats_map: dict = {}
+        try:
+            pipeline = [
+                {"$match": {"card_id": {"$in": card_ids}}},
+                {"$group": {
+                    "_id": "$card_id",
+                    "total": {"$sum": 1},
+                    "correct": {"$sum": {"$cond": [{"$gte": ["$quality", 4]}, 1, 0]}}
+                }}
+            ]
+            async for doc in db.card_reviews.aggregate(pipeline):
+                stats_map[doc["_id"]] = {
+                    "total_reviews": doc["total"],
+                    "pct_correct": round(doc["correct"] / doc["total"] * 100) if doc["total"] else 0
+                }
+        except Exception:
+            pass
+
         enriched = []
         for card in feed:
             card_dict = card.dict()
@@ -217,6 +239,11 @@ async def get_personalized_feed(
                     "profile_picture": creator.get("profile_picture"),
                     "is_verified": creator.get("is_verified", False),
                 }
+            # Attach community stats
+            cstats = stats_map.get(str(card.id))
+            if cstats:
+                card_dict["community_reviews"] = cstats["total_reviews"]
+                card_dict["community_pct_correct"] = cstats["pct_correct"]
             enriched.append(card_dict)
 
         return enriched

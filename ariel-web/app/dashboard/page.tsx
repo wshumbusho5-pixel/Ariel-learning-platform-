@@ -38,6 +38,8 @@ interface FeedCard {
   author_full_name?: string;
   author_profile_picture?: string;
   created_at?: string;
+  community_reviews?: number;
+  community_pct_correct?: number;
 }
 
 interface DueCard { id: string; question: string; subject?: string; }
@@ -233,12 +235,21 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
           <p className="text-zinc-800 font-bold text-[22px] text-center leading-snug line-clamp-4">
             {card.question}
           </p>
-          <span className="absolute bottom-4 text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            tap to reveal
-          </span>
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2.5">
+            {card.community_reviews && card.community_reviews > 0 ? (
+              <span className="text-[10px] text-zinc-400 font-medium">
+                📚 {card.community_reviews} studied · {card.community_pct_correct}% nailed it
+              </span>
+            ) : (
+              <span className="text-[10px] text-zinc-400 font-medium">Be the first to study this</span>
+            )}
+            <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              tap to reveal
+            </span>
+          </div>
         </div>
 
         {/* Back — Answer */}

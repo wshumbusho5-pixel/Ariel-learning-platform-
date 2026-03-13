@@ -232,6 +232,17 @@ class CardRepository:
             {"$set": update_dict}
         )
 
+        # Log community review event
+        try:
+            await db["card_reviews"].insert_one({
+                "card_id": card_id,
+                "user_id": user_id,
+                "quality": quality,
+                "reviewed_at": datetime.utcnow()
+            })
+        except Exception:
+            pass
+
         return await CardRepository.get_card(card_id, user_id)
 
     @staticmethod
