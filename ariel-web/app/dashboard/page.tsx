@@ -1118,8 +1118,8 @@ export default function Dashboard() {
                         </button>
                       </div>
                     )}
-                    {/* Clips row after card 9 */}
-                    {!searchQuery && !activeTopic && i === 9 && (
+                    {/* Clips row after card 3 */}
+                    {!searchQuery && !activeTopic && i === 2 && (
                       <ReelsRow reels={reels} fallbackTopics={reelTopics} onNavigate={router.push} />
                     )}
                   </div>
