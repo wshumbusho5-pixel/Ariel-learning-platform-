@@ -161,7 +161,13 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
     try {
       const { commentsAPI } = await import('@/lib/api');
       const data = await commentsAPI.getCardComments(card.id, 5);
-      setCardComments(data);
+      // Merge any locally liked comments so optimistic likes survive remounts
+      let localLikes: Record<string, boolean> = {};
+      try { localLikes = JSON.parse(localStorage.getItem(`ariel_clikes_${card.id}`) || '{}'); } catch {}
+      const merged = data.map((c: any) =>
+        localLikes[c.id] ? { ...c, likes: Math.max((c.likes || 0), 1) } : c
+      );
+      setCardComments(merged);
       if (data.length > 0) setCommentCount(prev => Math.max(prev, data.length));
     } catch {}
     setCommentsLoaded(true);
@@ -927,11 +933,11 @@ export default function Dashboard() {
                       <img
                         src={user.profile_picture}
                         alt={user.username}
-                        className="w-9 h-9 rounded-full object-cover"
+                        className="w-11 h-11 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-9 h-9 rounded-full bg-zinc-700 flex items-center justify-center">
-                        <span className="text-sm font-black text-white">
+                      <div className="w-11 h-11 rounded-full bg-zinc-700 flex items-center justify-center">
+                        <span className="text-base font-black text-white">
                           {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
                         </span>
                       </div>
@@ -943,7 +949,7 @@ export default function Dashboard() {
                   {dataLoading ? (
                     <span className="inline-block w-10 h-3 bg-zinc-800 rounded-full animate-pulse mt-1" />
                   ) : (
-                    <span className="text-[17px] font-black text-white leading-none tracking-tight mt-1">{firstName || 'there'}</span>
+                    <span className="text-[20px] font-black text-white leading-none tracking-tight mt-1">{firstName || 'there'}</span>
                   )}
                 </button>
 
