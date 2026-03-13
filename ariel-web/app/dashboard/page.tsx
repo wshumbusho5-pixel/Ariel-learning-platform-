@@ -159,6 +159,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       const { commentsAPI } = await import('@/lib/api');
       const data = await commentsAPI.getCardComments(card.id, 5);
       setCardComments(data);
+      if (data.length > 0) setCommentCount(prev => Math.max(prev, data.length));
     } catch {}
     setCommentsLoaded(true);
   }, [card.id, commentsLoaded]);
@@ -426,12 +427,10 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
               <div
                 key={c.id}
                 className={`flex items-start gap-2.5 ${i > 0 ? 'mt-3' : ''} select-none`}
-                onTouchStart={() => startLongPress(c.id)}
-                onTouchEnd={cancelLongPress}
-                onTouchMove={cancelLongPress}
-                onMouseDown={() => startLongPress(c.id)}
-                onMouseUp={cancelLongPress}
-                onMouseLeave={cancelLongPress}
+                onPointerDown={() => startLongPress(c.id)}
+                onPointerUp={cancelLongPress}
+                onPointerLeave={cancelLongPress}
+                onPointerCancel={cancelLongPress}
               >
                 {/* Avatar → profile */}
                 <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0">
@@ -445,7 +444,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                 </button>
 
                 <div className="flex-1 min-w-0">
-                  {/* Username underlined tap-to-reply + comment text */}
+                  {/* Username + comment text + inline like pill */}
                   <p className="text-[12.5px] leading-snug text-zinc-300 break-words">
                     <button
                       onClick={() => {
@@ -457,18 +456,16 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                       {c.author_username || 'user'}
                     </button>
                     {c.content}
+                    {(c.likes > 0 || likedComments[c.id]) && (
+                      <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
+                        <svg className="w-3 h-3 text-violet-400 inline" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                        </svg>
+                        {c.likes > 0 && <span className="text-[10px] text-violet-400 font-semibold">{c.likes}</span>}
+                      </span>
+                    )}
                   </p>
                 </div>
-
-                {/* Like — visible when liked or count > 0 */}
-                {(c.likes > 0 || likedComments[c.id]) && (
-                  <div className="flex-shrink-0 flex items-center gap-0.5 ml-1">
-                    <svg className="w-3.5 h-3.5 text-violet-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                    </svg>
-                    {c.likes > 0 && <span className="text-[10px] text-violet-400 font-semibold">{c.likes}</span>}
-                  </div>
-                )}
               </div>
             ))}
             {commentCount > 5 && (
