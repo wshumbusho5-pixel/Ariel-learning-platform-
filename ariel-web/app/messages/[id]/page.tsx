@@ -473,7 +473,7 @@ export default function ConversationPage() {
                         >
                           {/* Reply preview */}
                           {msg.reply_to_content && (
-                            <div className={`mb-1.5 px-2.5 py-1.5 rounded-xl text-xs border-l-2 ${isMine ? 'bg-black/25 border-white/50 text-white/75' : 'bg-zinc-900 border-violet-400 text-zinc-400'}`}>
+                            <div className={`mb-1.5 px-2.5 py-1.5 rounded-xl text-xs border-l-2 ${isMine ? 'bg-black/45 border-white/30 text-white/70' : 'bg-zinc-900 border-violet-400 text-zinc-400'}`}>
                               <p className="font-bold mb-0.5">{msg.reply_to_sender_username || 'Unknown'}</p>
                               <p className="truncate">{msg.reply_to_content}</p>
                             </div>
