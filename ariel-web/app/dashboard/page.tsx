@@ -745,6 +745,7 @@ export default function Dashboard() {
   const [feedTab, setFeedTab] = useState<'foryou' | 'following'>('foryou');
   const [followingCards, setFollowingCards] = useState<FeedCard[]>([]);
   const [followingLoading, setFollowingLoading] = useState(false);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -813,6 +814,12 @@ export default function Dashboard() {
     }, 350);
     return () => clearTimeout(t);
   }, [searchQuery]);
+
+  useEffect(() => {
+    const onScroll = () => setHeaderScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const addSubject = useCallback(async (key: string) => {
     if (!user?.subjects) return;
@@ -948,8 +955,8 @@ export default function Dashboard() {
             <>
               {/* ── Single row: avatar+name left | icons+ariel right ── */}
               <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
-                {/* Left: avatar + name below */}
-                <button onClick={() => router.push('/profile')} className="flex flex-col items-start flex-shrink-0">
+                {/* Left: avatar + name below — collapses on scroll */}
+                <button onClick={() => router.push('/profile')} className={`flex flex-col items-start flex-shrink-0 transition-all duration-300 ease-in-out ${headerScrolled ? 'opacity-0 -translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
                   <div className="relative">
                     {user?.profile_picture ? (
                       <img

@@ -156,6 +156,7 @@ export default function ConversationPage() {
   const [showEmoji, setShowEmoji] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [showTyping, setShowTyping] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
   const [pickerTab, setPickerTab] = useState<'cards' | 'reels'>('cards');
   const [pickerCards, setPickerCards] = useState<{ id: string; question: string; subject?: string }[]>([]);
   const [pickerReels, setPickerReels] = useState<{ id: string; title: string; thumbnail_url?: string; creator_username: string }[]>([]);
@@ -165,6 +166,7 @@ export default function ConversationPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
+  const prevScrollTopRef = useRef(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const presencePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -388,8 +390,9 @@ export default function ConversationPage() {
         className="fixed inset-0 lg:left-[72px] bg-[#09090b] flex flex-col"
         onClick={() => { setSelectedMsgId(null); setShowEmoji(false); setShowPicker(false); }}
       >
-        {/* Header — bleeds into status bar */}
-        <div className="flex-shrink-0 flex items-end gap-3 px-3 pb-3 border-b border-zinc-800 bg-[#09090b] z-10" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}>
+        {/* Header — bleeds into status bar, hides when reading old messages */}
+        <div className={`flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out border-b bg-[#09090b] z-10 ${headerHidden ? 'max-h-0 border-transparent' : 'max-h-28 border-zinc-800'}`}>
+        <div className="flex items-end gap-3 px-3 pb-3" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}>
           <button onClick={() => router.push('/messages')} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800/60 flex-shrink-0" aria-label="Back to Rooms">
             <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -411,6 +414,7 @@ export default function ConversationPage() {
             </div>
           </div>
         </div>
+        </div>
 
         {/* Messages */}
         <div
@@ -419,7 +423,13 @@ export default function ConversationPage() {
           style={{ WebkitOverflowScrolling: 'touch', backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.022) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
           onScroll={e => {
             const el = e.currentTarget;
-            isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+            const scrollTop = el.scrollTop;
+            const goingUp = scrollTop < prevScrollTopRef.current;
+            prevScrollTopRef.current = scrollTop;
+            // Hide header when reading old messages (scrolling up past 80px)
+            if (goingUp && scrollTop > 80) setHeaderHidden(true);
+            else if (!goingUp || scrollTop < 20) setHeaderHidden(false);
+            isNearBottomRef.current = el.scrollHeight - scrollTop - el.clientHeight < 120;
           }}
         >
           {loading ? (
