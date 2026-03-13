@@ -264,7 +264,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
             pointerEvents: flipped ? 'none' : 'auto',
           }}
         >
-          <p className="text-zinc-800 font-bold text-[22px] text-center leading-snug line-clamp-4">
+          <p className="text-zinc-800 font-bold text-[24px] text-center leading-snug line-clamp-4">
             {card.question}
           </p>
           <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2.5">
@@ -296,7 +296,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         >
           <div className="flex items-start gap-3 w-full">
             <div className="w-[3px] self-stretch rounded-full bg-violet-400 flex-shrink-0" />
-            <p className="text-zinc-800 font-semibold text-[18px] leading-snug line-clamp-4">
+            <p className="text-zinc-800 font-semibold text-[20px] leading-snug line-clamp-4">
               {card.answer || 'No answer provided.'}
             </p>
           </div>
@@ -872,10 +872,8 @@ export default function Dashboard() {
                   <p className="text-[11px] text-zinc-500 mt-1 leading-none">
                     {dataLoading ? (
                       <span className="inline-block w-28 h-2.5 bg-zinc-800 rounded-full animate-pulse" />
-                    ) : dueCards.length > 0 ? (
-                      <><span className="text-violet-400 font-semibold">{dueCards.length} card{dueCards.length !== 1 ? 's' : ''}</span> ready for review</>
                     ) : feedCards.length > 0 ? (
-                      <><span className="text-zinc-300 font-semibold">{feedCards.length} new card{feedCards.length !== 1 ? 's' : ''}</span> in your feed</>
+                      <><span className="text-zinc-300 font-semibold">{feedCards.length} card{feedCards.length !== 1 ? 's' : ''}</span> in your feed</>
                     ) : (
                       <span className="text-zinc-600">All caught up · keep it going</span>
                     )}
@@ -928,12 +926,6 @@ export default function Dashboard() {
                         <span className="text-sm">🔥</span>
                         <span className="text-xs font-black text-orange-400">{streakDays} day streak</span>
                       </div>
-                    )}
-                    {dueCards.length > 0 && (
-                      <button onClick={() => router.push('/deck')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 active:scale-95 transition-all">
-                        <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-                        <span className="text-xs font-black text-violet-400">{dueCards.length} due</span>
-                      </button>
                     )}
                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800/60 border border-zinc-700/40">
                       <span className="text-xs font-black text-zinc-400">Lv {level}</span>
