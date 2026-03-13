@@ -215,6 +215,11 @@ export const cardsAPI = {
     return response.data;
   },
 
+  getFollowingFeed: async (limit: number = 50, offset: number = 0) => {
+    const response = await api.get(`/api/cards/following-feed?limit=${limit}&offset=${offset}`);
+    return response.data;
+  },
+
   getTrendingCards: async (limit: number = 50) => {
     const response = await api.get(`/api/cards/trending?limit=${limit}`);
     return response.data;
@@ -603,13 +608,13 @@ export const commentsAPI = {
 
 // Duels API - Multiplayer flashcard battles
 export const duelsAPI = {
-  quickMatch: async (body?: { subject?: string; round_count?: number; max_players?: number }) => {
-    const response = await api.post('/api/duels/quick-match', body || {});
+  quickMatch: async () => {
+    const response = await api.post('/api/duels/quick-match');
     return response.data;
   },
 
-  challenge: async (username: string, body?: { subject?: string; round_count?: number }) => {
-    const response = await api.post(`/api/duels/challenge/${username}`, body || {});
+  challenge: async (username: string) => {
+    const response = await api.post(`/api/duels/challenge/${username}`);
     return response.data;
   },
 
@@ -621,11 +626,6 @@ export const duelsAPI = {
   getRoom: async (roomId: string) => {
     const response = await api.get(`/api/duels/${roomId}`);
     return response.data;
-  },
-
-  getMySubjects: async () => {
-    const response = await api.get('/api/duels/my-subjects');
-    return response.data as string[];
   },
 };
 

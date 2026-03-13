@@ -223,6 +223,68 @@ async def get_personalized_feed(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/following-feed")
+async def get_following_feed(
+    limit: int = 50,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user_dependency),
+    db = Depends(get_database)
+):
+    """Get cards from people the current user follows."""
+    try:
+        following_ids = current_user.following or []
+        if not following_ids:
+            return []
+
+        # Convert to ObjectIds
+        oid_list = []
+        for fid in following_ids:
+            try:
+                oid_list.append(ObjectId(fid))
+            except Exception:
+                pass
+
+        if not oid_list:
+            return []
+
+        cursor = db.cards.find({
+            "user_id": {"$in": [str(fid) for fid in following_ids]},
+            "visibility": "public"
+        }).sort("created_at", -1).skip(offset).limit(limit)
+
+        user_cache: dict = {}
+
+        async def get_user(uid: str):
+            if uid not in user_cache:
+                try:
+                    u = await db.users.find_one({"_id": ObjectId(uid)})
+                    user_cache[uid] = u
+                except Exception:
+                    user_cache[uid] = None
+            return user_cache[uid]
+
+        enriched = []
+        async for card_doc in cursor:
+            card_doc["id"] = str(card_doc["_id"])
+            del card_doc["_id"]
+            creator = await get_user(card_doc.get("user_id", ""))
+            if creator:
+                card_doc["created_by"] = {
+                    "id": str(creator["_id"]),
+                    "username": creator.get("username", "unknown"),
+                    "full_name": creator.get("full_name"),
+                    "profile_picture": creator.get("profile_picture"),
+                }
+                card_doc["author_username"] = creator.get("username")
+                card_doc["author_full_name"] = creator.get("full_name")
+                card_doc["author_profile_picture"] = creator.get("profile_picture")
+            enriched.append(card_doc)
+
+        return enriched
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/feed-insights")
 async def get_feed_insights(
     current_user: User = Depends(get_current_user_dependency)

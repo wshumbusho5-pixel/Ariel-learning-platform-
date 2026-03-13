@@ -597,6 +597,8 @@ export default function Dashboard() {
   const [searchResults, setSearchResults] = useState<FeedCard[]>([]);
   const [searching, setSearching] = useState(false);
   const [feedTab, setFeedTab] = useState<'foryou' | 'following'>('foryou');
+  const [followingCards, setFollowingCards] = useState<FeedCard[]>([]);
+  const [followingLoading, setFollowingLoading] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -632,6 +634,22 @@ export default function Dashboard() {
       setReels(allReels.filter(r => r.video_url && r.kind !== 'card'));
     }).finally(() => setDataLoading(false));
   }, [isAuthenticated, isLoading, user]);
+
+  // Fetch following feed when tab selected
+  useEffect(() => {
+    if (feedTab !== 'following' || !isAuthenticated) return;
+    if (followingCards.length > 0) return; // already loaded
+    setFollowingLoading(true);
+    cardsAPI.getFollowingFeed(40).then((data: any) => {
+      const mapped = ((data as any[]) || []).map((card: any) => ({
+        ...card,
+        author_username: card.author_username || card.created_by?.username,
+        author_full_name: card.author_full_name || card.created_by?.full_name,
+        author_profile_picture: card.author_profile_picture || card.created_by?.profile_picture,
+      }));
+      setFollowingCards(mapped);
+    }).catch(() => setFollowingCards([])).finally(() => setFollowingLoading(false));
+  }, [feedTab, isAuthenticated]);
 
   // Debounced backend search
   useEffect(() => {
@@ -1009,16 +1027,29 @@ export default function Dashboard() {
 
           {/* Card feed */}
           {feedTab === 'following' && !searchQuery ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-              <div className="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center mb-4">
-                <span className="text-2xl">👥</span>
+            followingLoading ? (
+              <div className="mt-3">
+                <CardSkeleton height={160} flush />
+                <CardSkeleton height={240} />
               </div>
-              <p className="text-base font-bold text-white">Follow people to see their cards</p>
-              <p className="text-sm text-zinc-500 mt-2 leading-relaxed max-w-[240px]">When you follow someone, their public cards show up here.</p>
-              <button onClick={() => router.push('/explore')} className="mt-5 px-5 py-2.5 rounded-full bg-violet-500 text-white text-sm font-bold active:scale-95 transition-all">
-                Explore people
-              </button>
-            </div>
+            ) : followingCards.length > 0 ? (
+              <div className="mt-3">
+                {followingCards.map((card, i) => (
+                  <CardTile key={card.id} card={card} onComment={openComments} flush={i === 0} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                <div className="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center mb-4">
+                  <span className="text-2xl">👥</span>
+                </div>
+                <p className="text-base font-bold text-white">Nothing from your following yet</p>
+                <p className="text-sm text-zinc-500 mt-2 leading-relaxed max-w-[240px]">The people you follow haven't posted public cards yet.</p>
+                <button onClick={() => router.push('/explore')} className="mt-5 px-5 py-2.5 rounded-full bg-violet-500 text-white text-sm font-bold active:scale-95 transition-all">
+                  Explore people
+                </button>
+              </div>
+            )
           ) : dataLoading ? (
             <div className="mt-3">
               <CardSkeleton height={160} flush />
