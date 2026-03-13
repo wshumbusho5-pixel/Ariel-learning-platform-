@@ -996,10 +996,8 @@ export default function Dashboard() {
                     </svg>
                   </button>
                   <button onClick={() => router.push('/messages')} className="relative w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
-                    {/* Rooms: two overlapping bubbles = group/community */}
-                    <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v3l-3-3H9a2 2 0 01-2-2v-1" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6a2 2 0 012-2h10a2 2 0 012 2v6a2 2 0 01-2 2H8l-3 3V6z" />
+                    <svg className="w-[20px] h-[20px]" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.836 1.359 5.373 3.497 7.07L4.5 22l4.193-1.668A10.7 10.7 0 0012 20.486c5.523 0 10-4.144 10-9.243S17.523 2 12 2z" />
                     </svg>
                     {unreadMessages > 0 && (
                       <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] rounded-full bg-violet-500 flex items-center justify-center">
