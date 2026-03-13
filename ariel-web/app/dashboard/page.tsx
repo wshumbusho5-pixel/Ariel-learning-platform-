@@ -1074,143 +1074,57 @@ export default function Dashboard() {
             </div>
           ) : displayCards.length > 0 ? (
             <>
-              {/* Feed section label */}
-              <div className="mt-5 mb-3">
-                <h2 className="text-lg font-black text-white leading-none">
-                  {activeSubject ? SUBJECT_META[activeSubject]?.label : 'What people are studying'}
-                </h2>
-                <p className="text-xs text-zinc-500 mt-1">
-                  {activeTopic
-                    ? `Cards about ${activeTopic}`
-                    : activeSubject
-                    ? `Top cards in ${SUBJECT_META[activeSubject]?.label}`
-                    : 'Latest cards from the community across all subjects'}
-                </p>
-                <div className="border-t border-zinc-800 mt-3" />
-              </div>
-
-              {/* First 2 cards — content first */}
-              <div className="mt-3">
-                {displayCards.slice(0, 2).map((card, i) => (
-                  <CardTile key={card.id} card={card} onComment={openComments} flush={i === 0} />
-                ))}
-              </div>
-
-              {/* Ariel — full bleed like LinkedIn */}
-              {!searchQuery && (
-                <div className="-mx-4">
-                <button
-                  onClick={openAriel}
-                  className="w-full text-left border-t border-b border-zinc-800 hover:bg-zinc-900/40 transition-colors p-4 mb-0"
-                  style={{ background: '#1e1e22' }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="relative flex-shrink-0">
-                      <div className="w-10 h-10 rounded-xl bg-[#0d0d18] border border-violet-500/20 flex items-center justify-center">
-                        <span style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 26, color: '#c4b0ff', lineHeight: 1 }}>a</span>
-                      </div>
-                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-2 border-[#1e1e22]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-bold text-white leading-none">Ariel</span>
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-300/15 text-violet-300 tracking-wide">AI</span>
-                        {dueCards.length > 0 && (
-                          <span className="ml-auto text-[10px] font-bold text-violet-300 bg-violet-300/10 px-2 py-0.5 rounded-full flex-shrink-0">
-                            {dueCards.length} due
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-zinc-300 leading-relaxed">
-                        Hey {firstName}! I can generate flashcards on any topic, break down hard concepts, or build you a full study plan — just tell me what you need.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    {['🎴 Make cards', '💡 Explain', '🗓️ Study plan'].map(chip => (
-                      <span key={chip} className="px-2.5 py-1 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-zinc-400 text-xs font-medium">
-                        {chip}
-                      </span>
-                    ))}
-                  </div>
-                </button>
-                </div>
-              )}
-
-              {/* Clips row */}
-              {!searchQuery && !activeTopic && (
-                <ReelsRow reels={reels} fallbackTopics={reelTopics} onNavigate={router.push} />
-              )}
-
-              {/* Remaining cards */}
-              {displayCards.length > 2 && (
-                <div className="mt-5">
-                  <div className="border-t border-zinc-800 mb-4" />
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="text-base font-black text-white leading-none">More to explore</h3>
-                      <p className="text-xs text-zinc-500 mt-1">Keep going — there's more to learn</p>
-                    </div>
-                    <span className="text-xs text-zinc-500 font-medium">{displayCards.length - 2} more</span>
-                  </div>
-                  {displayCards.slice(2, 8).map((card, i) => (
-                    <CardTile key={card.id} card={card} onComment={openComments} flush={i === 0} />
-                  ))}
-                </div>
-              )}
-
-              {/* Due for review */}
+              {/* Due for review — horizontal scroll strip */}
               {dueCards.length > 0 && !searchQuery && (
-                <div className="mt-6">
-                  <div className="border-t border-zinc-800 mb-4" />
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-base font-black text-white leading-none">Due for review</h3>
-                      <p className="text-xs text-zinc-500 mt-1">Cards you haven't seen in a while</p>
-                    </div>
-                    <span className="text-xs font-bold text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full mt-0.5">
-                      {dueCards.length} card{dueCards.length !== 1 ? 's' : ''}
-                    </span>
+                <div className="mt-4 mb-2">
+                  <div className="flex items-center justify-between px-0 mb-2">
+                    <span className="text-xs font-bold text-orange-400">Due for review</span>
+                    <button onClick={() => router.push('/deck')} className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Go to deck →</button>
                   </div>
-                  <div className="flex gap-2.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-                    {dueCards.map(card => (
+                  <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
+                    {dueCards.slice(0, 10).map(card => (
                       <button
                         key={card.id}
-                        onClick={() => router.push('/cram')}
-                        className="flex-shrink-0 w-44 p-3 rounded-2xl bg-[#1e1e22] border border-zinc-700/60 hover:border-violet-300/30 text-left transition-colors"
+                        onClick={() => router.push('/deck')}
+                        className="flex-shrink-0 w-40 p-3 rounded-2xl bg-[#1e1e22] border border-zinc-800 text-left active:scale-95 transition-all"
                       >
                         <p className="text-xs font-semibold text-white line-clamp-3 leading-snug">{card.question}</p>
-                        {card.subject && (
-                          <p className="text-[10px] text-zinc-400 mt-2 truncate">{card.subject}</p>
-                        )}
+                        {card.subject && <p className="text-[10px] text-zinc-500 mt-1.5 truncate">{card.subject}</p>}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Deck CTA */}
-              {!searchQuery && (
-                <button
-                  onClick={openAriel}
-                  className="mt-5 w-full flex items-center justify-between p-4 rounded-2xl bg-[#1e1e22] border border-zinc-700/60 hover:border-violet-300/30 active:scale-[0.98] transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-violet-300/10 border border-violet-300/20 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-violet-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-black text-white">Build your study deck</p>
-                      <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">Turn your notes into flashcards. Ask Ariel to generate a full deck on any subject in seconds.</p>
-                    </div>
+              {/* Continuous feed — no artificial end */}
+              <div className="mt-2">
+                {displayCards.map((card, i) => (
+                  <div key={card.id}>
+                    <CardTile card={card} onComment={openComments} />
+                    {/* Ariel prompt every 5 cards */}
+                    {!searchQuery && i === 4 && (
+                      <div className="-mx-4 mb-5">
+                        <button onClick={openAriel} className="w-full text-left border-t border-b border-zinc-900 p-4" style={{ background: '#111113' }}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-[#0d0d18] border border-violet-500/20 flex items-center justify-center flex-shrink-0">
+                              <span style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 24, color: '#c4b0ff', lineHeight: 1 }}>a</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-white leading-none">Ask Ariel</p>
+                              <p className="text-xs text-zinc-500 mt-0.5">Generate cards, explain topics, build a study plan</p>
+                            </div>
+                            <span className="ml-auto text-xs font-bold text-violet-400 flex-shrink-0">Try it →</span>
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                    {/* Clips row after card 9 */}
+                    {!searchQuery && !activeTopic && i === 9 && (
+                      <ReelsRow reels={reels} fallbackTopics={reelTopics} onNavigate={router.push} />
+                    )}
                   </div>
-                  <svg className="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              )}
+                ))}
+              </div>
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center px-6">
