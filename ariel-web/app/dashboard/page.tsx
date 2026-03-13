@@ -118,7 +118,7 @@ function timeAgo(d?: string) {
 
 // ─── Card Tile (square, 1:1) ─────────────────────────────────────────────────
 
-const CARD_HEIGHT = 240;
+const CARD_HEIGHT = 280;
 
 function CardTile({ card, onComment, flush = false }: { card: FeedCard; onComment: (id: string) => void; flush?: boolean }) {
   const [flipped, setFlipped] = useState(false);
@@ -273,7 +273,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] to-transparent pointer-events-none" />
-          <p className="text-zinc-800 font-bold text-[16px] text-center leading-relaxed relative z-10 line-clamp-5">
+          <p className="text-zinc-800 font-bold text-[22px] text-center leading-snug relative z-10 line-clamp-4">
             {card.question}
           </p>
           <span className="absolute bottom-3 text-[10px] text-zinc-300 font-medium flex items-center gap-1">
@@ -296,7 +296,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         >
           <div className="flex items-start gap-3 w-full">
             <div className="w-[3px] self-stretch rounded-full bg-violet-500 flex-shrink-0" />
-            <p className="text-zinc-800 font-semibold text-[15px] leading-relaxed line-clamp-5">
+            <p className="text-zinc-800 font-semibold text-[18px] leading-snug line-clamp-4">
               {card.answer || 'No answer provided.'}
             </p>
           </div>
