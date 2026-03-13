@@ -149,9 +149,12 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   const [commentInput, setCommentInput] = useState('');
   const [postingComment, setPostingComment] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{id: string; username: string} | null>(null);
-  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
+  const [likedComments, setLikedComments] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem(`ariel_clikes_${card.id}`) || '{}'); } catch { return {}; }
+  });
   const inputRef = useRef<HTMLInputElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStart = useRef<number>(0);
 
   const loadComments = useCallback(async () => {
     if (commentsLoaded) return;
@@ -181,8 +184,10 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   };
 
   const handleCommentLongPress = (commentId: string) => {
-    if (likedComments[commentId]) return; // already liked
-    setLikedComments(prev => ({ ...prev, [commentId]: true }));
+    if (likedComments[commentId]) return;
+    const updated = { ...likedComments, [commentId]: true };
+    setLikedComments(updated);
+    try { localStorage.setItem(`ariel_clikes_${card.id}`, JSON.stringify(updated)); } catch {}
     setCardComments(prev => prev.map(c =>
       c.id === commentId ? { ...c, likes: (c.likes || 0) + 1 } : c
     ));
@@ -192,10 +197,15 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   };
 
   const startLongPress = (commentId: string) => {
+    pressStart.current = Date.now();
     longPressTimer.current = setTimeout(() => handleCommentLongPress(commentId), 500);
   };
 
-  const cancelLongPress = () => {
+  const cancelLongPress = (commentId?: string) => {
+    // If finger held long enough when released, still trigger (fixes iOS pointercancel)
+    if (commentId && Date.now() - pressStart.current >= 480) {
+      handleCommentLongPress(commentId);
+    }
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
@@ -428,9 +438,9 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                 key={c.id}
                 className={`flex items-start gap-2.5 ${i > 0 ? 'mt-3' : ''} select-none`}
                 onPointerDown={() => startLongPress(c.id)}
-                onPointerUp={cancelLongPress}
-                onPointerLeave={cancelLongPress}
-                onPointerCancel={cancelLongPress}
+                onPointerUp={() => cancelLongPress(c.id)}
+                onPointerLeave={() => cancelLongPress()}
+                onPointerCancel={() => cancelLongPress(c.id)}
               >
                 {/* Avatar → profile */}
                 <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0">
