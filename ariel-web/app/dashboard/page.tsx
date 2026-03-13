@@ -196,87 +196,45 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   };
 
   return (
-    <div className="overflow-hidden relative rounded-xl border border-zinc-700/60 bg-[#1e1e22] mb-3">
-      {/* Subject colour strip — instant visual identity */}
-      <div className={`h-[2px] w-full bg-gradient-to-r from-transparent ${STRIP_COLOR[key] ?? 'via-zinc-400'} to-transparent`} />
-
+    <div className="mb-5 relative">
       {/* Save toast */}
       {saveToast && (
-        <div className="animate-toast absolute bottom-14 left-1/2 -translate-x-1/2 z-10 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
+        <div className="animate-toast absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
           Saved to deck ✓
         </div>
       )}
-      {/* Header — LinkedIn style: avatar left, name+meta right, Q/A pill far right */}
-      <div className="flex items-center gap-3 px-4 pt-3.5 pb-2">
-        {/* Avatar: profile pic or subject-coloured initial */}
-        <div className="flex-shrink-0 relative">
-          {card.author_profile_picture ? (
-            <img
-              src={card.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')}
-              alt={card.author_username}
-              className="w-10 h-10 rounded-full object-cover"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          ) : (
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
-              <span className="text-base font-bold text-white">
-                {card.author_username?.[0]?.toUpperCase() ?? meta.icon}
-              </span>
-            </div>
-          )}
-          {/* Subject icon badge */}
-          <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center border border-[#1e1e22]`}>
-            <span className="text-[8px] leading-none">{meta.icon}</span>
-          </div>
-        </div>
 
-        {/* Name + subject line */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[13px] font-semibold text-white leading-tight truncate">
-              {card.author_full_name || card.author_username || 'Ariel User'}
-            </span>
-            {card.author_username && (
-              <span className="text-[11px] text-zinc-500 truncate">@{card.author_username}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400`}>
-              {card.subject ?? meta.short}{card.topic ? ` · ${card.topic}` : ''}
-            </span>
-            {card.created_at && (
-              <span className="text-[10px] text-zinc-600">{timeAgo(card.created_at)}</span>
-            )}
-          </div>
-        </div>
-
-        {/* Q / A flip indicator */}
-        <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${flipped ? 'bg-violet-500 scale-110' : 'bg-zinc-800'}`}>
-          <span className="text-[11px] font-black text-white">{flipped ? 'A' : 'Q'}</span>
-        </div>
-      </div>
-
-      {/* Card face — fade/scale reveal */}
+      {/* ── Floating white card ── */}
       <div
-        className="cursor-pointer relative overflow-hidden"
-        style={{ height: `${CARD_HEIGHT}px` }}
+        className="cursor-pointer relative overflow-hidden rounded-3xl mx-1"
+        style={{
+          height: `${CARD_HEIGHT}px`,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+        }}
         onClick={() => setFlipped(f => !f)}
       >
+        {/* Subject accent bar at top */}
+        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent ${STRIP_COLOR[key] ?? 'via-zinc-400'} to-transparent z-10`} />
+
+        {/* Q / A pill — top right corner */}
+        <div className={`absolute top-3 right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${flipped ? 'bg-violet-500' : 'bg-zinc-200'}`}>
+          <span className={`text-[11px] font-black ${flipped ? 'text-white' : 'text-zinc-600'}`}>{flipped ? 'A' : 'Q'}</span>
+        </div>
+
         {/* Front — Question */}
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center p-6 transition-all duration-200"
+          className="absolute inset-0 flex flex-col items-center justify-center p-8 transition-all duration-200"
           style={{
             background: '#ffffff',
             opacity: flipped ? 0 : 1,
-            transform: flipped ? 'scaleX(0.92) scaleY(0.96)' : 'scaleX(1) scaleY(1)',
+            transform: flipped ? 'scaleX(0.94) scaleY(0.97)' : 'scaleX(1) scaleY(1)',
             pointerEvents: flipped ? 'none' : 'auto',
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] to-transparent pointer-events-none" />
-          <p className="text-zinc-800 font-bold text-[22px] text-center leading-snug relative z-10 line-clamp-4">
+          <p className="text-zinc-800 font-bold text-[22px] text-center leading-snug line-clamp-4">
             {card.question}
           </p>
-          <span className="absolute bottom-3 text-[10px] text-zinc-600 font-medium flex items-center gap-1">
+          <span className="absolute bottom-4 text-[10px] text-zinc-400 font-medium flex items-center gap-1">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
@@ -286,11 +244,11 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
         {/* Back — Answer */}
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center px-6 py-5 transition-all duration-200"
+          className="absolute inset-0 flex flex-col items-center justify-center px-8 py-6 transition-all duration-200"
           style={{
             background: '#f8f6ff',
             opacity: flipped ? 1 : 0,
-            transform: flipped ? 'scaleX(1) scaleY(1)' : 'scaleX(0.92) scaleY(0.96)',
+            transform: flipped ? 'scaleX(1) scaleY(1)' : 'scaleX(0.94) scaleY(0.97)',
             pointerEvents: flipped ? 'auto' : 'none',
           }}
         >
@@ -300,7 +258,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
               {card.answer || 'No answer provided.'}
             </p>
           </div>
-          <span className="absolute bottom-3 text-[10px] text-zinc-600 font-medium flex items-center gap-1">
+          <span className="absolute bottom-4 text-[10px] text-zinc-400 font-medium flex items-center gap-1">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
@@ -309,51 +267,84 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         </div>
       </div>
 
-      {/* Action bar — Instagram style: icons + counts, no labels */}
-      <div className="flex items-center px-3 py-2.5 gap-4 border-t border-zinc-800/60">
-        {/* Like */}
-        <button onClick={handleLike} className="flex items-center gap-1.5 group">
-          <svg className={`w-6 h-6 transition-transform active:scale-125 ${liked ? 'text-red-400' : 'text-zinc-400 group-hover:text-zinc-200'} ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-          {likeCount > 0 && <span className={`text-sm font-semibold ${liked ? 'text-red-400' : 'text-zinc-500'}`}>{likeCount}</span>}
-        </button>
+      {/* ── Below card: author + actions on dark background ── */}
+      <div className="flex items-center px-2 pt-2.5 pb-1">
+        {/* Avatar */}
+        <div className="flex-shrink-0 relative mr-2.5">
+          {card.author_profile_picture ? (
+            <img
+              src={card.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')}
+              alt={card.author_username}
+              className="w-8 h-8 rounded-full object-cover"
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
+              <span className="text-xs font-bold text-white">
+                {card.author_username?.[0]?.toUpperCase() ?? meta.icon}
+              </span>
+            </div>
+          )}
+        </div>
 
-        {/* Comment */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            try {
-              const commented: string[] = JSON.parse(localStorage.getItem('ariel_commented') || '[]');
-              if (!commented.includes(card.id)) {
-                localStorage.setItem('ariel_commented', JSON.stringify([...commented, card.id]));
-                setCommentCount(c => c + 1);
-              }
-            } catch {}
-            onComment(card.id);
-          }}
-          className="flex items-center gap-1.5 group"
-        >
-          <svg className="w-6 h-6 text-zinc-400 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          {commentCount > 0 && <span className="text-sm font-semibold text-zinc-500">{commentCount}</span>}
-        </button>
+        {/* Name + subject */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[13px] font-semibold text-white leading-none truncate">
+              {card.author_full_name || card.author_username || 'Ariel User'}
+            </span>
+            <span className="text-[11px] text-zinc-500">·</span>
+            <span className="text-[11px] text-zinc-500 truncate">
+              {card.subject ?? meta.short}{card.topic ? ` · ${card.topic}` : ''}
+            </span>
+            {card.created_at && (
+              <span className="text-[11px] text-zinc-600">{timeAgo(card.created_at)}</span>
+            )}
+          </div>
+        </div>
 
-        {/* Share */}
-        <button onClick={handleShare} className="flex items-center gap-1.5 group">
-          <svg className="w-6 h-6 text-zinc-400 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-          </svg>
-        </button>
+        {/* Actions */}
+        <div className="flex items-center gap-3.5 flex-shrink-0 ml-2">
+          <button onClick={handleLike} className="flex items-center gap-1 group">
+            <svg className={`w-5 h-5 transition-transform active:scale-125 ${liked ? 'text-red-400' : 'text-zinc-500 group-hover:text-zinc-200'} ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            {likeCount > 0 && <span className={`text-xs font-semibold ${liked ? 'text-red-400' : 'text-zinc-500'}`}>{likeCount}</span>}
+          </button>
 
-        {/* Save — pushed to the right */}
-        <button onClick={handleSave} className="flex items-center gap-1.5 group ml-auto">
-          {saveCount > 0 && <span className={`text-sm font-semibold ${saved ? 'text-violet-400' : 'text-zinc-500'}`}>{saveCount}</span>}
-          <svg className={`w-6 h-6 transition-colors ${saved ? 'text-violet-400' : 'text-zinc-400 group-hover:text-zinc-200'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-          </svg>
-        </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              try {
+                const commented: string[] = JSON.parse(localStorage.getItem('ariel_commented') || '[]');
+                if (!commented.includes(card.id)) {
+                  localStorage.setItem('ariel_commented', JSON.stringify([...commented, card.id]));
+                  setCommentCount(c => c + 1);
+                }
+              } catch {}
+              onComment(card.id);
+            }}
+            className="flex items-center gap-1 group"
+          >
+            <svg className="w-5 h-5 text-zinc-500 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            {commentCount > 0 && <span className="text-xs font-semibold text-zinc-500">{commentCount}</span>}
+          </button>
+
+          <button onClick={handleShare} className="group">
+            <svg className="w-5 h-5 text-zinc-500 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+            </svg>
+          </button>
+
+          <button onClick={handleSave} className="flex items-center gap-1 group">
+            {saveCount > 0 && <span className={`text-xs font-semibold ${saved ? 'text-violet-400' : 'text-zinc-500'}`}>{saveCount}</span>}
+            <svg className={`w-5 h-5 transition-colors ${saved ? 'text-violet-400' : 'text-zinc-500 group-hover:text-zinc-200'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );
