@@ -149,7 +149,9 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   const [commentInput, setCommentInput] = useState('');
   const [postingComment, setPostingComment] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{id: string; username: string} | null>(null);
+  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
   const inputRef = useRef<HTMLInputElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadComments = useCallback(async () => {
     if (commentsLoaded) return;
@@ -175,6 +177,28 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       setCommentCount(c => c + 1);
     } catch {}
     setPostingComment(false);
+  };
+
+  const handleCommentLongPress = (commentId: string) => {
+    if (likedComments[commentId]) return; // already liked
+    setLikedComments(prev => ({ ...prev, [commentId]: true }));
+    setCardComments(prev => prev.map(c =>
+      c.id === commentId ? { ...c, likes: (c.likes || 0) + 1 } : c
+    ));
+    import('@/lib/api').then(({ commentsAPI }) => {
+      commentsAPI.toggleLike(commentId).catch(() => {});
+    });
+  };
+
+  const startLongPress = (commentId: string) => {
+    longPressTimer.current = setTimeout(() => handleCommentLongPress(commentId), 500);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
   };
 
   const key = getSubjectKey(card);
@@ -399,7 +423,16 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         {cardComments.length > 0 && (
           <div className="mb-3">
             {cardComments.slice(0, 5).map((c, i) => (
-              <div key={c.id} className={`flex items-start gap-2.5 ${i > 0 ? 'mt-3' : ''}`}>
+              <div
+                key={c.id}
+                className={`flex items-start gap-2.5 ${i > 0 ? 'mt-3' : ''} select-none`}
+                onTouchStart={() => startLongPress(c.id)}
+                onTouchEnd={cancelLongPress}
+                onTouchMove={cancelLongPress}
+                onMouseDown={() => startLongPress(c.id)}
+                onMouseUp={cancelLongPress}
+                onMouseLeave={cancelLongPress}
+              >
                 {/* Avatar → profile */}
                 <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0">
                   <div className="w-7 h-7 rounded-full bg-zinc-700 overflow-hidden flex items-center justify-center">
@@ -427,13 +460,15 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                   </p>
                 </div>
 
-                {/* Purple like thumb */}
-                <button className="flex-shrink-0 flex flex-col items-center gap-0.5 ml-1">
-                  <svg className="w-4 h-4 text-zinc-600 hover:text-violet-400 transition-colors" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                  </svg>
-                  {c.likes > 0 && <span className="text-[9px] text-zinc-600">{c.likes}</span>}
-                </button>
+                {/* Like — visible when liked or count > 0 */}
+                {(c.likes > 0 || likedComments[c.id]) && (
+                  <div className="flex-shrink-0 flex items-center gap-0.5 ml-1">
+                    <svg className="w-3.5 h-3.5 text-violet-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                    </svg>
+                    {c.likes > 0 && <span className="text-[10px] text-violet-400 font-semibold">{c.likes}</span>}
+                  </div>
+                )}
               </div>
             ))}
             {commentCount > 5 && (
@@ -917,14 +952,16 @@ export default function Dashboard() {
 
                 {/* Action icons */}
                 <div className="flex items-center gap-0.5 flex-shrink-0">
-                  <button onClick={() => router.push('/search')} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <button onClick={() => router.push('/search')} className="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
+                    <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </button>
-                  <button onClick={() => router.push('/messages')} className="relative w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  <button onClick={() => router.push('/messages')} className="relative w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
+                    {/* Rooms: two overlapping bubbles = group/community */}
+                    <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v3l-3-3H9a2 2 0 01-2-2v-1" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6a2 2 0 012-2h10a2 2 0 012 2v6a2 2 0 01-2 2H8l-3 3V6z" />
                     </svg>
                     {unreadMessages > 0 && (
                       <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] rounded-full bg-violet-500 flex items-center justify-center">
@@ -932,8 +969,8 @@ export default function Dashboard() {
                       </span>
                     )}
                   </button>
-                  <button onClick={() => router.push('/notifications')} className="relative w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors">
-                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <button onClick={() => router.push('/notifications')} className="relative w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
+                    <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                     {unreadNotifications > 0 && (
@@ -942,11 +979,10 @@ export default function Dashboard() {
                       </span>
                     )}
                   </button>
-                  <button onClick={() => setDrawerOpen(true)} className="w-9 h-9 flex items-center justify-center text-zinc-500 hover:text-white transition-colors lg:hidden">
-                    <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="5" cy="5" r="1.5" /><circle cx="12" cy="5" r="1.5" /><circle cx="19" cy="5" r="1.5" />
-                      <circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" />
-                      <circle cx="5" cy="19" r="1.5" /><circle cx="12" cy="19" r="1.5" /><circle cx="19" cy="19" r="1.5" />
+                  <button onClick={() => setDrawerOpen(true)} className="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors lg:hidden">
+                    {/* Classic 3-line hamburger */}
+                    <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                   </button>
                 </div>

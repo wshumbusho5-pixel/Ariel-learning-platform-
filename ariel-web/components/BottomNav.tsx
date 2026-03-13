@@ -27,12 +27,12 @@ const mainNav = [
     ),
   },
   {
-    name: 'Search',
-    path: '/search',
+    name: 'Duels',
+    path: '/duels',
     exact: false,
     icon: (active: boolean) => (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M14.121 14.121L19 19m-7-7l7-7-3 3M9.879 9.879L5 5l3 3M5 19l5-5M19 5l-5 5" />
       </svg>
     ),
   },
