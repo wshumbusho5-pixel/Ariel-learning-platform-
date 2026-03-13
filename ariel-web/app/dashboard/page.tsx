@@ -266,14 +266,14 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         <div
           className="absolute inset-0 flex flex-col items-center justify-center p-6 transition-all duration-200"
           style={{
-            background: '#18181b',
+            background: '#ffffff',
             opacity: flipped ? 0 : 1,
             transform: flipped ? 'scaleX(0.92) scaleY(0.96)' : 'scaleX(1) scaleY(1)',
             pointerEvents: flipped ? 'none' : 'auto',
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] to-transparent pointer-events-none" />
-          <p className="text-white font-bold text-[22px] text-center leading-snug relative z-10 line-clamp-4">
+          <p className="text-zinc-800 font-bold text-[22px] text-center leading-snug relative z-10 line-clamp-4">
             {card.question}
           </p>
           <span className="absolute bottom-3 text-[10px] text-zinc-600 font-medium flex items-center gap-1">
@@ -288,7 +288,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         <div
           className="absolute inset-0 flex flex-col items-center justify-center px-6 py-5 transition-all duration-200"
           style={{
-            background: '#1e1a2e',
+            background: '#f8f6ff',
             opacity: flipped ? 1 : 0,
             transform: flipped ? 'scaleX(1) scaleY(1)' : 'scaleX(0.92) scaleY(0.96)',
             pointerEvents: flipped ? 'auto' : 'none',
@@ -296,7 +296,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         >
           <div className="flex items-start gap-3 w-full">
             <div className="w-[3px] self-stretch rounded-full bg-violet-400 flex-shrink-0" />
-            <p className="text-zinc-100 font-semibold text-[18px] leading-snug line-clamp-4">
+            <p className="text-zinc-800 font-semibold text-[18px] leading-snug line-clamp-4">
               {card.answer || 'No answer provided.'}
             </p>
           </div>
