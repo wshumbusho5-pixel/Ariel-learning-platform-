@@ -1034,7 +1034,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 overflow-x-auto px-4 pb-3 pt-2" style={{ scrollbarWidth: 'none' }}>
                   <button
                     onClick={() => { setActiveSubject(null); setActiveTopic(null); }}
-                    className={`flex-shrink-0 px-4 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all ${!activeSubject ? 'bg-white text-zinc-950' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    className={`flex-shrink-0 px-4 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all ${!activeSubject ? 'bg-violet-500 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                   >
                     All
                   </button>
@@ -1046,7 +1046,7 @@ export default function Dashboard() {
                         key={key}
                         onClick={() => handleStoryTap(key)}
                         className={`flex-shrink-0 flex items-center gap-1 px-4 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all whitespace-nowrap ${
-                          isActive ? 'bg-white text-zinc-950' : 'text-zinc-500 hover:text-zinc-300'
+                          isActive ? 'bg-violet-500 text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                       >
                         <span>{m.icon}</span>
@@ -1098,14 +1098,14 @@ export default function Dashboard() {
                 className={`relative text-[15px] font-black tracking-tight transition-all pb-2 ${feedTab === 'foryou' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
                 For You
-                {feedTab === 'foryou' && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full" />}
+                {feedTab === 'foryou' && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-violet-400 rounded-full" />}
               </button>
               <button
                 onClick={() => setFeedTab('following')}
                 className={`relative text-[15px] font-black tracking-tight transition-all pb-2 ${feedTab === 'following' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
                 Following
-                {feedTab === 'following' && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full" />}
+                {feedTab === 'following' && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-violet-400 rounded-full" />}
               </button>
             </div>
           )}
