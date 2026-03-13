@@ -803,7 +803,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-24 page-enter">
 
         {/* ── Sticky header ─────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-40 bg-[#09090b]/75 backdrop-blur-xl border-b border-white/[0.06]">
+        <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-900">
 
           {/* Ariel violet crown line */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
