@@ -182,10 +182,8 @@ export default function BottomNav() {
       )}
 
       {/* Bottom nav bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
-        {/* Fade gradient so content doesn't hard-cut behind icons */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent pointer-events-none" />
-        <div className="relative flex items-stretch h-[72px] max-w-screen-sm mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#09090b] border-t border-zinc-900">
+        <div className="flex items-stretch h-[60px] max-w-screen-sm mx-auto">
 
           {/* Today, Deck */}
           {mainNav.slice(0, 2).map((item) => {
@@ -250,8 +248,6 @@ export default function BottomNav() {
           })}
 
         </div>
-        {/* Safe area spacer for iPhone home bar */}
-        <div className="h-safe-bottom bg-transparent" />
       </div>
     </>
   );

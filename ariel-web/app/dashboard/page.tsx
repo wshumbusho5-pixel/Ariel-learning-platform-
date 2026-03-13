@@ -148,26 +148,30 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [commentInput, setCommentInput] = useState('');
   const [postingComment, setPostingComment] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{id: string; username: string} | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const loadComments = useCallback(async () => {
     if (commentsLoaded) return;
     try {
       const { commentsAPI } = await import('@/lib/api');
-      const data = await commentsAPI.getCardComments(card.id, 3);
+      const data = await commentsAPI.getCardComments(card.id, 5);
       setCardComments(data);
     } catch {}
     setCommentsLoaded(true);
   }, [card.id, commentsLoaded]);
 
   const submitComment = async () => {
-    if (!commentInput.trim() || postingComment) return;
+    const text = commentInput.trim();
+    if (!text || postingComment) return;
     setPostingComment(true);
     try {
       const { commentsAPI } = await import('@/lib/api');
-      const newComment = await commentsAPI.postCardComment(card.id, commentInput.trim());
+      const content = replyingTo ? `@${replyingTo.username} ${text}` : text;
+      const newComment = await commentsAPI.postCardComment(card.id, content);
       setCardComments(prev => [newComment, ...prev]);
       setCommentInput('');
+      setReplyingTo(null);
       setCommentCount(c => c + 1);
     } catch {}
     setPostingComment(false);
@@ -391,25 +395,50 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
       {/* ── Inline comments ── */}
       <div className="px-4 pb-4">
-        {/* Existing comments — top 3 */}
+        {/* Comments — Twitter style */}
         {cardComments.length > 0 && (
-          <div className="space-y-2 mb-2.5">
-            {cardComments.slice(0, 3).map(c => (
+          <div className="space-y-3 mb-3">
+            {cardComments.slice(0, 5).map(c => (
               <div key={c.id} className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  {c.author_profile_picture ? (
-                    <img src={c.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')} className="w-6 h-6 rounded-full object-cover" />
-                  ) : (
-                    <span className="text-[9px] font-bold text-zinc-300">{(c.author_username || 'U')[0].toUpperCase()}</span>
-                  )}
-                </div>
+                {/* Avatar — tappable → profile */}
+                <button
+                  onClick={() => c.author_username && window.location.assign(`/profile/${c.user_id}`)}
+                  className="flex-shrink-0 mt-0.5"
+                >
+                  <div className="w-7 h-7 rounded-full bg-zinc-700 overflow-hidden flex items-center justify-center">
+                    {c.author_profile_picture ? (
+                      <img src={c.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')} className="w-7 h-7 object-cover" />
+                    ) : (
+                      <span className="text-[10px] font-bold text-zinc-300">{(c.author_username || 'U')[0].toUpperCase()}</span>
+                    )}
+                  </div>
+                </button>
+
                 <div className="flex-1 min-w-0">
-                  <span className="text-[12px] font-bold text-white mr-1.5">{c.author_username || 'user'}</span>
-                  <span className="text-[12px] text-zinc-300 leading-snug">{c.content}</span>
+                  {/* Username inline — Twitter style */}
+                  <div>
+                    <button
+                      onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)}
+                      className="text-[12px] font-bold text-white mr-1.5 hover:underline"
+                    >
+                      {c.author_username || 'user'}
+                    </button>
+                    <span className="text-[12px] text-zinc-300 leading-snug break-words">{c.content}</span>
+                  </div>
+                  {/* Reply button */}
+                  <button
+                    onClick={() => {
+                      setReplyingTo({ id: c.id, username: c.author_username || 'user' });
+                      setTimeout(() => inputRef.current?.focus(), 50);
+                    }}
+                    className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors mt-0.5"
+                  >
+                    Reply
+                  </button>
                 </div>
               </div>
             ))}
-            {commentCount > 3 && (
+            {commentCount > 5 && (
               <button onClick={() => onComment(card.id)} className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">
                 View all {commentCount} answers
               </button>
@@ -417,23 +446,31 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
           </div>
         )}
 
-        {/* Add your answer input */}
+        {/* Input */}
         <div className="flex items-center gap-2">
-          <input
-            ref={inputRef}
-            value={commentInput}
-            onChange={e => setCommentInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && submitComment()}
-            placeholder="Add your answer…"
-            className="flex-1 bg-transparent text-[13px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none border-b border-zinc-800 focus:border-zinc-500 pb-1 transition-colors"
-          />
+          <div className="flex-1 border-b border-zinc-800 focus-within:border-zinc-600 transition-colors pb-1">
+            {replyingTo && (
+              <div className="flex items-center gap-1 mb-1">
+                <span className="text-[11px] text-violet-400">Replying to @{replyingTo.username}</span>
+                <button onClick={() => setReplyingTo(null)} className="text-[11px] text-zinc-600 hover:text-zinc-400 ml-1">✕</button>
+              </div>
+            )}
+            <input
+              ref={inputRef}
+              value={commentInput}
+              onChange={e => setCommentInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && submitComment()}
+              placeholder={replyingTo ? `Reply to @${replyingTo.username}…` : 'Add your answer…'}
+              className="w-full bg-transparent text-[13px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none"
+            />
+          </div>
           {commentInput.trim() && (
             <button
               onClick={submitComment}
               disabled={postingComment}
               className="text-[12px] font-bold text-violet-400 hover:text-violet-300 transition-colors flex-shrink-0"
             >
-              {postingComment ? '...' : 'Post'}
+              {postingComment ? '…' : 'Post'}
             </button>
           )}
         </div>
