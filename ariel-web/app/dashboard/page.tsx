@@ -11,6 +11,7 @@ import SideNav from '@/components/SideNav';
 import Onboarding from '@/components/Onboarding';
 import ArielIcon from '@/components/ArielIcon';
 import ArielWordmark from '@/components/ArielWordmark';
+import ArielLoader from '@/components/ArielLoader';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1129,9 +1130,8 @@ export default function Dashboard() {
           {/* Card feed */}
           {feedTab === 'following' && !searchQuery ? (
             followingLoading ? (
-              <div className="mt-3">
-                <CardSkeleton height={160} flush />
-                <CardSkeleton height={240} />
+              <div className="flex items-center justify-center py-24">
+                <ArielLoader size={52} />
               </div>
             ) : followingCards.length > 0 ? (
               <div className="mt-3">
@@ -1152,12 +1152,8 @@ export default function Dashboard() {
               </div>
             )
           ) : dataLoading ? (
-            <div className="mt-3">
-              <CardSkeleton height={160} flush />
-              <CardSkeleton height={240} />
-              <ArielSkeleton />
-              <CardSkeleton height={200} flush />
-              <CardSkeleton height={180} />
+            <div className="flex items-center justify-center py-24">
+              <ArielLoader size={52} />
             </div>
           ) : displayCards.length > 0 ? (
             <>

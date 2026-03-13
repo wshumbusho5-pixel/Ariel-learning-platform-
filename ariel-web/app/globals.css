@@ -204,6 +204,26 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
+  /* Ariel orbit loader */
+  .ariel-orbit-arc {
+    animation: orbitSpin 1.4s linear infinite;
+    transform-origin: 30px 30px;
+  }
+
+  .ariel-orbit-dot {
+    animation: orbitPulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes orbitSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  @keyframes orbitPulse {
+    0%, 100% { opacity: 0.6; r: 4.5; }
+    50%       { opacity: 1;   r: 5.5; }
+  }
+
   /* Removed: animate-float, animate-pulse-slow, animate-reveal */
   .animate-float {
     /* intentionally empty */
