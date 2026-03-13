@@ -118,12 +118,7 @@ function timeAgo(d?: string) {
 
 // ─── Card Tile (square, 1:1) ─────────────────────────────────────────────────
 
-function cardHeight(card: FeedCard): number {
-  const maxLen = Math.max(card.question?.length ?? 0, card.answer?.length ?? 0);
-  if (maxLen < 60) return 160;
-  if (maxLen < 150) return 210;
-  return 280;
-}
+const CARD_HEIGHT = 240;
 
 function CardTile({ card, onComment, flush = false }: { card: FeedCard; onComment: (id: string) => void; flush?: boolean }) {
   const [flipped, setFlipped] = useState(false);
@@ -149,7 +144,6 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
   const key = getSubjectKey(card);
   const meta = SUBJECT_META[key];
-  const flipHeight = cardHeight(card);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -265,7 +259,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       {/* Card face — fade/scale reveal */}
       <div
         className="cursor-pointer relative overflow-hidden"
-        style={{ minHeight: `${flipHeight}px` }}
+        style={{ height: `${CARD_HEIGHT}px` }}
         onClick={() => setFlipped(f => !f)}
       >
         {/* Front — Question */}
@@ -279,7 +273,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] to-transparent pointer-events-none" />
-          <p className="text-zinc-800 font-bold text-[16px] text-center leading-relaxed relative z-10">
+          <p className="text-zinc-800 font-bold text-[16px] text-center leading-relaxed relative z-10 line-clamp-5">
             {card.question}
           </p>
           <span className="absolute bottom-3 text-[10px] text-zinc-300 font-medium flex items-center gap-1">
@@ -302,7 +296,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         >
           <div className="flex items-start gap-3 w-full">
             <div className="w-[3px] self-stretch rounded-full bg-violet-500 flex-shrink-0" />
-            <p className="text-zinc-800 font-semibold text-[15px] leading-relaxed">
+            <p className="text-zinc-800 font-semibold text-[15px] leading-relaxed line-clamp-5">
               {card.answer || 'No answer provided.'}
             </p>
           </div>
@@ -315,44 +309,17 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         </div>
       </div>
 
-      {/* Counts summary — LinkedIn style */}
-      {(likeCount > 0 || commentCount > 0 || saveCount > 0) && (
-        <div className="flex items-center gap-3 px-4 py-2 border-t border-zinc-800/50">
-          {likeCount > 0 && (
-            <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-              <svg className="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-              <span className="font-semibold text-zinc-400">{likeCount}</span>
-            </span>
-          )}
-          {commentCount > 0 && (
-            <span className="text-[11px] text-zinc-500">
-              <span className="font-semibold text-zinc-400">{commentCount}</span> comment{commentCount !== 1 ? 's' : ''}
-            </span>
-          )}
-          {saveCount > 0 && (
-            <span className="text-[11px] text-zinc-500 ml-auto">
-              <span className="font-semibold text-zinc-400">{saveCount}</span> save{saveCount !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Action bar — LinkedIn style: tall, full labels, always visible */}
-      <div className="flex items-stretch border-t border-zinc-800">
-        <button
-          onClick={handleLike}
-          className={`flex items-center justify-center gap-2 flex-1 py-3 text-sm font-semibold transition-colors ${liked ? 'text-red-400' : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50'}`}
-        >
-          <svg className={`w-5 h-5 flex-shrink-0 ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+      {/* Action bar — Instagram style: icons + counts, no labels */}
+      <div className="flex items-center px-3 py-2.5 gap-4 border-t border-zinc-800/60">
+        {/* Like */}
+        <button onClick={handleLike} className="flex items-center gap-1.5 group">
+          <svg className={`w-6 h-6 transition-transform active:scale-125 ${liked ? 'text-red-400' : 'text-zinc-400 group-hover:text-zinc-200'} ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
-          Like
+          {likeCount > 0 && <span className={`text-sm font-semibold ${liked ? 'text-red-400' : 'text-zinc-500'}`}>{likeCount}</span>}
         </button>
 
-        <div className="w-px bg-zinc-800 self-stretch" />
-
+        {/* Comment */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -365,36 +332,27 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
             } catch {}
             onComment(card.id);
           }}
-          className="flex items-center justify-center gap-2 flex-1 py-3 text-sm font-semibold text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
+          className="flex items-center gap-1.5 group"
         >
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-zinc-400 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
-          Comment
+          {commentCount > 0 && <span className="text-sm font-semibold text-zinc-500">{commentCount}</span>}
         </button>
 
-        <div className="w-px bg-zinc-800 self-stretch" />
-
-        <button
-          onClick={handleShare}
-          className="flex items-center justify-center gap-2 flex-1 py-3 text-sm font-semibold text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
-        >
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+        {/* Share */}
+        <button onClick={handleShare} className="flex items-center gap-1.5 group">
+          <svg className="w-6 h-6 text-zinc-400 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
           </svg>
-          Share
         </button>
 
-        <div className="w-px bg-zinc-800 self-stretch" />
-
-        <button
-          onClick={handleSave}
-          className={`flex items-center justify-center gap-2 flex-1 py-3 text-sm font-semibold transition-colors ${saved ? 'text-violet-400' : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/50'}`}
-        >
-          <svg className="w-5 h-5 flex-shrink-0" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+        {/* Save — pushed to the right */}
+        <button onClick={handleSave} className="flex items-center gap-1.5 group ml-auto">
+          {saveCount > 0 && <span className={`text-sm font-semibold ${saved ? 'text-violet-400' : 'text-zinc-500'}`}>{saveCount}</span>}
+          <svg className={`w-6 h-6 transition-colors ${saved ? 'text-violet-400' : 'text-zinc-400 group-hover:text-zinc-200'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
           </svg>
-          {saved ? 'Saved' : 'Save'}
         </button>
       </div>
     </div>
