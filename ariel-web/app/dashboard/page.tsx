@@ -936,13 +936,21 @@ export default function Dashboard() {
                   {dataLoading ? (
                     <span className="inline-block w-10 h-3 bg-zinc-800 rounded-full animate-pulse mt-1" />
                   ) : (
-                    <span className="text-[13px] font-black text-white leading-none tracking-tight mt-1">{firstName || 'there'}</span>
+                    <span className="text-[17px] font-black text-white leading-none tracking-tight mt-1">{firstName || 'there'}</span>
                   )}
                 </button>
 
-                {/* Center: Ariel icon mark */}
-                <div className="absolute left-1/2 -translate-x-1/2">
-                  <ArielIcon size={36} variant="dark" />
+                {/* Center: italic 'a' monogram */}
+                <div className="absolute left-1/2 -translate-x-1/2 select-none">
+                  <span style={{
+                    fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
+                    fontSize: 48,
+                    fontWeight: 700,
+                    fontStyle: 'italic',
+                    lineHeight: 1,
+                    color: '#ffffff',
+                    letterSpacing: '-1px',
+                  }}>a</span>
                 </div>
 
                 {/* Right: action icons */}
