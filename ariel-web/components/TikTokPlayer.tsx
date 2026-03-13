@@ -335,8 +335,9 @@ export default function TikTokPlayer({
                 {/* Discuss */}
                 <button onClick={(e) => { e.stopPropagation(); onComment(reel.id); }} className="flex flex-col items-center gap-1.5">
                   <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                    <svg className="w-[22px] h-[22px] text-white" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                    <svg className="w-[22px] h-[22px] text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M2 6a2 2 0 012-2h10a2 2 0 012 2v6a2 2 0 01-2 2H8l-4 4V8a2 2 0 010-.17V6z" />
+                      <path d="M18 8h.01A2 2 0 0120 10v5a2 2 0 01-2 2h-1v2l-3-2h-1" opacity="0.5" />
                     </svg>
                   </div>
                   <span className="text-white/70 text-[10px] font-semibold">Discuss</span>
@@ -364,8 +365,8 @@ export default function TikTokPlayer({
                 {onDMShare && (
                   <button onClick={(e) => { e.stopPropagation(); onDMShare(reel); }} className="flex flex-col items-center gap-1.5">
                     <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                      <svg className="w-[22px] h-[22px] text-white" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <svg className="w-[22px] h-[22px] text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                       </svg>
                     </div>
                     <span className="text-white/70 text-[10px] font-semibold">Send</span>
