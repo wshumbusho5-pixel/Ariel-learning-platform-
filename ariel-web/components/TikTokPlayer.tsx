@@ -62,6 +62,7 @@ export default function TikTokPlayer({
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [bufferingIndex, setBufferingIndex] = useState<number | null>(null);
+  const [muteToast, setMuteToast] = useState<string | null>(null);
   const [poppedSave, setPoppedSave] = useState<string | null>(null);
   const [poppedFollow, setPoppedFollow] = useState<string | null>(null);
   const [expandedCaption, setExpandedCaption] = useState<string | null>(null);
@@ -137,6 +138,8 @@ export default function TikTokPlayer({
     setMuted(next);
     const video = videoRefs.current[activeIndex];
     if (video) video.muted = next;
+    setMuteToast(next ? 'Muted' : 'Sound on');
+    setTimeout(() => setMuteToast(null), 1200);
   };
 
   const togglePlay = (e: React.MouseEvent) => {
@@ -181,6 +184,13 @@ export default function TikTokPlayer({
 
   return (
     <div className="fixed inset-0 z-[300] bg-black">
+
+      {/* Mute toast */}
+      {muteToast && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-black/70 backdrop-blur-sm rounded-full pointer-events-none">
+          <span className="text-white text-xs font-bold">{muteToast}</span>
+        </div>
+      )}
 
       {/* Close */}
       <button
@@ -336,8 +346,7 @@ export default function TikTokPlayer({
                 <button onClick={(e) => { e.stopPropagation(); onComment(reel.id); }} className="flex flex-col items-center gap-1.5">
                   <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
                     <svg className="w-[22px] h-[22px] text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M2 6a2 2 0 012-2h10a2 2 0 012 2v6a2 2 0 01-2 2H8l-4 4V8a2 2 0 010-.17V6z" />
-                      <path d="M18 8h.01A2 2 0 0120 10v5a2 2 0 01-2 2h-1v2l-3-2h-1" opacity="0.5" />
+                      <path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z" />
                     </svg>
                   </div>
                   <span className="text-white/70 text-[10px] font-semibold">Discuss</span>

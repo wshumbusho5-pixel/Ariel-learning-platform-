@@ -167,7 +167,7 @@ function HeroCard({ reel, onTap }: { reel: Reel; onTap: () => void }) {
         {/* Category pill */}
         {reel.category && (
           <div className="absolute top-3 left-3 z-10">
-            <span className="text-[10px] font-bold bg-violet-500/80 backdrop-blur-sm text-white px-2.5 py-1 rounded-full">
+            <span className="text-[10px] font-bold bg-black/50 backdrop-blur-sm border border-white/20 text-white/90 px-2.5 py-1 rounded-full">
               {reel.category}
             </span>
           </div>
@@ -260,9 +260,9 @@ function ReelCard({
         </div>
 
         {/* Text overlay at bottom */}
-        <div className="absolute bottom-0 inset-x-0 p-2.5">
+        <div className="absolute bottom-0 inset-x-0 px-3 pb-3 pt-6">
           <p className="text-white text-[11px] font-bold line-clamp-2 leading-snug">{reel.title}</p>
-          <p className="text-white/50 text-[10px] mt-0.5 truncate">@{reel.creator_username}</p>
+          <p className="text-white/50 text-[10px] mt-1 truncate">@{reel.creator_username}</p>
           {reel.view_count ? (
             <p className="text-white/35 text-[9px] mt-0.5">{formatViews(reel.view_count)} views</p>
           ) : null}
@@ -293,7 +293,7 @@ function SectionRow({
   const router = useRouter();
 
   return (
-    <section className="mb-1">
+    <section className="mb-6">
       {/* YouTube-style section header: bold label left, See all right, generous air above */}
       <div className={`px-4 pt-7 pb-3 flex items-center justify-between ${isUserTopic ? 'bg-violet-500/[0.04]' : ''}`}>
         <div className="flex items-center gap-2.5">
@@ -312,10 +312,10 @@ function SectionRow({
         </div>
         <button
           onClick={() => router.push(`/reels/subject/${subjectKey}`)}
-          className="text-xs font-semibold text-zinc-500 hover:text-white transition-colors flex items-center gap-0.5"
+          className="flex items-center gap-1 text-[11px] font-bold text-zinc-300 bg-zinc-800/80 border border-zinc-700/60 px-2.5 py-1 rounded-full hover:bg-zinc-700/80 transition-colors active:scale-95"
         >
           See all
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -355,8 +355,6 @@ function SectionRow({
         </div>
       )}
 
-      {/* Section divider */}
-      <div className="mx-4 mt-4 border-t border-zinc-800" />
     </section>
   );
 }
@@ -371,6 +369,7 @@ export default function ReelsPage() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [tab, setTab] = useState<'foryou' | 'following'>('foryou');
   const [loading, setLoading] = useState(true);
+  const [headerHidden, setHeaderHidden] = useState(false);
 
   const [loadingMore, setLoadingMore] = useState(false);
   const [offset, setOffset] = useState(0);
@@ -385,6 +384,25 @@ export default function ReelsPage() {
     setToast(msg);
     setTimeout(() => setToast(null), 2000);
   };
+
+  // Hide header on scroll down, restore on scroll up (with 3s auto-restore)
+  useEffect(() => {
+    let prev = window.scrollY;
+    let autoShowTimer: ReturnType<typeof setTimeout> | null = null;
+    const onScroll = () => {
+      const curr = window.scrollY;
+      if (autoShowTimer) clearTimeout(autoShowTimer);
+      if (curr > prev && curr > 60) {
+        setHeaderHidden(true);
+        autoShowTimer = setTimeout(() => setHeaderHidden(false), 3000);
+      } else if (curr < prev) {
+        setHeaderHidden(false);
+      }
+      prev = curr;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); if (autoShowTimer) clearTimeout(autoShowTimer); };
+  }, []);
 
   // Reset and reload when tab changes
   useEffect(() => {
@@ -606,7 +624,7 @@ export default function ReelsPage() {
       <main className="lg:pl-[72px] min-h-screen bg-[#09090b] page-enter">
 
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-[#09090b] border-b border-zinc-800 px-4 pt-3 pb-0">
+        <header className={`sticky top-0 z-30 bg-[#09090b] border-b border-zinc-800 px-4 pt-3 pb-0 transition-transform duration-300 ease-in-out ${headerHidden ? '-translate-y-full' : 'translate-y-0'}`}>
           {/* Row 1: title + wordmark + upload */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-baseline gap-2">
