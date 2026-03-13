@@ -557,6 +557,14 @@ export const notificationsAPI = {
 
 // Comments API - Deck discussions
 export const commentsAPI = {
+  getCardComments: async (cardId: string, limit: number = 10) => {
+    const response = await api.get(`/api/comments/card/${cardId}?limit=${limit}`);
+    return response.data;
+  },
+  postCardComment: async (cardId: string, content: string) => {
+    const response = await api.post(`/api/comments/card/${cardId}`, { content });
+    return response.data;
+  },
   // Get comments
   getDeckComments: async (deckId: string, limit: number = 50, offset: number = 0, parentOnly: boolean = false) => {
     const params = new URLSearchParams();

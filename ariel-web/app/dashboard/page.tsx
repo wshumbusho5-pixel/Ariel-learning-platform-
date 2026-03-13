@@ -144,6 +144,35 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   });
   const [saveCount, setSaveCount] = useState(card.saves ?? 0);
 
+  const [cardComments, setCardComments] = useState<any[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [commentInput, setCommentInput] = useState('');
+  const [postingComment, setPostingComment] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const loadComments = useCallback(async () => {
+    if (commentsLoaded) return;
+    try {
+      const { commentsAPI } = await import('@/lib/api');
+      const data = await commentsAPI.getCardComments(card.id, 3);
+      setCardComments(data);
+    } catch {}
+    setCommentsLoaded(true);
+  }, [card.id, commentsLoaded]);
+
+  const submitComment = async () => {
+    if (!commentInput.trim() || postingComment) return;
+    setPostingComment(true);
+    try {
+      const { commentsAPI } = await import('@/lib/api');
+      const newComment = await commentsAPI.postCardComment(card.id, commentInput.trim());
+      setCardComments(prev => [newComment, ...prev]);
+      setCommentInput('');
+      setCommentCount(c => c + 1);
+    } catch {}
+    setPostingComment(false);
+  };
+
   const key = getSubjectKey(card);
   const meta = SUBJECT_META[key];
 
@@ -196,6 +225,9 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       try { await navigator.clipboard.writeText(url); } catch {}
     }
   };
+
+  // Load comments on mount
+  useEffect(() => { loadComments(); }, []);
 
   return (
     <div className="mb-5 relative -mx-4">
@@ -354,6 +386,56 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
           </button>
+        </div>
+      </div>
+
+      {/* ── Inline comments ── */}
+      <div className="px-4 pb-4">
+        {/* Existing comments — top 3 */}
+        {cardComments.length > 0 && (
+          <div className="space-y-2 mb-2.5">
+            {cardComments.slice(0, 3).map(c => (
+              <div key={c.id} className="flex items-start gap-2">
+                <div className="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  {c.author_profile_picture ? (
+                    <img src={c.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')} className="w-6 h-6 rounded-full object-cover" />
+                  ) : (
+                    <span className="text-[9px] font-bold text-zinc-300">{(c.author_username || 'U')[0].toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-[12px] font-bold text-white mr-1.5">{c.author_username || 'user'}</span>
+                  <span className="text-[12px] text-zinc-300 leading-snug">{c.content}</span>
+                </div>
+              </div>
+            ))}
+            {commentCount > 3 && (
+              <button onClick={() => onComment(card.id)} className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors">
+                View all {commentCount} answers
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Add your answer input */}
+        <div className="flex items-center gap-2">
+          <input
+            ref={inputRef}
+            value={commentInput}
+            onChange={e => setCommentInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && submitComment()}
+            placeholder="Add your answer…"
+            className="flex-1 bg-transparent text-[13px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none border-b border-zinc-800 focus:border-zinc-500 pb-1 transition-colors"
+          />
+          {commentInput.trim() && (
+            <button
+              onClick={submitComment}
+              disabled={postingComment}
+              className="text-[12px] font-bold text-violet-400 hover:text-violet-300 transition-colors flex-shrink-0"
+            >
+              {postingComment ? '...' : 'Post'}
+            </button>
+          )}
         </div>
       </div>
     </div>

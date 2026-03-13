@@ -387,6 +387,93 @@ async def toggle_comment_like(
         return {"success": True, "action": "liked", "likes": comment.get("likes", 0) + 1}
 
 
+# ============== CARD COMMENT ALIASES ==============
+# Cards reuse the same comment system — card_id acts as deck_id
+
+@router.get("/card/{card_id}", response_model=List[CommentWithAuthor])
+async def get_card_comments(
+    card_id: str,
+    current_user: User = Depends(get_current_user_dependency),
+    limit: int = 20,
+    offset: int = 0,
+):
+    """Get comments for a card (reuses deck comment system)."""
+    db = db_service.get_db()
+    current_user_id = str(current_user.id)
+    comments = []
+    async for comment in db.comments.find(
+        {"deck_id": card_id, "is_deleted": False, "parent_comment_id": None}
+    ).sort("created_at", -1).skip(offset).limit(limit):
+        author = await db.users.find_one({"_id": comment["user_id"]})
+        if not author:
+            continue
+        reply_count = await db.comments.count_documents({"parent_comment_id": str(comment["_id"]), "is_deleted": False})
+        is_liked = current_user_id in comment.get("liked_by", [])
+        comments.append(CommentWithAuthor(
+            id=str(comment["_id"]),
+            deck_id=comment["deck_id"],
+            user_id=comment["user_id"],
+            content=comment["content"],
+            parent_comment_id=comment.get("parent_comment_id"),
+            author_username=author.get("username"),
+            author_full_name=author.get("full_name"),
+            author_profile_picture=author.get("profile_picture"),
+            author_is_verified=author.get("is_verified", False),
+            likes=comment.get("likes", 0),
+            is_liked_by_current_user=is_liked,
+            reply_count=reply_count,
+            is_edited=comment.get("is_edited", False),
+            edited_at=comment.get("edited_at"),
+            is_author=(comment["user_id"] == current_user_id),
+            created_at=comment["created_at"]
+        ))
+    return comments
+
+
+@router.post("/card/{card_id}", response_model=CommentWithAuthor)
+async def create_card_comment(
+    card_id: str,
+    comment_data: CommentCreate,
+    current_user: User = Depends(get_current_user_dependency)
+):
+    """Post a comment on a card."""
+    db = db_service.get_db()
+    user_id = str(current_user.id)
+    now = datetime.utcnow()
+    comment_doc = {
+        "deck_id": card_id,
+        "user_id": user_id,
+        "content": comment_data.content,
+        "parent_comment_id": None,
+        "likes": 0,
+        "liked_by": [],
+        "is_deleted": False,
+        "is_edited": False,
+        "created_at": now,
+        "updated_at": now,
+    }
+    result = await db.comments.insert_one(comment_doc)
+    author = await db.users.find_one({"_id": user_id})
+    return CommentWithAuthor(
+        id=str(result.inserted_id),
+        deck_id=card_id,
+        user_id=user_id,
+        content=comment_data.content,
+        parent_comment_id=None,
+        author_username=current_user.username,
+        author_full_name=getattr(current_user, "full_name", None),
+        author_profile_picture=getattr(current_user, "profile_picture", None),
+        author_is_verified=getattr(current_user, "is_verified", False),
+        likes=0,
+        is_liked_by_current_user=False,
+        reply_count=0,
+        is_edited=False,
+        edited_at=None,
+        is_author=True,
+        created_at=now,
+    )
+
+
 # ============== COMMENT COUNT ==============
 
 @router.get("/deck/{deck_id}/count")
