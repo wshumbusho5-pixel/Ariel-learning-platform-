@@ -325,7 +325,8 @@ export default function CreateCardsPage() {
                           onChange={e => updateCard(card.id, 'question', e.target.value)}
                           placeholder="What do you want to be asked?"
                           rows={2}
-                          className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-none leading-relaxed"
+                          className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-none leading-relaxed"
+                          style={{ fontFamily: "var(--font-caveat), cursive", fontSize: '18px' }}
                         />
                       </div>
 
@@ -343,7 +344,8 @@ export default function CreateCardsPage() {
                           onChange={e => updateCard(card.id, 'answer', e.target.value)}
                           placeholder="The correct answer…"
                           rows={2}
-                          className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none leading-relaxed"
+                          className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none leading-relaxed"
+                          style={{ fontFamily: "var(--font-caveat), cursive", fontSize: '18px' }}
                         />
                       </div>
 

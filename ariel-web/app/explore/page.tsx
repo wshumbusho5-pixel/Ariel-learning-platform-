@@ -361,7 +361,7 @@ export default function ExplorePage() {
                       {!isFlipped ? (
                         <div className="space-y-6">
                           <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Question</p>
-                          <h2 className="text-white text-2xl font-black leading-snug">
+                          <h2 className="text-white text-3xl leading-snug" style={{ fontFamily: "var(--font-caveat), cursive" }}>
                             {card.question}
                           </h2>
                           <div className="flex items-center gap-2 mt-4">
@@ -372,13 +372,13 @@ export default function ExplorePage() {
                       ) : (
                         <div className="space-y-4">
                           <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest">Answer</p>
-                          <p className="text-white text-xl font-bold leading-relaxed">
+                          <p className="text-white text-2xl leading-relaxed" style={{ fontFamily: "var(--font-caveat), cursive" }}>
                             {card.answer}
                           </p>
                           {card.explanation && (
                             <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10">
                               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Explanation</p>
-                              <p className="text-zinc-300 text-sm leading-relaxed">{card.explanation}</p>
+                              <p className="text-zinc-300 text-base leading-relaxed" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.explanation}</p>
                             </div>
                           )}
                           <button
