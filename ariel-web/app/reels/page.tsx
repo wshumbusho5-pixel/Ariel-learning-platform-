@@ -364,7 +364,7 @@ function SectionRow({
       )}
 
       {/* Section divider */}
-      <div className="mx-4 mt-4 border-t border-zinc-800/50" />
+      <div className="mx-4 mt-4 border-t border-zinc-800" />
     </section>
   );
 }
@@ -608,52 +608,66 @@ export default function ReelsPage() {
       <main className="lg:pl-[72px] min-h-screen bg-[#09090b] page-enter">
 
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-[#09090b] border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
-          <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-full p-0.5">
+        <header className="sticky top-0 z-30 bg-[#09090b] border-b border-zinc-800 px-4 pt-3 pb-0">
+          {/* Row 1: title + wordmark + upload */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-[22px] font-black text-white tracking-tight leading-none">Clips</h1>
+              <span className="select-none" style={{
+                fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
+                fontSize: 16,
+                fontWeight: 700,
+                fontStyle: 'italic',
+                lineHeight: 1,
+                letterSpacing: '0.5px',
+              }}>
+                <span style={{ color: '#71717a' }}>ar</span>
+                <span style={{ color: '#9B7FFF' }}>i</span>
+                <span style={{ color: '#71717a' }}>el</span>
+              </span>
+            </div>
+            <button
+              onClick={() => router.push('/reels/upload')}
+              className="flex items-center gap-1.5 text-xs font-bold text-white bg-violet-500 active:scale-95 transition-all px-3.5 py-2 rounded-full shadow-[0_0_12px_rgba(139,92,246,0.4)]"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Clip
+            </button>
+          </div>
+          {/* Row 2: tabs */}
+          <div className="flex items-center gap-6">
             {(['foryou', 'following'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                  tab === t ? 'bg-violet-400/20 text-violet-200 border border-violet-400/30' : 'text-zinc-500 hover:text-zinc-300'
-                }`}
+                className={`relative text-[14px] font-black tracking-tight transition-all pb-2.5 ${tab === t ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
                 {t === 'foryou' ? 'For You' : 'Following'}
+                <span className={`absolute bottom-0 left-0 right-0 h-[3px] bg-violet-400 rounded-full transition-all duration-200 ${tab === t ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}`} />
               </button>
             ))}
           </div>
-          <button
-            onClick={() => router.push('/reels/upload')}
-            className="flex items-center gap-1.5 text-xs font-bold text-white bg-violet-500 hover:bg-violet-400 active:scale-95 transition-all px-3.5 py-2 rounded-full shadow-md shadow-violet-500/25"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Clip
-          </button>
         </header>
 
         {/* Content */}
         <div className="py-3 pb-28 lg:pb-8">
           {reels.length === 0 ? (
             <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="text-center space-y-4 px-6">
-                <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto">
-                  <svg className="w-6 h-6 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-white">No clips yet</h3>
-                  <p className="text-sm text-zinc-500 mt-1">
-                    {tab === 'following'
-                      ? 'Follow educators to see their clips here.'
-                      : 'Be the first to share a learning clip.'}
-                  </p>
-                </div>
+              <div className="text-center px-6">
+                <ArielLoader size={56} className="mb-5" />
+                <p className="text-[15px] font-bold text-white">
+                  {tab === 'following' ? 'No clips from people you follow' : 'No clips yet'}
+                </p>
+                <p className="text-[13px] text-zinc-500 mt-2 leading-relaxed max-w-[220px] mx-auto">
+                  {tab === 'following'
+                    ? 'Follow educators to see their clips here.'
+                    : 'Be the first to share a learning clip.'}
+                </p>
                 <button
                   onClick={() => router.push('/reels/upload')}
-                  className="px-5 py-2.5 bg-violet-400 text-white text-sm font-semibold rounded-xl hover:bg-violet-500 transition-colors"
+                  className="mt-5 px-5 py-2.5 bg-violet-500 text-white text-sm font-bold rounded-full shadow-[0_0_12px_rgba(139,92,246,0.4)] active:scale-95 transition-all"
                 >
                   Upload a clip
                 </button>
@@ -661,20 +675,6 @@ export default function ReelsPage() {
             </div>
           ) : (
             <>
-              {/* Page intro */}
-              <div className="px-4 pt-4 pb-5 border-b border-zinc-800">
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-[11px] font-black text-violet-400 uppercase tracking-widest mb-1">Ariel</p>
-                    <h1 className="text-[28px] font-black text-white leading-none tracking-tight">Clips</h1>
-                    <p className="text-[13px] text-zinc-500 mt-1">Short videos · all subjects</p>
-                  </div>
-                  {reels.length > 0 && (
-                    <span className="text-[12px] font-bold text-zinc-600">{reels.length} videos</span>
-                  )}
-                </div>
-              </div>
-
               {/* Pinned: New this week — always hero */}
               {newThisWeek.length > 0 && (
                 <SectionRow
@@ -711,7 +711,10 @@ export default function ReelsPage() {
                 </div>
               )}
               {!hasMore && reels.length > 0 && (
-                <p className="text-center text-zinc-700 text-xs py-6">You've seen everything</p>
+                <div className="flex flex-col items-center py-8 gap-3">
+                  <ArielLoader size={36} />
+                  <p className="text-zinc-600 text-xs font-semibold">You've seen everything</p>
+                </div>
               )}
             </>
           )}
