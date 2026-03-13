@@ -933,16 +933,14 @@ export default function Dashboard() {
                   )}
                 </button>
 
-                {/* Center: Ariel wordmark */}
-                <div className="flex flex-col items-center gap-0.5">
-                  <ArielWordmark size={18} variant="dark" />
-                  <p className="text-[11px] text-zinc-500 leading-none">
-                    {dataLoading ? (
-                      <span className="inline-block w-20 h-2 bg-zinc-800 rounded-full animate-pulse" />
-                    ) : (
-                      <span>Good to see you, <span className="text-zinc-300 font-semibold">{firstName || 'there'}</span></span>
-                    )}
-                  </p>
+                {/* Center: Ariel wordmark + name */}
+                <div className="flex flex-col items-center gap-1">
+                  <ArielWordmark size={26} variant="dark" />
+                  {dataLoading ? (
+                    <span className="inline-block w-16 h-3 bg-zinc-800 rounded-full animate-pulse" />
+                  ) : (
+                    <h1 className="text-[22px] font-black text-white leading-none tracking-tight">{firstName || 'there'}</h1>
+                  )}
                 </div>
 
                 {/* Right: action icons */}
