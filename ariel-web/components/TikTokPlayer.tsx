@@ -62,6 +62,8 @@ export default function TikTokPlayer({
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [bufferingIndex, setBufferingIndex] = useState<number | null>(null);
+  const [poppedSave, setPoppedSave] = useState<string | null>(null);
+  const [poppedFollow, setPoppedFollow] = useState<string | null>(null);
 
   // Swipe hint — only show if never seen before
   const [showSwipeHint, setShowSwipeHint] = useState(() => {
@@ -150,6 +152,8 @@ export default function TikTokPlayer({
       next.has(reelId) ? next.delete(reelId) : next.add(reelId);
       return next;
     });
+    setPoppedSave(reelId);
+    setTimeout(() => setPoppedSave(null), 300);
     onSave(reelId);
   };
 
@@ -160,6 +164,8 @@ export default function TikTokPlayer({
       next.has(creatorId) ? next.delete(creatorId) : next.add(creatorId);
       return next;
     });
+    setPoppedFollow(creatorId);
+    setTimeout(() => setPoppedFollow(null), 300);
     onFollow(creatorId);
   };
 
@@ -295,11 +301,11 @@ export default function TikTokPlayer({
                   ) : null}
                   <button
                     onClick={e => handleFollow(e, reel.creator_id)}
-                    className={`flex-shrink-0 ml-auto px-3 py-0.5 rounded-full text-[11px] font-bold border transition-all active:scale-95 ${
+                    className={`flex-shrink-0 ml-auto px-3 py-0.5 rounded-full text-[11px] font-bold border transition-all ${
                       isFollowing
                         ? 'border-white/20 text-white/40 bg-transparent'
                         : 'border-white/70 text-white bg-white/10 backdrop-blur-sm'
-                    }`}
+                    } ${poppedFollow === reel.creator_id ? 'animate-heart-pop' : ''}`}
                   >
                     {isFollowing ? 'Following' : 'Follow'}
                   </button>
@@ -321,7 +327,7 @@ export default function TikTokPlayer({
 
                 {/* Save — optimistic */}
                 <button onClick={e => handleSave(e, reel.id)} className="flex flex-col items-center gap-1.5">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors ${isSaved ? 'bg-violet-500/40' : 'bg-white/10'}`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors ${isSaved ? 'bg-violet-500/40' : 'bg-white/10'} ${poppedSave === reel.id ? 'animate-heart-pop' : ''}`}>
                     <svg
                       className={`w-[22px] h-[22px] transition-colors ${isSaved ? 'text-violet-300' : 'text-white'}`}
                       fill={isSaved ? 'currentColor' : 'none'}

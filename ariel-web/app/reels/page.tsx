@@ -504,6 +504,11 @@ export default function ReelsPage() {
     return diffDays <= 7;
   });
 
+  // Fallback anchor section when nothing is new this week
+  const recentlyAdded = newThisWeek.length === 0
+    ? [...reels].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? '')).slice(0, 6)
+    : [];
+
   // ── Skeletons ──
   if (loading) {
     return (
@@ -669,7 +674,7 @@ export default function ReelsPage() {
           ) : (
             <>
               {/* Pinned: New this week — always hero */}
-              {newThisWeek.length > 0 && (
+              {newThisWeek.length > 0 ? (
                 <SectionRow
                   key="new-this-week"
                   label="New This Week"
@@ -680,7 +685,17 @@ export default function ReelsPage() {
                   heroLayout
                   onTap={setActiveReel}
                 />
-              )}
+              ) : recentlyAdded.length > 0 ? (
+                <SectionRow
+                  key="recently-added"
+                  label="Recently Added"
+                  subjectKey="recent"
+                  reels={recentlyAdded}
+                  isUserTopic={false}
+                  heroLayout
+                  onTap={setActiveReel}
+                />
+              ) : null}
               {/* Subject sections — user topics get hero, others get grid */}
               {sections.map(section => (
                 <SectionRow
