@@ -315,7 +315,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
             {!isExpanded ? (
               <div className="space-y-5 text-center w-full">
                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Question</p>
-                <h2 className="text-zinc-900 text-2xl font-black leading-snug">
+                <h2 className="text-zinc-900 text-3xl leading-snug" style={{ fontFamily: "var(--font-caveat), cursive" }}>
                   {card.question}
                 </h2>
                 <div className="flex items-center justify-center gap-2 pt-1">
@@ -325,21 +325,21 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
               </div>
             ) : (
               <div className="space-y-4 w-full">
-                <p className="text-zinc-400 text-sm leading-relaxed text-center">{card.question}</p>
+                <p className="text-zinc-400 text-lg leading-relaxed text-center" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.question}</p>
                 <div className="h-px bg-zinc-200" />
                 <div className="text-center space-y-3">
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Answer</p>
-                  <p className="text-zinc-900 text-2xl font-black leading-snug">
+                  <p className="text-zinc-900 text-3xl leading-snug" style={{ fontFamily: "var(--font-caveat), cursive" }}>
                     {card.answer}
                   </p>
                 </div>
                 {card.explanation && (
                   <div className="mt-2 p-4 rounded-2xl bg-zinc-100 border border-zinc-200">
                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Why</p>
-                    <p className="text-zinc-600 text-sm leading-relaxed">{card.explanation}</p>
+                    <p className="text-zinc-600 text-base leading-relaxed" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.explanation}</p>
                   </div>
                 )}
-                <p className="text-zinc-300 text-xs text-center pt-1">Tap again to see question</p>
+                <p className="text-zinc-300 text-xs text-center">Tap again to see question</p>
               </div>
             )}
           </div>
@@ -472,7 +472,7 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
             {!isExpanded ? (
               <div className="text-center space-y-4 w-full">
                 <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Question</p>
-                <p className="text-zinc-900 text-xl font-black leading-snug">{card.question}</p>
+                <p className="text-zinc-900 text-2xl leading-snug" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.question}</p>
                 <div className="flex items-center justify-center gap-1.5 pt-1">
                   <div className="w-1 h-1 rounded-full bg-zinc-300 animate-pulse" />
                   <p className="text-zinc-400 text-xs">tap to reveal</p>
@@ -480,16 +480,16 @@ export default function CardFeed({ type, onCardClick, subjectFilter, groupBySubj
               </div>
             ) : (
               <div className="w-full space-y-4">
-                <p className="text-zinc-400 text-sm leading-relaxed text-center">{card.question}</p>
+                <p className="text-zinc-400 text-lg leading-relaxed text-center" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.question}</p>
                 <div className="h-px bg-zinc-200" />
                 <div className="text-center space-y-2">
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Answer</p>
-                  <p className="text-zinc-900 text-xl font-black leading-snug">{card.answer}</p>
+                  <p className="text-zinc-900 text-2xl leading-snug" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.answer}</p>
                 </div>
                 {card.explanation && (
                   <div className="pt-3 border-t border-zinc-200">
                     <p className="text-zinc-400 text-[10px] font-semibold uppercase tracking-widest mb-1.5">Why</p>
-                    <p className="text-zinc-600 text-sm leading-relaxed">{card.explanation}</p>
+                    <p className="text-zinc-600 text-base leading-relaxed" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.explanation}</p>
                   </div>
                 )}
                 <p className="text-zinc-300 text-xs text-center">Tap again to see question</p>
