@@ -266,17 +266,17 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         <div
           className="absolute inset-0 flex flex-col items-center justify-center p-6 transition-all duration-200"
           style={{
-            background: '#ffffff',
+            background: '#18181b',
             opacity: flipped ? 0 : 1,
             transform: flipped ? 'scaleX(0.92) scaleY(0.96)' : 'scaleX(1) scaleY(1)',
             pointerEvents: flipped ? 'none' : 'auto',
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-violet-500/[0.04] to-transparent pointer-events-none" />
-          <p className="text-zinc-800 font-bold text-[22px] text-center leading-snug relative z-10 line-clamp-4">
+          <p className="text-white font-bold text-[22px] text-center leading-snug relative z-10 line-clamp-4">
             {card.question}
           </p>
-          <span className="absolute bottom-3 text-[10px] text-zinc-300 font-medium flex items-center gap-1">
+          <span className="absolute bottom-3 text-[10px] text-zinc-600 font-medium flex items-center gap-1">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
@@ -288,19 +288,19 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         <div
           className="absolute inset-0 flex flex-col items-center justify-center px-6 py-5 transition-all duration-200"
           style={{
-            background: '#f8f6ff',
+            background: '#1e1a2e',
             opacity: flipped ? 1 : 0,
             transform: flipped ? 'scaleX(1) scaleY(1)' : 'scaleX(0.92) scaleY(0.96)',
             pointerEvents: flipped ? 'auto' : 'none',
           }}
         >
           <div className="flex items-start gap-3 w-full">
-            <div className="w-[3px] self-stretch rounded-full bg-violet-500 flex-shrink-0" />
-            <p className="text-zinc-800 font-semibold text-[18px] leading-snug line-clamp-4">
+            <div className="w-[3px] self-stretch rounded-full bg-violet-400 flex-shrink-0" />
+            <p className="text-zinc-100 font-semibold text-[18px] leading-snug line-clamp-4">
               {card.answer || 'No answer provided.'}
             </p>
           </div>
-          <span className="absolute bottom-3 text-[10px] text-zinc-300 font-medium flex items-center gap-1">
+          <span className="absolute bottom-3 text-[10px] text-zinc-600 font-medium flex items-center gap-1">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
