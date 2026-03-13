@@ -124,7 +124,10 @@ export default function DuelsPage() {
 
   useEffect(() => () => {
     clearTimers();
-    wsRef.current?.close();
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+    }
   }, []);
 
   // Poll for incoming challenges every 5s while in lobby
@@ -354,10 +357,13 @@ export default function DuelsPage() {
       // Poll room status — connect WS only when p2 has actually joined
       // (avoids idle WS timeout while waiting for the other person)
       if (pollRef.current) clearInterval(pollRef.current);
+      let didConnect = false; // guard against async race on slow networks
       pollRef.current = setInterval(async () => {
+        if (didConnect) return;
         try {
           const room = await duelsAPI.getRoom(rid);
-          if (room.p2_username) {
+          if (room.p2_username && !didConnect) {
+            didConnect = true;
             clearInterval(pollRef.current!);
             pollRef.current = null;
             setOpponentName(room.p2_username);
@@ -398,7 +404,12 @@ export default function DuelsPage() {
   const connectToRoom = (rid: string) => {
     const token = localStorage.getItem('auth_token');
     if (!token) { setWsError('Not logged in.'); return; }
-    wsRef.current?.close();
+    // Null out old handlers before closing so the close doesn't trigger the error banner
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.onerror = null;
+      wsRef.current.close();
+    }
 
     const ws = new WebSocket(`${WS_URL}/api/duels/${rid}/ws?token=${token}`);
     wsRef.current = ws;
