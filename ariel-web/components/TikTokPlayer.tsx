@@ -59,6 +59,17 @@ export default function TikTokPlayer({
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
+  // Optimistic saved state — seed from initial reel data
+  const [savedReels, setSavedReels] = useState<Set<string>>(
+    () => new Set(reels.filter(r => r.saved_to_deck).map(r => r.id))
+  );
+
+  // Hide swipe hint after 2.5s
+  useEffect(() => {
+    const t = setTimeout(() => setShowSwipeHint(false), 2500);
+    return () => clearTimeout(t);
+  }, []);
 
   useLayoutEffect(() => {
     if (containerRef.current) {
@@ -115,11 +126,24 @@ export default function TikTokPlayer({
     else { video.pause(); setPaused(true); }
   };
 
+  const handleSave = (e: React.MouseEvent, reelId: string) => {
+    e.stopPropagation();
+    setSavedReels(prev => {
+      const next = new Set(prev);
+      if (next.has(reelId)) next.delete(reelId);
+      else next.add(reelId);
+      return next;
+    });
+    onSave(reelId);
+  };
+
   const handleTimeUpdate = useCallback((e: React.SyntheticEvent<HTMLVideoElement>, index: number) => {
     if (index !== activeIndex) return;
     const video = e.currentTarget;
     if (video.duration) setProgress(video.currentTime / video.duration);
   }, [activeIndex]);
+
+  const hasMore = activeIndex < reels.length - 1;
 
   return (
     <div className="fixed inset-0 z-[300] bg-black">
@@ -134,22 +158,17 @@ export default function TikTokPlayer({
         </svg>
       </button>
 
-      {/* Counter */}
-      <div className="absolute top-[52px] left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-        <span className="text-white/50 text-[11px] font-semibold">{activeIndex + 1} / {reels.length}</span>
-      </div>
-
       {/* Mute */}
       <button
         onClick={toggleMute}
         className="absolute top-12 right-4 z-50 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-transform"
       >
         {muted ? (
-          <svg className="w-4.5 h-4.5 text-white/60" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg className="w-[18px] h-[18px] text-white/60" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
           </svg>
         ) : (
-          <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg className="w-[18px] h-[18px] text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6L5.586 9H4a1 1 0 00-1 1v4a1 1 0 001 1h1.586L12 18V6z" />
           </svg>
         )}
@@ -162,6 +181,8 @@ export default function TikTokPlayer({
         style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
       >
         {reels.map((reel, index) => {
+          const isSaved = savedReels.has(reel.id);
+
           return (
             <div
               key={reel.id}
@@ -170,7 +191,7 @@ export default function TikTokPlayer({
               style={{ height: '100dvh', scrollSnapAlign: 'start' }}
               onClick={togglePlay}
             >
-              {/* Video — object-cover for full immersive fill */}
+              {/* Video */}
               <video
                 ref={el => { videoRefs.current[index] = el; }}
                 src={proxyUrl(reel.video_url)}
@@ -182,7 +203,7 @@ export default function TikTokPlayer({
                 onTimeUpdate={e => handleTimeUpdate(e, index)}
               />
 
-              {/* Cinematic gradient — lighter, lets video breathe */}
+              {/* Cinematic gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-black/20 pointer-events-none" />
 
               {/* Pause indicator */}
@@ -197,7 +218,9 @@ export default function TikTokPlayer({
               )}
 
               {/* Bottom-left: creator + info */}
-              <div className="absolute bottom-[100px] left-4 right-[76px] z-20">
+              <div className="absolute bottom-[130px] left-4 right-[76px] z-20">
+
+                {/* Creator row */}
                 <div className="flex items-center gap-2.5 mb-3">
                   {reel.creator_profile_picture ? (
                     <img
@@ -211,10 +234,15 @@ export default function TikTokPlayer({
                       {reel.creator_username[0]?.toUpperCase()}
                     </div>
                   )}
-                  <p className="text-white font-bold text-[14px] drop-shadow">@{reel.creator_username}</p>
+                  <div className="flex flex-col min-w-0">
+                    <p className="text-white font-bold text-[14px] drop-shadow leading-tight">@{reel.creator_username}</p>
+                    {reel.view_count ? (
+                      <p className="text-white/40 text-[11px] leading-tight">{formatViews(reel.view_count)} views</p>
+                    ) : null}
+                  </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); onFollow(reel.creator_id); }}
-                    className={`flex-shrink-0 px-3.5 py-1 rounded-full text-xs font-bold border transition-all ${
+                    className={`flex-shrink-0 ml-1 px-3.5 py-1 rounded-full text-xs font-bold border transition-all ${
                       reel.following_creator
                         ? 'border-white/20 text-white/50 bg-transparent'
                         : 'border-white text-white bg-white/10 backdrop-blur-sm'
@@ -236,9 +264,9 @@ export default function TikTokPlayer({
               </div>
 
               {/* Right-side action buttons */}
-              <div className="absolute bottom-[110px] right-3 z-20 flex flex-col items-center gap-5">
+              <div className="absolute bottom-[140px] right-3 z-20 flex flex-col items-center gap-5">
 
-                {/* Comment */}
+                {/* Discuss */}
                 <button onClick={(e) => { e.stopPropagation(); onComment(reel.id); }} className="flex flex-col items-center gap-1.5">
                   <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
                     <svg className="w-[22px] h-[22px] text-white" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
@@ -248,12 +276,12 @@ export default function TikTokPlayer({
                   <span className="text-white/70 text-[10px] font-semibold">Discuss</span>
                 </button>
 
-                {/* Save */}
-                <button onClick={(e) => { e.stopPropagation(); onSave(reel.id); }} className="flex flex-col items-center gap-1.5">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors ${reel.saved_to_deck ? 'bg-violet-500/40' : 'bg-white/10'}`}>
+                {/* Save — optimistic */}
+                <button onClick={e => handleSave(e, reel.id)} className="flex flex-col items-center gap-1.5">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors ${isSaved ? 'bg-violet-500/40' : 'bg-white/10'}`}>
                     <svg
-                      className={`w-[22px] h-[22px] transition-colors ${reel.saved_to_deck ? 'text-violet-300' : 'text-white'}`}
-                      fill={reel.saved_to_deck ? 'currentColor' : 'none'}
+                      className={`w-[22px] h-[22px] transition-colors ${isSaved ? 'text-violet-300' : 'text-white'}`}
+                      fill={isSaved ? 'currentColor' : 'none'}
                       stroke="currentColor"
                       strokeWidth={1.75}
                       viewBox="0 0 24 24"
@@ -261,10 +289,12 @@ export default function TikTokPlayer({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                     </svg>
                   </div>
-                  <span className={`text-[10px] font-semibold ${reel.saved_to_deck ? 'text-violet-300' : 'text-white/70'}`}>Save</span>
+                  <span className={`text-[10px] font-semibold ${isSaved ? 'text-violet-300' : 'text-white/70'}`}>
+                    {isSaved ? 'Saved' : 'Save'}
+                  </span>
                 </button>
 
-                {/* DM */}
+                {/* Send */}
                 {onDMShare && (
                   <button onClick={(e) => { e.stopPropagation(); onDMShare(reel); }} className="flex flex-col items-center gap-1.5">
                     <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
@@ -277,12 +307,28 @@ export default function TikTokPlayer({
                 )}
               </div>
 
-              {/* View count */}
-              {reel.view_count ? (
-                <div className="absolute top-14 right-4 z-20 pointer-events-none">
-                  <span className="text-white/40 text-[10px] font-medium">{formatViews(reel.view_count)} views</span>
+              {/* Swipe-up hint — fades out after 2.5s, only shows if there's a next clip */}
+              {activeIndex === index && hasMore && (
+                <div
+                  className="absolute bottom-[18px] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 pointer-events-none"
+                  style={{
+                    opacity: showSwipeHint ? 1 : 0,
+                    transition: 'opacity 0.6s ease',
+                  }}
+                >
+                  <svg
+                    className="w-4 h-4 text-white/50"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    viewBox="0 0 24 24"
+                    style={{ animation: 'swipeBounce 1.2s ease-in-out infinite' }}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                  <span className="text-white/35 text-[10px] font-medium tracking-wide">swipe up</span>
                 </div>
-              ) : null}
+              )}
 
               {/* Progress bar */}
               {activeIndex === index && (
@@ -297,6 +343,13 @@ export default function TikTokPlayer({
           );
         })}
       </div>
+
+      <style jsx global>{`
+        @keyframes swipeBounce {
+          0%, 100% { transform: translateY(0); opacity: 0.5; }
+          50% { transform: translateY(4px); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

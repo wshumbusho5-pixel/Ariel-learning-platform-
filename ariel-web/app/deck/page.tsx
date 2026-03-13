@@ -9,6 +9,7 @@ import { cardsAPI, reelsAPI } from '@/lib/api';
 import api, { socialAPI } from '@/lib/api';
 import SideNav from '@/components/SideNav';
 import TikTokPlayer, { type TikTokReel } from '@/components/TikTokPlayer';
+import { useComments } from '@/lib/commentsContext';
 
 interface DeckStats {
   total_cards: number;
@@ -27,6 +28,7 @@ function proxyThumb(url?: string): string | undefined {
 export default function DeckPage() {
   const router = useRouter();
   const { isAuthenticated, checkAuth } = useAuth();
+  const { openComments } = useComments();
   const [stats, setStats] = useState<DeckStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
@@ -182,8 +184,7 @@ export default function DeckPage() {
           onClose={() => setActiveClip(null)}
           onSave={handleUnsave}
           onFollow={handleFollow}
-          onShare={handleShare}
-          onComment={() => setActiveClip(null)}
+          onComment={(id) => { openComments(id); }}
         />
       )}
 
