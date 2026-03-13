@@ -955,9 +955,12 @@ export default function Dashboard() {
                     fontWeight: 700,
                     fontStyle: 'italic',
                     lineHeight: 1,
-                    color: '#9B7FFF',
                     letterSpacing: '1px',
-                  }}>ariel</span>
+                  }}>
+                    <span style={{ color: '#ffffff' }}>ar</span>
+                    <span style={{ color: '#9B7FFF' }}>i</span>
+                    <span style={{ color: '#ffffff' }}>el</span>
+                  </span>
                   <div className="flex items-center gap-0.5">
                   <button onClick={() => router.push('/search')} className="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
                     <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
