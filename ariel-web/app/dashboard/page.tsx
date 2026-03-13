@@ -1204,7 +1204,7 @@ export default function Dashboard() {
               {!searchQuery && (
                 <div className="flex items-center gap-3 mt-5 mb-4">
                   <p className="text-[12px] font-black text-zinc-500 uppercase tracking-widest">
-                    {activeSubject ? (SUBJECT_META[activeSubject]?.label ?? 'Cards') : greeting}
+                    {activeSubject ? (SUBJECT_META[activeSubject]?.label ?? 'Cards') : 'Today'}
                   </p>
                   <div className="flex-1 h-px bg-zinc-800" />
                 </div>
