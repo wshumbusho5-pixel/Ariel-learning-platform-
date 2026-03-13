@@ -1004,33 +1004,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ── Study Now card ── */}
-          {!searchQuery && !dataLoading && dueCards.length > 0 && (
-            <button
-              onClick={() => router.push('/deck')}
-              className="w-full mt-4 rounded-2xl overflow-hidden active:scale-[0.98] transition-all group"
-              style={{ background: 'linear-gradient(135deg, #1a1040 0%, #0f0f1a 100%)' }}
-            >
-              <div className="flex items-center justify-between px-4 py-4 border border-violet-500/20 rounded-2xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(139,92,246,0.2)' }}>
-                    <span className="text-2xl">🎴</span>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[11px] font-bold text-violet-400 uppercase tracking-widest mb-0.5">Ready to study</p>
-                    <p className="text-base font-black text-white leading-tight">
-                      {dueCards.length} card{dueCards.length !== 1 ? 's' : ''} waiting
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-white bg-violet-500 px-3 py-1.5 rounded-full group-active:bg-violet-600 transition-colors">
-                    Study now
-                  </span>
-                </div>
-              </div>
-            </button>
-          )}
 
           {/* ── Feed tabs ── */}
           {!searchQuery && (
