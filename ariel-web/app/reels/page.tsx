@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import api, { socialAPI } from '@/lib/api';
 import { useAuth } from '@/lib/useAuth';
 import { useComments } from '@/lib/commentsContext';
@@ -311,7 +311,7 @@ function SectionRow({
           )}
         </div>
         <button
-          onClick={() => router.push(`/reels/subject/${subjectKey}`)}
+          onClick={() => router.push(`/reels?subject=${subjectKey}`)}
           className="flex items-center gap-1 text-[11px] font-bold text-zinc-300 bg-zinc-800/80 border border-zinc-700/60 px-2.5 py-1 rounded-full hover:bg-zinc-700/80 transition-colors active:scale-95"
         >
           See all
@@ -363,6 +363,8 @@ function SectionRow({
 // (TikTokPlayer imported from @/components/TikTokPlayer)
 export default function ReelsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const subjectFilter = searchParams.get('subject');
   const { user } = useAuth();
   const { openComments } = useComments();
 
@@ -513,7 +515,10 @@ export default function ReelsPage() {
     }
   }, []);
 
-  const sections = groupReels(reels, user?.subjects ?? []);
+  const allSections = groupReels(reels, user?.subjects ?? []);
+  const sections = subjectFilter
+    ? allSections.filter(s => s.key === subjectFilter)
+    : allSections;
 
   // "New this week" — reels uploaded in the last 7 days, shown pinned at top
   const newThisWeek = reels.filter(r => {
@@ -652,6 +657,19 @@ export default function ReelsPage() {
               Clip
             </button>
           </div>
+          {/* Subject filter chip — shown when navigated from a section */}
+          {subjectFilter && (
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-1.5 bg-violet-500/15 border border-violet-500/30 px-3 py-1 rounded-full">
+                <span className="text-[11px] font-bold text-violet-400">{SUBJECT_LABELS[subjectFilter] ?? subjectFilter}</span>
+                <button onClick={() => router.push('/reels')} className="text-violet-400/60 hover:text-violet-300 ml-0.5">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
           {/* Row 2: tabs */}
           <div className="flex items-center gap-6">
             {(['foryou', 'following'] as const).map(t => (

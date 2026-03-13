@@ -620,8 +620,8 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
         <div className="flex items-start justify-between mb-4 px-4">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.361a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <svg className="w-3.5 h-3.5 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M21 3H3a2 2 0 00-2 2v14a2 2 0 002 2h18a2 2 0 002-2V5a2 2 0 00-2-2zm-7 8l-5 3V8l5 3z" />
               </svg>
               <span className="text-[13px] font-black text-white tracking-tight">Clips</span>
             </div>
