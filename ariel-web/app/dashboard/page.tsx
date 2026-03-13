@@ -196,7 +196,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   };
 
   return (
-    <div className="mb-5 relative">
+    <div className="mb-5 relative -mx-4">
       {/* Save toast */}
       {saveToast && (
         <div className="animate-toast absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
@@ -204,12 +204,11 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         </div>
       )}
 
-      {/* ── Floating white card ── */}
+      {/* ── Full bleed white card ── */}
       <div
-        className="cursor-pointer relative overflow-hidden rounded-3xl"
+        className="cursor-pointer relative overflow-hidden"
         style={{
           height: `${CARD_HEIGHT}px`,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
         }}
         onClick={() => setFlipped(f => !f)}
       >
@@ -268,7 +267,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       </div>
 
       {/* ── Below card: author + actions on dark background ── */}
-      <div className="flex items-center px-2 pt-2.5 pb-1">
+      <div className="flex items-center px-4 pt-2.5 pb-1">
         {/* Avatar */}
         <div className="flex-shrink-0 relative mr-2.5">
           {card.author_profile_picture ? (
