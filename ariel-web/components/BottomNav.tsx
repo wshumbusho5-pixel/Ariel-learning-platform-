@@ -182,8 +182,10 @@ export default function BottomNav() {
       )}
 
       {/* Bottom nav bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#09090b]/75 backdrop-blur-xl border-t border-white/[0.06]">
-        <div className="flex items-stretch h-[68px] max-w-screen-sm mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
+        {/* Fade gradient so content doesn't hard-cut behind icons */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent pointer-events-none" />
+        <div className="relative flex items-stretch h-[72px] max-w-screen-sm mx-auto">
 
           {/* Today, Deck */}
           {mainNav.slice(0, 2).map((item) => {
@@ -196,9 +198,7 @@ export default function BottomNav() {
                 onClick={() => router.push(item.path)}
                 className="flex-1 flex flex-col items-center justify-center gap-0.5 pt-1 transition-all"
               >
-                <div className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all duration-200 ${
-                  isActive ? 'bg-violet-500/15' : ''
-                }`}>
+                <div className="flex flex-col items-center gap-0.5 px-3 py-1.5">
                   <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-400'}`}>
                     {item.icon(isActive)}
                   </span>
@@ -237,9 +237,7 @@ export default function BottomNav() {
                 onClick={() => router.push(item.path)}
                 className="flex-1 flex flex-col items-center justify-center gap-0.5 pt-1 transition-all"
               >
-                <div className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all duration-200 ${
-                  isActive ? 'bg-violet-500/15' : ''
-                }`}>
+                <div className="flex flex-col items-center gap-0.5 px-3 py-1.5">
                   <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-400'}`}>
                     {item.icon(isActive)}
                   </span>
@@ -252,6 +250,8 @@ export default function BottomNav() {
           })}
 
         </div>
+        {/* Safe area spacer for iPhone home bar */}
+        <div className="h-safe-bottom bg-transparent" />
       </div>
     </>
   );
