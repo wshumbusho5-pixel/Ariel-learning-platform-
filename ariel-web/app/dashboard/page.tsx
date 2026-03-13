@@ -1007,29 +1007,12 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Stats strip */}
-              {!dataLoading && (
-                <div className="max-w-3xl mx-auto px-4 pb-3 pt-1">
-                  <div className="flex items-center gap-2">
-                    {streakDays > 0 && (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
-                        <span className="text-sm">🔥</span>
-                        <span className="text-xs font-black text-orange-400">{streakDays} day streak</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800/60 border border-zinc-700/40">
-                      <span className="text-xs font-black text-zinc-400">Lv {level}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* Subject filter strip */}
               <div className="max-w-3xl mx-auto">
-                <div className="flex items-center gap-1.5 overflow-x-auto px-4 pb-3 pt-1" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex items-center gap-2 overflow-x-auto px-4 pb-3 pt-2" style={{ scrollbarWidth: 'none' }}>
                   <button
                     onClick={() => { setActiveSubject(null); setActiveTopic(null); }}
-                    className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${!activeSubject ? 'bg-violet-500 text-white' : 'border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'}`}
+                    className={`flex-shrink-0 px-4 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all ${!activeSubject ? 'bg-white text-zinc-950' : 'text-zinc-500 hover:text-zinc-300'}`}
                   >
                     All
                   </button>
@@ -1040,10 +1023,8 @@ export default function Dashboard() {
                       <button
                         key={key}
                         onClick={() => handleStoryTap(key)}
-                        className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                          isActive
-                            ? 'bg-violet-500 text-white'
-                            : 'border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                        className={`flex-shrink-0 flex items-center gap-1 px-4 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all whitespace-nowrap ${
+                          isActive ? 'bg-white text-zinc-950' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                       >
                         <span>{m.icon}</span>
@@ -1053,9 +1034,9 @@ export default function Dashboard() {
                   })}
                   <button
                     onClick={() => setShowSubjectPicker(true)}
-                    className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold border border-dashed border-zinc-800 text-zinc-600 hover:text-zinc-400 hover:border-zinc-600 transition-all"
+                    className="flex-shrink-0 px-4 py-1 rounded-full text-[11px] font-bold text-zinc-600 hover:text-zinc-400 transition-all"
                   >
-                    + Add
+                    + more
                   </button>
                 </div>
               </div>
@@ -1089,18 +1070,20 @@ export default function Dashboard() {
 
           {/* ── Feed tabs ── */}
           {!searchQuery && (
-            <div className="flex items-center gap-0 mt-4 border-b border-zinc-800">
+            <div className="flex items-center gap-6 mt-5 mb-1 px-1">
               <button
                 onClick={() => setFeedTab('foryou')}
-                className={`px-4 py-2.5 text-sm font-bold transition-all border-b-2 -mb-px ${feedTab === 'foryou' ? 'text-white border-violet-400' : 'text-zinc-500 border-transparent hover:text-zinc-300'}`}
+                className={`relative text-[15px] font-black tracking-tight transition-all pb-2 ${feedTab === 'foryou' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
                 For You
+                {feedTab === 'foryou' && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full" />}
               </button>
               <button
                 onClick={() => setFeedTab('following')}
-                className={`px-4 py-2.5 text-sm font-bold transition-all border-b-2 -mb-px ${feedTab === 'following' ? 'text-white border-violet-400' : 'text-zinc-500 border-transparent hover:text-zinc-300'}`}
+                className={`relative text-[15px] font-black tracking-tight transition-all pb-2 ${feedTab === 'following' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
                 Following
+                {feedTab === 'following' && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white rounded-full" />}
               </button>
             </div>
           )}
@@ -1156,22 +1139,25 @@ export default function Dashboard() {
             </div>
           ) : displayCards.length > 0 ? (
             <>
-              {/* Due for review — horizontal scroll strip */}
+              {/* Due for review — elegant strip */}
               {dueCards.length > 0 && !searchQuery && (
-                <div className="mt-4 mb-2">
-                  <div className="flex items-center justify-between px-0 mb-2">
-                    <span className="text-xs font-bold text-orange-400">Due for review</span>
-                    <button onClick={() => router.push('/deck')} className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Go to deck →</button>
+                <div className="mt-5 mb-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">Review</span>
+                      <span className="text-[11px] font-black text-white bg-zinc-800 px-2 py-0.5 rounded-full">{dueCards.length}</span>
+                    </div>
+                    <button onClick={() => router.push('/deck')} className="text-[11px] font-bold text-zinc-500 hover:text-white transition-colors tracking-wide">Study all</button>
                   </div>
-                  <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
+                  <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1" style={{ scrollbarWidth: 'none' }}>
                     {dueCards.slice(0, 10).map(card => (
                       <button
                         key={card.id}
                         onClick={() => router.push('/deck')}
-                        className="flex-shrink-0 w-40 p-3 rounded-2xl bg-[#1e1e22] border border-zinc-800 text-left active:scale-95 transition-all"
+                        className="flex-shrink-0 w-36 p-3 rounded-2xl bg-zinc-900 text-left active:scale-95 transition-all"
                       >
-                        <p className="text-xs font-semibold text-white line-clamp-3 leading-snug">{card.question}</p>
-                        {card.subject && <p className="text-[10px] text-zinc-500 mt-1.5 truncate">{card.subject}</p>}
+                        <p className="text-[11px] font-semibold text-zinc-300 line-clamp-3 leading-snug">{card.question}</p>
+                        {card.subject && <p className="text-[9px] text-zinc-600 mt-2 uppercase tracking-wide truncate">{card.subject}</p>}
                       </button>
                     ))}
                   </div>
