@@ -991,8 +991,8 @@ export default function Dashboard() {
                   </span>
                   <div className="flex items-center gap-0.5">
                   <button onClick={() => router.push('/search')} className="w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
-                    <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg className="w-[20px] h-[20px]" viewBox="0 0 24 24" fill="currentColor">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M10.5 2a8.5 8.5 0 105.374 15.12l3.75 3.753a1 1 0 001.415-1.414l-3.751-3.752A8.5 8.5 0 0010.5 2zm-6.5 8.5a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0z" />
                     </svg>
                   </button>
                   <button onClick={() => router.push('/messages')} className="relative w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
@@ -1006,8 +1006,8 @@ export default function Dashboard() {
                     )}
                   </button>
                   <button onClick={() => router.push('/notifications')} className="relative w-9 h-9 flex items-center justify-center text-zinc-400 hover:text-white transition-colors">
-                    <svg className="w-[20px] h-[20px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    <svg className="w-[20px] h-[20px]" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2a7 7 0 00-7 7v3.17c0 .46-.18.9-.51 1.23L3 15h18l-1.49-1.6A1.74 1.74 0 0119 12.17V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" />
                     </svg>
                     {unreadNotifications > 0 && (
                       <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] rounded-full bg-red-500 flex items-center justify-center">
