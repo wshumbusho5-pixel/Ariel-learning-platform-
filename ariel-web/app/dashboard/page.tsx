@@ -118,7 +118,7 @@ function timeAgo(d?: string) {
 
 // ─── Card Tile (square, 1:1) ─────────────────────────────────────────────────
 
-const CARD_HEIGHT = 280;
+const CARD_HEIGHT = 300;
 
 function CardTile({ card, onComment, flush = false }: { card: FeedCard; onComment: (id: string) => void; flush?: boolean }) {
   const [flipped, setFlipped] = useState(false);
@@ -206,7 +206,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
       {/* ── Floating white card ── */}
       <div
-        className="cursor-pointer relative overflow-hidden rounded-3xl mx-1"
+        className="cursor-pointer relative overflow-hidden rounded-3xl"
         style={{
           height: `${CARD_HEIGHT}px`,
           boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
