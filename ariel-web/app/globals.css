@@ -204,6 +204,11 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
+  /* Hide scrollbar on card answer scroll area */
+  .answer-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Ariel orbit loader */
   .ariel-orbit-arc {
     animation: orbitSpin 1.4s linear infinite;

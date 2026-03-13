@@ -297,7 +297,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   useEffect(() => { loadComments(); }, []);
 
   return (
-    <div className="mb-5 relative overflow-hidden rounded-2xl">
+    <div className="relative border-b border-zinc-800 py-3">
       {/* Toasts */}
       {(saveToast || shareToast) && (
         <div className="animate-toast absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
@@ -305,243 +305,240 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
         </div>
       )}
 
-      {/* ── Full bleed white card ── */}
-      <div
-        className="cursor-pointer relative overflow-hidden"
-        style={{
-          height: `${CARD_HEIGHT}px`,
-        }}
-        onClick={() => setFlipped(f => !f)}
-      >
-        {/* Subject accent bar at top */}
-        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent ${STRIP_COLOR[key] ?? 'via-zinc-400'} to-transparent z-10`} />
-
-        {/* Q / A pill — top right corner */}
-        <div className={`absolute top-3 right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${flipped ? 'bg-violet-500' : 'bg-zinc-200'}`}>
-          <span className={`text-[11px] font-black ${flipped ? 'text-white' : 'text-zinc-600'}`}>{flipped ? 'A' : 'Q'}</span>
-        </div>
-
-        {/* Front — Question */}
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center p-8 transition-all duration-200"
-          style={{
-            background: '#ffffff',
-            opacity: flipped ? 0 : 1,
-            transform: flipped ? 'scaleX(0.94) scaleY(0.97)' : 'scaleX(1) scaleY(1)',
-            pointerEvents: flipped ? 'none' : 'auto',
-          }}
-        >
-          <p className="text-zinc-800 font-bold text-[24px] text-center leading-snug line-clamp-4">
-            {card.question}
-          </p>
-          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2.5">
-            {card.community_reviews && card.community_reviews > 0 ? (
-              <span className="text-[10px] text-zinc-400 font-medium">
-                📚 {card.community_reviews} studied · {card.community_pct_correct}% nailed it
-              </span>
-            ) : (
-              <span className="text-[10px] text-zinc-400 font-medium">Be the first to study this</span>
-            )}
-            <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              tap to reveal
-            </span>
-          </div>
-        </div>
-
-        {/* Back — Answer */}
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center px-8 py-6 transition-all duration-200"
-          style={{
-            background: '#f8f6ff',
-            opacity: flipped ? 1 : 0,
-            transform: flipped ? 'scaleX(1) scaleY(1)' : 'scaleX(0.94) scaleY(0.97)',
-            pointerEvents: flipped ? 'auto' : 'none',
-          }}
-        >
-          <div className="flex items-start gap-3 w-full">
-            <div className="w-[3px] self-stretch rounded-full bg-violet-400 flex-shrink-0" />
-            <p className="text-zinc-800 font-semibold text-[20px] leading-snug line-clamp-4">
-              {card.answer || 'No answer provided.'}
-            </p>
-          </div>
-          <span className="absolute bottom-4 text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            tap to hide
-          </span>
-        </div>
-      </div>
-
-      {/* ── Below card: author + actions on dark background ── */}
-      <div className="flex items-center px-4 pt-2.5 pb-1">
-        {/* Avatar */}
-        <div className="flex-shrink-0 relative mr-2.5">
+      <div className="flex gap-3">
+        {/* ── Left column: avatar ── */}
+        <div className="flex-shrink-0 pt-0.5">
           {card.author_profile_picture ? (
             <img
               src={card.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')}
               alt={card.author_username}
-              className="w-8 h-8 rounded-full object-cover"
+              className="w-10 h-10 rounded-full object-cover"
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           ) : (
-            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
-              <span className="text-xs font-bold text-white">
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
+              <span className="text-sm font-bold text-white">
                 {card.author_username?.[0]?.toUpperCase() ?? meta.icon}
               </span>
             </div>
           )}
         </div>
 
-        {/* Name + subject */}
+        {/* ── Right column: everything ── */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[14px] font-bold text-white leading-none truncate">
-              {card.author_full_name || card.author_username || 'Ariel User'}
-            </span>
-            <span className="text-[12px] text-zinc-500">·</span>
-            <span className="text-[12px] text-zinc-500 truncate">
-              {card.subject ?? meta.short}
-            </span>
-            {card.created_at && (
-              <span className="text-[12px] text-zinc-600">{timeAgo(card.created_at)}</span>
-            )}
+
+          {/* Author row */}
+          <div className="flex items-start justify-between mb-2">
+            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+              <span className="text-[14px] font-bold text-white leading-none truncate">
+                {card.author_full_name || card.author_username || 'Ariel User'}
+              </span>
+              <span className="text-[12px] text-zinc-600">·</span>
+              <span className="text-[12px] text-zinc-500 truncate">{card.subject ?? meta.short}</span>
+              {card.created_at && (
+                <>
+                  <span className="text-[12px] text-zinc-700">·</span>
+                  <span className="text-[12px] text-zinc-600 flex-shrink-0">{timeAgo(card.created_at)}</span>
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3.5 flex-shrink-0 ml-2">
-          <button onClick={handleLike} className="flex items-center gap-1 group">
-            <svg className={`w-5 h-5 transition-transform active:scale-125 ${liked ? 'text-red-400' : 'text-zinc-500 group-hover:text-zinc-200'} ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-            {likeCount > 0 && <span className={`text-xs font-semibold ${liked ? 'text-red-400' : 'text-zinc-500'}`}>{likeCount}</span>}
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              try {
-                const commented: string[] = JSON.parse(localStorage.getItem('ariel_commented') || '[]');
-                if (!commented.includes(card.id)) {
-                  localStorage.setItem('ariel_commented', JSON.stringify([...commented, card.id]));
-                  setCommentCount(c => c + 1);
-                }
-              } catch {}
-              onComment(card.id);
-            }}
-            className="flex items-center gap-1 group"
+          {/* ── Card face ── */}
+          <div
+            className="cursor-pointer relative overflow-hidden rounded-2xl"
+            style={{ height: `${CARD_HEIGHT}px` }}
+            onClick={() => setFlipped(f => !f)}
           >
-            <svg className="w-5 h-5 text-zinc-500 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            {commentCount > 0 && <span className="text-xs font-semibold text-zinc-500">{commentCount}</span>}
-          </button>
+            {/* Subject accent bar at top */}
+            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent ${STRIP_COLOR[key] ?? 'via-zinc-400'} to-transparent z-10`} />
 
-          <button onClick={handleShare} className="group">
-            <svg className="w-5 h-5 text-zinc-500 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-            </svg>
-          </button>
-
-          <button onClick={handleSave} className="flex items-center gap-1 group">
-            {saveCount > 0 && <span className={`text-xs font-semibold ${saved ? 'text-violet-400' : 'text-zinc-500'}`}>{saveCount}</span>}
-            <svg className={`w-5 h-5 transition-colors ${saved ? 'text-violet-400' : 'text-zinc-500 group-hover:text-zinc-200'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {/* ── Inline comments ── */}
-      <div className="px-4 pb-4">
-        {/* Comments — Twitter style */}
-        {cardComments.length > 0 && (
-          <div className="mb-3">
-            {cardComments.slice(0, 5).map((c, i) => (
-              <div
-                key={c.id}
-                className={`flex items-start gap-3 ${i > 0 ? 'mt-4' : ''} select-none`}
-                onPointerDown={() => startLongPress(c.id)}
-                onPointerUp={() => cancelLongPress(c.id)}
-                onPointerLeave={() => cancelLongPress()}
-                onPointerCancel={() => cancelLongPress(c.id)}
-              >
-                {/* Avatar → profile */}
-                <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0 mt-0.5">
-                  <div className="w-7 h-7 rounded-full bg-zinc-700 overflow-hidden flex items-center justify-center">
-                    {c.author_profile_picture ? (
-                      <img src={c.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')} className="w-7 h-7 object-cover" />
-                    ) : (
-                      <span className="text-[11px] font-bold text-zinc-300">{(c.author_username || 'U')[0].toUpperCase()}</span>
-                    )}
-                  </div>
-                </button>
-
-                <div className="flex-1 min-w-0">
-                  {/* Username on its own line */}
-                  <button
-                    onClick={() => {
-                      setReplyingTo({ id: c.id, username: c.author_username || 'user' });
-                      setTimeout(() => inputRef.current?.focus(), 50);
-                    }}
-                    className="text-[13px] font-bold text-white leading-none mb-1 block"
-                  >
-                    {c.author_username || 'user'}
-                  </button>
-                  {/* Comment text on its own line */}
-                  <p className="text-[14px] leading-relaxed text-zinc-300 break-words">
-                    {c.content}
-                    {(c.likes > 0 || likedComments[c.id]) && (
-                      <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
-                        <svg className="w-3 h-3 text-violet-400 inline" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                        </svg>
-                        {c.likes > 0 && <span className="text-[11px] text-violet-400 font-semibold">{c.likes}</span>}
-                      </span>
-                    )}
-                  </p>
-                </div>
+            {/* Subject label — top left, persists on both sides */}
+            {(card.subject || key) && (
+              <div className="absolute top-3.5 left-4 z-10">
+                <span className={`text-[9px] font-black uppercase tracking-widest transition-colors duration-300 ${flipped ? 'text-violet-400/70' : 'text-zinc-400/80'}`}>{card.subject ?? key}</span>
               </div>
-            ))}
-            {commentCount > 5 && (
-              <button onClick={() => onComment(card.id)} className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors mt-2.5 block">
-                View all {commentCount} answers
+            )}
+
+            {/* Q / A pill — top right */}
+            <div className={`absolute top-3 right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${flipped ? 'bg-violet-500' : 'border border-zinc-300 bg-transparent'}`}>
+              <span className={`text-[11px] font-black ${flipped ? 'text-white' : 'text-zinc-400'}`}>{flipped ? 'A' : 'Q'}</span>
+            </div>
+
+            {/* Front — Question */}
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center p-5 transition-all duration-200"
+              style={{
+                background: '#fafaf8',
+                opacity: flipped ? 0 : 1,
+                transform: flipped ? 'scaleX(0.94) scaleY(0.97)' : 'scaleX(1) scaleY(1)',
+                pointerEvents: flipped ? 'none' : 'auto',
+              }}
+            >
+              <p className={`text-zinc-800 font-bold text-center leading-snug line-clamp-4 ${card.question.length > 80 ? 'text-[17px]' : card.question.length > 50 ? 'text-[20px]' : 'text-[22px]'}`}>
+                {card.question}
+              </p>
+              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2.5">
+                {card.community_reviews && card.community_reviews > 0 ? (
+                  <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    {card.community_reviews} studied · {card.community_pct_correct}% correct
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-zinc-400/60 font-medium">Be the first</span>
+                )}
+                <svg className="w-3.5 h-3.5 text-zinc-400/50" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Back — Answer */}
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center px-5 py-5 transition-all duration-200"
+              style={{
+                background: '#f3f0ff',
+                opacity: flipped ? 1 : 0,
+                transform: flipped ? 'scaleX(1) scaleY(1)' : 'scaleX(0.94) scaleY(0.97)',
+                pointerEvents: flipped ? 'auto' : 'none',
+              }}
+            >
+              <div
+                className="flex items-start gap-3 w-full overflow-y-auto answer-scroll"
+                style={{ maxHeight: '220px', scrollbarWidth: 'none' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="w-[3px] self-start rounded-full bg-violet-400 flex-shrink-0 mt-1" style={{ minHeight: '1.4em' }} />
+                <p className={`text-zinc-800 font-bold text-left leading-relaxed ${card.answer && card.answer.length > 80 ? 'text-[17px]' : card.answer && card.answer.length > 50 ? 'text-[20px]' : 'text-[22px]'}`}>
+                  {card.answer || 'No answer provided.'}
+                </p>
+              </div>
+              <svg className="absolute bottom-3.5 right-4 w-3.5 h-3.5 text-zinc-400/50" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+              </svg>
+            </div>
+          </div>
+
+          {/* ── Action bar ── */}
+          <div className="flex items-center gap-5 mt-2.5">
+            <button onClick={handleLike} className="flex items-center gap-1.5 group">
+              <svg className={`w-5 h-5 transition-transform active:scale-125 ${liked ? 'text-red-400' : 'text-zinc-500 group-hover:text-zinc-200'} ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              {likeCount > 0 && <span className={`text-xs font-semibold ${liked ? 'text-red-400' : 'text-zinc-500'}`}>{likeCount}</span>}
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                try {
+                  const commented: string[] = JSON.parse(localStorage.getItem('ariel_commented') || '[]');
+                  if (!commented.includes(card.id)) {
+                    localStorage.setItem('ariel_commented', JSON.stringify([...commented, card.id]));
+                    setCommentCount(c => c + 1);
+                  }
+                } catch {}
+                onComment(card.id);
+              }}
+              className="flex items-center gap-1.5 group"
+            >
+              <svg className="w-5 h-5 text-zinc-500 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              {commentCount > 0 && <span className="text-xs font-semibold text-zinc-500">{commentCount}</span>}
+            </button>
+
+            <button onClick={handleShare} className="group">
+              <svg className="w-5 h-5 text-zinc-500 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+              </svg>
+            </button>
+
+            <button onClick={handleSave} className="flex items-center gap-1.5 group ml-auto">
+              {saveCount > 0 && <span className={`text-xs font-semibold ${saved ? 'text-violet-400' : 'text-zinc-500'}`}>{saveCount}</span>}
+              <svg className={`w-5 h-5 transition-colors ${saved ? 'text-violet-400' : 'text-zinc-500 group-hover:text-zinc-200'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </button>
+          </div>
+
+          {/* ── Comments ── */}
+          {cardComments.length > 0 && (
+            <div className="mt-3 border-t border-zinc-800 pt-3">
+              {cardComments.slice(0, 5).map((c, i) => (
+                <div
+                  key={c.id}
+                  className={`flex items-start gap-2.5 ${i > 0 ? 'mt-4' : ''} select-none`}
+                  onPointerDown={() => startLongPress(c.id)}
+                  onPointerUp={() => cancelLongPress(c.id)}
+                  onPointerLeave={() => cancelLongPress()}
+                  onPointerCancel={() => cancelLongPress(c.id)}
+                >
+                  <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0 mt-0.5">
+                    <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center">
+                      {c.author_profile_picture ? (
+                        <img src={c.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')} className="w-7 h-7 object-cover" />
+                      ) : (
+                        <span className="text-[11px] font-bold text-zinc-400">{(c.author_username || 'U')[0].toUpperCase()}</span>
+                      )}
+                    </div>
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <button
+                      onClick={() => { setReplyingTo({ id: c.id, username: c.author_username || 'user' }); setTimeout(() => inputRef.current?.focus(), 50); }}
+                      className="text-[13px] font-bold text-white leading-none mb-1 block"
+                    >
+                      {c.author_username || 'user'}
+                    </button>
+                    <p className="text-[14px] leading-relaxed text-zinc-300 break-words">
+                      {c.content}
+                      {(c.likes > 0 || likedComments[c.id]) && (
+                        <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
+                          <svg className="w-3 h-3 text-violet-400 inline" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                          </svg>
+                          {c.likes > 0 && <span className="text-[11px] text-violet-400 font-semibold">{c.likes}</span>}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {commentCount > 5 && (
+                <button onClick={() => onComment(card.id)} className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors mt-2.5 block">
+                  View all {commentCount} answers
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Input ── */}
+          <div className="flex items-center gap-2 mt-3">
+            <div className="flex-1 border-b border-zinc-800 focus-within:border-zinc-600 transition-colors pb-1">
+              {replyingTo && (
+                <div className="flex items-center gap-1 mb-1">
+                  <span className="text-[11px] text-violet-400">Replying to @{replyingTo.username}</span>
+                  <button onClick={() => setReplyingTo(null)} className="text-[11px] text-zinc-600 hover:text-zinc-400 ml-1">✕</button>
+                </div>
+              )}
+              <input
+                ref={inputRef}
+                value={commentInput}
+                onChange={e => setCommentInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && submitComment()}
+                placeholder={replyingTo ? `Reply to @${replyingTo.username}…` : "What's your take…"}
+                className="w-full bg-transparent text-[14px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none"
+              />
+            </div>
+            {commentInput.trim() && (
+              <button onClick={submitComment} disabled={postingComment} className="text-[12px] font-bold text-violet-400 hover:text-violet-300 transition-colors flex-shrink-0">
+                {postingComment ? '…' : 'Post'}
               </button>
             )}
           </div>
-        )}
 
-        {/* Input */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 border-b border-zinc-800 focus-within:border-zinc-600 transition-colors pb-1">
-            {replyingTo && (
-              <div className="flex items-center gap-1 mb-1">
-                <span className="text-[11px] text-violet-400">Replying to @{replyingTo.username}</span>
-                <button onClick={() => setReplyingTo(null)} className="text-[11px] text-zinc-600 hover:text-zinc-400 ml-1">✕</button>
-              </div>
-            )}
-            <input
-              ref={inputRef}
-              value={commentInput}
-              onChange={e => setCommentInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && submitComment()}
-              placeholder={replyingTo ? `Reply to @${replyingTo.username}…` : 'Add your answer…'}
-              className="w-full bg-transparent text-[14px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none"
-            />
-          </div>
-          {commentInput.trim() && (
-            <button
-              onClick={submitComment}
-              disabled={postingComment}
-              className="text-[12px] font-bold text-violet-400 hover:text-violet-300 transition-colors flex-shrink-0"
-            >
-              {postingComment ? '…' : 'Post'}
-            </button>
-          )}
         </div>
       </div>
     </div>
@@ -570,7 +567,7 @@ function ReelCard({ reel, onNavigate }: { reel: Reel; onNavigate: (path: string)
   return (
     <button
       onClick={() => onNavigate('/reels')}
-      className="flex-shrink-0 w-[130px] rounded-2xl overflow-hidden relative bg-zinc-900"
+      className="flex-shrink-0 w-[180px] rounded-3xl overflow-hidden relative bg-zinc-900"
       style={{ aspectRatio: '9/16' }}
     >
       {reel.video_url ? (
@@ -593,10 +590,16 @@ function ReelCard({ reel, onNavigate }: { reel: Reel; onNavigate: (path: string)
       ) : (
         <div className="absolute inset-0 bg-gradient-to-b from-zinc-700 to-zinc-900" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-transparent" />
-      <div className="absolute bottom-0 inset-x-0 p-2.5">
-        <p className="text-[11px] font-bold text-white leading-tight line-clamp-2">{reel.title}</p>
-        <p className="text-[9px] text-white/50 mt-0.5 truncate">@{reel.creator_username}</p>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+      {/* Centered play button */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+        </div>
+      </div>
+      <div className="absolute bottom-0 inset-x-0 p-3">
+        <p className="text-[12px] font-bold text-white leading-tight line-clamp-2">{reel.title}</p>
+        <p className="text-[10px] text-white/50 mt-1 truncate">@{reel.creator_username}</p>
       </div>
     </button>
   );
@@ -616,17 +619,13 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
         {/* Header — inside padding */}
         <div className="flex items-start justify-between mb-4 px-4">
           <div>
-            <div className="flex items-center gap-2.5 mb-0.5">
-              {/* Equalizer bars — Ariel's content indicator */}
-              <div className="flex items-end gap-[3px] h-4 flex-shrink-0">
-                <div className="w-[3px] rounded-full bg-violet-400" style={{ height: '45%', animation: 'pulse 1.1s ease-in-out infinite' }} />
-                <div className="w-[3px] rounded-full bg-violet-400" style={{ height: '100%', animation: 'pulse 1.1s ease-in-out infinite 0.25s' }} />
-                <div className="w-[3px] rounded-full bg-violet-500" style={{ height: '65%', animation: 'pulse 1.1s ease-in-out infinite 0.5s' }} />
-                <div className="w-[3px] rounded-full bg-violet-400" style={{ height: '85%', animation: 'pulse 1.1s ease-in-out infinite 0.15s' }} />
-              </div>
-              <span className="text-base font-black text-white tracking-tight">Short Clips</span>
+            <div className="flex items-center gap-2 mb-0.5">
+              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.361a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span className="text-[13px] font-black text-white tracking-tight">Clips</span>
             </div>
-            <p className="text-xs text-zinc-400">Quick learning videos from the community</p>
+            <p className="text-[11px] text-zinc-500">Short videos from the community</p>
           </div>
           <button onClick={() => onNavigate('/reels')} className="text-xs text-zinc-400 hover:text-white transition-colors font-semibold flex items-center gap-1 mt-0.5 flex-shrink-0">
             See all
@@ -648,19 +647,19 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
                 <button
                   key={i}
                   onClick={() => onNavigate(`/topic/${encodeURIComponent(topic)}?subject=${encodeURIComponent(meta.label)}`)}
-                  className={`flex-shrink-0 w-[160px] rounded-2xl overflow-hidden bg-gradient-to-b ${meta.gradient} relative`}
+                  className={`flex-shrink-0 w-[180px] rounded-3xl overflow-hidden bg-gradient-to-b ${meta.gradient} relative`}
                   style={{ aspectRatio: '9/16' }}
                 >
-                  <div className="h-full flex flex-col justify-between p-3">
-                    <div className="flex items-center gap-1">
-                      <div className="w-5 h-5 rounded-full bg-black/30 flex items-center justify-center">
-                        <svg className="w-2.5 h-2.5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                      </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  {/* Centered play button */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                     </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-white leading-tight">{topic}</p>
-                      <p className="text-[9px] text-white/50 mt-0.5">{meta.short}</p>
-                    </div>
+                  </div>
+                  <div className="absolute bottom-0 inset-x-0 p-3">
+                    <p className="text-[12px] font-bold text-white leading-tight">{topic}</p>
+                    <p className="text-[10px] text-white/50 mt-1">{meta.short}</p>
                   </div>
                 </button>
               );
@@ -909,7 +908,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-24 page-enter">
 
         {/* ── Sticky header ─────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-900">
+        <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800">
 
           {/* Ariel violet crown line */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
@@ -1035,7 +1034,7 @@ export default function Dashboard() {
                 <div className="flex items-center gap-2 overflow-x-auto px-4 pb-3 pt-2" style={{ scrollbarWidth: 'none' }}>
                   <button
                     onClick={() => { setActiveSubject(null); setActiveTopic(null); }}
-                    className={`flex-shrink-0 px-4 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all ${!activeSubject ? 'bg-violet-500 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wide transition-all ${!activeSubject ? 'bg-violet-500 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                   >
                     All
                   </button>
@@ -1046,7 +1045,7 @@ export default function Dashboard() {
                       <button
                         key={key}
                         onClick={() => handleStoryTap(key)}
-                        className={`flex-shrink-0 flex items-center gap-1 px-4 py-1 rounded-full text-[11px] font-bold tracking-wide transition-all whitespace-nowrap ${
+                        className={`flex-shrink-0 flex items-center gap-1 px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wide transition-all whitespace-nowrap ${
                           isActive ? 'bg-violet-500 text-white' : 'text-zinc-500 hover:text-zinc-300'
                         }`}
                       >
@@ -1057,9 +1056,9 @@ export default function Dashboard() {
                   })}
                   <button
                     onClick={() => setShowSubjectPicker(true)}
-                    className="flex-shrink-0 px-4 py-1 rounded-full text-[11px] font-bold text-zinc-600 hover:text-zinc-400 transition-all"
+                    className="flex-shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold text-zinc-600 hover:text-zinc-400 transition-all"
                   >
-                    + more
+                    +{allSubjectKeys.filter(k => !userSubjects.includes(k)).length}
                   </button>
                 </div>
               </div>
@@ -1093,20 +1092,20 @@ export default function Dashboard() {
 
           {/* ── Feed tabs ── */}
           {!searchQuery && (
-            <div className="flex items-center gap-6 mt-5 mb-1 px-1">
+            <div className="flex items-center gap-6 mt-6 mb-1 px-1">
               <button
                 onClick={() => setFeedTab('foryou')}
-                className={`relative text-[15px] font-black tracking-tight transition-all pb-2 ${feedTab === 'foryou' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
+                className={`relative text-[15px] font-black tracking-tight transition-all pb-2.5 ${feedTab === 'foryou' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
                 For You
-                {feedTab === 'foryou' && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-violet-400 rounded-full" />}
+                <span className={`absolute bottom-0 left-0 right-0 h-[3px] bg-violet-400 rounded-full transition-all duration-200 ${feedTab === 'foryou' ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}`} />
               </button>
               <button
                 onClick={() => setFeedTab('following')}
-                className={`relative text-[15px] font-black tracking-tight transition-all pb-2 ${feedTab === 'following' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
+                className={`relative text-[15px] font-black tracking-tight transition-all pb-2.5 ${feedTab === 'following' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
                 Following
-                {feedTab === 'following' && <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-violet-400 rounded-full" />}
+                <span className={`absolute bottom-0 left-0 right-0 h-[3px] bg-violet-400 rounded-full transition-all duration-200 ${feedTab === 'following' ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}`} />
               </button>
             </div>
           )}
@@ -1136,7 +1135,9 @@ export default function Dashboard() {
             ) : followingCards.length > 0 ? (
               <div className="mt-3">
                 {followingCards.map((card, i) => (
-                  <CardTile key={card.id} card={card} onComment={openComments} flush={i === 0} />
+                  <div key={card.id}>
+                    <CardTile card={card} onComment={openComments} flush={i === 0} />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -1172,10 +1173,17 @@ export default function Dashboard() {
                       <button
                         key={card.id}
                         onClick={() => router.push('/deck')}
-                        className="flex-shrink-0 w-36 p-3 rounded-2xl bg-zinc-900 text-left active:scale-95 transition-all"
+                        className="flex-shrink-0 w-36 rounded-2xl overflow-hidden text-left active:scale-95 transition-all"
+                        style={{ background: '#fafaf8' }}
                       >
-                        <p className="text-[11px] font-semibold text-zinc-300 line-clamp-3 leading-snug">{card.question}</p>
-                        {card.subject && <p className="text-[9px] text-zinc-600 mt-2 uppercase tracking-wide truncate">{card.subject}</p>}
+                        {/* Subject accent */}
+                        {card.subject && (
+                          <div className={`h-[3px] bg-gradient-to-r from-transparent ${STRIP_COLOR[card.subject?.toLowerCase().split(' ')[0]] ?? 'via-zinc-400'} to-transparent`} />
+                        )}
+                        <div className="p-3">
+                          <p className="text-[11px] font-semibold text-zinc-800 line-clamp-3 leading-snug">{card.question}</p>
+                          {card.subject && <p className="text-[9px] text-zinc-400 mt-2 uppercase tracking-wide truncate">{card.subject}</p>}
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -1214,12 +1222,8 @@ export default function Dashboard() {
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-              {/* Ariel avatar with sparkle */}
               <div className="relative mb-5">
-                <div className="w-16 h-16 rounded-2xl bg-violet-400 flex items-center justify-center">
-                  <span className="text-3xl font-black text-white">A</span>
-                </div>
-                <span className="absolute -top-1 -right-1 text-base">✦</span>
+                <ArielLoader size={56} />
               </div>
               <p className="text-base font-bold text-white">
                 {activeSubject || activeTopic ? 'Nothing here yet' : 'Your feed is wide open'}

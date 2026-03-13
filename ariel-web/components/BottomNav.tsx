@@ -182,7 +182,7 @@ export default function BottomNav() {
       )}
 
       {/* Bottom nav bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#09090b] border-t border-zinc-900">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#09090b] border-t border-zinc-800">
         <div className="flex items-stretch h-[60px] max-w-screen-sm mx-auto">
 
           {/* Today, Deck */}
@@ -196,11 +196,11 @@ export default function BottomNav() {
                 onClick={() => router.push(item.path)}
                 className="flex-1 flex flex-col items-center justify-center transition-all"
               >
-                <div className="flex flex-col items-center gap-1">
-                  <div className={`w-1 h-1 rounded-full transition-all duration-200 ${isActive ? 'bg-violet-400' : 'bg-transparent'}`} />
+                <div className="flex flex-col items-center gap-1.5">
                   <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-500'}`}>
                     {item.icon(isActive)}
                   </span>
+                  <div className={`h-[2px] rounded-full transition-all duration-200 ${isActive ? 'w-4 bg-violet-400' : 'w-0 bg-transparent'}`} />
                 </div>
               </button>
             );
@@ -212,10 +212,10 @@ export default function BottomNav() {
             className="flex-1 flex flex-col items-center justify-center pb-1"
           >
             <div className="relative">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg -mt-5 border transition-transform duration-150 active:scale-95 ${
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center -mt-5 border transition-transform duration-150 active:scale-95 ${
                 pathname === '/create-cards'
-                  ? 'bg-violet-400 border-violet-300/30 shadow-violet-400/30'
-                  : 'bg-violet-500 border-violet-400/30 shadow-violet-500/30'
+                  ? 'bg-violet-400 border-violet-300/30 shadow-[0_0_20px_rgba(167,139,250,0.5)]'
+                  : 'bg-violet-500 border-violet-400/30 shadow-[0_0_16px_rgba(139,92,246,0.45)]'
               }`}>
                 <ArielIcon size={30} variant="purple" />
               </div>
@@ -233,11 +233,11 @@ export default function BottomNav() {
                 onClick={() => router.push(item.path)}
                 className="flex-1 flex flex-col items-center justify-center transition-all"
               >
-                <div className="flex flex-col items-center gap-1">
-                  <div className={`w-1 h-1 rounded-full transition-all duration-200 ${isActive ? 'bg-violet-400' : 'bg-transparent'}`} />
+                <div className="flex flex-col items-center gap-1.5">
                   <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-500'}`}>
                     {item.icon(isActive)}
                   </span>
+                  <div className={`h-[2px] rounded-full transition-all duration-200 ${isActive ? 'w-4 bg-violet-400' : 'w-0 bg-transparent'}`} />
                 </div>
               </button>
             );
