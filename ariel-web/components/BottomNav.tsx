@@ -194,14 +194,12 @@ export default function BottomNav() {
               <button
                 key={item.name}
                 onClick={() => router.push(item.path)}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 pt-1 transition-all"
+                className="flex-1 flex flex-col items-center justify-center transition-all"
               >
-                <div className="flex flex-col items-center gap-0.5 px-3 py-1.5">
-                  <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-400'}`}>
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`w-1 h-1 rounded-full transition-all duration-200 ${isActive ? 'bg-violet-400' : 'bg-transparent'}`} />
+                  <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-500'}`}>
                     {item.icon(isActive)}
-                  </span>
-                  <span className={`text-[10px] font-semibold transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-400'}`}>
-                    {item.name}
                   </span>
                 </div>
               </button>
@@ -224,7 +222,7 @@ export default function BottomNav() {
             </div>
           </button>
 
-          {/* Cram, Duels */}
+          {/* Duels, Cram */}
           {mainNav.slice(2).map((item) => {
             const isActive = item.exact
               ? pathname === item.path
@@ -233,14 +231,12 @@ export default function BottomNav() {
               <button
                 key={item.name}
                 onClick={() => router.push(item.path)}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 pt-1 transition-all"
+                className="flex-1 flex flex-col items-center justify-center transition-all"
               >
-                <div className="flex flex-col items-center gap-0.5 px-3 py-1.5">
-                  <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-400'}`}>
+                <div className="flex flex-col items-center gap-1">
+                  <div className={`w-1 h-1 rounded-full transition-all duration-200 ${isActive ? 'bg-violet-400' : 'bg-transparent'}`} />
+                  <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-500'}`}>
                     {item.icon(isActive)}
-                  </span>
-                  <span className={`text-[10px] font-semibold transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-400'}`}>
-                    {item.name}
                   </span>
                 </div>
               </button>

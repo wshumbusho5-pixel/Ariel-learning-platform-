@@ -257,17 +257,38 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
     } catch {}
   };
 
+  const [shareToast, setShareToast] = useState(false);
+
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const url = `${window.location.origin}/cards/${card.id}`;
+    const copyFallback = () => {
+      try {
+        const el = document.createElement('textarea');
+        el.value = url;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 1600);
+      } catch {}
+    };
     try {
       if (navigator.share) {
         await navigator.share({ title: card.question, text: card.question, url });
-      } else {
+      } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(url);
+        setShareToast(true);
+        setTimeout(() => setShareToast(false), 1600);
+      } else {
+        copyFallback();
       }
     } catch {
-      try { await navigator.clipboard.writeText(url); } catch {}
+      copyFallback();
     }
   };
 
@@ -276,10 +297,10 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
   return (
     <div className="mb-5 relative -mx-4">
-      {/* Save toast */}
-      {saveToast && (
+      {/* Toasts */}
+      {(saveToast || shareToast) && (
         <div className="animate-toast absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
-          Saved to deck ✓
+          {saveToast ? 'Saved to deck ✓' : 'Link copied ✓'}
         </div>
       )}
 
