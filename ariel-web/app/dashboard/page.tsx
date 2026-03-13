@@ -596,6 +596,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FeedCard[]>([]);
   const [searching, setSearching] = useState(false);
+  const [feedTab, setFeedTab] = useState<'foryou' | 'following'>('foryou');
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -859,6 +860,29 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* Stats strip */}
+              {!dataLoading && (
+                <div className="max-w-3xl mx-auto px-4 pb-3 pt-1">
+                  <div className="flex items-center gap-2">
+                    {streakDays > 0 && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
+                        <span className="text-sm">🔥</span>
+                        <span className="text-xs font-black text-orange-400">{streakDays} day streak</span>
+                      </div>
+                    )}
+                    {dueCards.length > 0 && (
+                      <button onClick={() => router.push('/deck')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 active:scale-95 transition-all">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+                        <span className="text-xs font-black text-violet-400">{dueCards.length} due</span>
+                      </button>
+                    )}
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-800/60 border border-zinc-700/40">
+                      <span className="text-xs font-black text-zinc-400">Lv {level}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Subject filter strip */}
               <div className="max-w-3xl mx-auto">
                 <div className="flex items-center gap-1.5 overflow-x-auto px-4 pb-3 pt-1" style={{ scrollbarWidth: 'none' }}>
@@ -921,27 +945,50 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ── Due cards banner ── */}
+          {/* ── Study Now card ── */}
           {!searchQuery && !dataLoading && dueCards.length > 0 && (
             <button
               onClick={() => router.push('/deck')}
-              className="w-full mt-4 flex items-center justify-between px-4 py-3.5 bg-gradient-to-r from-orange-500/10 via-orange-500/5 to-transparent border border-orange-500/25 rounded-2xl group active:scale-[0.98] transition-all"
+              className="w-full mt-4 rounded-2xl overflow-hidden active:scale-[0.98] transition-all group"
+              style={{ background: 'linear-gradient(135deg, #1a1040 0%, #0f0f1a 100%)' }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl">📚</span>
+              <div className="flex items-center justify-between px-4 py-4 border border-violet-500/20 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(139,92,246,0.2)' }}>
+                    <span className="text-2xl">🎴</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[11px] font-bold text-violet-400 uppercase tracking-widest mb-0.5">Ready to study</p>
+                    <p className="text-base font-black text-white leading-tight">
+                      {dueCards.length} card{dueCards.length !== 1 ? 's' : ''} waiting
+                    </p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="text-sm font-black text-white">
-                    {dueCards.length} card{dueCards.length !== 1 ? 's' : ''} ready for review
-                  </p>
-                  <p className="text-xs text-orange-400/70 mt-0.5">Open your deck to go through them</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-white bg-violet-500 px-3 py-1.5 rounded-full group-active:bg-violet-600 transition-colors">
+                    Study now
+                  </span>
                 </div>
               </div>
-              <svg className="w-4 h-4 text-orange-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
             </button>
+          )}
+
+          {/* ── Feed tabs ── */}
+          {!searchQuery && (
+            <div className="flex items-center gap-0 mt-4 border-b border-zinc-800">
+              <button
+                onClick={() => setFeedTab('foryou')}
+                className={`px-4 py-2.5 text-sm font-bold transition-all border-b-2 -mb-px ${feedTab === 'foryou' ? 'text-white border-violet-400' : 'text-zinc-500 border-transparent hover:text-zinc-300'}`}
+              >
+                For You
+              </button>
+              <button
+                onClick={() => setFeedTab('following')}
+                className={`px-4 py-2.5 text-sm font-bold transition-all border-b-2 -mb-px ${feedTab === 'following' ? 'text-white border-violet-400' : 'text-zinc-500 border-transparent hover:text-zinc-300'}`}
+              >
+                Following
+              </button>
+            </div>
           )}
 
           {/* Search results label */}
@@ -961,7 +1008,18 @@ export default function Dashboard() {
           )}
 
           {/* Card feed */}
-          {dataLoading ? (
+          {feedTab === 'following' && !searchQuery ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+              <div className="w-14 h-14 rounded-2xl bg-zinc-800 flex items-center justify-center mb-4">
+                <span className="text-2xl">👥</span>
+              </div>
+              <p className="text-base font-bold text-white">Follow people to see their cards</p>
+              <p className="text-sm text-zinc-500 mt-2 leading-relaxed max-w-[240px]">When you follow someone, their public cards show up here.</p>
+              <button onClick={() => router.push('/explore')} className="mt-5 px-5 py-2.5 rounded-full bg-violet-500 text-white text-sm font-bold active:scale-95 transition-all">
+                Explore people
+              </button>
+            </div>
+          ) : dataLoading ? (
             <div className="mt-3">
               <CardSkeleton height={160} flush />
               <CardSkeleton height={240} />
