@@ -17,7 +17,6 @@ export interface TikTokReel {
   following_creator?: boolean;
   saved_to_deck?: boolean;
   view_count?: number;
-  like_count?: number;
 }
 
 function proxyUrl(url?: string): string | undefined {
@@ -42,20 +41,16 @@ export default function TikTokPlayer({
   onClose,
   onSave,
   onFollow,
-  onShare,
   onComment,
   onDMShare,
-  onLike,
 }: {
   reels: TikTokReel[];
   startIndex: number;
   onClose: () => void;
   onSave: (id: string) => void;
   onFollow: (creatorId: string) => void;
-  onShare: (id: string) => void;
   onComment: (id: string) => void;
   onDMShare?: (reel: TikTokReel) => void;
-  onLike?: (id: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
@@ -64,7 +59,6 @@ export default function TikTokPlayer({
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [likedReels, setLikedReels] = useState<Set<string>>(new Set());
 
   useLayoutEffect(() => {
     if (containerRef.current) {
@@ -121,17 +115,6 @@ export default function TikTokPlayer({
     else { video.pause(); setPaused(true); }
   };
 
-  const handleLike = (e: React.MouseEvent, reelId: string) => {
-    e.stopPropagation();
-    setLikedReels(prev => {
-      const next = new Set(prev);
-      if (next.has(reelId)) next.delete(reelId);
-      else next.add(reelId);
-      return next;
-    });
-    onLike?.(reelId);
-  };
-
   const handleTimeUpdate = useCallback((e: React.SyntheticEvent<HTMLVideoElement>, index: number) => {
     if (index !== activeIndex) return;
     const video = e.currentTarget;
@@ -179,9 +162,6 @@ export default function TikTokPlayer({
         style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
       >
         {reels.map((reel, index) => {
-          const isLiked = likedReels.has(reel.id);
-          const likeCount = (reel.like_count ?? 0) + (isLiked ? 1 : 0);
-
           return (
             <div
               key={reel.id}
@@ -258,24 +238,6 @@ export default function TikTokPlayer({
               {/* Right-side action buttons */}
               <div className="absolute bottom-[110px] right-3 z-20 flex flex-col items-center gap-5">
 
-                {/* Like */}
-                <button onClick={e => handleLike(e, reel.id)} className="flex flex-col items-center gap-1.5">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors ${isLiked ? 'bg-red-500/30' : 'bg-white/10'}`}>
-                    <svg
-                      className={`w-[22px] h-[22px] transition-colors ${isLiked ? 'text-red-400' : 'text-white'}`}
-                      fill={isLiked ? 'currentColor' : 'none'}
-                      stroke="currentColor"
-                      strokeWidth={1.75}
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </div>
-                  <span className={`text-[10px] font-semibold ${isLiked ? 'text-red-400' : 'text-white/70'}`}>
-                    {likeCount > 0 ? formatViews(likeCount) : 'Like'}
-                  </span>
-                </button>
-
                 {/* Comment */}
                 <button onClick={(e) => { e.stopPropagation(); onComment(reel.id); }} className="flex flex-col items-center gap-1.5">
                   <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
@@ -283,7 +245,7 @@ export default function TikTokPlayer({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                     </svg>
                   </div>
-                  <span className="text-white/70 text-[10px] font-semibold">Answer</span>
+                  <span className="text-white/70 text-[10px] font-semibold">Discuss</span>
                 </button>
 
                 {/* Save */}
@@ -300,16 +262,6 @@ export default function TikTokPlayer({
                     </svg>
                   </div>
                   <span className={`text-[10px] font-semibold ${reel.saved_to_deck ? 'text-violet-300' : 'text-white/70'}`}>Save</span>
-                </button>
-
-                {/* Share */}
-                <button onClick={(e) => { e.stopPropagation(); onShare(reel.id); }} className="flex flex-col items-center gap-1.5">
-                  <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                    <svg className="w-[22px] h-[22px] text-white" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                    </svg>
-                  </div>
-                  <span className="text-white/70 text-[10px] font-semibold">Share</span>
                 </button>
 
                 {/* DM */}

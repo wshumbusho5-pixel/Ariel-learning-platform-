@@ -599,9 +599,8 @@ export default function ReelsPage() {
           onClose={() => setActiveReel(null)}
           onSave={handleSaveToDeck}
           onFollow={handleFollow}
-          onShare={handleShare}
-          onComment={(id) => { setActiveReel(null); openComments(id); }}
-          onDMShare={(reel) => { setActiveReel(null); setShareReel(reels.find(r => r.id === reel.id) || null); }}
+          onComment={(id) => { openComments(id); }}
+          onDMShare={(reel) => { setShareReel(reels.find(r => r.id === reel.id) || null); }}
         />
       )}
 

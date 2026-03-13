@@ -85,12 +85,12 @@ export default function ShareSheet({ target, onClose }: ShareSheetProps) {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[59] bg-black/40 backdrop-blur-sm"
+        className="fixed inset-0 z-[399] bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Sheet — sits above the bottom nav on mobile (nav is ~56px + safe area) */}
-      <div className="fixed bottom-0 left-0 right-0 z-[60] bg-white rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="fixed bottom-0 left-0 right-0 z-[400] bg-white rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-10 h-1 rounded-full bg-gray-200" />

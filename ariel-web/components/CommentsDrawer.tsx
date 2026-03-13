@@ -128,7 +128,7 @@ export default function CommentsDrawer() {
   if (!cardId) return null;
 
   return (
-    <div className="fixed inset-0 z-[300] flex flex-col justify-end">
+    <div className="fixed inset-0 z-[400] flex flex-col justify-end">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
