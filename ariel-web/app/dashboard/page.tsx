@@ -909,38 +909,40 @@ export default function Dashboard() {
           ) : (
             <>
               {/* Main row */}
-              {/* ── Top row: Ariel logo centered + icons flanking ── */}
+              {/* ── Top row: identity left | brand center | icons right ── */}
               <div className="max-w-3xl mx-auto px-4 pt-3 pb-2 flex items-center justify-between">
-                {/* Left: profile avatar */}
-                <button onClick={() => router.push('/profile')} className="flex-shrink-0 relative">
-                  <div className="p-[2px] rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500">
-                    {user?.profile_picture ? (
-                      <img
-                        src={user.profile_picture}
-                        alt={user.username}
-                        className="w-9 h-9 rounded-full object-cover block"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-[#09090b] flex items-center justify-center">
-                        <span className="text-sm font-black text-white">
-                          {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
-                        </span>
-                      </div>
+                {/* Left: avatar + name */}
+                <button onClick={() => router.push('/profile')} className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
+                  <div className="relative flex-shrink-0">
+                    <div className="p-[2px] rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-indigo-500">
+                      {user?.profile_picture ? (
+                        <img
+                          src={user.profile_picture}
+                          alt={user.username}
+                          className="w-9 h-9 rounded-full object-cover block"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-[#09090b] flex items-center justify-center">
+                          <span className="text-sm font-black text-white">
+                            {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {streakDays > 0 && (
+                      <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none bg-[#09090b] rounded-full px-0.5">🔥</span>
                     )}
                   </div>
-                  {streakDays > 0 && (
-                    <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none bg-[#09090b] rounded-full px-0.5">🔥</span>
+                  {dataLoading ? (
+                    <span className="inline-block w-14 h-4 bg-zinc-800 rounded-full animate-pulse" />
+                  ) : (
+                    <span className="text-[20px] font-black text-white leading-none tracking-tight truncate">{firstName || 'there'}</span>
                   )}
                 </button>
 
-                {/* Center: Ariel wordmark + name */}
-                <div className="flex flex-col items-center gap-1">
-                  <ArielWordmark size={26} variant="dark" />
-                  {dataLoading ? (
-                    <span className="inline-block w-16 h-3 bg-zinc-800 rounded-full animate-pulse" />
-                  ) : (
-                    <h1 className="text-[22px] font-black text-white leading-none tracking-tight">{firstName || 'there'}</h1>
-                  )}
+                {/* Center: Ariel wordmark alone — no name nearby */}
+                <div className="absolute left-1/2 -translate-x-1/2">
+                  <ArielWordmark size={28} variant="dark" />
                 </div>
 
                 {/* Right: action icons */}
