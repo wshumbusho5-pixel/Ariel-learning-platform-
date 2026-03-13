@@ -35,6 +35,8 @@ function formatViews(n?: number): string {
   return String(n);
 }
 
+const SWIPE_HINT_KEY = 'ariel_clips_swipe_hint_seen';
+
 export default function TikTokPlayer({
   reels,
   startIndex,
@@ -59,17 +61,32 @@ export default function TikTokPlayer({
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [showSwipeHint, setShowSwipeHint] = useState(true);
-  // Optimistic saved state — seed from initial reel data
+  const [bufferingIndex, setBufferingIndex] = useState<number | null>(null);
+
+  // Swipe hint — only show if never seen before
+  const [showSwipeHint, setShowSwipeHint] = useState(() => {
+    try { return !localStorage.getItem(SWIPE_HINT_KEY); } catch { return true; }
+  });
+
+  // Optimistic saved state
   const [savedReels, setSavedReels] = useState<Set<string>>(
     () => new Set(reels.filter(r => r.saved_to_deck).map(r => r.id))
   );
 
-  // Hide swipe hint after 2.5s
+  // Optimistic following state
+  const [followingCreators, setFollowingCreators] = useState<Set<string>>(
+    () => new Set(reels.filter(r => r.following_creator).map(r => r.creator_id))
+  );
+
+  // Hide swipe hint after 2.5s and persist
   useEffect(() => {
-    const t = setTimeout(() => setShowSwipeHint(false), 2500);
+    if (!showSwipeHint) return;
+    const t = setTimeout(() => {
+      setShowSwipeHint(false);
+      try { localStorage.setItem(SWIPE_HINT_KEY, '1'); } catch {}
+    }, 2500);
     return () => clearTimeout(t);
-  }, []);
+  }, [showSwipeHint]);
 
   useLayoutEffect(() => {
     if (containerRef.current) {
@@ -130,11 +147,20 @@ export default function TikTokPlayer({
     e.stopPropagation();
     setSavedReels(prev => {
       const next = new Set(prev);
-      if (next.has(reelId)) next.delete(reelId);
-      else next.add(reelId);
+      next.has(reelId) ? next.delete(reelId) : next.add(reelId);
       return next;
     });
     onSave(reelId);
+  };
+
+  const handleFollow = (e: React.MouseEvent, creatorId: string) => {
+    e.stopPropagation();
+    setFollowingCreators(prev => {
+      const next = new Set(prev);
+      next.has(creatorId) ? next.delete(creatorId) : next.add(creatorId);
+      return next;
+    });
+    onFollow(creatorId);
   };
 
   const handleTimeUpdate = useCallback((e: React.SyntheticEvent<HTMLVideoElement>, index: number) => {
@@ -182,6 +208,8 @@ export default function TikTokPlayer({
       >
         {reels.map((reel, index) => {
           const isSaved = savedReels.has(reel.id);
+          const isFollowing = followingCreators.has(reel.creator_id);
+          const isBuffering = bufferingIndex === index && activeIndex === index;
 
           return (
             <div
@@ -191,6 +219,15 @@ export default function TikTokPlayer({
               style={{ height: '100dvh', scrollSnapAlign: 'start' }}
               onClick={togglePlay}
             >
+              {/* Poster shown while buffering */}
+              {reel.thumbnail_url && (
+                <img
+                  src={proxyUrl(reel.thumbnail_url)}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              )}
+
               {/* Video */}
               <video
                 ref={el => { videoRefs.current[index] = el; }}
@@ -199,12 +236,20 @@ export default function TikTokPlayer({
                 loop
                 playsInline
                 muted
-                poster={proxyUrl(reel.thumbnail_url)}
+                onWaiting={() => setBufferingIndex(index)}
+                onPlaying={() => setBufferingIndex(b => b === index ? null : b)}
                 onTimeUpdate={e => handleTimeUpdate(e, index)}
               />
 
-              {/* Cinematic gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-black/20 pointer-events-none" />
+              {/* Buffering spinner */}
+              {isBuffering && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                  <div className="w-12 h-12 rounded-full border-2 border-white/20 border-t-white/80 animate-spin" />
+                </div>
+              )}
+
+              {/* Cinematic gradient — stronger at bottom for text, light at top */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
               {/* Pause indicator */}
               {paused && activeIndex === index && (
@@ -235,29 +280,41 @@ export default function TikTokPlayer({
                     </div>
                   )}
                   <div className="flex flex-col min-w-0">
-                    <p className="text-white font-bold text-[14px] drop-shadow leading-tight">@{reel.creator_username}</p>
+                    <p className="text-white font-bold text-[14px] leading-tight" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                      @{reel.creator_username}
+                    </p>
                     {reel.view_count ? (
-                      <p className="text-white/40 text-[11px] leading-tight">{formatViews(reel.view_count)} views</p>
+                      <p className="text-white/50 text-[11px] leading-tight">{formatViews(reel.view_count)} views</p>
                     ) : null}
                   </div>
                   <button
-                    onClick={(e) => { e.stopPropagation(); onFollow(reel.creator_id); }}
-                    className={`flex-shrink-0 ml-1 px-3.5 py-1 rounded-full text-xs font-bold border transition-all ${
-                      reel.following_creator
+                    onClick={e => handleFollow(e, reel.creator_id)}
+                    className={`flex-shrink-0 ml-1 px-3.5 py-1 rounded-full text-xs font-bold border transition-all active:scale-95 ${
+                      isFollowing
                         ? 'border-white/20 text-white/50 bg-transparent'
                         : 'border-white text-white bg-white/10 backdrop-blur-sm'
                     }`}
                   >
-                    {reel.following_creator ? 'Following' : 'Follow'}
+                    {isFollowing ? 'Following' : 'Follow'}
                   </button>
                 </div>
 
-                <p className="text-white font-bold text-[15px] leading-snug drop-shadow line-clamp-2 mb-1">{reel.title}</p>
+                <p
+                  className="text-white font-bold text-[15px] leading-snug line-clamp-2 mb-1"
+                  style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}
+                >
+                  {reel.title}
+                </p>
                 {reel.description && (
-                  <p className="text-white/60 text-[13px] leading-relaxed line-clamp-2 drop-shadow">{reel.description}</p>
+                  <p
+                    className="text-white/70 text-[13px] leading-relaxed line-clamp-2"
+                    style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
+                  >
+                    {reel.description}
+                  </p>
                 )}
                 {reel.category && (
-                  <span className="inline-block mt-2 text-[10px] font-bold bg-black/30 backdrop-blur-sm text-white/70 px-2.5 py-1 rounded-full">
+                  <span className="inline-flex items-center mt-2 text-[11px] font-semibold bg-white/15 backdrop-blur-md text-white px-3 py-1 rounded-full border border-white/20">
                     {reel.category}
                   </span>
                 )}
@@ -289,7 +346,7 @@ export default function TikTokPlayer({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                     </svg>
                   </div>
-                  <span className={`text-[10px] font-semibold ${isSaved ? 'text-violet-300' : 'text-white/70'}`}>
+                  <span className={`text-[10px] font-semibold transition-colors ${isSaved ? 'text-violet-300' : 'text-white/70'}`}>
                     {isSaved ? 'Saved' : 'Save'}
                   </span>
                 </button>
@@ -307,15 +364,9 @@ export default function TikTokPlayer({
                 )}
               </div>
 
-              {/* Swipe-up hint — fades out after 2.5s, only shows if there's a next clip */}
-              {activeIndex === index && hasMore && (
-                <div
-                  className="absolute bottom-[18px] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 pointer-events-none"
-                  style={{
-                    opacity: showSwipeHint ? 1 : 0,
-                    transition: 'opacity 0.6s ease',
-                  }}
-                >
+              {/* Swipe-up hint — only shows once ever */}
+              {activeIndex === index && hasMore && showSwipeHint && (
+                <div className="absolute bottom-[18px] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 pointer-events-none">
                   <svg
                     className="w-4 h-4 text-white/50"
                     fill="none"
