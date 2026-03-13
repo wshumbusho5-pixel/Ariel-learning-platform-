@@ -248,8 +248,8 @@ export default function TikTokPlayer({
                 </div>
               )}
 
-              {/* Cinematic gradient — stronger at bottom for text, light at top */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+              {/* Gradient — concentrated at bottom where text lives */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/25 pointer-events-none" />
 
               {/* Pause indicator */}
               {paused && activeIndex === index && (
@@ -262,66 +262,52 @@ export default function TikTokPlayer({
                 </div>
               )}
 
-              {/* Bottom-left: creator + info */}
-              <div className="absolute bottom-[130px] left-4 right-[76px] z-20">
+              {/* Bottom-left: creator + info — tight to bottom like TikTok */}
+              <div className="absolute bottom-[72px] left-4 right-[76px] z-20">
+
+                {/* Title */}
+                <p
+                  className="text-white font-bold text-[15px] leading-snug line-clamp-2 mb-2.5"
+                  style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}
+                >
+                  {reel.title}
+                </p>
 
                 {/* Creator row */}
-                <div className="flex items-center gap-2.5 mb-3">
+                <div className="flex items-center gap-2.5">
                   {reel.creator_profile_picture ? (
                     <img
                       src={proxyUrl(reel.creator_profile_picture)}
                       alt={reel.creator_username}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-white/30 flex-shrink-0"
+                      className="w-8 h-8 rounded-full object-cover border border-white/30 flex-shrink-0"
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-violet-500/40 border-2 border-violet-400/30 flex items-center justify-center text-violet-200 font-black text-sm flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-violet-500/40 border border-violet-400/30 flex items-center justify-center text-violet-200 font-black text-xs flex-shrink-0">
                       {reel.creator_username[0]?.toUpperCase()}
                     </div>
                   )}
-                  <div className="flex flex-col min-w-0">
-                    <p className="text-white font-bold text-[14px] leading-tight" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
-                      @{reel.creator_username}
-                    </p>
-                    {reel.view_count ? (
-                      <p className="text-white/50 text-[11px] leading-tight">{formatViews(reel.view_count)} views</p>
-                    ) : null}
-                  </div>
+                  <p className="text-white/80 font-semibold text-[13px]" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+                    @{reel.creator_username}
+                  </p>
+                  {reel.view_count ? (
+                    <span className="text-white/40 text-[11px]">· {formatViews(reel.view_count)} views</span>
+                  ) : null}
                   <button
                     onClick={e => handleFollow(e, reel.creator_id)}
-                    className={`flex-shrink-0 ml-1 px-3.5 py-1 rounded-full text-xs font-bold border transition-all active:scale-95 ${
+                    className={`flex-shrink-0 ml-auto px-3 py-0.5 rounded-full text-[11px] font-bold border transition-all active:scale-95 ${
                       isFollowing
-                        ? 'border-white/20 text-white/50 bg-transparent'
-                        : 'border-white text-white bg-white/10 backdrop-blur-sm'
+                        ? 'border-white/20 text-white/40 bg-transparent'
+                        : 'border-white/70 text-white bg-white/10 backdrop-blur-sm'
                     }`}
                   >
                     {isFollowing ? 'Following' : 'Follow'}
                   </button>
                 </div>
-
-                <p
-                  className="text-white font-bold text-[15px] leading-snug line-clamp-2 mb-1"
-                  style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}
-                >
-                  {reel.title}
-                </p>
-                {reel.description && (
-                  <p
-                    className="text-white/70 text-[13px] leading-relaxed line-clamp-2"
-                    style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
-                  >
-                    {reel.description}
-                  </p>
-                )}
-                {reel.category && (
-                  <span className="inline-flex items-center mt-2 text-[11px] font-semibold bg-white/15 backdrop-blur-md text-white px-3 py-1 rounded-full border border-white/20">
-                    {reel.category}
-                  </span>
-                )}
               </div>
 
               {/* Right-side action buttons */}
-              <div className="absolute bottom-[140px] right-3 z-20 flex flex-col items-center gap-5">
+              <div className="absolute bottom-[80px] right-3 z-20 flex flex-col items-center gap-5">
 
                 {/* Discuss */}
                 <button onClick={(e) => { e.stopPropagation(); onComment(reel.id); }} className="flex flex-col items-center gap-1.5">

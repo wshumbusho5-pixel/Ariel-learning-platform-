@@ -481,12 +481,14 @@ export default function ReelsPage() {
     try {
       if (isFollowing) { await socialAPI.unfollowUser(creatorId); showToast('Unfollowed'); }
       else { await socialAPI.followUser(creatorId); showToast(`Following @${reel?.creator_username}`); }
-    } catch {
+    } catch (err: any) {
       const revert = (list: Reel[]) =>
         list.map(r => r.creator_id === creatorId ? { ...r, following_creator: isFollowing } : r);
       setReels(prev => revert(prev));
       if (activeReel?.creator_id === creatorId) setActiveReel(prev => prev ? { ...prev, following_creator: isFollowing } : prev);
-      showToast('Something went wrong');
+      const msg = err?.response?.data?.detail || err?.message || 'Something went wrong';
+      console.error('[follow error]', msg, err);
+      showToast(msg);
     }
   }, [reels, activeReel]);
 
