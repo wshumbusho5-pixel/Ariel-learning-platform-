@@ -494,7 +494,7 @@ export default function Home() {
         {/* Headline below phone */}
         <div className="text-center mb-8">
           <h1 style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em' }}>
-            Learn by scrolling.<br />Teach by sharing.
+            Go deeper.
           </h1>
           <p style={{ fontSize: 14, color: '#8b9099', marginTop: 10, lineHeight: 1.6 }}>
             Cards, clips &amp; community — for students, self-learners, and anyone endlessly curious.
@@ -525,7 +525,7 @@ export default function Home() {
           </div>
 
           <h1 style={{ fontSize: 58, fontWeight: 900, color: '#fff', lineHeight: 0.98, letterSpacing: '-0.03em', marginBottom: 18 }}>
-            Learn by scrolling.<br />Teach by sharing.
+            Go deeper.
           </h1>
 
           <p style={{ fontSize: 17, color: '#8b9099', lineHeight: 1.6, maxWidth: 420 }}>
