@@ -6,13 +6,13 @@ import AuthModal from '@/components/AuthModal';
 import { useAuth } from '@/lib/useAuth';
 import ArielWordmark from '@/components/ArielWordmark';
 
-// ─── Feed data ────────────────────────────────────────────────────────────────
+// ─── Feed data (generic names, realistic content) ─────────────────────────────
 
 const FEED_ITEMS = [
   {
     type: 'card',
-    author: 'Naomi keza',
-    avatar: 'N',
+    author: 'Alex K.',
+    avatar: 'A',
     avatarColor: '#7c5cfc',
     subject: 'Physics',
     subjectIcon: '🔬',
@@ -27,21 +27,21 @@ const FEED_ITEMS = [
   },
   {
     type: 'reel',
-    author: 'Orttoblend',
-    avatar: 'O',
-    avatarColor: '#52525b',
+    author: 'Jordan M.',
+    avatar: 'J',
+    avatarColor: '#0ea5e9',
     subject: 'Sciences',
-    title: 'cell division simplified',
+    title: 'Cell division simplified',
     caption: 'Breaking it down so it actually makes sense',
-    thumbGradient: 'linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%)',
+    thumbImg: 'https://picsum.photos/seed/cells42/280/140',
     views: '2.3k',
     likes: 418,
   },
   {
     type: 'card',
-    author: 'Uwase Monalisa',
-    avatar: 'U',
-    avatarColor: '#0ea5e9',
+    author: 'Sam R.',
+    avatar: 'S',
+    avatarColor: '#22c55e',
     subject: 'Sciences',
     subjectIcon: '🔭',
     time: '1d',
@@ -55,21 +55,21 @@ const FEED_ITEMS = [
   },
   {
     type: 'reel',
-    author: 'Ortega willy',
-    avatar: 'O',
+    author: 'Casey T.',
+    avatar: 'C',
     avatarColor: '#f59e0b',
     subject: 'Economics',
     title: 'Supply & Demand in 60 sec',
     caption: 'The concept that runs the world',
-    thumbGradient: 'linear-gradient(160deg, #1c1007 0%, #2d1b00 50%, #451a00 100%)',
+    thumbImg: 'https://picsum.photos/seed/econ17/280/140',
     views: '5.1k',
     likes: 892,
   },
   {
     type: 'card',
-    author: 'hui',
-    avatar: 'H',
-    avatarColor: '#7c5cfc',
+    author: 'Taylor B.',
+    avatar: 'T',
+    avatarColor: '#f43f5e',
     subject: 'History',
     subjectIcon: '📜',
     time: '3h',
@@ -83,13 +83,13 @@ const FEED_ITEMS = [
   },
   {
     type: 'reel',
-    author: 'Prof. James',
-    avatar: 'P',
-    avatarColor: '#22c55e',
+    author: 'Morgan L.',
+    avatar: 'M',
+    avatarColor: '#8b5cf6',
     subject: 'Biology',
     title: 'How DNA replication works',
     caption: 'The most beautiful process in nature',
-    thumbGradient: 'linear-gradient(160deg, #052e16 0%, #064e3b 60%, #065f46 100%)',
+    thumbImg: 'https://picsum.photos/seed/dna88/280/140',
     views: '4.1k',
     likes: 847,
   },
@@ -103,7 +103,10 @@ type ReelItem = Extract<FeedItem, { type: 'reel' }>;
 
 function HeartIcon({ filled }: { filled?: boolean }) {
   return (
-    <svg width="12" height="12" viewBox="0 0 16 16" fill={filled ? '#f43f5e' : 'none'} stroke={filled ? '#f43f5e' : 'currentColor'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="12" height="12" viewBox="0 0 16 16"
+      fill={filled ? '#f43f5e' : 'none'}
+      stroke={filled ? '#f43f5e' : 'currentColor'}
+      strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M8 13.5s-6-3.8-6-7.5a4 4 0 0 1 6-3.4A4 4 0 0 1 14 6c0 3.7-6 7.5-6 7.5z" />
     </svg>
   );
@@ -111,7 +114,7 @@ function HeartIcon({ filled }: { filled?: boolean }) {
 
 function CommentIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M2 3h12v8H9l-3 3v-3H2z" />
     </svg>
   );
@@ -128,8 +131,7 @@ function PlayIcon() {
 function SearchIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round">
-      <circle cx="7" cy="7" r="4.5" />
-      <path d="M10.5 10.5l3 3" />
+      <circle cx="7" cy="7" r="4.5" /><path d="M10.5 10.5l3 3" />
     </svg>
   );
 }
@@ -137,8 +139,7 @@ function SearchIcon() {
 function BellIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 10V7a5 5 0 0 1 10 0v3l1.5 2.5H1.5L3 10z" />
-      <path d="M6.5 13a1.5 1.5 0 0 0 3 0" />
+      <path d="M3 10V7a5 5 0 0 1 10 0v3l1.5 2.5H1.5L3 10z" /><path d="M6.5 13a1.5 1.5 0 0 0 3 0" />
     </svg>
   );
 }
@@ -151,98 +152,62 @@ function CardFeedItem({ item, flipped }: { item: CardItem; flipped: boolean }) {
       {/* Author row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
         <div style={{
-          width: 28, height: 28, borderRadius: '50%',
-          background: item.avatarColor, flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 28, height: 28, borderRadius: '50%', background: item.avatarColor,
+          flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 11, fontWeight: 700, color: '#fff',
-        }}>
-          {item.avatar}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#e7e9ea' }}>{item.author}</span>
-            <span style={{
-              fontSize: 9, color: '#8b9099',
-              background: 'rgba(255,255,255,0.06)',
-              padding: '1px 5px', borderRadius: 999,
-            }}>{item.subject}</span>
-            <span style={{ fontSize: 9, color: '#52525b', marginLeft: 'auto' }}>{item.time}</span>
-          </div>
+        }}>{item.avatar}</div>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#e7e9ea' }}>{item.author}</span>
+          <span style={{ fontSize: 9, color: '#8b9099', background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 999 }}>{item.subject}</span>
+          <span style={{ fontSize: 9, color: '#52525b', marginLeft: 'auto' }}>{item.time}</span>
         </div>
       </div>
 
       {/* Caption */}
-      <p style={{ fontSize: 10.5, color: '#a1a1aa', marginBottom: 7, lineHeight: 1.35 }}>
-        {item.caption}
-      </p>
+      <p style={{ fontSize: 10.5, color: '#a1a1aa', marginBottom: 7, lineHeight: 1.35 }}>{item.caption}</p>
 
       {/* Flashcard */}
       <div style={{
         background: flipped ? '#f0fdf4' : '#fff',
         borderRadius: 10,
         border: `1px solid ${flipped ? '#bbf7d0' : 'rgba(0,0,0,0.08)'}`,
-        padding: '9px 10px 8px 10px',
-        minHeight: 72,
+        padding: '9px 10px 8px',
+        minHeight: 74,
         boxShadow: '0 1px 6px rgba(0,0,0,0.10)',
         transition: 'background 0.4s, border-color 0.4s',
         position: 'relative',
       }}>
-        {/* Header row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <span style={{
-            fontSize: 8.5, fontWeight: 700, letterSpacing: '0.06em',
-            color: flipped ? '#16a34a' : '#22c55e',
-          }}>
+          <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.06em', color: flipped ? '#16a34a' : '#22c55e' }}>
             {flipped ? 'ANSWER' : 'QUESTION'}
           </span>
           <span style={{ fontSize: 9, color: '#a1a1aa' }}>{item.subjectIcon} {item.subject}</span>
         </div>
-        {/* Divider */}
         <div style={{ height: 1, background: flipped ? '#bbf7d0' : 'rgba(0,0,0,0.07)', marginBottom: 6 }} />
-
-        {/* Content */}
-        <div style={{ position: 'relative', minHeight: 30 }}>
-          <p style={{
-            fontSize: 12, fontWeight: 700, color: '#18181b',
-            lineHeight: 1.3,
-            opacity: flipped ? 0 : 1,
-            transition: 'opacity 0.3s',
-            position: flipped ? 'absolute' : 'relative',
-          }}>
+        <div style={{ position: 'relative', minHeight: 28 }}>
+          <p style={{ fontSize: 12, fontWeight: 700, color: '#18181b', lineHeight: 1.3, opacity: flipped ? 0 : 1, transition: 'opacity 0.3s', position: flipped ? 'absolute' : 'relative' }}>
             {item.q}
           </p>
-          <p style={{
-            fontSize: 10.5, color: '#3f3f46',
-            lineHeight: 1.45,
-            opacity: flipped ? 1 : 0,
-            transition: 'opacity 0.3s',
-            position: flipped ? 'relative' : 'absolute',
-          }}>
+          <p style={{ fontSize: 10.5, color: '#3f3f46', lineHeight: 1.45, opacity: flipped ? 1 : 0, transition: 'opacity 0.3s', position: flipped ? 'relative' : 'absolute' }}>
             {item.a}
           </p>
         </div>
-
-        {/* Bottom hint */}
-        {!flipped && (
-          <p style={{ fontSize: 8.5, color: '#d4d4d8', textAlign: 'right', marginTop: 5 }}>
-            tap to reveal →
-          </p>
-        )}
+        {!flipped && <p style={{ fontSize: 8.5, color: '#d4d4d8', textAlign: 'right', marginTop: 5 }}>tap to reveal →</p>}
       </div>
 
       {/* Actions */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        marginTop: 7, paddingBottom: 2, color: '#71717a',
-      }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 7, color: '#71717a' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9.5 }}>
           <HeartIcon filled={flipped} />{item.likes}
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9.5 }}>
           <CommentIcon />{item.comments}
         </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9.5, marginLeft: 'auto' }}>
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h10v13l-5-3-5 3V2z" fill={flipped ? '#7c5cfc' : 'none'} stroke={flipped ? '#7c5cfc' : 'currentColor'} /></svg>
+        <span style={{ fontSize: 9, color: '#52525b', marginLeft: 'auto' }}>
+          )))) {item.reach}
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 9.5 }}>
+          <svg width="10" height="10" viewBox="0 0 16 16" fill={flipped ? '#7c5cfc' : 'none'} stroke={flipped ? '#7c5cfc' : 'currentColor'} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2h10v13l-5-3-5 3V2z" /></svg>
           {item.saves}
         </span>
       </div>
@@ -258,75 +223,54 @@ function ReelFeedItem({ item }: { item: ReelItem }) {
       {/* Author row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
         <div style={{
-          width: 28, height: 28, borderRadius: '50%',
-          background: item.avatarColor, flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 28, height: 28, borderRadius: '50%', background: item.avatarColor,
+          flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 11, fontWeight: 700, color: '#fff',
-        }}>
-          {item.avatar}
-        </div>
-        <div>
+        }}>{item.avatar}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#e7e9ea' }}>{item.author}</span>
-          <span style={{
-            fontSize: 9, color: '#8b9099',
-            background: 'rgba(255,255,255,0.06)',
-            padding: '1px 5px', borderRadius: 999, marginLeft: 5,
-          }}>{item.subject}</span>
+          <span style={{ fontSize: 9, color: '#8b9099', background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 999 }}>{item.subject}</span>
         </div>
       </div>
 
-      {/* Caption */}
-      <p style={{ fontSize: 10.5, color: '#a1a1aa', marginBottom: 7 }}>
-        {item.caption}
-      </p>
+      <p style={{ fontSize: 10.5, color: '#a1a1aa', marginBottom: 7 }}>{item.caption}</p>
 
-      {/* Video thumbnail */}
-      <div style={{
-        borderRadius: 10, height: 124,
-        background: item.thumbGradient,
-        position: 'relative', overflow: 'hidden',
-      }}>
+      {/* Video thumbnail with real image */}
+      <div style={{ borderRadius: 10, height: 128, position: 'relative', overflow: 'hidden', background: '#111' }}>
+        <img
+          src={item.thumbImg}
+          alt={item.title}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
+        />
+        {/* Dark overlay */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 50%, transparent 100%)' }} />
         {/* Subject pill */}
         <div style={{
           position: 'absolute', top: 7, left: 7,
-          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-          borderRadius: 999, fontSize: 8.5, color: '#fff',
-          padding: '2px 7px',
-        }}>
-          {item.subject}
-        </div>
+          background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)',
+          borderRadius: 999, fontSize: 8.5, color: '#fff', padding: '2px 7px',
+          border: '1px solid rgba(255,255,255,0.12)',
+        }}>{item.subject}</div>
         {/* Play button */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{
-            width: 36, height: 36,
-            background: 'rgba(255,255,255,0.18)',
-            backdropFilter: 'blur(6px)',
-            borderRadius: '50%',
+            width: 36, height: 36, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '1px solid rgba(255,255,255,0.25)',
+            border: '1px solid rgba(255,255,255,0.3)',
           }}>
             <PlayIcon />
           </div>
         </div>
-        {/* Title overlay */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          padding: '16px 8px 8px',
-          background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)',
-        }}>
+        {/* Title + views */}
+        <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8 }}>
           <p style={{ fontSize: 10.5, fontWeight: 700, color: '#fff' }}>{item.title}</p>
           <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', marginTop: 1 }}>{item.views} views</p>
         </div>
       </div>
 
       {/* Actions */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        marginTop: 7, color: '#71717a',
-      }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 7, color: '#71717a' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9.5 }}>
           <HeartIcon />{item.likes >= 1000 ? `${(item.likes / 1000).toFixed(1)}k` : item.likes}
         </span>
@@ -355,20 +299,14 @@ function PhoneMockup() {
   useEffect(() => {
     clearTimers();
     setFlipped(false);
-
     const item = FEED_ITEMS[activeIndex];
     if (item.type === 'card') {
       flipTimer.current = setTimeout(() => setFlipped(true), 1800);
     }
-
     advanceTimer.current = setInterval(() => {
       setVisible(false);
-      setTimeout(() => {
-        setActiveIndex(i => (i + 1) % FEED_ITEMS.length);
-        setVisible(true);
-      }, 350);
-    }, 3500);
-
+      setTimeout(() => { setActiveIndex(i => (i + 1) % FEED_ITEMS.length); setVisible(true); }, 350);
+    }, 3800);
     return clearTimers;
   }, [activeIndex]);
 
@@ -376,72 +314,47 @@ function PhoneMockup() {
 
   return (
     <div style={{
-      width: 240,
-      height: 490,
-      borderRadius: 34,
-      border: '1.5px solid rgba(255,255,255,0.14)',
+      width: 272,
+      height: 540,
+      borderRadius: 38,
+      border: '1.5px solid rgba(255,255,255,0.13)',
       background: '#000',
       overflow: 'hidden',
       flexShrink: 0,
       position: 'relative',
       display: 'flex',
       flexDirection: 'column',
-      boxShadow: '0 32px 80px rgba(124,92,252,0.15), 0 8px 32px rgba(0,0,0,0.6)',
+      boxShadow: '0 40px 100px rgba(124,92,252,0.18), 0 8px 40px rgba(0,0,0,0.7)',
     }}>
-      {/* ── Status bar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 16px 4px',
-        flexShrink: 0,
-      }}>
-        <span style={{ fontSize: 9, color: '#71717a', fontWeight: 600 }}>9:41</span>
-        <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-          {[3,4,4,4].map((h, i) => (
-            <div key={i} style={{ width: 2.5, height: h, background: i < 3 ? '#71717a' : '#3f3f46', borderRadius: 1 }} />
+      {/* Status bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px 4px', flexShrink: 0 }}>
+        <span style={{ fontSize: 10, color: '#71717a', fontWeight: 600 }}>9:41</span>
+        <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end' }}>
+          {[3, 4, 5, 5].map((h, i) => (
+            <div key={i} style={{ width: 2.5, height: h, background: i < 3 ? '#8b9099' : '#3f3f46', borderRadius: 1 }} />
           ))}
-          <div style={{ width: 12, height: 6, border: '1px solid #52525b', borderRadius: 2, marginLeft: 2, display: 'flex', alignItems: 'center', padding: '0 1px', gap: '1px' }}>
-            <div style={{ flex: 1, height: 3, background: '#71717a', borderRadius: 1 }} />
+          <div style={{ width: 14, height: 7, border: '1px solid #52525b', borderRadius: 2, marginLeft: 3, display: 'flex', alignItems: 'center', padding: '0 1.5px' }}>
+            <div style={{ flex: 0.7, height: 3.5, background: '#8b9099', borderRadius: 1 }} />
           </div>
         </div>
       </div>
 
-      {/* ── Top bar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '4px 12px 6px',
-        flexShrink: 0,
-      }}>
-        {/* Avatar + name */}
+      {/* Top bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 14px 6px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{
-            width: 26, height: 26, borderRadius: '50%',
-            background: '#7c5cfc',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 10, fontWeight: 700, color: '#fff',
-            border: '1.5px solid #7c5cfc',
-          }}>O</div>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Ortega</span>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#7c5cfc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', border: '1.5px solid rgba(124,92,252,0.4)' }}>Y</div>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>You</span>
         </div>
-        {/* Wordmark */}
-        <span style={{
-          fontFamily: "Georgia, 'Times New Roman', serif",
-          fontStyle: 'italic', fontWeight: 700,
-          fontSize: 14, color: '#fff', letterSpacing: '0.02em',
-        }}>
+        <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: 'italic', fontWeight: 700, fontSize: 15, color: '#fff', letterSpacing: '0.02em' }}>
           ar<span style={{ color: '#7c5cfc' }}>i</span>el
         </span>
-        {/* Icons */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <SearchIcon />
-          <BellIcon />
+        <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
+          <SearchIcon /><BellIcon />
         </div>
       </div>
 
-      {/* ── Subject pills ── */}
-      <div style={{
-        display: 'flex', gap: 5, padding: '2px 12px 6px',
-        flexShrink: 0, overflowX: 'hidden',
-      }}>
+      {/* Subject pills */}
+      <div style={{ display: 'flex', gap: 5, padding: '2px 14px 7px', flexShrink: 0, overflowX: 'hidden' }}>
         {[
           { label: 'All', active: true },
           { label: 'Physics' },
@@ -449,91 +362,93 @@ function PhoneMockup() {
           { label: 'History' },
         ].map(pill => (
           <div key={pill.label} style={{
-            padding: '3px 8px',
-            borderRadius: 999,
-            fontSize: 8.5,
-            fontWeight: 600,
-            flexShrink: 0,
-            background: pill.active ? '#7c5cfc' : 'rgba(255,255,255,0.08)',
+            padding: '3px 9px', borderRadius: 999, fontSize: 9, fontWeight: 600, flexShrink: 0,
+            background: pill.active ? '#7c5cfc' : 'rgba(255,255,255,0.07)',
             color: pill.active ? '#fff' : '#8b9099',
-            border: pill.active ? 'none' : '1px solid rgba(255,255,255,0.1)',
-          }}>
-            {pill.label}
-          </div>
+            border: pill.active ? 'none' : '1px solid rgba(255,255,255,0.09)',
+          }}>{pill.label}</div>
         ))}
       </div>
 
-      {/* ── Feed tabs ── */}
-      <div style={{
-        display: 'flex', gap: 0,
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        flexShrink: 0,
-        marginBottom: 2,
-      }}>
+      {/* Feed tabs */}
+      <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, marginBottom: 2 }}>
         {['For You', 'Following', 'Explore'].map((tab, i) => (
           <div key={tab} style={{
-            flex: 1, textAlign: 'center',
-            padding: '6px 0 5px',
-            fontSize: 9.5,
-            fontWeight: i === 0 ? 700 : 500,
+            flex: 1, textAlign: 'center', padding: '6px 0 5px',
+            fontSize: 10, fontWeight: i === 0 ? 700 : 500,
             color: i === 0 ? '#e7e9ea' : '#52525b',
             borderBottom: i === 0 ? '1.5px solid #7c5cfc' : '1.5px solid transparent',
             marginBottom: -1,
-          }}>
-            {tab}
-          </div>
+          }}>{tab}</div>
         ))}
       </div>
 
-      {/* ── Feed item ── */}
+      {/* Feed item */}
       <div style={{
         flex: 1, overflow: 'hidden',
         transition: 'opacity 0.35s, transform 0.35s',
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',
       }}>
-        {item.type === 'card' ? (
-          <CardFeedItem item={item as CardItem} flipped={flipped} />
-        ) : (
-          <ReelFeedItem item={item as ReelItem} />
-        )}
+        {item.type === 'card'
+          ? <CardFeedItem item={item as CardItem} flipped={flipped} />
+          : <ReelFeedItem item={item as ReelItem} />
+        }
       </div>
 
-      {/* ── Bottom nav ── */}
+      {/* Progress dots */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 4, paddingBottom: 10, paddingTop: 4, flexShrink: 0 }}>
+        {FEED_ITEMS.map((_, i) => (
+          <div key={i} style={{
+            width: i === activeIndex ? 14 : 4, height: 4, borderRadius: 999,
+            background: i === activeIndex ? '#7c5cfc' : 'rgba(255,255,255,0.12)',
+            transition: 'all 0.3s',
+          }} />
+        ))}
+      </div>
+
+      {/* Bottom nav */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-around',
         borderTop: '1px solid rgba(255,255,255,0.06)',
-        padding: '8px 0 10px',
-        background: '#000',
-        flexShrink: 0,
+        padding: '8px 0 12px',
+        background: '#000', flexShrink: 0,
       }}>
-        {/* Deck */}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="3" />
-          <path d="M3 9h18" />
-        </svg>
-        {/* Cards */}
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 6h16M4 10h16M4 14h10" />
-        </svg>
-        {/* AI button — purple pill */}
-        <div style={{
-          width: 38, height: 38, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #7c5cfc, #9b7fff)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 12px rgba(124,92,252,0.5)',
-        }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.9)' }} />
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M3 9h18" /></svg>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 10h16M4 14h10" /></svg>
+        <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'linear-gradient(135deg, #7c5cfc, #9b7fff)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(124,92,252,0.6)' }}>
+          <div style={{ width: 9, height: 9, borderRadius: '50%', background: 'rgba(255,255,255,0.92)' }} />
         </div>
-        {/* X */}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round">
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-        {/* Lightning */}
-        <svg width="16" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M13 2L4 14h8l-1 8 9-12h-8l1-8z" />
-        </svg>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+        <svg width="17" height="19" viewBox="0 0 24 24" fill="none" stroke="#8b9099" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L4 14h8l-1 8 9-12h-8l1-8z" /></svg>
       </div>
+    </div>
+  );
+}
+
+// ─── Feature pills ─────────────────────────────────────────────────────────────
+
+function FeaturePills() {
+  const features = [
+    { icon: '⚡', label: 'Cram Mode' },
+    { icon: '⚔️', label: 'Study Duels' },
+    { icon: '🎬', label: 'Short Clips' },
+    { icon: '🃏', label: 'Flashcards' },
+  ];
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 24 }}>
+      {features.map(f => (
+        <div key={f.label} style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          padding: '6px 12px', borderRadius: 999,
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.09)',
+          fontSize: 12, color: '#8b9099', fontWeight: 500,
+        }}>
+          <span style={{ fontSize: 13 }}>{f.icon}</span>
+          {f.label}
+        </div>
+      ))}
     </div>
   );
 }
@@ -546,14 +461,9 @@ export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
 
+  useEffect(() => { checkAuth(); }, [checkAuth]);
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      router.push('/dashboard');
-    }
+    if (isAuthenticated && !isLoading) router.push('/dashboard');
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
@@ -572,139 +482,103 @@ export default function Home() {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onSuccess={(user, token) => {
-          login(user, token);
-          router.push('/dashboard');
-        }}
+        onSuccess={(user, token) => { login(user, token); router.push('/dashboard'); }}
       />
 
-      {/* ── Mobile layout ──────────────────────────────────────────────── */}
+      {/* ── Mobile ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col items-center min-h-screen px-6 lg:hidden" style={{ paddingTop: 48, paddingBottom: 32 }}>
-
-        {/* Wordmark */}
         <div className="flex justify-center mb-6">
           <ArielWordmark size={52} variant="dark" showTagline={false} animate />
         </div>
 
-        {/* Headline */}
         <div className="text-center mb-8">
-          <h1 style={{ fontSize: 38, fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.025em' }}>
+          <h1 style={{ fontSize: 40, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em' }}>
             Go deeper.
           </h1>
-          <p style={{ fontSize: 16, color: '#8b9099', marginTop: 10, lineHeight: 1.5 }}>
-            Cards, clips &amp; community<br />for curious minds.
+          <p style={{ fontSize: 16, color: '#8b9099', marginTop: 10, lineHeight: 1.55 }}>
+            The social feed that makes you smarter.<br />
+            <span style={{ fontSize: 14, color: '#52525b' }}>Cards, clips &amp; community — for anyone curious.</span>
           </p>
         </div>
 
-        {/* Phone mockup */}
         <div className="flex justify-center mb-8">
           <PhoneMockup />
         </div>
 
-        {/* CTAs */}
         <div className="w-full mt-auto">
-          <button
-            onClick={openSignup}
-            style={{
-              width: '100%', background: '#fff', color: '#000',
-              borderRadius: 999, padding: '14px 0',
-              fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'block',
-            }}
-          >
+          <button onClick={openSignup} style={{ width: '100%', background: '#fff', color: '#000', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'block' }}>
             Create account
           </button>
-          <button
-            onClick={openLogin}
-            style={{
-              width: '100%', background: 'transparent', color: '#e7e9ea',
-              borderRadius: 999, padding: '14px 0',
-              fontSize: 15, fontWeight: 700,
-              border: '1px solid #3f3f46', cursor: 'pointer', display: 'block', marginTop: 12,
-            }}
-          >
+          <button onClick={openLogin} style={{ width: '100%', background: 'transparent', color: '#e7e9ea', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 700, border: '1px solid #3f3f46', cursor: 'pointer', display: 'block', marginTop: 12 }}>
             Log in
           </button>
           <p style={{ fontSize: 11, color: '#52525b', textAlign: 'center', marginTop: 16 }}>
-            By signing up you agree to our{' '}
-            <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Terms</span>
-            {' '}and{' '}
-            <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Privacy Policy</span>.
+            By signing up you agree to our <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Terms</span> and <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Privacy Policy</span>.
           </p>
         </div>
       </div>
 
-      {/* ── Desktop layout ──────────────────────────────────────────────── */}
+      {/* ── Desktop ────────────────────────────────────────────────────────── */}
       <div className="hidden lg:flex min-h-screen items-center">
 
-        {/* Left column */}
+        {/* Left */}
         <div className="flex-1 flex flex-col justify-center" style={{ paddingLeft: 80, paddingRight: 60, maxWidth: 580 }}>
           <div style={{ marginBottom: 40 }}>
             <ArielWordmark size={52} variant="dark" showTagline={false} animate />
           </div>
 
-          <h1 style={{
-            fontSize: 58, fontWeight: 900, color: '#fff',
-            lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 16,
-          }}>
+          <h1 style={{ fontSize: 62, fontWeight: 900, color: '#fff', lineHeight: 0.98, letterSpacing: '-0.03em', marginBottom: 18 }}>
             Go deeper.
           </h1>
 
-          <p style={{ fontSize: 18, color: '#8b9099', marginBottom: 8, lineHeight: 1.6 }}>
-            Cards, clips &amp; community for curious minds.<br />
-            <span style={{ color: '#52525b', fontSize: 15 }}>Whether you&apos;re in school, building skills, or just love to learn.</span>
+          <p style={{ fontSize: 18, color: '#8b9099', lineHeight: 1.6, maxWidth: 420 }}>
+            The social feed that makes you smarter.
+          </p>
+          <p style={{ fontSize: 14, color: '#52525b', marginTop: 6 }}>
+            Whether you&apos;re cramming for an exam, building new skills, or just endlessly curious — Ariel meets you where you are.
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 360, marginTop: 32 }}>
-            <button
-              onClick={openSignup}
-              style={{
-                background: '#fff', color: '#000', borderRadius: 999,
-                padding: '14px 0', fontSize: 15, fontWeight: 700,
-                border: 'none', cursor: 'pointer', width: '100%',
-              }}
-            >
+          <FeaturePills />
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 360, marginTop: 36 }}>
+            <button onClick={openSignup} style={{ background: '#fff', color: '#000', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', width: '100%' }}>
               Create account
             </button>
-
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-              <span style={{ fontSize: 12, color: '#52525b', fontWeight: 500 }}>or</span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+              <span style={{ fontSize: 12, color: '#52525b' }}>or</span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
             </div>
-
-            <button
-              onClick={openLogin}
-              style={{
-                background: 'transparent', color: '#e7e9ea', borderRadius: 999,
-                padding: '14px 0', fontSize: 15, fontWeight: 700,
-                border: '1px solid #3f3f46', cursor: 'pointer', width: '100%',
-              }}
-            >
+            <button onClick={openLogin} style={{ background: 'transparent', color: '#e7e9ea', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 700, border: '1px solid #3f3f46', cursor: 'pointer', width: '100%' }}>
               Log in
             </button>
           </div>
 
           <p style={{ fontSize: 11, color: '#52525b', marginTop: 20, maxWidth: 360 }}>
-            By signing up you agree to our{' '}
-            <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Terms</span>
-            {' '}and{' '}
-            <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Privacy Policy</span>.
+            By signing up you agree to our <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Terms</span> and <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Privacy Policy</span>.
           </p>
         </div>
 
-        {/* Right column */}
-        <div
-          className="flex-1 flex items-center justify-center"
-          style={{
-            minHeight: '100vh',
-            borderLeft: '1px solid rgba(255,255,255,0.05)',
-            background: 'radial-gradient(ellipse at center, rgba(124,92,252,0.06) 0%, transparent 70%)',
-          }}
-        >
-          <div style={{ transform: 'scale(1.18)', transformOrigin: 'center center' }}>
+        {/* Right */}
+        <div className="flex-1 flex items-center justify-center" style={{
+          minHeight: '100vh',
+          borderLeft: '1px solid rgba(255,255,255,0.05)',
+          background: 'radial-gradient(ellipse at 60% 50%, rgba(124,92,252,0.10) 0%, rgba(124,92,252,0.03) 40%, transparent 70%)',
+          position: 'relative',
+        }}>
+          {/* Faint glow ring behind phone */}
+          <div style={{
+            position: 'absolute',
+            width: 340, height: 340,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(124,92,252,0.12) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{ transform: 'scale(1.2)', transformOrigin: 'center center', position: 'relative' }}>
             <PhoneMockup />
           </div>
         </div>
+
       </div>
     </main>
   );
