@@ -29,11 +29,13 @@ export default function ProfilePage() {
   // Cropper
   const CROP_SIZE = 280;
   const [cropperSrc, setCropperSrc] = useState<string | null>(null);
+  const [cropImgNatural, setCropImgNatural] = useState({ w: 1, h: 1 });
   const [cropPos, setCropPos] = useState({ x: 0, y: 0 });
-  const [cropScale, setCropScale] = useState(1);
+  const [cropScale, setCropScale] = useState(1); // 1 = exactly covers the circle
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const lastPinchDist = useRef<number | null>(null);
+  const lastPinchMid = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -100,12 +102,23 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    setCropperSrc(url);
-    setCropPos({ x: 0, y: 0 });
-    setCropScale(1);
+    const probe = new Image();
+    probe.onload = () => {
+      setCropImgNatural({ w: probe.naturalWidth, h: probe.naturalHeight });
+      setCropperSrc(url);
+      setCropPos({ x: 0, y: 0 });
+      setCropScale(1); // 1 = cover scale — image exactly fills the circle
+    };
+    probe.src = url;
     setAvatarError('');
     e.target.value = '';
   };
+
+  // cover scale: smallest multiplier that makes image fill the circle
+  const coverScale = Math.max(CROP_SIZE / cropImgNatural.w, CROP_SIZE / cropImgNatural.h);
+  // display dimensions at cropScale=1 (already covers the circle)
+  const displayW = cropImgNatural.w * coverScale;
+  const displayH = cropImgNatural.h * coverScale;
 
   const handleCropSave = useCallback(async () => {
     if (!cropperSrc) return;
@@ -119,18 +132,17 @@ export default function ProfilePage() {
     canvas.height = outputSize;
     const ctx = canvas.getContext('2d')!;
 
-    // Clip to circle
     ctx.beginPath();
     ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
     ctx.clip();
 
-    // Reproduce the same transform used in the preview
-    const fitScale = Math.min(CROP_SIZE / img.naturalWidth, CROP_SIZE / img.naturalHeight);
-    const displayScale = outputSize / CROP_SIZE;
-    const dw = img.naturalWidth  * fitScale * displayScale * cropScale;
-    const dh = img.naturalHeight * fitScale * displayScale * cropScale;
-    const dx = outputSize / 2 + cropPos.x * displayScale - dw / 2;
-    const dy = outputSize / 2 + cropPos.y * displayScale - dh / 2;
+    // Match the preview transform exactly
+    const cv = Math.max(CROP_SIZE / img.naturalWidth, CROP_SIZE / img.naturalHeight);
+    const dScale = outputSize / CROP_SIZE;
+    const dw = img.naturalWidth  * cv * cropScale * dScale;
+    const dh = img.naturalHeight * cv * cropScale * dScale;
+    const dx = outputSize / 2 + cropPos.x * dScale - dw / 2;
+    const dy = outputSize / 2 + cropPos.y * dScale - dh / 2;
     ctx.drawImage(img, dx, dy, dw, dh);
 
     canvas.toBlob(async (blob) => {
@@ -140,8 +152,8 @@ export default function ProfilePage() {
       setAvatarUploading(true);
       setAvatarBroken(false);
       try {
-        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
-        await authAPI.uploadProfilePicture(file);
+        const f = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+        await authAPI.uploadProfilePicture(f);
         await checkAuth();
       } catch (err: any) {
         setAvatarError(err?.response?.data?.detail || 'Upload failed. Try again.');
@@ -149,7 +161,7 @@ export default function ProfilePage() {
         setAvatarUploading(false);
       }
     }, 'image/jpeg', 0.92);
-  }, [cropperSrc, cropPos, cropScale]);
+  }, [cropperSrc, cropPos, cropScale, cropImgNatural]);
 
   const handleCropPointerDown = (e: React.PointerEvent) => {
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -167,20 +179,49 @@ export default function ProfilePage() {
 
   const handleCropWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    setCropScale(s => Math.max(0.5, Math.min(4, s - e.deltaY * 0.002)));
+    setCropScale(s => Math.max(1, Math.min(4, s - e.deltaY * 0.003)));
   };
 
-  const handlePinch = (e: React.TouchEvent) => {
-    if (e.touches.length !== 2) return;
-    const d = Math.hypot(
-      e.touches[0].clientX - e.touches[1].clientX,
-      e.touches[0].clientY - e.touches[1].clientY,
-    );
-    if (lastPinchDist.current !== null) {
-      const delta = d - lastPinchDist.current;
-      setCropScale(s => Math.max(0.5, Math.min(4, s + delta * 0.005)));
+  // Touch: single finger drag, two finger pinch-zoom
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      lastPinchDist.current = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY,
+      );
+      lastPinchMid.current = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      };
+    } else if (e.touches.length === 1) {
+      setIsDragging(true);
+      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, posX: cropPos.x, posY: cropPos.y };
     }
-    lastPinchDist.current = d;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (e.touches.length === 2) {
+      const d = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY,
+      );
+      if (lastPinchDist.current !== null) {
+        const ratio = d / lastPinchDist.current;
+        setCropScale(s => Math.max(1, Math.min(4, s * ratio)));
+      }
+      lastPinchDist.current = d;
+    } else if (e.touches.length === 1 && isDragging) {
+      setCropPos({
+        x: dragStart.current.posX + (e.touches[0].clientX - dragStart.current.x),
+        y: dragStart.current.posY + (e.touches[0].clientY - dragStart.current.y),
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    lastPinchDist.current = null;
   };
 
   if (!isAuthenticated && !isLoading) {
@@ -582,26 +623,52 @@ export default function ProfilePage() {
 
       {/* Avatar cropper modal */}
       {cropperSrc && (
-        <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm">
-          <p className="text-[15px] font-bold mb-6" style={{ color: '#e7e9ea' }}>Move and zoom to position</p>
+        <div className="fixed inset-0 z-[300] bg-black flex flex-col">
+          {/* Top bar */}
+          <div className="flex items-center justify-between px-5 pt-12 pb-4">
+            <button
+              onClick={() => { URL.revokeObjectURL(cropperSrc); setCropperSrc(null); }}
+              className="text-[15px] font-semibold" style={{ color: '#8b9099' }}
+            >
+              Cancel
+            </button>
+            <p className="text-[15px] font-bold" style={{ color: '#e7e9ea' }}>Move and scale</p>
+            <button
+              onClick={handleCropSave}
+              className="text-[15px] font-bold text-violet-400"
+            >
+              Done
+            </button>
+          </div>
 
-          {/* Circular crop area */}
+          {/* Full-screen image drag area */}
           <div
-            className="relative overflow-hidden rounded-full select-none touch-none"
-            style={{
-              width: CROP_SIZE,
-              height: CROP_SIZE,
-              boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
-              cursor: isDragging ? 'grabbing' : 'grab',
-            }}
+            className="flex-1 relative overflow-hidden select-none"
+            style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
             onPointerDown={handleCropPointerDown}
             onPointerMove={handleCropPointerMove}
             onPointerUp={() => setIsDragging(false)}
             onPointerCancel={() => setIsDragging(false)}
             onWheel={handleCropWheel}
-            onTouchMove={handlePinch}
-            onTouchEnd={() => { lastPinchDist.current = null; }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
+            {/* Dim overlay with circle cutout */}
+            <div className="absolute inset-0 pointer-events-none z-10" style={{
+              background: 'radial-gradient(circle ' + (CROP_SIZE / 2) + 'px at 50% 50%, transparent ' + (CROP_SIZE / 2) + 'px, rgba(0,0,0,0.6) ' + (CROP_SIZE / 2) + 'px)',
+            }} />
+            {/* Circle border */}
+            <div className="absolute pointer-events-none z-10 rounded-full" style={{
+              width: CROP_SIZE,
+              height: CROP_SIZE,
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              border: '2px solid rgba(255,255,255,0.8)',
+            }} />
+
+            {/* The image */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={cropperSrc}
@@ -609,11 +676,11 @@ export default function ProfilePage() {
               draggable={false}
               style={{
                 position: 'absolute',
+                width: displayW * cropScale,
+                height: displayH * cropScale,
                 top: '50%',
                 left: '50%',
-                transform: `translate(calc(-50% + ${cropPos.x}px), calc(-50% + ${cropPos.y}px)) scale(${cropScale})`,
-                transformOrigin: 'center',
-                maxWidth: 'none',
+                transform: `translate(calc(-50% + ${cropPos.x}px), calc(-50% + ${cropPos.y}px))`,
                 userSelect: 'none',
                 pointerEvents: 'none',
               }}
@@ -621,35 +688,19 @@ export default function ProfilePage() {
           </div>
 
           {/* Zoom slider */}
-          <div className="mt-6 flex items-center gap-3 w-64">
+          <div className="px-8 pb-6 pt-5 flex items-center gap-4">
             <svg className="w-4 h-4 flex-shrink-0" style={{ color: '#8b9099' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <circle cx="11" cy="11" r="7" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
             </svg>
             <input
-              type="range" min={0.5} max={4} step={0.01}
+              type="range" min={1} max={4} step={0.01}
               value={cropScale}
               onChange={e => setCropScale(parseFloat(e.target.value))}
-              className="flex-1 accent-violet-500"
+              className="flex-1 accent-violet-500 h-1"
             />
             <svg className="w-5 h-5 flex-shrink-0" style={{ color: '#8b9099' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <circle cx="11" cy="11" r="7" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
             </svg>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={() => { URL.revokeObjectURL(cropperSrc); setCropperSrc(null); }}
-              className="px-6 py-2.5 rounded-full text-[14px] font-bold border border-zinc-700 text-zinc-300"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleCropSave}
-              className="px-6 py-2.5 rounded-full text-[14px] font-bold bg-white text-black"
-            >
-              Save photo
-            </button>
           </div>
         </div>
       )}
