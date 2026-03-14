@@ -30,7 +30,7 @@ const FEED_ITEMS = [
     subject: 'Sciences',
     title: 'Cell division simplified',
     caption: 'Breaking it down so it actually makes sense',
-    thumb: 'sciences',
+    thumbImg: 'https://i.pravatar.cc/400?img=47',
     views: '2.3k',
     likes: 418,
   },
@@ -55,7 +55,7 @@ const FEED_ITEMS = [
     subject: 'Economics',
     title: 'Supply & Demand in 60 sec',
     caption: 'The concept that runs the world',
-    thumb: 'economics',
+    thumbImg: 'https://i.pravatar.cc/400?img=12',
     views: '5.1k',
     likes: 892,
   },
@@ -80,7 +80,7 @@ const FEED_ITEMS = [
     subject: 'Biology',
     title: 'How DNA replication works',
     caption: 'The most beautiful process in nature',
-    thumb: 'biology',
+    thumbImg: 'https://i.pravatar.cc/400?img=26',
     views: '4.1k',
     likes: 847,
   },
@@ -89,88 +89,6 @@ const FEED_ITEMS = [
 type FeedItem = typeof FEED_ITEMS[number];
 type CardItem = Extract<FeedItem, { type: 'card' }>;
 type ReelItem = Extract<FeedItem, { type: 'reel' }>;
-
-// ─── Reel thumbnail art ───────────────────────────────────────────────────────
-
-const THUMB_CONFIGS: Record<string, { bg: string; accent: string; art: React.ReactNode }> = {
-  sciences: {
-    bg: 'linear-gradient(145deg, #0c2a4a 0%, #0e4d6e 60%, #0891b2 100%)',
-    accent: '#22d3ee',
-    art: (
-      <svg width="100%" height="100%" viewBox="0 0 280 140" fill="none" style={{ position: 'absolute', inset: 0, opacity: 0.25 }}>
-        {/* Cell-like circles */}
-        <circle cx="60"  cy="50"  r="38" stroke="#22d3ee" strokeWidth="1.5" />
-        <circle cx="60"  cy="50"  r="16" stroke="#22d3ee" strokeWidth="1" />
-        <circle cx="180" cy="90"  r="28" stroke="#22d3ee" strokeWidth="1.5" />
-        <circle cx="180" cy="90"  r="10" stroke="#22d3ee" strokeWidth="1" />
-        <circle cx="230" cy="30"  r="20" stroke="#22d3ee" strokeWidth="1" />
-        <circle cx="110" cy="115" r="15" stroke="#22d3ee" strokeWidth="1" />
-        {/* Dots */}
-        <circle cx="60"  cy="50"  r="3" fill="#22d3ee" opacity="0.7" />
-        <circle cx="180" cy="90"  r="3" fill="#22d3ee" opacity="0.7" />
-        <circle cx="230" cy="30"  r="2" fill="#22d3ee" opacity="0.5" />
-      </svg>
-    ),
-  },
-  economics: {
-    bg: 'linear-gradient(145deg, #1c0d00 0%, #7c2d12 60%, #9a3412 100%)',
-    accent: '#fb923c',
-    art: (
-      <svg width="100%" height="100%" viewBox="0 0 280 140" fill="none" style={{ position: 'absolute', inset: 0, opacity: 0.28 }}>
-        {/* Supply curve */}
-        <path d="M20 120 Q80 90 140 60 Q200 30 260 15" stroke="#fb923c" strokeWidth="2" strokeLinecap="round" />
-        {/* Demand curve */}
-        <path d="M20 15 Q80 45 140 70 Q200 95 260 120" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
-        {/* Intersection */}
-        <circle cx="140" cy="67" r="5" fill="#fb923c" opacity="0.9" />
-        {/* Grid */}
-        {[40, 80, 120, 160, 200, 240].map(x => (
-          <line key={x} x1={x} y1="0" x2={x} y2="140" stroke="#fb923c" strokeWidth="0.4" opacity="0.3" />
-        ))}
-        {[30, 60, 90, 110].map(y => (
-          <line key={y} x1="0" y1={y} x2="280" y2={y} stroke="#fb923c" strokeWidth="0.4" opacity="0.3" />
-        ))}
-        {/* Labels */}
-        <text x="30" y="30" fill="#fb923c" fontSize="11" opacity="0.8" fontWeight="600">Supply</text>
-        <text x="30" y="112" fill="#fbbf24" fontSize="11" opacity="0.8" fontWeight="600">Demand</text>
-      </svg>
-    ),
-  },
-  biology: {
-    bg: 'linear-gradient(145deg, #021a0e 0%, #064e3b 60%, #065f46 100%)',
-    accent: '#34d399',
-    art: (
-      <svg width="100%" height="100%" viewBox="0 0 280 140" fill="none" style={{ position: 'absolute', inset: 0, opacity: 0.28 }}>
-        {/* DNA double helix */}
-        <path d="M60 10 C80 30 100 30 120 50 C140 70 160 70 180 90 C200 110 220 110 240 130" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
-        <path d="M60 130 C80 110 100 110 120 90 C140 70 160 70 180 50 C200 30 220 30 240 10" stroke="#6ee7b7" strokeWidth="2" strokeLinecap="round" />
-        {/* Rungs */}
-        {[
-          [70, 22, 70, 118], [90, 34, 90, 106], [110, 48, 110, 92],
-          [130, 62, 130, 78], [150, 70, 150, 70], [170, 62, 170, 78],
-          [190, 50, 190, 90], [210, 36, 210, 104], [230, 22, 230, 118],
-        ].map(([x1, y1, x2, y2], i) => (
-          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#34d399" strokeWidth="1" opacity="0.4" />
-        ))}
-        {/* Nucleotide dots */}
-        {[70, 110, 150, 190, 230].map((x, i) => (
-          <circle key={i} cx={x} cy={i % 2 === 0 ? 22 : 118} r="4" fill="#34d399" opacity="0.7" />
-        ))}
-      </svg>
-    ),
-  },
-};
-
-function ReelThumb({ thumb, children }: { thumb: string; children: React.ReactNode }) {
-  const cfg = THUMB_CONFIGS[thumb] ?? THUMB_CONFIGS.sciences;
-  return (
-    <div style={{ borderRadius: 10, height: 128, position: 'relative', overflow: 'hidden', background: cfg.bg }}>
-      {cfg.art}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.1) 55%, transparent 100%)' }} />
-      {children}
-    </div>
-  );
-}
 
 // ─── Micro icons ──────────────────────────────────────────────────────────────
 
@@ -268,35 +186,73 @@ function CardFeedItem({ item, flipped }: { item: CardItem; flipped: boolean }) {
 
 function ReelFeedItem({ item }: { item: ReelItem }) {
   return (
-    <div style={{ padding: '10px 12px 0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', background: item.avatarColor, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>
-          {item.avatar}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#e7e9ea' }}>{item.author}</span>
-          <span style={{ fontSize: 9, color: '#8b9099', background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 999 }}>{item.subject}</span>
-        </div>
-      </div>
+    <div style={{ padding: '8px 12px 0' }}>
+      {/* Portrait TikTok-style thumbnail — fills the width, taller than wide */}
+      <div style={{
+        borderRadius: 12,
+        // 9:16 feel inside the phone — wide content area ~248px → height ~340px is too tall,
+        // so we use a 3:4 crop (248 × 210) which reads as portrait and fits the card
+        width: '100%',
+        height: 210,
+        position: 'relative',
+        overflow: 'hidden',
+        background: '#111',
+      }}>
+        {/* Real face photo */}
+        <img
+          src={item.thumbImg}
+          alt={item.title}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center top',
+          }}
+        />
 
-      <p style={{ fontSize: 10.5, color: '#a1a1aa', marginBottom: 7 }}>{item.caption}</p>
+        {/* Gradient scrim — heavier at top and bottom like TikTok */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 35%, transparent 55%, rgba(0,0,0,0.85) 100%)' }} />
 
-      <ReelThumb thumb={item.thumb}>
-        <div style={{ position: 'absolute', top: 7, left: 7, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', borderRadius: 999, fontSize: 8.5, color: '#fff', padding: '2px 7px', border: '1px solid rgba(255,255,255,0.12)' }}>
+        {/* Subject pill — top left */}
+        <div style={{
+          position: 'absolute', top: 9, left: 9,
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
+          borderRadius: 999, fontSize: 8.5, color: '#fff',
+          padding: '2px 8px', border: '1px solid rgba(255,255,255,0.15)',
+          fontWeight: 600,
+        }}>
           {item.subject}
         </div>
+
+        {/* Play button — centre */}
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.3)' }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.20)', backdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '1.5px solid rgba(255,255,255,0.35)',
+          }}>
             <PlayIcon />
           </div>
         </div>
-        <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8 }}>
-          <p style={{ fontSize: 10.5, fontWeight: 700, color: '#fff' }}>{item.title}</p>
-          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', marginTop: 1 }}>{item.views} views</p>
-        </div>
-      </ReelThumb>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 7, color: '#71717a' }}>
+        {/* Author row + title — bottom overlay */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 10px 10px' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#fff', marginBottom: 5, lineHeight: 1.3 }}>{item.title}</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: item.avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', border: '1.5px solid rgba(255,255,255,0.4)' }}>
+                {item.avatar}
+              </div>
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>@{item.author.replace(' ', '').toLowerCase()}</span>
+            </div>
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)' }}>{item.views} views</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 8, color: '#71717a' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9.5 }}>
           <HeartIcon />{item.likes >= 1000 ? `${(item.likes / 1000).toFixed(1)}k` : item.likes}
         </span>
