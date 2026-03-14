@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { cardsAPI, socialAPI } from '@/lib/api';
 import { useAuth } from '@/lib/useAuth';
@@ -60,7 +60,7 @@ function Avatar({ creator, size = 40 }: { creator?: Creator; size?: number }) {
   );
 }
 
-export default function ExplorePage() {
+function ExploreContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const subjectFilter = searchParams.get('subject');
@@ -80,12 +80,15 @@ export default function ExplorePage() {
   // Search
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
-  const [peopleResults, setPeopleResults] = useState<UserResult[]>([]);
-  const [searchingPeople, setSearchingPeople] = useState(false);
+  const [searchResults, setSearchResults] = useState<Card[]>([]);   // loaded into scroll
+  const [suggestions, setSuggestions] = useState<Card[]>([]);       // dropdown preview
+  const [searching, setSearching] = useState(false);
+  const [activeSearch, setActiveSearch] = useState('');             // committed search term
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const isSearchMode = searchFocused || searchQuery.length > 0;
+  const showDropdown = searchFocused && searchQuery.length >= 2;
+  const isSearchActive = activeSearch.length > 0;                   // results in scroll
 
   useEffect(() => { checkAuth(); }, []);
   useEffect(() => { loadCards(); }, [feedMode, subjectFilter, topicFilter]);
@@ -174,28 +177,45 @@ export default function ExplorePage() {
     setFlipped(next);
   };
 
+  // While typing — fetch suggestions for dropdown only
   const handleSearchChange = (q: string) => {
     setSearchQuery(q);
     clearTimeout(searchTimeout.current);
-    if (q.trim().length < 2) { setPeopleResults([]); return; }
-    setSearchingPeople(true);
+    if (q.trim().length < 2) { setSuggestions([]); return; }
+    setSearching(true);
     searchTimeout.current = setTimeout(async () => {
       try {
-        const results = await socialAPI.searchUsers(q.trim());
-        setPeopleResults(results);
+        const results = await cardsAPI.search(q.trim(), 8) as Card[];
+        setSuggestions(results);
       } catch {}
-      finally { setSearchingPeople(false); }
-    }, 350);
+      finally { setSearching(false); }
+    }, 300);
   };
 
-  const handleToggleFollow = async (userId: string) => {
-    const user = peopleResults.find(u => u.id === userId);
-    if (!user) return;
+  // Commit search — loads results INTO the scroll
+  const commitSearch = async (q: string) => {
+    if (!q.trim()) return;
+    setSearchFocused(false);
+    setActiveSearch(q.trim());
+    setSearching(true);
     try {
-      if (user.is_following) await socialAPI.unfollowUser(userId);
-      else await socialAPI.followUser(userId);
-      setPeopleResults(prev => prev.map(u => u.id === userId ? { ...u, is_following: !u.is_following } : u));
+      const results = await cardsAPI.search(q.trim(), 50) as Card[];
+      setSearchResults(results);
+      const lc: Record<string, number> = {};
+      const sc: Record<string, number> = {};
+      results.forEach(c => { lc[c.id] = c.likes; sc[c.id] = c.saves; });
+      setLikeCounts(prev => ({ ...prev, ...lc }));
+      setSaveCounts(prev => ({ ...prev, ...sc }));
     } catch {}
+    finally { setSearching(false); }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setActiveSearch('');
+    setSearchResults([]);
+    setSuggestions([]);
+    setSearchFocused(false);
   };
 
   if (loading) {
@@ -213,85 +233,178 @@ export default function ExplorePage() {
     <div className="h-screen bg-black overflow-hidden lg:pl-[72px]">
       {/* Fixed top bar */}
       <div className="absolute top-0 left-0 right-0 lg:left-[72px] z-50">
-        <div className="px-4 pt-3 pb-2 flex items-center gap-3">
-          {!isSearchMode && (
-            <div className="flex gap-1 bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10">
+        {/* Glassy header bg */}
+        <div
+          className="px-4 pt-4 pb-3"
+          style={{
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          {/* Row 1: back + search bar */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.back()}
+              className="w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0 transition-colors"
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
+              </svg>
+            </button>
+
+            {/* Glassy search pill */}
+            <div
+              className="flex items-center gap-2.5 flex-1 h-11 px-4 rounded-full"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 16px rgba(0,0,0,0.3)',
+              }}
+            >
+              <svg className="w-4 h-4 flex-shrink-0" style={{ color: 'rgba(255,255,255,0.4)' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                ref={searchRef}
+                value={searchQuery}
+                onChange={e => handleSearchChange(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
+                onKeyDown={e => { if (e.key === 'Enter' && searchQuery.trim()) commitSearch(searchQuery); }}
+                placeholder="Cards, subjects, topics…"
+                className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-white/30"
+                style={{ color: '#e7e9ea' }}
+              />
+              {(searchQuery.length > 0 || isSearchActive) && (
+                <button
+                  onClick={clearSearch}
+                  className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(255,255,255,0.15)' }}
+                >
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2: active search label OR For You / Trending toggle */}
+          {isSearchActive ? (
+            <div className="flex items-center gap-2 mt-2">
+              <p className="text-[13px] font-semibold" style={{ color: '#8b9099' }}>
+                {searching ? 'Searching…' : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for`}
+              </p>
+              {!searching && <span className="text-[13px] font-bold text-violet-400">"{activeSearch}"</span>}
+            </div>
+          ) : (
+            <div className="flex gap-1 mt-3 p-1 rounded-full w-fit" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <button
-                onClick={() => { setFeedMode('personalized'); }}
-                className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${
-                  feedMode === 'personalized' ? 'bg-white text-black' : 'text-white/60'
-                }`}
+                onClick={() => setFeedMode('personalized')}
+                className="px-4 py-1.5 rounded-full text-[13px] font-bold transition-all"
+                style={feedMode === 'personalized'
+                  ? { background: 'rgba(255,255,255,0.92)', color: '#000' }
+                  : { color: 'rgba(255,255,255,0.45)' }}
               >
                 For You
               </button>
               <button
-                onClick={() => { setFeedMode('trending'); }}
-                className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${
-                  feedMode === 'trending' ? 'bg-white text-black' : 'text-white/60'
-                }`}
+                onClick={() => setFeedMode('trending')}
+                className="px-4 py-1.5 rounded-full text-[13px] font-bold transition-all"
+                style={feedMode === 'trending'
+                  ? { background: 'rgba(255,255,255,0.92)', color: '#000' }
+                  : { color: 'rgba(255,255,255,0.45)' }}
               >
                 Trending
               </button>
             </div>
           )}
-
-          {/* Search */}
-          <div
-            className={`flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 rounded-full px-3 h-10 transition-all ${isSearchMode ? 'flex-1' : 'w-10 cursor-pointer ml-auto'}`}
-            onClick={() => { if (!isSearchMode) { setSearchFocused(true); searchRef.current?.focus(); } }}
-          >
-            <svg className="w-4 h-4 text-white/60 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            {isSearchMode && (
-              <input
-                ref={searchRef}
-                autoFocus
-                value={searchQuery}
-                onChange={e => handleSearchChange(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                placeholder="Search people..."
-                className="flex-1 bg-transparent text-white text-sm outline-none placeholder:text-white/30"
-              />
-            )}
-          </div>
-          {isSearchMode && (
-            <button onClick={() => { setSearchQuery(''); setSearchFocused(false); setPeopleResults([]); }}
-              className="text-white/60 text-sm font-semibold flex-shrink-0">
-              Cancel
-            </button>
-          )}
         </div>
 
-        {/* Search results */}
-        {isSearchMode && (
-          <div className="mx-4 mt-1 bg-zinc-900/95 backdrop-blur-xl rounded-2xl border border-zinc-800 overflow-hidden max-h-[60vh] overflow-y-auto">
-            {searchingPeople ? (
-              <div className="py-8 flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
+        {/* Suggestions dropdown — while typing, before committing */}
+        {showDropdown && (
+          <div
+            className="mx-4 mt-2 rounded-2xl overflow-hidden max-h-[55vh] overflow-y-auto"
+            style={{
+              background: 'rgba(10,10,12,0.98)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.7)',
+            }}
+          >
+            {searching ? (
+              <div className="py-6 flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
+                <span className="text-[13px]" style={{ color: '#8b9099' }}>Looking…</span>
               </div>
-            ) : searchQuery.length < 2 ? (
-              <p className="text-xs text-zinc-600 py-6 text-center">Type to search people</p>
-            ) : peopleResults.length === 0 ? (
-              <p className="text-xs text-zinc-600 py-6 text-center">No results for "{searchQuery}"</p>
+            ) : suggestions.length === 0 ? (
+              <p className="text-[13px] py-6 text-center" style={{ color: '#8b9099' }}>No matches for "{searchQuery}"</p>
             ) : (
-              <div className="divide-y divide-zinc-800">
-                {peopleResults.map(person => (
-                  <div key={person.id} className="flex items-center gap-3 px-4 py-3">
-                    <Avatar creator={person} size={40} />
-                    <div className="flex-1 min-w-0" onClick={() => router.push(`/profile/${person.username}`)}>
-                      <p className="text-sm font-bold text-white truncate">{person.full_name || person.username}</p>
-                      <p className="text-xs text-zinc-500">@{person.username}</p>
-                    </div>
-                    <button
-                      onClick={() => handleToggleFollow(person.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                        person.is_following ? 'bg-zinc-800 text-zinc-400' : 'bg-violet-600 text-white'
-                      }`}
-                    >
-                      {person.is_following ? 'Following' : 'Follow'}
-                    </button>
+              <div>
+                {/* "See all" row */}
+                <button
+                  onMouseDown={() => commitSearch(searchQuery)}
+                  className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.04]"
+                  style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)' }}>
+                    <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                   </div>
+                  <span className="text-[14px] font-semibold" style={{ color: '#e7e9ea' }}>
+                    See all results for <span className="text-violet-400">"{searchQuery}"</span>
+                  </span>
+                </button>
+
+                {/* Keyword/topic suggestions from results */}
+                {(() => {
+                  const subjects = [...new Set(suggestions.map(c => c.subject).filter(Boolean))] as string[];
+                  const topics = [...new Set(suggestions.map(c => c.topic).filter(Boolean))] as string[];
+                  const chips = [...subjects.map(s => ({ label: s, kind: 'subject' })), ...topics.slice(0, 4).map(t => ({ label: t, kind: 'topic' }))];
+                  if (!chips.length) return null;
+                  return (
+                    <div className="px-4 py-2 flex flex-wrap gap-1.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      {chips.map(chip => (
+                        <button
+                          key={chip.label}
+                          onMouseDown={() => commitSearch(chip.label!)}
+                          className="px-3 py-1 rounded-full text-[12px] font-bold transition-all"
+                          style={chip.kind === 'subject'
+                            ? { background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: '#c4b5fd' }
+                            : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#8b9099' }}
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Card previews */}
+                {suggestions.slice(0, 5).map((card, i) => (
+                  <button
+                    key={card.id}
+                    onMouseDown={() => commitSearch(card.question)}
+                    className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.04]"
+                    style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                  >
+                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#8b9099' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] leading-snug line-clamp-1" style={{ color: '#e7e9ea' }}>{card.question}</p>
+                      {(card.subject || card.topic) && (
+                        <p className="text-[11px] mt-0.5 text-violet-400">{[card.subject, card.topic].filter(Boolean).join(' · ')}</p>
+                      )}
+                    </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -300,16 +413,17 @@ export default function ExplorePage() {
       </div>
 
       {/* TikTok scroll container */}
-      {!isSearchMode && (
-        cards.length === 0 ? (
+      {(() => {
+        const displayCards = isSearchActive ? searchResults : cards;
+        return displayCards.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-8">
             <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-4">
               <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-black text-white mb-2">No cards yet</h3>
-            <p className="text-sm text-zinc-500 leading-relaxed">Try Trending or follow more people to see cards here.</p>
+            <h3 className="text-lg font-black text-white mb-2">{isSearchActive ? `No results for "${activeSearch}"` : 'No cards yet'}</h3>
+            <p className="text-sm text-zinc-500 leading-relaxed">{isSearchActive ? 'Try a different keyword or subject.' : 'Try Trending or follow more people to see cards here.'}</p>
           </div>
         ) : (
           <div
@@ -320,7 +434,7 @@ export default function ExplorePage() {
               scrollbarWidth: 'none',
             }}
           >
-            {cards.map((card, idx) => {
+            {displayCards.map((card, idx) => {
               const isFlipped = flipped.has(card.id);
               const isLiked = liked.has(card.id);
               const isSaved = saved.has(card.id);
@@ -339,7 +453,7 @@ export default function ExplorePage() {
 
                   {/* Tap to flip */}
                   <div
-                    className="absolute inset-0 flex flex-col justify-center px-5 pb-28 pt-24 cursor-pointer"
+                    className="absolute inset-0 flex flex-col justify-center px-5 pb-28 pt-36 cursor-pointer"
                     onClick={() => handleFlip(card.id)}
                   >
                     {/* Subject / Topic pills */}
@@ -487,8 +601,16 @@ export default function ExplorePage() {
               );
             })}
           </div>
-        )
-      )}
+        );
+      })()}
     </div>
+  );
+}
+
+export default function ExplorePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <ExploreContent />
+    </Suspense>
   );
 }

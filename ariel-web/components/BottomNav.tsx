@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import ArielIcon from '@/components/ArielIcon';
 import ArielWordmark from '@/components/ArielWordmark';
@@ -145,6 +145,15 @@ export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    import('@/lib/api').then(({ messagesAPI }) => {
+      messagesAPI.getUnreadCount()
+        .then((d: any) => setUnreadMessages(d?.unread_count ?? 0))
+        .catch(() => {});
+    });
+  }, []);
 
   return (
     <>
@@ -153,7 +162,7 @@ export default function BottomNav() {
         <div className="fixed inset-0 z-[100] lg:hidden" onClick={() => setDrawerOpen(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="absolute bottom-0 left-0 right-0 bg-[#0c0c0e] border-t border-zinc-800/60 rounded-t-3xl pb-8"
+            className="absolute bottom-0 left-0 right-0 bg-[#000000] border-t border-zinc-800/60 rounded-t-3xl pb-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col items-center pt-3 pb-5 gap-3">
@@ -171,7 +180,14 @@ export default function BottomNav() {
                       isActive ? 'bg-violet-500/15 text-violet-400' : 'text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300'
                     }`}
                   >
-                    {item.icon}
+                    <div className="relative">
+                      {item.icon}
+                      {item.path === '/messages' && unreadMessages > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-violet-500 rounded-full flex items-center justify-center px-0.5">
+                          <span className="text-[9px] font-black text-white leading-none">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[11px] font-medium">{item.name}</span>
                   </button>
                 );
@@ -182,7 +198,7 @@ export default function BottomNav() {
       )}
 
       {/* Bottom nav bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#09090b] border-t border-zinc-800">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#000000] border-t border-zinc-800">
         <div className="flex items-stretch h-[60px] max-w-screen-sm mx-auto">
 
           {/* Today, Deck */}

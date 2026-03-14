@@ -64,6 +64,9 @@ export default function DuelsPage() {
   const [roundResult, setRoundResult] = useState<'win' | 'lose' | 'tie' | null>(null);
   const [finalResult, setFinalResult] = useState<'win' | 'lose' | 'tie'>('tie');
 
+  // Round count selector
+  const [rounds, setRounds] = useState(5);
+
   // Solo
   const [botName] = useState(BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)]);
   const [botDelay] = useState(BOT_DELAYS[Math.floor(Math.random() * BOT_DELAYS.length)]);
@@ -95,9 +98,11 @@ export default function DuelsPage() {
   const phaseRef = useRef<Phase>('lobby');
   const userScoreRef = useRef(0);
   const opponentScoreRef = useRef(0);
+  const roundsRef = useRef(5);
 
-  // Keep phaseRef in sync
+  // Keep refs in sync
   useEffect(() => { phaseRef.current = phase; }, [phase]);
+  useEffect(() => { roundsRef.current = rounds; }, [rounds]);
 
   const currentCard = cards[currentIndex];
   const displayOpponent = mode === 'online' ? (opponentName || '...') : botName;
@@ -183,24 +188,25 @@ export default function DuelsPage() {
   const isDeckChallenge = searchParams.get('deckChallenge') === '1';
 
   const loadSoloCards = async (): Promise<DuelCard[]> => {
+    const rc = roundsRef.current;
     // If launched from deck session, use those cards (shuffled by duel)
     if (isDeckChallenge) {
       try {
         const raw = sessionStorage.getItem('ariel_deck_challenge_cards');
         if (raw) {
           const parsed: DuelCard[] = JSON.parse(raw);
-          if (parsed.length >= ROUNDS) {
+          if (parsed.length >= rc) {
             // Shuffle — duel owns the order, not the user
-            return [...parsed].sort(() => Math.random() - 0.5);
+            return [...parsed].sort(() => Math.random() - 0.5).slice(0, rc);
           }
         }
       } catch {}
     }
     try {
-      const data = await cardsAPI.getTrendingCards(20);
-      return data.length >= ROUNDS ? data : [...data, ...FALLBACK_CARDS].slice(0, Math.max(data.length, ROUNDS + 3));
+      const data = await cardsAPI.getTrendingCards(rc * 2);
+      return data.length >= rc ? data.slice(0, rc) : [...data, ...FALLBACK_CARDS].slice(0, Math.max(data.length, rc));
     } catch {
-      return FALLBACK_CARDS;
+      return FALLBACK_CARDS.slice(0, rc);
     }
   };
 
@@ -254,7 +260,7 @@ export default function DuelsPage() {
     setPhase('reveal');
 
     setTimeout(() => {
-      if (nextIdx >= ROUNDS) {
+      if (nextIdx >= roundsRef.current) {
         // Compare total scores — NOT just the last round result
         const u = userScoreRef.current;
         const o = opponentScoreRef.current;
@@ -310,7 +316,7 @@ export default function DuelsPage() {
     setMatchmakingLoading(true);
     setWsError('');
     try {
-      const data = await duelsAPI.quickMatch();
+      const data = await duelsAPI.quickMatch(roundsRef.current);
       setRoomId(data.room_id);
       setPhase('waiting');
       if (data.status === 'joined' && data.opponent_username) {
@@ -350,7 +356,10 @@ export default function DuelsPage() {
     setChallengeSending(username);
     setWsError('');
     try {
-      const data = await duelsAPI.challenge(username);
+      const deckCards = isDeckChallenge ? (() => {
+        try { const raw = sessionStorage.getItem('ariel_deck_challenge_cards'); return raw ? JSON.parse(raw) : undefined; } catch { return undefined; }
+      })() : undefined;
+      const data = await duelsAPI.challenge(username, deckCards, roundsRef.current);
       const rid = data.room_id;
       setRoomId(rid);
       setChallengeSent(username);
@@ -497,6 +506,7 @@ export default function DuelsPage() {
         break;
 
       case 'round_start':
+        if (msg.total) { setRounds(msg.total); roundsRef.current = msg.total; }
         setPhase('question');
         setUserAnswer('');
         setUserAnswered(false);
@@ -546,7 +556,7 @@ export default function DuelsPage() {
         });
         setPhase('reveal');
         setTimeout(() => {
-          if (msg.round >= ROUNDS) {
+          if (msg.round >= roundsRef.current) {
             // game_over will arrive shortly
           } else {
             setCurrentIndex(msg.round);
@@ -673,7 +683,7 @@ export default function DuelsPage() {
 
           {/* ─── LOBBY ─────────────────────────────────────────────────────── */}
           {phase === 'lobby' && mode === 'solo' && (
-            <SoloLobby opponent={botName} onStart={startSoloDuel} isDeckChallenge={isDeckChallenge} />
+            <SoloLobby opponent={botName} onStart={startSoloDuel} isDeckChallenge={isDeckChallenge} rounds={rounds} onRoundsChange={setRounds} />
           )}
 
           {phase === 'lobby' && mode === 'online' && (
@@ -690,6 +700,8 @@ export default function DuelsPage() {
               matchmakingLoading={matchmakingLoading}
               wsError={wsError}
               isDeckChallenge={isDeckChallenge}
+              rounds={rounds}
+              onRoundsChange={setRounds}
             />
           )}
 
@@ -751,6 +763,7 @@ export default function DuelsPage() {
               opponentAnswered={opponentAnswered}
               roundResult={roundResult}
               onChoiceSelect={handleChoiceSelect}
+              rounds={rounds}
             />
           )}
 
@@ -774,7 +787,30 @@ export default function DuelsPage() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SoloLobby({ opponent, onStart, isDeckChallenge }: { opponent: string; onStart: () => void; isDeckChallenge?: boolean }) {
+const ROUND_OPTIONS = [5, 10, 15, 20];
+
+function RoundSelector({ rounds, onChange }: { rounds: number; onChange: (n: number) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-zinc-500 font-medium">Rounds</span>
+      <div className="flex gap-1">
+        {ROUND_OPTIONS.map(n => (
+          <button
+            key={n}
+            onClick={() => onChange(n)}
+            className={`w-9 h-8 rounded-lg text-xs font-bold transition-colors ${
+              rounds === n ? 'bg-violet-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+            }`}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SoloLobby({ opponent, onStart, isDeckChallenge, rounds, onRoundsChange }: { opponent: string; onStart: () => void; isDeckChallenge?: boolean; rounds: number; onRoundsChange: (n: number) => void }) {
   return (
     <div className="space-y-4">
       {isDeckChallenge && (
@@ -791,7 +827,10 @@ function SoloLobby({ opponent, onStart, isDeckChallenge }: { opponent: string; o
           <div className="text-zinc-600 font-bold text-lg">VS</div>
           <PlayerAvatar label={opponent} letter={opponent[0]} color="zinc" />
         </div>
-        <RulesList />
+        <div className="flex justify-center mb-4">
+          <RoundSelector rounds={rounds} onChange={onRoundsChange} />
+        </div>
+        <RulesList rounds={rounds} />
         <button
           onClick={onStart}
           className="w-full py-4 bg-violet-400 hover:bg-violet-400 text-white font-bold rounded-xl transition-colors"
@@ -806,7 +845,7 @@ function SoloLobby({ opponent, onStart, isDeckChallenge }: { opponent: string; o
 function OnlineLobby({
   tab, onTabChange, challengeQuery, setChallengeQuery, challengeResults,
   challengeSending, challengeSent, onChallenge, onQuickMatch, matchmakingLoading, wsError,
-  isDeckChallenge,
+  isDeckChallenge, rounds, onRoundsChange,
 }: {
   tab: OnlineTab;
   onTabChange: (t: OnlineTab) => void;
@@ -820,6 +859,8 @@ function OnlineLobby({
   matchmakingLoading: boolean;
   wsError: string;
   isDeckChallenge?: boolean;
+  rounds: number;
+  onRoundsChange: (n: number) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -864,7 +905,10 @@ function OnlineLobby({
             <p className="text-white font-semibold mb-1">Find a Random Opponent</p>
             <p className="text-zinc-400 text-sm">Get matched with someone studying right now. Win to earn followers.</p>
           </div>
-          <RulesList />
+          <div className="flex justify-center mb-1">
+            <RoundSelector rounds={rounds} onChange={onRoundsChange} />
+          </div>
+          <RulesList rounds={rounds} />
           <button
             onClick={onQuickMatch}
             disabled={matchmakingLoading}
@@ -890,7 +934,10 @@ function OnlineLobby({
             </div>
           ) : (
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3">
-              <p className="text-white font-medium text-sm">Challenge anyone — even if they don&apos;t follow you</p>
+              <div className="flex items-center justify-between">
+                <p className="text-white font-medium text-sm">Challenge anyone — even if they don&apos;t follow you</p>
+                <RoundSelector rounds={rounds} onChange={onRoundsChange} />
+              </div>
               <input
                 type="text"
                 placeholder="Search by username..."
@@ -962,7 +1009,7 @@ function WaitingRoom({
 
 function GameRound({
   card, choices, phase, timeLeft, currentIndex, userScore, opponentScore,
-  opponentName, userAnswer, userAnswered, opponentAnswered, roundResult, onChoiceSelect,
+  opponentName, userAnswer, userAnswered, opponentAnswered, roundResult, onChoiceSelect, rounds,
 }: {
   card: DuelCard;
   choices: string[];
@@ -977,6 +1024,7 @@ function GameRound({
   opponentAnswered: boolean;
   roundResult: 'win' | 'lose' | 'tie' | null;
   onChoiceSelect: (choice: string) => void;
+  rounds: number;
 }) {
   return (
     <div className="space-y-4">
@@ -988,7 +1036,7 @@ function GameRound({
         </div>
         <div className="text-center">
           <p className="text-xs text-zinc-500 mb-1">Round</p>
-          <p className="text-sm font-bold text-zinc-300">{currentIndex + 1} / {ROUNDS}</p>
+          <p className="text-sm font-bold text-zinc-300">{currentIndex + 1} / {rounds}</p>
         </div>
         <div className="flex-1 text-center">
           <p className="text-xs text-zinc-500 mb-1">{opponentName}</p>
@@ -1130,9 +1178,9 @@ function PlayerAvatar({ label, letter, color }: { label: string; letter: string;
   );
 }
 
-function RulesList() {
+function RulesList({ rounds }: { rounds: number }) {
   const rules = [
-    `${ROUNDS} rounds · 15 seconds per question`,
+    `${rounds} rounds · 15 seconds per question`,
     'Choose the correct answer from 4 options',
     'Fastest correct answer wins the round',
     'Most rounds won takes the duel',

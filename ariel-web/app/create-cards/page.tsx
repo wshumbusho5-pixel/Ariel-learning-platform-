@@ -102,6 +102,7 @@ export default function CreateCardsPage() {
     setShowBulkPaste(false);
   };
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+  const [caption, setCaption] = useState('');
 
   // ── Cards ──────────────────────────────────────────────────────
   const [cards, setCards] = useState<CardDraft[]>([
@@ -149,7 +150,8 @@ export default function CreateCardsPage() {
         effectiveSubject || undefined,
         topic || undefined,
         [],
-        visibility
+        visibility,
+        visibility === 'public' && caption.trim() ? caption.trim() : undefined
       );
       setSaved(true);
       setTimeout(() => router.push('/deck'), 1200);
@@ -290,6 +292,22 @@ export default function CreateCardsPage() {
                   <p className="text-[11px] text-zinc-600 mt-1.5">
                     {visibility === 'public' ? 'Everyone can find and study these cards.' : 'Only you can see these cards.'}
                   </p>
+
+                  {/* Caption — only when public */}
+                  {visibility === 'public' && (
+                    <div className="mt-3">
+                      <label className="text-xs font-semibold text-zinc-400 mb-1.5 block">Caption <span className="text-zinc-600 font-normal">(optional)</span></label>
+                      <textarea
+                        value={caption}
+                        onChange={e => setCaption(e.target.value)}
+                        maxLength={200}
+                        rows={2}
+                        placeholder="What should people know before studying this? e.g. &quot;This comes up every exam 🔥&quot;"
+                        className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-[13px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-violet-500/60 resize-none transition-colors"
+                      />
+                      <p className="text-[10px] text-zinc-700 text-right mt-0.5">{caption.length}/200</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -311,6 +311,9 @@ async def enrich_deck_with_author(db, deck: Dict, current_user_id: str) -> Dict:
         "is_liked": current_user_id in deck.get("liked_by", []) if current_user_id else False,
         "is_saved": current_user_id in deck.get("saved_by", []) if current_user_id else False,
 
+        # Caption
+        "caption": deck.get("caption"),
+
         # Metadata
         "created_at": deck["created_at"],
         "published_at": deck.get("published_at"),

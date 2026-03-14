@@ -195,7 +195,7 @@ export default function DeckPage() {
 
       {/* Clips grid — rendered on clips tab */}
       {activeTab === 'clips' && (
-        <div className="lg:pl-[72px] min-h-screen bg-[#09090b]">
+        <div className="lg:pl-[72px] min-h-screen bg-black">
           <div className="pt-[152px] pb-28 px-4">
             {clipsLoading ? (
               <div className="grid grid-cols-2 gap-3">
@@ -282,7 +282,7 @@ export default function DeckPage() {
 
       {/* Overlay header — floats above everything */}
       <div className="fixed top-0 left-0 right-0 lg:left-[72px] z-40 pointer-events-none">
-        <div className={`px-4 pt-3 pb-3 ${activeTab === 'cards' ? 'bg-gradient-to-b from-black/70 via-black/30 to-transparent' : 'bg-[#09090b]/90 backdrop-blur-xl border-b border-white/[0.06]'}`}>
+        <div className={`px-4 pt-3 pb-3 ${activeTab === 'cards' ? 'bg-gradient-to-b from-black/70 via-black/30 to-transparent' : 'bg-black/90 backdrop-blur-xl border-b border-[#2f3336]'}`}>
 
           {/* Title row */}
           <div className="flex items-center justify-between mb-3 pointer-events-auto">

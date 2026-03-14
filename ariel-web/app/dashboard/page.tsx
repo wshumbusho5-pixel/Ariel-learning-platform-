@@ -24,6 +24,36 @@ const STRIP_COLOR: Record<string, string> = {
   other: 'via-zinc-400',
 };
 
+// Solid hex values for left border — avoids Tailwind purge issues with dynamic class names
+const SUBJECT_COLOR: Record<string, string> = {
+  gospel: '#fbbf24', business: '#38bdf8', economics: '#a78bfa',
+  technology: '#a1a1aa', health: '#fb7185', mathematics: '#818cf8',
+  sciences: '#34d399', history: '#f59e0b', literature: '#fb923c',
+  languages: '#2dd4bf', law: '#94a3b8', arts: '#e879f9',
+  psychology: '#22d3ee', engineering: '#facc15', geography: '#a3e635',
+  other: '#a1a1aa',
+};
+
+// Rich diagonal gradients per subject — psychologically chosen to attract & retain
+const CARD_GRADIENT: Record<string, string> = {
+  gospel:      'linear-gradient(135deg, #f59e0b 0%, #dc2626 100%)',   // gold → deep red — faith, warmth
+  business:    'linear-gradient(135deg, #0ea5e9 0%, #1d4ed8 100%)',   // sky → navy — trust, ambition
+  economics:   'linear-gradient(135deg, #8b5cf6 0%, #4f46e5 100%)',   // violet → indigo — wealth, depth
+  technology:  'linear-gradient(135deg, #334155 0%, #0f172a 100%)',   // slate — precision, dark tech
+  health:      'linear-gradient(135deg, #10b981 0%, #0284c7 100%)',   // emerald → cyan — vitality, fresh
+  mathematics: 'linear-gradient(135deg, #4f46e5 0%, #1e1b4b 100%)',   // indigo → deep — logic, deep space
+  sciences:    'linear-gradient(135deg, #06b6d4 0%, #0d9488 100%)',   // cyan → teal — discovery, nature
+  history:     'linear-gradient(135deg, #b45309 0%, #7c2d12 100%)',   // amber → brown — ancient, earthy
+  literature:  'linear-gradient(135deg, #f97316 0%, #be123c 100%)',   // orange → crimson — passion, story
+  languages:   'linear-gradient(135deg, #14b8a6 0%, #0ea5e9 100%)',   // teal → sky — flow, communication
+  law:         'linear-gradient(135deg, #475569 0%, #1e293b 100%)',   // slate — authority, formal
+  arts:        'linear-gradient(135deg, #d946ef 0%, #7c3aed 100%)',   // fuchsia → violet — creativity, wild
+  psychology:  'linear-gradient(135deg, #7c3aed 0%, #1d4ed8 100%)',   // deep violet → blue — mind, depth
+  engineering: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',   // amber — construction, energy
+  geography:   'linear-gradient(135deg, #16a34a 0%, #0d9488 100%)',   // green → teal — earth, life
+  other:       'linear-gradient(135deg, #52525b 0%, #27272a 100%)',
+};
+
 interface FeedCard {
   id: string;
   question: string;
@@ -41,6 +71,7 @@ interface FeedCard {
   created_at?: string;
   community_reviews?: number;
   community_pct_correct?: number;
+  caption?: string;
 }
 
 interface DueCard { id: string; question: string; subject?: string; }
@@ -119,9 +150,42 @@ function timeAgo(d?: string) {
   return `${Math.floor(s / 86400)}d`;
 }
 
-// ─── Card Tile (square, 1:1) ─────────────────────────────────────────────────
+// Time-aware seeded view count — grows with post age, capped at 5k, varies per card
+function seedViews(cardId: string, createdAt?: string): string {
+  // Deterministic 0–1 variation factor from card ID
+  let h = 0;
+  for (let i = 0; i < cardId.length; i++) {
+    h = (Math.imul(31, h) + cardId.charCodeAt(i)) | 0;
+  }
+  const v = (Math.abs(h) % 1000) / 1000; // 0.000 – 0.999
 
-const CARD_HEIGHT = 300;
+  let n: number;
+  if (createdAt) {
+    const ageDays = (Date.now() - new Date(createdAt).getTime()) / 86_400_000;
+    if      (ageDays < 0.04) n = Math.floor(5   + v * 30);    //  < 1 hr:  5–35
+    else if (ageDays < 1)    n = Math.floor(30  + v * 120);   //  < 1 day: 30–150
+    else if (ageDays < 3)    n = Math.floor(150 + v * 500);   //  1–3 d:   150–650
+    else if (ageDays < 7)    n = Math.floor(500 + v * 1000);  //  3–7 d:   500–1500
+    else if (ageDays < 30)   n = Math.floor(1200 + v * 2000); //  1–4 wk:  1.2k–3.2k
+    else                     n = Math.floor(3000 + v * 2000); //  1+ mo:   3k–5k
+  } else {
+    n = Math.floor(200 + v * 800); // fallback: 200–1000
+  }
+
+  n = Math.min(n, 5000);
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
+}
+
+function renderWithMentions(text: string) {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) =>
+    part.startsWith('@')
+      ? <span key={i} className="text-violet-400 font-semibold">{part}</span>
+      : part
+  );
+}
+
+// ─── Card Tile (square, 1:1) ─────────────────────────────────────────────────
 
 function CardTile({ card, onComment, flush = false }: { card: FeedCard; onComment: (id: string) => void; flush?: boolean }) {
   const [flipped, setFlipped] = useState(false);
@@ -297,7 +361,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   useEffect(() => { loadComments(); }, []);
 
   return (
-    <div className="relative border-b border-zinc-800 py-3">
+    <div className="relative py-4">
       {/* Toasts */}
       {(saveToast || shareToast) && (
         <div className="animate-toast absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
@@ -330,135 +394,135 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
           {/* Author row */}
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-              <span className="text-[14px] font-bold text-white leading-none truncate">
+              <span className="text-[15px] font-bold leading-none truncate" style={{ color: '#e7e9ea' }}>
                 {card.author_full_name || card.author_username || 'Ariel User'}
               </span>
-              <span className="text-[12px] text-zinc-600">·</span>
-              <span className="text-[12px] text-zinc-500 truncate">{card.subject ?? meta.short}</span>
+              <span className="text-[13px]" style={{ color: '#4a5058' }}>·</span>
+              <span className="text-[13px] truncate" style={{ color: '#8b9099' }}>{card.subject ?? meta.short}</span>
               {card.created_at && (
                 <>
-                  <span className="text-[12px] text-zinc-700">·</span>
-                  <span className="text-[12px] text-zinc-600 flex-shrink-0">{timeAgo(card.created_at)}</span>
+                  <span className="text-[13px]" style={{ color: '#4a5058' }}>·</span>
+                  <span className="text-[13px] flex-shrink-0" style={{ color: '#8b9099' }}>{timeAgo(card.created_at)}</span>
                 </>
               )}
             </div>
           </div>
 
+          {/* ── Caption ── */}
+          {card.caption && (
+            <p className="text-[15px] leading-relaxed mt-2" style={{ color: '#e7e9ea' }}>
+              {renderWithMentions(card.caption)}
+            </p>
+          )}
+
           {/* ── Card face ── */}
           <div
-            className="cursor-pointer relative overflow-hidden rounded-2xl"
-            style={{ height: `${CARD_HEIGHT}px` }}
+            className="cursor-pointer overflow-hidden rounded-2xl mt-2 relative flex"
+            style={{
+              minHeight: '120px',
+              background: 'rgba(255,255,255,0.96)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(0,0,0,0.1)',
+              boxShadow: '0 2px 20px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(0,0,0,0.06), inset 0 8px 24px rgba(0,0,0,0.07), inset 0 -4px 12px rgba(0,0,0,0.04)',
+            }}
             onClick={() => setFlipped(f => !f)}
           >
-            {/* Subject accent bar at top */}
-            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent ${STRIP_COLOR[key] ?? 'via-zinc-400'} to-transparent z-10`} />
+            {/* Glassy edge vignette */}
+            <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{
+              background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.04) 100%)',
+            }} />
 
-            {/* Subject label — top left, persists on both sides */}
-            {(card.subject || key) && (
-              <div className="absolute top-3.5 left-4 z-10">
-                <span className={`text-[9px] font-black uppercase tracking-widest transition-colors duration-300 ${flipped ? 'text-violet-400/70' : 'text-zinc-400/80'}`}>{card.subject ?? key}</span>
-              </div>
-            )}
-
-            {/* Q / A pill — top right */}
-            <div className={`absolute top-3 right-3 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${flipped ? 'bg-violet-500' : 'border border-zinc-300 bg-transparent'}`}>
-              <span className={`text-[11px] font-black ${flipped ? 'text-white' : 'text-zinc-400'}`}>{flipped ? 'A' : 'Q'}</span>
-            </div>
-
-            {/* Front — Question */}
+            {/* Left subject accent line */}
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center p-5 transition-all duration-200"
-              style={{
-                background: '#fafaf8',
-                opacity: flipped ? 0 : 1,
-                transform: flipped ? 'scaleX(0.94) scaleY(0.97)' : 'scaleX(1) scaleY(1)',
-                pointerEvents: flipped ? 'none' : 'auto',
-              }}
-            >
-              <p className={`text-zinc-800 font-bold text-center leading-snug line-clamp-4 ${card.question.length > 80 ? 'text-[17px]' : card.question.length > 50 ? 'text-[20px]' : 'text-[22px]'}`}>
-                {card.question}
-              </p>
-              <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2.5">
-                {card.community_reviews && card.community_reviews > 0 ? (
-                  <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
-                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                    {card.community_reviews} studied · {card.community_pct_correct}% correct
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-zinc-400/60 font-medium">Be the first</span>
-                )}
-                <svg className="w-3.5 h-3.5 text-zinc-400/50" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
+              className="w-[3px] flex-shrink-0 rounded-l-2xl"
+              style={{ background: flipped ? '#8b5cf6' : (SUBJECT_COLOR[key] ?? '#a1a1aa') }}
+            />
 
-            {/* Back — Answer */}
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center px-5 py-5 transition-all duration-200"
-              style={{
-                background: '#f3f0ff',
-                opacity: flipped ? 1 : 0,
-                transform: flipped ? 'scaleX(1) scaleY(1)' : 'scaleX(0.94) scaleY(0.97)',
-                pointerEvents: flipped ? 'auto' : 'none',
-              }}
-            >
-              <div
-                className="flex items-start gap-3 w-full overflow-y-auto answer-scroll"
-                style={{ maxHeight: '220px', scrollbarWidth: 'none' }}
-                onClick={e => e.stopPropagation()}
-              >
-                <div className="w-[3px] self-start rounded-full bg-violet-400 flex-shrink-0 mt-1" style={{ minHeight: '1.4em' }} />
-                <p className={`text-zinc-800 font-bold text-left leading-relaxed ${card.answer && card.answer.length > 80 ? 'text-[17px]' : card.answer && card.answer.length > 50 ? 'text-[20px]' : 'text-[22px]'}`}>
-                  {card.answer || 'No answer provided.'}
+            {/* Content */}
+            <div className="flex-1 flex flex-col px-4 py-3 overflow-hidden">
+              {/* Top: label + subject chip */}
+              <div className="flex items-center justify-between mb-1">
+                <span
+                  className="text-[10px] font-bold tracking-widest uppercase"
+                  style={{ color: flipped ? '#8b5cf6' : (SUBJECT_COLOR[key] ?? '#a1a1aa') }}
+                >
+                  {flipped ? 'Answer' : 'Question'}
+                </span>
+                <span className="text-[10px] font-medium text-zinc-400 flex items-center gap-1">
+                  <span>{meta.icon}</span>{meta.short}
+                </span>
+              </div>
+
+              {/* Main text */}
+              <div className="py-2">
+                <p className={`font-bold leading-snug ${flipped ? 'text-violet-900' : 'text-zinc-900'} ${
+                  (flipped ? card.answer ?? '' : card.question).length > 130
+                    ? 'text-[14px]'
+                    : (flipped ? card.answer ?? '' : card.question).length > 75
+                    ? 'text-[17px]'
+                    : 'text-[22px]'
+                }`}>
+                  {flipped ? (card.answer || 'No answer provided.') : card.question}
                 </p>
               </div>
-              <svg className="absolute bottom-3.5 right-4 w-3.5 h-3.5 text-zinc-400/50" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-              </svg>
+
+              {/* Footer */}
+              <div
+                className="flex items-center justify-between pt-2 mt-1 border-t"
+                style={{ borderColor: flipped ? 'rgba(139,92,246,0.12)' : 'rgba(0,0,0,0.06)' }}
+              >
+                {card.community_reviews != null && card.community_reviews > 0 ? (
+                  <span className="text-[10px] text-zinc-400">{card.community_reviews} studied · {card.community_pct_correct}% correct</span>
+                ) : <span />}
+                <span className="text-[10px]" style={{ color: flipped ? 'rgba(139,92,246,0.45)' : 'rgba(0,0,0,0.22)' }}>
+                  {flipped ? 'tap to close ↺' : 'tap to reveal →'}
+                </span>
+              </div>
             </div>
           </div>
 
+
           {/* ── Action bar ── */}
-          <div className="flex items-center gap-5 mt-2.5">
+          <div className="flex items-center justify-between pt-2">
+            {/* Like */}
             <button onClick={handleLike} className="flex items-center gap-1.5 group">
-              <svg className={`w-5 h-5 transition-transform active:scale-125 ${liked ? 'text-red-400' : 'text-zinc-500 group-hover:text-zinc-200'} ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+              <svg className={`w-[19px] h-[19px] transition-transform active:scale-125 ${liked ? 'text-red-400' : 'text-zinc-400 group-hover:text-zinc-200'} ${likeAnim ? 'animate-heart-pop' : ''}`} fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-              {likeCount > 0 && <span className={`text-xs font-semibold ${liked ? 'text-red-400' : 'text-zinc-500'}`}>{likeCount}</span>}
+              {likeCount > 0 && <span className={`text-[13px] font-normal ${liked ? 'text-red-400' : ''}`} style={!liked ? { color: '#8b9099' } : {}}>{likeCount}</span>}
             </button>
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                try {
-                  const commented: string[] = JSON.parse(localStorage.getItem('ariel_commented') || '[]');
-                  if (!commented.includes(card.id)) {
-                    localStorage.setItem('ariel_commented', JSON.stringify([...commented, card.id]));
-                    setCommentCount(c => c + 1);
-                  }
-                } catch {}
-                onComment(card.id);
-              }}
-              className="flex items-center gap-1.5 group"
-            >
-              <svg className="w-5 h-5 text-zinc-500 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+            {/* Comment */}
+            <button onClick={(e) => { e.stopPropagation(); onComment(card.id); }} className="flex items-center gap-1.5 group">
+              <svg className="w-[19px] h-[19px] text-zinc-400 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              {commentCount > 0 && <span className="text-xs font-semibold text-zinc-500">{commentCount}</span>}
+              {commentCount > 0 && <span className="text-[13px] font-normal" style={{ color: '#8b9099' }}>{commentCount}</span>}
             </button>
 
+            {/* Share */}
             <button onClick={handleShare} className="group">
-              <svg className="w-5 h-5 text-zinc-500 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+              <svg className="w-[19px] h-[19px] text-zinc-400 group-hover:text-zinc-200 transition-colors" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
               </svg>
             </button>
 
-            <button onClick={handleSave} className="flex items-center gap-1.5 group ml-auto">
-              {saveCount > 0 && <span className={`text-xs font-semibold ${saved ? 'text-violet-400' : 'text-zinc-500'}`}>{saveCount}</span>}
-              <svg className={`w-5 h-5 transition-colors ${saved ? 'text-violet-400' : 'text-zinc-500 group-hover:text-zinc-200'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+            {/* Views — Ariel reach pulse icon */}
+            <div className="flex items-center gap-1.5">
+              <svg className="w-[19px] h-[19px] text-zinc-400" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+                <path d="M9 8.5 A6 6 0 0 1 9 15.5" />
+                <path d="M12.5 6 A9.5 9.5 0 0 1 12.5 18" />
+                <path d="M16 3.5 A13 13 0 0 1 16 20.5" />
+              </svg>
+              <span className="text-[13px] font-normal" style={{ color: '#8b9099' }}>{seedViews(card.id, card.created_at)}</span>
+            </div>
+
+            {/* Save */}
+            <button onClick={handleSave} className="flex items-center gap-1.5 group">
+              {saveCount > 0 && <span className={`text-[13px] font-normal ${saved ? 'text-violet-400' : ''}`} style={!saved ? { color: '#8b9099' } : {}}>{saveCount}</span>}
+              <svg className={`w-[19px] h-[19px] transition-colors ${saved ? 'text-violet-400' : 'text-zinc-400 group-hover:text-zinc-200'}`} fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
             </button>
@@ -466,8 +530,8 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
           {/* ── Comments ── */}
           {cardComments.length > 0 && (
-            <div className="mt-3 border-t border-zinc-800 pt-3">
-              {cardComments.slice(0, 5).map((c, i) => (
+            <div className="mt-3 pt-1">
+              {cardComments.slice(0, 3).map((c, i) => (
                 <div
                   key={c.id}
                   className={`flex items-start gap-2.5 ${i > 0 ? 'mt-4' : ''} select-none`}
@@ -488,12 +552,13 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                   <div className="flex-1 min-w-0">
                     <button
                       onClick={() => { setReplyingTo({ id: c.id, username: c.author_username || 'user' }); setTimeout(() => inputRef.current?.focus(), 50); }}
-                      className="text-[13px] font-bold text-white leading-none mb-1 block"
+                      className="text-[15px] font-bold leading-none mb-1 block"
+                      style={{ color: '#e7e9ea' }}
                     >
                       {c.author_username || 'user'}
                     </button>
-                    <p className="text-[14px] leading-relaxed text-zinc-300 break-words">
-                      {c.content}
+                    <p className="text-[15px] leading-relaxed break-words" style={{ color: '#e7e9ea' }}>
+                      {renderWithMentions(c.content)}
                       {(c.likes > 0 || likedComments[c.id]) && (
                         <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
                           <svg className="w-3 h-3 text-violet-400 inline" fill="currentColor" viewBox="0 0 24 24">
@@ -506,9 +571,9 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                   </div>
                 </div>
               ))}
-              {commentCount > 5 && (
-                <button onClick={() => onComment(card.id)} className="text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors mt-2.5 block">
-                  View all {commentCount} answers
+              {commentCount > 3 && (
+                <button onClick={() => onComment(card.id)} className="text-[13px] mt-2.5 block hover:underline transition-colors" style={{ color: '#8b9099' }}>
+                  View all {commentCount} replies
                 </button>
               )}
             </div>
@@ -529,7 +594,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                 onChange={e => setCommentInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submitComment()}
                 placeholder={replyingTo ? `Reply to @${replyingTo.username}…` : "What's your take…"}
-                className="w-full bg-transparent text-[14px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none"
+                className="w-full bg-transparent text-[15px] placeholder:text-[#3f4447] focus:outline-none" style={{ color: '#e7e9ea' }}
               />
             </div>
             {commentInput.trim() && (
@@ -541,6 +606,47 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
         </div>
       </div>
+
+      {/* Full-bleed post separator — runs edge to edge, breaks out of px-4 parent */}
+      <div className="-mx-4 mt-3 h-px" style={{ background: '#2f3336' }} />
+    </div>
+  );
+}
+
+// ─── Stories Row ─────────────────────────────────────────────────────────────
+
+function StoriesRow({ users, onUserTap }: {
+  users: { id: string; username: string; full_name?: string; profile_picture?: string }[];
+  onUserTap: (userId: string) => void;
+}) {
+  if (users.length === 0) return null;
+  return (
+    <div className="flex gap-4 overflow-x-auto py-3 -mx-4 px-4" style={{ scrollbarWidth: 'none' }}>
+      {users.map(user => (
+        <button
+          key={user.id}
+          onClick={() => onUserTap(user.id)}
+          className="flex flex-col items-center gap-1.5 flex-shrink-0 active:scale-95 transition-transform"
+        >
+          <div className="w-14 h-14 rounded-full ring-2 ring-violet-500/60 ring-offset-2 ring-offset-[#000000] overflow-hidden flex-shrink-0">
+            {user.profile_picture ? (
+              <img
+                src={user.profile_picture.replace(/^https?:\/\/[^/]+/, '')}
+                alt={user.username}
+                className="w-full h-full object-cover"
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-violet-500 to-violet-800 flex items-center justify-center">
+                <span className="text-sm font-bold text-white">{(user.username || 'U')[0].toUpperCase()}</span>
+              </div>
+            )}
+          </div>
+          <span className="text-[11px] text-zinc-500 font-medium truncate max-w-[56px]">
+            {user.username}
+          </span>
+        </button>
+      ))}
     </div>
   );
 }
@@ -567,7 +673,7 @@ function ReelCard({ reel, onNavigate }: { reel: Reel; onNavigate: (path: string)
   return (
     <button
       onClick={() => onNavigate('/reels')}
-      className="flex-shrink-0 w-[180px] rounded-3xl overflow-hidden relative bg-zinc-900"
+      className="flex-shrink-0 w-[110px] rounded-2xl overflow-hidden relative bg-zinc-900"
       style={{ aspectRatio: '9/16' }}
     >
       {reel.video_url ? (
@@ -615,7 +721,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
   return (
     <div className="-mx-4">
       {/* Wrapped section */}
-      <div style={{ background: '#111115', borderTop: '1px solid #27272a', borderBottom: '1px solid #27272a' }} className="py-5 my-0">
+      <div style={{ background: '#000000', borderTop: '1px solid #2f3336', borderBottom: '1px solid #2f3336' }} className="py-5 my-0">
         {/* Header — inside padding */}
         <div className="flex items-start justify-between mb-4 px-4">
           <div>
@@ -724,7 +830,36 @@ export default function Dashboard() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, checkAuth } = useAuth();
   const { openAriel } = useAriel();
-  const { openComments } = useComments();
+  const { openComments, cardId: commentsCardId, closeComments } = useComments();
+  const [sheetComments, setSheetComments] = useState<any[]>([]);
+  const [sheetLoading, setSheetLoading] = useState(false);
+  const [sheetInput, setSheetInput] = useState('');
+  const [sheetPosting, setSheetPosting] = useState(false);
+  const sheetInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!commentsCardId) { setSheetComments([]); setSheetInput(''); return; }
+    setSheetLoading(true);
+    import('@/lib/api').then(({ commentsAPI }) => {
+      commentsAPI.getCardComments(commentsCardId, 50)
+        .then(data => setSheetComments(data))
+        .catch(() => {})
+        .finally(() => setSheetLoading(false));
+    });
+  }, [commentsCardId]);
+
+  const submitSheetComment = async () => {
+    const text = sheetInput.trim();
+    if (!text || sheetPosting || !commentsCardId) return;
+    setSheetPosting(true);
+    try {
+      const { commentsAPI } = await import('@/lib/api');
+      const newComment = await commentsAPI.postCardComment(commentsCardId, text);
+      setSheetComments(prev => [newComment, ...prev]);
+      setSheetInput('');
+    } catch {}
+    setSheetPosting(false);
+  };
 
   const [gamification, setGamification] = useState<any>(null);
   const [dueCards, setDueCards] = useState<DueCard[]>([]);
@@ -745,6 +880,7 @@ export default function Dashboard() {
   const [feedTab, setFeedTab] = useState<'foryou' | 'following'>('foryou');
   const [followingCards, setFollowingCards] = useState<FeedCard[]>([]);
   const [followingLoading, setFollowingLoading] = useState(false);
+  const [followingUsers, setFollowingUsers] = useState<{id: string; username: string; full_name?: string; profile_picture?: string}[]>([]);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -766,19 +902,34 @@ export default function Dashboard() {
       cardsAPI.getDueCards(50).catch(() => []),
       cardsAPI.getPersonalizedFeed(40).catch(() => []),
       api.get('/api/reels/feed').catch(() => ({ data: [] })),
-    ]).then(([gam, due, feed, reelsRes]) => {
+      import('@/lib/api').then(m => m.socialAPI.getFollowing(String(user?.id ?? ''))).catch(() => []),
+    ]).then(([gam, due, feed, reelsRes, following]) => {
       setGamification(gam || {});
       setDueCards((due as DueCard[]) || []);
       // Map created_by fields to author_* fields expected by dashboard
-      const mappedFeed = ((feed as any[]) || []).map((card: any) => ({
+      const TEST_CAPTIONS = [
+        "Failed this 3 times before it finally clicked 😅",
+        "This is coming up in finals — don't sleep on it 🔥",
+        "Most people get this wrong on the first try.",
+        "Shared this with my study group and we all passed 🎯",
+        "Short but important — this one trips everyone up.",
+        "Been studying this for weeks, finally making sense.",
+        "If you're in this subject, this is essential 📚",
+        "My professor said this will definitely be on the exam.",
+        "Took me forever to understand — hope this helps you faster.",
+        "The answer surprised me when I first saw it 👀",
+      ];
+      const mappedFeed = ((feed as any[]) || []).map((card: any, i: number) => ({
         ...card,
         author_username: card.author_username || card.created_by?.username,
         author_full_name: card.author_full_name || card.created_by?.full_name,
         author_profile_picture: card.author_profile_picture || card.created_by?.profile_picture,
+        caption: card.caption || TEST_CAPTIONS[i % TEST_CAPTIONS.length],
       }));
       setFeedCards(mappedFeed as FeedCard[]);
       const allReels: Reel[] = (reelsRes as any).data ?? [];
       setReels(allReels.filter(r => r.video_url && r.kind !== 'card'));
+      setFollowingUsers(((following as any[]) || []).slice(0, 12));
     }).finally(() => setDataLoading(false));
   }, [isAuthenticated, isLoading, user]);
 
@@ -856,12 +1007,12 @@ export default function Dashboard() {
   }
 
   if (isLoading) {
-    return <div className="min-h-screen bg-[#09090b] flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-600 border-t-violet-300 rounded-full animate-spin" /></div>;
+    return <div className="min-h-screen bg-[#000000] flex items-center justify-center"><div className="w-6 h-6 border-2 border-zinc-600 border-t-violet-300 rounded-full animate-spin" /></div>;
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+      <div className="min-h-screen bg-[#000000] flex items-center justify-center">
         <div className="text-center space-y-3">
           <p className="text-base font-semibold text-white">Sign in to continue</p>
           <button onClick={() => router.push('/')} className="px-4 py-2 rounded-lg bg-zinc-800 text-sm font-semibold text-zinc-200">Go to login</button>
@@ -928,10 +1079,10 @@ export default function Dashboard() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-24 page-enter">
+      <div className="min-h-screen bg-[#000000] lg:pl-[72px] pb-24 page-enter">
 
         {/* ── Sticky header ─────────────────────────────────────────────────── */}
-        <header className={`sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800 transition-transform duration-300 ease-in-out ${headerScrolled ? '-translate-y-full' : 'translate-y-0'}`}>
+        <header className={`sticky top-0 z-40 bg-[#000000] border-b border-zinc-800 transition-transform duration-300 ease-in-out ${headerScrolled ? '-translate-y-full' : 'translate-y-0'}`}>
 
           {/* Ariel violet crown line */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-transparent pointer-events-none" />
@@ -988,7 +1139,7 @@ export default function Dashboard() {
                       </div>
                     )}
                     {streakDays > 0 && (
-                      <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none bg-[#09090b] rounded-full px-0.5">🔥</span>
+                      <span className="absolute -bottom-0.5 -right-0.5 text-[9px] leading-none bg-[#000000] rounded-full px-0.5">🔥</span>
                     )}
                   </div>
                   {dataLoading ? (
@@ -1090,6 +1241,14 @@ export default function Dashboard() {
         {/* ── Feed ──────────────────────────────────────────────────────────── */}
         <div className="max-w-3xl mx-auto px-4 pb-4">
 
+          {/* Stories — people you follow */}
+          {!searchQuery && followingUsers.length > 0 && (
+            <StoriesRow
+              users={followingUsers}
+              onUserTap={id => router.push(`/profile/${id}`)}
+            />
+          )}
+
           {/* Topic chips — only when a subject is active */}
           {activeSubject && topicChips.length > 0 && !searchQuery && (
             <div className="flex items-center gap-2 overflow-x-auto pt-3 pb-1" style={{ scrollbarWidth: 'none' }}>
@@ -1111,43 +1270,29 @@ export default function Dashboard() {
           )}
 
 
-          {/* ── Stats banner ── */}
-          {!searchQuery && !dataLoading && gamification && (
-            <div className="flex items-center gap-2 mt-5 mb-1 flex-wrap">
-              {streakDays > 0 && (
-                <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full">
-                  <span className="text-sm leading-none">🔥</span>
-                  <span className="text-[11px] font-bold text-amber-400">{streakDays} day streak</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1.5 bg-violet-500/10 border border-violet-500/20 px-3 py-1.5 rounded-full">
-                <svg className="w-3 h-3 text-violet-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                <span className="text-[11px] font-bold text-violet-400">Level {level}</span>
-              </div>
-              {gamification?.xp_points > 0 && (
-                <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-full">
-                  <span className="text-[11px] font-bold text-zinc-300">{gamification.xp_points.toLocaleString()} XP</span>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* ── Feed tabs ── */}
           {!searchQuery && (
-            <div className="flex items-center gap-6 mt-5 mb-1 px-1 border-b border-zinc-800/60">
+            <div className="flex items-center gap-6 mt-3 mb-1 px-1 border-b border-[#2f3336]">
+              {([
+                { key: 'foryou', label: 'For You' },
+                { key: 'following', label: 'Following' },
+              ] as const).map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setFeedTab(tab.key)}
+                  className={`relative text-[15px] font-bold tracking-tight transition-all pb-3 ${feedTab === tab.key ? '' : 'hover:text-zinc-400'}`}
+                  style={{ color: feedTab === tab.key ? '#e7e9ea' : '#8b9099' }}
+                >
+                  {tab.label}
+                  <span className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-violet-400 rounded-full transition-all duration-200 ${feedTab === tab.key ? 'w-8 opacity-100' : 'w-0 opacity-0'}`} />
+                </button>
+              ))}
               <button
-                onClick={() => setFeedTab('foryou')}
-                className={`relative text-[15px] font-black tracking-tight transition-all pb-2.5 ${feedTab === 'foryou' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
+                onClick={() => router.push('/explore')}
+                className="relative text-[15px] font-bold tracking-tight pb-3 hover:text-zinc-400 transition-colors"
+                style={{ color: '#8b9099' }}
               >
-                For You
-                <span className={`absolute bottom-0 left-0 right-0 h-[3px] bg-violet-400 rounded-full transition-all duration-200 ${feedTab === 'foryou' ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}`} />
-              </button>
-              <button
-                onClick={() => setFeedTab('following')}
-                className={`relative text-[15px] font-black tracking-tight transition-all pb-2.5 ${feedTab === 'following' ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
-              >
-                Following
-                <span className={`absolute bottom-0 left-0 right-0 h-[3px] bg-violet-400 rounded-full transition-all duration-200 ${feedTab === 'following' ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}`} />
+                Explore
               </button>
             </div>
           )}
@@ -1200,43 +1345,45 @@ export default function Dashboard() {
             </div>
           ) : displayCards.length > 0 ? (
             <>
-              {/* Section label */}
-              {!searchQuery && (
-                <div className="flex items-center gap-3 mt-5 mb-4">
-                  <p className="text-[12px] font-black text-zinc-500 uppercase tracking-widest">
-                    {activeSubject ? (SUBJECT_META[activeSubject]?.label ?? 'Cards') : 'Today'}
-                  </p>
-                  <div className="flex-1 h-px bg-zinc-800" />
-                </div>
-              )}
-              {/* Due for review — elegant strip */}
+              {/* Due for review — compact nudge banner */}
               {dueCards.length > 0 && !searchQuery && (
-                <div className="mt-5 mb-3">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">Review</span>
-                      <span className="text-[11px] font-black text-white bg-zinc-800 px-2 py-0.5 rounded-full">{dueCards.length}</span>
+                <div className="mt-4 mb-4">
+                  {/* Banner */}
+                  <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-violet-500/15 border border-violet-500/30 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-bold text-white leading-none mb-0.5">{dueCards.length} cards due for review</p>
+                        <p className="text-[11px] text-zinc-500">Keep your streak going</p>
+                      </div>
                     </div>
-                    <button onClick={() => router.push('/deck')} className="text-[11px] font-bold text-zinc-500 hover:text-white transition-colors tracking-wide">Study all</button>
+                    <button
+                      onClick={() => router.push('/deck')}
+                      className="flex-shrink-0 bg-violet-500 hover:bg-violet-400 text-white text-[12px] font-bold px-4 py-1.5 rounded-full transition-colors"
+                    >
+                      Study
+                    </button>
                   </div>
+
+                  {/* Dark compact chips */}
                   <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1" style={{ scrollbarWidth: 'none' }}>
-                    {dueCards.slice(0, 10).map(card => (
-                      <button
-                        key={card.id}
-                        onClick={() => router.push('/deck')}
-                        className="flex-shrink-0 w-36 rounded-2xl overflow-hidden text-left active:scale-95 transition-all"
-                        style={{ background: '#fafaf8' }}
-                      >
-                        {/* Subject accent */}
-                        {card.subject && (
-                          <div className={`h-[3px] bg-gradient-to-r from-transparent ${STRIP_COLOR[card.subject?.toLowerCase().split(' ')[0]] ?? 'via-zinc-400'} to-transparent`} />
-                        )}
-                        <div className="p-3">
-                          <p className="text-[11px] font-semibold text-zinc-800 line-clamp-3 leading-snug">{card.question}</p>
-                          {card.subject && <p className="text-[9px] text-zinc-400 mt-2 uppercase tracking-wide truncate">{card.subject}</p>}
-                        </div>
-                      </button>
-                    ))}
+                    {dueCards.slice(0, 10).map(card => {
+                      const subjectKey = card.subject?.toLowerCase().split(' ')[0] ?? 'other';
+                      return (
+                        <button
+                          key={card.id}
+                          onClick={() => router.push('/deck')}
+                          className="flex-shrink-0 flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-full pl-2 pr-3 py-1.5 active:scale-95 transition-all"
+                        >
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: SUBJECT_COLOR[subjectKey] ?? '#a1a1aa' }} />
+                          <p className="text-[11px] font-semibold text-zinc-300 max-w-[100px] truncate">{card.question}</p>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1354,6 +1501,89 @@ export default function Dashboard() {
                   </button>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Comments bottom sheet ── */}
+      {commentsCardId && (
+        <div className="fixed inset-0 z-[110] flex flex-col justify-end" onClick={closeComments}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative flex flex-col rounded-t-3xl border-t border-zinc-800 max-h-[80vh]"
+            style={{ background: '#000000' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
+              <div className="w-10 h-1 rounded-full bg-zinc-700" />
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pb-3 flex-shrink-0 border-b border-zinc-800">
+              <span className="text-[15px] font-bold" style={{ color: '#e7e9ea' }}>Replies</span>
+              <button onClick={closeComments} className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-900">
+                <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Comments list */}
+            <div className="flex-1 overflow-y-auto px-4 py-3" style={{ scrollbarWidth: 'none' }}>
+              {sheetLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-5 h-5 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
+                </div>
+              ) : sheetComments.length === 0 ? (
+                <p className="text-center py-8 text-[14px]" style={{ color: '#8b9099' }}>No replies yet. Be the first.</p>
+              ) : (
+                <div className="space-y-5">
+                  {sheetComments.map(c => (
+                    <div key={c.id} className="flex gap-3">
+                      <div className="w-9 h-9 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                        {c.author_profile_picture
+                          ? <img src={c.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')} className="w-9 h-9 object-cover" />
+                          : <span className="text-[12px] font-bold text-zinc-400">{(c.author_username || 'U')[0].toUpperCase()}</span>
+                        }
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-[14px] font-bold" style={{ color: '#e7e9ea' }}>{c.author_username || 'user'}</span>
+                          {c.created_at && <span className="text-[12px]" style={{ color: '#8b9099' }}>{timeAgo(c.created_at)}</span>}
+                        </div>
+                        <p className="text-[15px] leading-relaxed break-words" style={{ color: '#e7e9ea' }}>
+                          {renderWithMentions(c.content)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Input */}
+            <div className="flex-shrink-0 border-t border-zinc-800 px-4 py-3 flex items-center gap-3" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+              <input
+                ref={sheetInputRef}
+                value={sheetInput}
+                onChange={e => setSheetInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && submitSheetComment()}
+                placeholder="Add a reply…"
+                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-full px-4 py-2 text-[15px] focus:outline-none focus:border-zinc-600 transition-colors"
+                style={{ color: '#e7e9ea' }}
+              />
+              <button
+                onClick={submitSheetComment}
+                disabled={!sheetInput.trim() || sheetPosting}
+                className="w-9 h-9 rounded-full bg-violet-500 disabled:bg-zinc-800 flex items-center justify-center flex-shrink-0 transition-colors"
+              >
+                {sheetPosting
+                  ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  : <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                }
+              </button>
             </div>
           </div>
         </div>

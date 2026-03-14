@@ -110,9 +110,13 @@ export default function CardFeed({
   const [likedCards, setLikedCards] = useState<Set<string>>(new Set());
   const [savedCards, setSavedCards] = useState<Set<string>>(new Set());
   const [reviewCounts, setReviewCounts] = useState<Record<string, { hard: number; easy: number; nailed: number }>>({});
+  // Track which queue entry key was last rated per card — so re-appearing cards start fresh
+  const [ratedEntryKey, setRatedEntryKey] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<{ id: string; title: string; subtitle?: string } | null>(null);
   const snapContainerRef = useRef<HTMLDivElement>(null);
+  const [stripVisible, setStripVisible] = useState(true);
+  const stripTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Session queue (snap + my-deck) ──────────────────────────────────────────
   const [queueEntries, setQueueEntries] = useState<QueueEntry[]>([]);
@@ -174,6 +178,7 @@ export default function CardFeed({
     activeSnapIdxRef.current = 0;
     setNailedInSession(new Set());
     setReviewCounts({});
+    setRatedEntryKey({});
     setSessionRestarted(false);
   }, [filteredCards.length, subjectFilter, snapScroll, type]);
 
@@ -184,6 +189,12 @@ export default function CardFeed({
     const idx = Math.round(c.scrollTop / c.clientHeight);
     setActiveSnapIdx(idx);
     activeSnapIdxRef.current = idx;
+    // Show strip while scrolling, hide 1.6s after settling
+    setStripVisible(true);
+    if (stripTimerRef.current) clearTimeout(stripTimerRef.current);
+    stripTimerRef.current = setTimeout(() => setStripVisible(false), 1600);
+    // Reset flip state for the card we're leaving so it starts face-down next visit
+    setExpandedCards(new Set());
   }, []);
 
   const handleLike = async (cardId: string, e: React.MouseEvent) => {
@@ -249,14 +260,15 @@ export default function CardFeed({
   };
 
   // ── Core rating + queue management ─────────────────────────────────────────
-  const handleRate = async (card: Card, rating: RatingKey, e: React.MouseEvent) => {
+  const handleRate = async (card: Card, rating: RatingKey, e: React.MouseEvent, entryKey?: string) => {
     e.stopPropagation();
     const quality = rating === 'hard' ? 2 : rating === 'easy' ? 4 : 5;
 
-    // Increment display count
+    // Increment display count and record which entry key was rated
     const prevCounts = reviewCounts[card.id] ?? { hard: 0, easy: 0, nailed: 0 };
     const newCounts = { ...prevCounts, [rating]: prevCounts[rating] + 1 };
     setReviewCounts(prev => ({ ...prev, [card.id]: newCounts }));
+    if (entryKey) setRatedEntryKey(prev => ({ ...prev, [card.id]: entryKey }));
 
     // SRS update
     const updates = applyRatingLocally(card, quality);
@@ -354,6 +366,7 @@ export default function CardFeed({
     setActiveSnapIdx(0);
     activeSnapIdxRef.current = 0;
     setReviewCounts({});
+    setRatedEntryKey({});
     setSessionRestarted(true);
     setTimeout(() => {
       if (snapContainerRef.current) snapContainerRef.current.scrollTop = 0;
@@ -361,39 +374,34 @@ export default function CardFeed({
   }, [filteredCards, nailedInSession]);
 
   // ── Rating buttons (reusable) ───────────────────────────────────────────────
-  const renderRatingButtons = (card: Card, snap = false) => {
+  const renderRatingButtons = (card: Card, snap = false, entryKey?: string) => {
     const counts = reviewCounts[card.id] ?? { hard: 0, easy: 0, nailed: 0 };
+    // Active only if this specific queue entry was the one rated
+    const thisEntryRated = entryKey ? ratedEntryKey[card.id] === entryKey : true;
     return (
-      <div className={`flex items-stretch ${snap ? 'gap-3 justify-around' : 'gap-2'}`}>
+      <div className={`flex items-end ${snap ? 'justify-around gap-2' : 'gap-2'}`}>
         {(Object.keys(RATING_META) as RatingKey[]).map(key => {
-          const count = counts[key];
-          const active = count > 0;
+          const active = counts[key] > 0 && thisEntryRated;
           const m = RATING_META[key];
           return (
             <button
               key={key}
-              onClick={e => handleRate(card, key, e)}
-              className={`flex flex-col items-center gap-1 active:scale-90 transition-transform ${snap ? 'flex-none px-3 py-2' : 'flex-1 py-2.5'}`}
+              onClick={e => handleRate(card, key, e, entryKey)}
+              className={`flex flex-col items-center gap-1.5 active:scale-90 transition-transform ${snap ? 'flex-none px-4 py-1' : 'flex-1 py-2.5'}`}
             >
-              {/* Solid-fill checkbox */}
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center border-2 transition-all ${
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center border-2 transition-all duration-150 ${
                 active
                   ? `${m.solidBg} border-transparent shadow-lg`
-                  : 'border-white/20 bg-white/5'
+                  : 'border-white/15 bg-white/[0.04]'
               }`}>
                 {active && (
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                  <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 )}
               </div>
-              {/* Label */}
-              <span className={`text-[11px] font-semibold leading-none transition-colors ${active ? m.text : 'text-white/40'}`}>
+              <span className={`text-[11px] font-semibold leading-none transition-colors ${active ? m.text : 'text-white/30'}`}>
                 {m.label}
-              </span>
-              {/* Count — always reserve space so layout stable */}
-              <span className={`text-[10px] font-black tabular-nums leading-none transition-all ${active ? m.text : 'text-transparent'}`}>
-                {count > 0 ? count : '0'}
               </span>
             </button>
           );
@@ -452,12 +460,11 @@ export default function CardFeed({
       >
         <div className="absolute inset-0 bg-black" />
 
-        {/* Progress + meta strip */}
+        {/* Progress + meta strip — fades out after settling */}
         <div
-          className="absolute left-0 right-0 z-10 px-5 flex items-center justify-between"
-          style={{ top: `${headerOffset + 12}px` }}
+          className="absolute left-0 right-0 z-10 px-5 flex items-center justify-between transition-opacity duration-500"
+          style={{ top: `${headerOffset + 12}px`, opacity: stripVisible ? 1 : 0 }}
         >
-          {/* Subject + status */}
           <div className="flex items-center gap-2 min-w-0">
             {card.subject && (
               <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest truncate">{card.subject}</span>
@@ -466,14 +473,16 @@ export default function CardFeed({
               {statusMeta.label}
             </span>
           </div>
-          {/* Remaining count */}
           {remaining > 0 && (
             <span className="text-[11px] font-bold text-zinc-600 tabular-nums flex-shrink-0">{remaining} left</span>
           )}
         </div>
 
-        {/* Progress bar */}
-        <div className="absolute left-0 right-0 z-10 px-5" style={{ top: `${headerOffset + 34}px` }}>
+        {/* Progress bar — fades with strip */}
+        <div
+          className="absolute left-0 right-0 z-10 px-5 transition-opacity duration-500"
+          style={{ top: `${headerOffset + 34}px`, opacity: stripVisible ? 1 : 0 }}
+        >
           <div className="h-[2px] w-full bg-white/8 rounded-full overflow-hidden">
             <div
               className="h-full bg-white/25 rounded-full transition-all duration-500"
@@ -482,10 +491,10 @@ export default function CardFeed({
           </div>
         </div>
 
-        {/* Floating white card — tap to flip */}
+        {/* Floating white card — tap to reveal */}
         <div
           className="absolute inset-0 flex items-center justify-center px-5 cursor-pointer"
-          style={{ paddingTop: `${headerOffset + 52}px`, paddingBottom: '160px' }}
+          style={{ paddingTop: `${headerOffset + 52}px`, paddingBottom: '148px' }}
           onClick={() => toggleExpanded(card.id)}
         >
           <div
@@ -495,44 +504,37 @@ export default function CardFeed({
             style={{ maxHeight: `calc(100svh - ${headerOffset + 220}px)` }}
           >
             {!isExpanded ? (
-              <div className="space-y-5 text-center w-full">
-                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Question</p>
+              <div className="space-y-6 text-center w-full">
                 <h2 className="text-zinc-900 text-3xl leading-snug" style={{ fontFamily: "var(--font-caveat), cursive" }}>
                   {card.question}
                 </h2>
-                <div className="flex items-center justify-center gap-2 pt-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 animate-pulse" />
-                  <p className="text-zinc-400 text-sm">Tap to reveal answer</p>
-                </div>
+                <p className="text-zinc-400 text-xs tracking-wide">tap to reveal</p>
               </div>
             ) : (
-              <div className="space-y-4 w-full">
+              <div className="space-y-5 w-full">
                 <p className="text-zinc-400 text-lg leading-relaxed text-center" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.question}</p>
                 <div className="h-px bg-zinc-200" />
-                <div className="text-center space-y-3">
+                <div className="text-center space-y-2">
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Answer</p>
                   <p className="text-zinc-900 text-3xl leading-snug" style={{ fontFamily: "var(--font-caveat), cursive" }}>
                     {card.answer}
                   </p>
                 </div>
                 {card.explanation && (
-                  <div className="mt-2 p-4 rounded-2xl bg-zinc-100 border border-zinc-200">
+                  <div className="p-4 rounded-2xl bg-zinc-100 border border-zinc-200">
                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Why</p>
                     <p className="text-zinc-600 text-base leading-relaxed" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.explanation}</p>
                   </div>
                 )}
-                <p className="text-zinc-300 text-xs text-center">Tap again to see question</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Rating buttons */}
+        {/* Rating buttons — floating, no box */}
         {type === 'my-deck' && (
-          <div className="absolute bottom-24 left-0 right-0 px-6 z-10">
-            <div className="bg-black/50 backdrop-blur-md rounded-2xl px-2 py-3 border border-white/8">
-              {renderRatingButtons(card, true)}
-            </div>
+          <div className="absolute bottom-24 left-0 right-0 px-8 z-10">
+            {renderRatingButtons(card, true, entryKey)}
           </div>
         )}
       </div>

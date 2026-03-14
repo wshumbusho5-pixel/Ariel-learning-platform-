@@ -46,22 +46,22 @@ function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onTog
       <Avatar person={person} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-[14px] font-bold text-zinc-900 truncate">
+          <span className="text-[14px] font-bold truncate" style={{ color: '#e7e9ea' }}>
             {person.full_name || person.username}
           </span>
           {person.is_verified && (
-            <svg className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           )}
           {person.is_teacher && (
-            <span className="text-[9px] bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded font-bold flex-shrink-0">Teacher</span>
+            <span className="text-[9px] bg-violet-500/15 text-violet-400 border border-violet-500/30 rounded-full px-1.5 py-0.5 font-bold flex-shrink-0">Teacher</span>
           )}
         </div>
-        <p className="text-xs text-zinc-400 truncate">@{person.username}</p>
-        {person.bio && <p className="text-xs text-zinc-400 truncate mt-0.5">{person.bio}</p>}
+        <p className="text-xs truncate" style={{ color: '#8b9099' }}>@{person.username}</p>
+        {person.bio && <p className="text-xs truncate mt-0.5" style={{ color: '#8b9099' }}>{person.bio}</p>}
         {waitingFollowBack && (
-          <p className="text-[10px] text-zinc-400 mt-0.5">Follow back to message</p>
+          <p className="text-[10px] mt-0.5" style={{ color: '#8b9099' }}>Follow back to message</p>
         )}
       </div>
       {mutual ? (
@@ -72,7 +72,7 @@ function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onTog
           Message
         </button>
       ) : waitingFollowBack ? (
-        <span className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold bg-gray-100 text-zinc-400 border border-gray-200">
+        <span className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold border border-zinc-700 text-zinc-300 bg-transparent">
           Following
         </span>
       ) : (
@@ -170,17 +170,17 @@ export default function SearchPage() {
   return (
     <>
       <SideNav />
-      <div className="min-h-screen bg-white pb-20 lg:pl-[72px]">
+      <div className="min-h-screen bg-black pb-20 lg:pl-[72px]">
 
         {/* Header — always-visible search bar */}
-        <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        <div className="sticky top-0 z-40 bg-black border-b border-[#2f3336]">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button onClick={() => router.back()}>
               <svg className="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div className="flex-1 flex items-center gap-2 bg-gray-100 rounded-xl px-3 h-10">
+            <div className="flex-1 flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl px-3 h-10">
               <svg className="w-4 h-4 text-zinc-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -189,7 +189,8 @@ export default function SearchPage() {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={isDM ? 'Search to message...' : 'Search people...'}
-                className="flex-1 bg-transparent text-zinc-900 text-sm outline-none placeholder:text-zinc-400"
+                className="flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-500"
+                style={{ color: '#e7e9ea' }}
               />
               {query && (
                 <button onClick={() => setQuery('')}>
@@ -205,7 +206,7 @@ export default function SearchPage() {
         {/* Section label */}
         <div className="max-w-2xl mx-auto">
           <div className="px-4 pt-4 pb-1">
-            <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8b9099' }}>
               {isSearching ? `Results for "${query}"` : 'Suggested for you'}
             </p>
           </div>
@@ -213,22 +214,22 @@ export default function SearchPage() {
           {/* Loading */}
           {isLoading && (
             <div className="py-12 flex items-center justify-center">
-              <div className="w-6 h-6 border-2 border-gray-100 border-t-violet-500 rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-zinc-900 border-t-violet-500 rounded-full animate-spin" />
             </div>
           )}
 
           {/* Empty state */}
           {!isLoading && displayList.length === 0 && (
             <div className="py-16 text-center px-8">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <div className="w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-7 h-7 text-zinc-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-zinc-700">
+              <p className="text-sm font-semibold" style={{ color: '#e7e9ea' }}>
                 {isSearching ? `No results for "${query}"` : 'No suggestions yet'}
               </p>
-              <p className="text-xs text-zinc-400 mt-1">
+              <p className="text-xs mt-1" style={{ color: '#8b9099' }}>
                 {isSearching ? 'Try a different name or username' : 'More people will appear as the community grows'}
               </p>
             </div>
@@ -236,7 +237,7 @@ export default function SearchPage() {
 
           {/* People list */}
           {!isLoading && displayList.length > 0 && (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-zinc-800">
               {displayList.map(person => (
                 <PersonRow key={person.id} person={person} onToggleFollow={toggleFollow} onOpenDM={openDM} />
               ))}

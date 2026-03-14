@@ -257,7 +257,7 @@ export default function TikTokPlayer({
       <div
         ref={containerRef}
         className="h-full overflow-y-scroll flex-shrink-0"
-        style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none', width: 'min(100vw, calc(100dvh * 9 / 16))' } as React.CSSProperties}
+        style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none', width: '100%' } as React.CSSProperties}
       >
         {reels.map((reel, index) => {
           const isSaved = savedReels.has(reel.id);

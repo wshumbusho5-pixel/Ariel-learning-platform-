@@ -181,13 +181,14 @@ export const cardsAPI = {
     return response.data;
   },
 
-  createCardsBulk: async (cards: any[], subject?: string, topic?: string, tags?: string[], visibility: 'public' | 'private' = 'private') => {
+  createCardsBulk: async (cards: any[], subject?: string, topic?: string, tags?: string[], visibility: 'public' | 'private' = 'private', caption?: string) => {
     const response = await api.post('/api/cards/bulk', {
       cards,
       subject,
       topic,
       tags,
       visibility,
+      ...(caption ? { caption } : {}),
     });
     return response.data;
   },
@@ -616,13 +617,13 @@ export const commentsAPI = {
 
 // Duels API - Multiplayer flashcard battles
 export const duelsAPI = {
-  quickMatch: async () => {
-    const response = await api.post('/api/duels/quick-match');
+  quickMatch: async (roundCount: number = 5) => {
+    const response = await api.post('/api/duels/quick-match', { round_count: roundCount });
     return response.data;
   },
 
-  challenge: async (username: string) => {
-    const response = await api.post(`/api/duels/challenge/${username}`);
+  challenge: async (username: string, cardIds?: Array<{id: string; question: string; answer: string; subject?: string}>, roundCount: number = 5) => {
+    const response = await api.post(`/api/duels/challenge/${username}`, { card_ids: cardIds ?? null, round_count: roundCount });
     return response.data;
   },
 

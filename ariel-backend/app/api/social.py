@@ -317,7 +317,7 @@ async def get_user_profile(
     db = db_service.get_db()
 
     # Get target user
-    target_user = await db.users.find_one({"_id": user_id})
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
     if not target_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

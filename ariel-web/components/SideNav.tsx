@@ -223,7 +223,7 @@ export default function SideNav() {
         />
       )}
 
-      <div className={`hidden lg:flex fixed left-0 top-0 h-full flex-col z-50 bg-[#09090b] border-r border-zinc-800/60 transition-all duration-200 ${expanded ? 'w-56' : 'w-[72px]'}`}>
+      <div className={`hidden lg:flex fixed left-0 top-0 h-full flex-col z-50 bg-[#000000] border-r border-zinc-800/60 transition-all duration-200 ${expanded ? 'w-56' : 'w-[72px]'}`}>
         {/* Logo + hamburger */}
         <div className={`flex items-center h-16 px-4 flex-shrink-0 ${expanded ? 'gap-3' : 'justify-center'}`}>
           <button

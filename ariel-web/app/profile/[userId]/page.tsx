@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { socialAPI } from '@/lib/api';
 import UserCard from '@/components/UserCard';
 
@@ -28,6 +28,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const userId = params.userId as string;
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -38,16 +39,14 @@ export default function ProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, [userId]);
+  useEffect(() => { loadProfile(); }, [userId]);
 
   const loadProfile = async () => {
     try {
       setIsLoading(true);
       const data = await socialAPI.getUserProfile(userId);
       setProfile(data);
-      setIsFollowing(data.follows_you);
+      setIsFollowing(data.is_following);
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -59,31 +58,23 @@ export default function ProfilePage() {
     try {
       const data = await socialAPI.getFollowers(userId);
       setFollowers(data);
-    } catch (error) {
-      console.error('Error loading followers:', error);
-    }
+    } catch {}
   };
 
   const loadFollowing = async () => {
     try {
       const data = await socialAPI.getFollowing(userId);
       setFollowing(data);
-    } catch (error) {
-      console.error('Error loading following:', error);
-    }
+    } catch {}
   };
 
   useEffect(() => {
-    if (activeTab === 'followers') {
-      loadFollowers();
-    } else if (activeTab === 'following') {
-      loadFollowing();
-    }
+    if (activeTab === 'followers') loadFollowers();
+    else if (activeTab === 'following') loadFollowing();
   }, [activeTab, userId]);
 
   const handleFollowToggle = async () => {
     if (!profile) return;
-
     setIsActionLoading(true);
     try {
       if (isFollowing) {
@@ -95,229 +86,199 @@ export default function ProfilePage() {
         setIsFollowing(true);
         setProfile({ ...profile, followers_count: profile.followers_count + 1 });
       }
-    } catch (error) {
-      console.error('Follow/unfollow error:', error);
-    } finally {
-      setIsActionLoading(false);
-    }
+    } catch {}
+    setIsActionLoading(false);
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <p className="text-xl text-gray-600">Profile not found</p>
+          <p className="text-[17px] font-bold mb-2" style={{ color: '#e7e9ea' }}>Profile not found</p>
+          <button onClick={() => router.back()} className="text-[14px]" style={{ color: '#8b9099' }}>Go back</button>
         </div>
       </div>
     );
   }
 
+  const tabs = [
+    { key: 'about', label: 'About' },
+    { key: 'followers', label: `Followers` },
+    { key: 'following', label: `Following` },
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-start gap-6">
-            {/* Avatar */}
-            <div className="w-24 h-24 rounded-full bg-zinc-400 flex items-center justify-center text-white font-bold text-3xl flex-shrink-0">
-              {profile.profile_picture ? (
-                <img
-                  src={profile.profile_picture}
-                  alt={profile.username || profile.full_name || 'User'}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                (profile.username?.[0] || profile.full_name?.[0] || 'U').toUpperCase()
-              )}
-            </div>
+    <div className="min-h-screen bg-black pb-24">
 
-            {/* Info */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {profile.full_name || profile.username || 'Anonymous'}
-                </h1>
-                {profile.is_verified && (
-                  <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                )}
-                {profile.is_teacher && (
-                  <span className="px-3 py-1 text-sm font-medium bg-blue-50 text-blue-600 rounded-full">
-                    Teacher
-                  </span>
-                )}
-              </div>
-
-              {profile.username && profile.full_name && (
-                <p className="text-gray-500 mb-3">@{profile.username}</p>
-              )}
-
-              {profile.bio && (
-                <p className="text-gray-700 mb-4">{profile.bio}</p>
-              )}
-
-              {/* Stats */}
-              <div className="flex gap-6 mb-4">
-                <div>
-                  <span className="font-bold text-gray-900">{profile.followers_count}</span>
-                  <span className="text-gray-600 ml-1">followers</span>
-                </div>
-                <div>
-                  <span className="font-bold text-gray-900">{profile.following_count}</span>
-                  <span className="text-gray-600 ml-1">following</span>
-                </div>
-                <div>
-                  <span className="font-bold text-gray-900">{profile.current_streak}</span>
-                  <span className="text-gray-600 ml-1">day streak 🔥</span>
-                </div>
-              </div>
-
-              {/* Follow Button */}
-              <button
-                onClick={handleFollowToggle}
-                disabled={isActionLoading}
-                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                  isFollowing
-                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
-                } ${isActionLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {isActionLoading ? 'Loading...' : isFollowing ? 'Following' : 'Follow'}
-              </button>
-
-              {profile.follows_you && (
-                <span className="ml-3 px-3 py-1 text-sm bg-gray-100 text-gray-600 rounded-lg">
-                  Follows you
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Education Info */}
-          {(profile.education_level || profile.school || profile.subjects.length > 0) && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              {profile.education_level && (
-                <div className="mb-2">
-                  <span className="text-gray-600">📚 </span>
-                  <span className="text-gray-900">{profile.education_level}</span>
-                </div>
-              )}
-              {profile.school && (
-                <div className="mb-2">
-                  <span className="text-gray-600">🏫 </span>
-                  <span className="text-gray-900">{profile.school}</span>
-                </div>
-              )}
-              {profile.subjects.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {profile.subjects.map((subject) => (
-                    <span
-                      key={subject}
-                      className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full"
-                    >
-                      {subject}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+      {/* Back button */}
+      <div className="sticky top-0 z-40 bg-black border-b border-[#2f3336] px-4 h-14 flex items-center gap-4">
+        <button onClick={() => router.back()} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-900 transition-colors">
+          <svg className="w-5 h-5" style={{ color: '#e7e9ea' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
+          </svg>
+        </button>
+        <div>
+          <p className="text-[15px] font-bold leading-none" style={{ color: '#e7e9ea' }}>
+            {profile.full_name || profile.username || 'Profile'}
+          </p>
+          {profile.total_points > 0 && (
+            <p className="text-[12px]" style={{ color: '#8b9099' }}>{profile.total_points} points</p>
           )}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex gap-8">
+      {/* Avatar + info */}
+      <div className="px-4 pt-6 pb-4 border-b border-[#2f3336]">
+        <div className="flex items-start gap-4">
+          {/* Avatar */}
+          <div className="w-20 h-20 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
+            {profile.profile_picture ? (
+              <img src={profile.profile_picture} alt={profile.username} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-2xl font-bold" style={{ color: '#e7e9ea' }}>
+                {(profile.username?.[0] || profile.full_name?.[0] || 'U').toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          {/* Follow button */}
+          <div className="flex-1 flex justify-end pt-1">
             <button
-              onClick={() => setActiveTab('about')}
-              className={`py-4 border-b-2 font-medium transition-colors ${
-                activeTab === 'about'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
+              onClick={handleFollowToggle}
+              disabled={isActionLoading}
+              className={`px-5 py-1.5 rounded-full text-[14px] font-bold transition-all ${
+                isFollowing
+                  ? 'bg-transparent border border-zinc-700 text-zinc-300 hover:border-red-500/60 hover:text-red-400'
+                  : 'bg-white text-black hover:bg-zinc-200'
+              } ${isActionLoading ? 'opacity-50' : ''}`}
             >
-              About
-            </button>
-            <button
-              onClick={() => setActiveTab('followers')}
-              className={`py-4 border-b-2 font-medium transition-colors ${
-                activeTab === 'followers'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Followers ({profile.followers_count})
-            </button>
-            <button
-              onClick={() => setActiveTab('following')}
-              className={`py-4 border-b-2 font-medium transition-colors ${
-                activeTab === 'following'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Following ({profile.following_count})
+              {isActionLoading ? '…' : isFollowing ? 'Following' : 'Follow'}
             </button>
           </div>
         </div>
+
+        {/* Name + username */}
+        <div className="mt-3">
+          <div className="flex items-center gap-2">
+            <h1 className="text-[20px] font-bold" style={{ color: '#e7e9ea' }}>
+              {profile.full_name || profile.username || 'Anonymous'}
+            </h1>
+            {profile.is_verified && (
+              <svg className="w-5 h-5 text-violet-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            )}
+            {profile.is_teacher && (
+              <span className="px-2 py-0.5 text-[11px] font-bold bg-violet-500/15 text-violet-400 rounded-full border border-violet-500/30">
+                Teacher
+              </span>
+            )}
+          </div>
+          {profile.username && (
+            <p className="text-[14px] mt-0.5" style={{ color: '#8b9099' }}>@{profile.username}</p>
+          )}
+          {profile.follows_you && (
+            <span className="inline-block mt-1 px-2 py-0.5 text-[11px] font-semibold bg-zinc-800 text-zinc-400 rounded-full">
+              Follows you
+            </span>
+          )}
+          {profile.bio && (
+            <p className="text-[15px] leading-relaxed mt-3" style={{ color: '#e7e9ea' }}>{profile.bio}</p>
+          )}
+        </div>
+
+        {/* Stats row */}
+        <div className="flex gap-5 mt-3">
+          <button onClick={() => setActiveTab('followers')} className="flex items-center gap-1 hover:underline">
+            <span className="text-[15px] font-bold" style={{ color: '#e7e9ea' }}>{profile.followers_count}</span>
+            <span className="text-[14px]" style={{ color: '#8b9099' }}>followers</span>
+          </button>
+          <button onClick={() => setActiveTab('following')} className="flex items-center gap-1 hover:underline">
+            <span className="text-[15px] font-bold" style={{ color: '#e7e9ea' }}>{profile.following_count}</span>
+            <span className="text-[14px]" style={{ color: '#8b9099' }}>following</span>
+          </button>
+          {profile.current_streak > 0 && (
+            <div className="flex items-center gap-1">
+              <span className="text-[15px] font-bold" style={{ color: '#e7e9ea' }}>{profile.current_streak}</span>
+              <span className="text-[14px]" style={{ color: '#8b9099' }}>day streak 🔥</span>
+            </div>
+          )}
+        </div>
+
+        {/* Subjects */}
+        {profile.subjects.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {profile.subjects.map(s => (
+              <span key={s} className="px-2.5 py-0.5 text-[12px] font-medium bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full">
+                {s}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Tab Content */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      {/* Tabs */}
+      <div className="flex border-b border-[#2f3336] sticky top-14 bg-black z-30">
+        {tabs.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className="flex-1 relative py-4 text-[14px] font-semibold transition-colors"
+            style={{ color: activeTab === tab.key ? '#e7e9ea' : '#8b9099' }}
+          >
+            {tab.label}
+            {activeTab === tab.key && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-violet-400 rounded-full" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div className="px-4 py-4">
         {activeTab === 'about' && (
-          <div className="space-y-4">
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <h3 className="font-bold text-lg mb-4">Stats</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-gray-600 text-sm">Total Points</p>
-                  <p className="text-2xl font-bold text-gray-900">{profile.total_points}</p>
+          <div className="space-y-3">
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Total Points', value: profile.total_points },
+                { label: 'Level', value: profile.level },
+                { label: 'Streak', value: `${profile.current_streak} days 🔥` },
+                { label: 'Joined', value: new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) },
+              ].map(stat => (
+                <div key={stat.label} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                  <p className="text-[12px] mb-1" style={{ color: '#8b9099' }}>{stat.label}</p>
+                  <p className="text-[20px] font-bold" style={{ color: '#e7e9ea' }}>{stat.value}</p>
                 </div>
-                <div>
-                  <p className="text-gray-600 text-sm">Level</p>
-                  <p className="text-2xl font-bold text-gray-900">{profile.level}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 text-sm">Current Streak</p>
-                  <p className="text-2xl font-bold text-gray-900">{profile.current_streak} days 🔥</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 text-sm">Joined</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {new Date(profile.created_at).toLocaleDateString('en-US', {
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
+            {(profile.education_level || profile.school) && (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-2">
+                {profile.education_level && (
+                  <p className="text-[14px]" style={{ color: '#e7e9ea' }}>📚 {profile.education_level}</p>
+                )}
+                {profile.school && (
+                  <p className="text-[14px]" style={{ color: '#e7e9ea' }}>🏫 {profile.school}</p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === 'followers' && (
           <div className="space-y-3">
             {followers.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-600">No followers yet</p>
-              </div>
+              <p className="text-center py-12 text-[14px]" style={{ color: '#8b9099' }}>No followers yet</p>
             ) : (
-              followers.map((follower) => (
-                <UserCard key={follower.id} user={follower} onFollowChange={loadFollowers} />
-              ))
+              followers.map(f => <UserCard key={f.id} user={f} onFollowChange={loadFollowers} />)
             )}
           </div>
         )}
@@ -325,13 +286,9 @@ export default function ProfilePage() {
         {activeTab === 'following' && (
           <div className="space-y-3">
             {following.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-600">Not following anyone yet</p>
-              </div>
+              <p className="text-center py-12 text-[14px]" style={{ color: '#8b9099' }}>Not following anyone yet</p>
             ) : (
-              following.map((user) => (
-                <UserCard key={user.id} user={user} onFollowChange={loadFollowing} />
-              ))
+              following.map(u => <UserCard key={u.id} user={u} onFollowChange={loadFollowing} />)
             )}
           </div>
         )}

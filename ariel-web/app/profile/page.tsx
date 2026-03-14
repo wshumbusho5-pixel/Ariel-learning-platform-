@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
 import { progressAPI, gamificationAPI, authAPI, cardsAPI, reelsAPI } from '@/lib/api';
@@ -25,6 +25,15 @@ export default function ProfilePage() {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState('');
   const [avatarBroken, setAvatarBroken] = useState(false);
+
+  // Cropper
+  const CROP_SIZE = 280;
+  const [cropperSrc, setCropperSrc] = useState<string | null>(null);
+  const [cropPos, setCropPos] = useState({ x: 0, y: 0 });
+  const [cropScale, setCropScale] = useState(1);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+  const lastPinchDist = useRef<number | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -87,21 +96,91 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setAvatarUploading(true);
+    const url = URL.createObjectURL(file);
+    setCropperSrc(url);
+    setCropPos({ x: 0, y: 0 });
+    setCropScale(1);
     setAvatarError('');
-    setAvatarBroken(false);
-    try {
-      await authAPI.uploadProfilePicture(file);
-      await checkAuth();
-    } catch (err: any) {
-      setAvatarError(err?.response?.data?.detail || 'Upload failed. Try again.');
-    } finally {
-      setAvatarUploading(false);
-      e.target.value = '';
+    e.target.value = '';
+  };
+
+  const handleCropSave = useCallback(async () => {
+    if (!cropperSrc) return;
+    const img = new Image();
+    img.src = cropperSrc;
+    await new Promise(res => { img.onload = res; });
+
+    const outputSize = 400;
+    const canvas = document.createElement('canvas');
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+    const ctx = canvas.getContext('2d')!;
+
+    // Clip to circle
+    ctx.beginPath();
+    ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
+    ctx.clip();
+
+    // Reproduce the same transform used in the preview
+    const fitScale = Math.min(CROP_SIZE / img.naturalWidth, CROP_SIZE / img.naturalHeight);
+    const displayScale = outputSize / CROP_SIZE;
+    const dw = img.naturalWidth  * fitScale * displayScale * cropScale;
+    const dh = img.naturalHeight * fitScale * displayScale * cropScale;
+    const dx = outputSize / 2 + cropPos.x * displayScale - dw / 2;
+    const dy = outputSize / 2 + cropPos.y * displayScale - dh / 2;
+    ctx.drawImage(img, dx, dy, dw, dh);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      URL.revokeObjectURL(cropperSrc);
+      setCropperSrc(null);
+      setAvatarUploading(true);
+      setAvatarBroken(false);
+      try {
+        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+        await authAPI.uploadProfilePicture(file);
+        await checkAuth();
+      } catch (err: any) {
+        setAvatarError(err?.response?.data?.detail || 'Upload failed. Try again.');
+      } finally {
+        setAvatarUploading(false);
+      }
+    }, 'image/jpeg', 0.92);
+  }, [cropperSrc, cropPos, cropScale]);
+
+  const handleCropPointerDown = (e: React.PointerEvent) => {
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY, posX: cropPos.x, posY: cropPos.y };
+  };
+
+  const handleCropPointerMove = (e: React.PointerEvent) => {
+    if (!isDragging) return;
+    setCropPos({
+      x: dragStart.current.posX + (e.clientX - dragStart.current.x),
+      y: dragStart.current.posY + (e.clientY - dragStart.current.y),
+    });
+  };
+
+  const handleCropWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    setCropScale(s => Math.max(0.5, Math.min(4, s - e.deltaY * 0.002)));
+  };
+
+  const handlePinch = (e: React.TouchEvent) => {
+    if (e.touches.length !== 2) return;
+    const d = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY,
+    );
+    if (lastPinchDist.current !== null) {
+      const delta = d - lastPinchDist.current;
+      setCropScale(s => Math.max(0.5, Math.min(4, s + delta * 0.005)));
     }
+    lastPinchDist.current = d;
   };
 
   if (!isAuthenticated && !isLoading) {
@@ -500,6 +579,80 @@ export default function ProfilePage() {
 
         <BottomNav />
       </div>
+
+      {/* Avatar cropper modal */}
+      {cropperSrc && (
+        <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm">
+          <p className="text-[15px] font-bold mb-6" style={{ color: '#e7e9ea' }}>Move and zoom to position</p>
+
+          {/* Circular crop area */}
+          <div
+            className="relative overflow-hidden rounded-full select-none touch-none"
+            style={{
+              width: CROP_SIZE,
+              height: CROP_SIZE,
+              boxShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
+              cursor: isDragging ? 'grabbing' : 'grab',
+            }}
+            onPointerDown={handleCropPointerDown}
+            onPointerMove={handleCropPointerMove}
+            onPointerUp={() => setIsDragging(false)}
+            onPointerCancel={() => setIsDragging(false)}
+            onWheel={handleCropWheel}
+            onTouchMove={handlePinch}
+            onTouchEnd={() => { lastPinchDist.current = null; }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cropperSrc}
+              alt="crop"
+              draggable={false}
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: `translate(calc(-50% + ${cropPos.x}px), calc(-50% + ${cropPos.y}px)) scale(${cropScale})`,
+                transformOrigin: 'center',
+                maxWidth: 'none',
+                userSelect: 'none',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
+
+          {/* Zoom slider */}
+          <div className="mt-6 flex items-center gap-3 w-64">
+            <svg className="w-4 h-4 flex-shrink-0" style={{ color: '#8b9099' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="range" min={0.5} max={4} step={0.01}
+              value={cropScale}
+              onChange={e => setCropScale(parseFloat(e.target.value))}
+              className="flex-1 accent-violet-500"
+            />
+            <svg className="w-5 h-5 flex-shrink-0" style={{ color: '#8b9099' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 mt-6">
+            <button
+              onClick={() => { URL.revokeObjectURL(cropperSrc); setCropperSrc(null); }}
+              className="px-6 py-2.5 rounded-full text-[14px] font-bold border border-zinc-700 text-zinc-300"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCropSave}
+              className="px-6 py-2.5 rounded-full text-[14px] font-bold bg-white text-black"
+            >
+              Save photo
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Edit Profile sheet */}
       {showEditSheet && (

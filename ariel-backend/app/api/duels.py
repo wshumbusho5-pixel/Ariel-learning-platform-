@@ -2,6 +2,7 @@
 Duels API - Real-time multiplayer flashcard battles
 """
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
 from typing import List, Optional, Dict
 from datetime import datetime
 import asyncio
@@ -23,7 +24,7 @@ ROUND_TIMEOUT = 15.0  # seconds per round
 # ── In-memory game state ──────────────────────────────────────────────────────
 
 class DuelRoom:
-    def __init__(self, room_id: str, creator_id: str, creator_username: str):
+    def __init__(self, room_id: str, creator_id: str, creator_username: str, preset_cards: Optional[List[dict]] = None, round_count: int = 5):
         self.room_id = room_id
         self.p1_id = creator_id
         self.p1_username = creator_username
@@ -31,6 +32,8 @@ class DuelRoom:
         self.p2_username: Optional[str] = None
         self.status = "waiting"  # waiting | playing | finished
         self.cards: List[dict] = []
+        self.preset_cards: Optional[List[dict]] = preset_cards  # deck-challenge cards
+        self.round_count = max(1, min(round_count, 20))  # clamp 1-20
         self.current_round = 0
         self.p1_answers: List[Optional[str]] = []
         self.p2_answers: List[Optional[str]] = []
@@ -45,11 +48,13 @@ matchmaking_queue: List[tuple] = []  # (user_id, username, room_id)
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-async def _fetch_cards(db, count: int) -> List[dict]:
-    pipeline = [
-        {"$match": {"visibility": "public"}},
-        {"$sample": {"size": count}},
-    ]
+async def _fetch_cards(db, count: int, subject: Optional[str] = None) -> List[dict]:
+    match_filter: dict = {"visibility": "public"}
+    if subject:
+        match_filter["subject"] = {"$regex": f"^{subject}$", "$options": "i"}
+
+    # Try subject-specific first; if not enough, fall back to all subjects
+    pipeline = [{"$match": match_filter}, {"$sample": {"size": count}}]
     cards = []
     async for card in db.cards.aggregate(pipeline):
         cards.append({
@@ -58,17 +63,48 @@ async def _fetch_cards(db, count: int) -> List[dict]:
             "answer": card["answer"],
             "subject": card.get("subject", ""),
         })
+
+    # Not enough same-subject cards — pad with random public cards
+    if len(cards) < count and subject:
+        seen_ids = {c["id"] for c in cards}
+        fallback_pipeline = [
+            {"$match": {"visibility": "public"}},
+            {"$sample": {"size": count * 2}},
+        ]
+        async for card in db.cards.aggregate(fallback_pipeline):
+            cid = str(card["_id"])
+            if cid not in seen_ids:
+                cards.append({
+                    "id": cid,
+                    "question": card["question"],
+                    "answer": card["answer"],
+                    "subject": card.get("subject", ""),
+                })
+                seen_ids.add(cid)
+            if len(cards) >= count:
+                break
+
     return cards
 
 
 def _build_choices(card: dict, pool: List[dict]) -> List[str]:
     correct = card["answer"]
-    distractors = [
-        c["answer"] for c in pool
-        if c["id"] != card["id"] and c["answer"].strip().lower() != correct.strip().lower()
-    ]
-    chosen = random.sample(distractors, min(3, len(distractors)))
-    choices = [correct] + chosen
+    correct_lower = correct.strip().lower()
+    subject = (card.get("subject") or "").strip().lower()
+
+    def _is_valid(c: dict) -> bool:
+        return c["id"] != card["id"] and c["answer"].strip().lower() != correct_lower
+
+    # Same-subject distractors first (harder — they're in the same domain)
+    same_subject = [c["answer"] for c in pool if _is_valid(c) and (c.get("subject") or "").strip().lower() == subject]
+    other = [c["answer"] for c in pool if _is_valid(c) and (c.get("subject") or "").strip().lower() != subject]
+
+    # Fill 3 slots: as many same-subject as possible, pad with other-subject if needed
+    random.shuffle(same_subject)
+    random.shuffle(other)
+    distractors = (same_subject + other)[:3]
+
+    choices = [correct] + distractors
     random.shuffle(choices)
     return choices
 
@@ -145,34 +181,50 @@ async def _run_game_inner(room: DuelRoom):
     db = db_service.get_db()
 
     # Fire game_start IMMEDIATELY — don't make players wait for card fetch.
-    # Fetch cards in parallel with the countdown so round 1 is ready on time.
     await _broadcast(room, {"type": "game_start", "countdown": 3})
 
-    # Start card fetch as a concurrent task during the 3-second countdown
-    fetch_task = asyncio.create_task(_fetch_cards(db, ROUND_COUNT * 4))
-    await asyncio.sleep(3)
+    rc = room.round_count
 
-    pool = await fetch_task
-    if len(pool) < ROUND_COUNT:
+    # Use preset deck cards if challenger provided them, otherwise fetch from DB.
+    # Fetch runs concurrently with the 3-second countdown so round 1 is ready on time.
+    if room.preset_cards and len(room.preset_cards) >= rc:
+        random.shuffle(room.preset_cards)
+        pool = room.preset_cards
+        # Detect dominant subject so distractors come from same domain
+        subjects = [c.get("subject", "") for c in pool if c.get("subject")]
+        dominant_subject = max(set(subjects), key=subjects.count) if subjects else None
+        # Fetch extra same-subject cards to use as distractor pool during countdown
+        extra_task = asyncio.create_task(_fetch_cards(db, rc * 4, subject=dominant_subject))
+        await asyncio.sleep(3)
+        extra = await extra_task
+        # Merge: preset cards first, then extra for distractor diversity
+        seen = {c["id"] for c in pool}
+        pool = pool + [c for c in extra if c["id"] not in seen]
+    else:
+        fetch_task = asyncio.create_task(_fetch_cards(db, rc * 4))
+        await asyncio.sleep(3)
+        pool = await fetch_task
+
+    if len(pool) < rc:
         pool = [
             {"id": str(i), "question": q, "answer": a, "subject": s}
             for i, (q, a, s) in enumerate(FALLBACK_CARDS_DATA)
         ]
 
-    game_cards = pool[:ROUND_COUNT]
+    game_cards = pool[:rc]
     for card in game_cards:
         card["choices"] = _build_choices(card, pool)
     room.cards = game_cards
-    room.p1_answers = [None] * ROUND_COUNT
-    room.p2_answers = [None] * ROUND_COUNT
+    room.p1_answers = [None] * rc
+    room.p2_answers = [None] * rc
 
     # Rounds
-    for i in range(ROUND_COUNT):
+    for i in range(rc):
         if room.status != "playing":
             break
         room.current_round = i
         await _play_round(room, i)
-        if i < ROUND_COUNT - 1:
+        if i < rc - 1:
             await asyncio.sleep(2.5)  # brief pause before next round
 
     # Game over
@@ -198,7 +250,7 @@ async def _play_round(room: DuelRoom, idx: int):
     await _broadcast(room, {
         "type": "round_start",
         "round": idx + 1,
-        "total": ROUND_COUNT,
+        "total": room.round_count,
         "question": card["question"],
         "subject": card["subject"],
         "choices": card["choices"],
@@ -263,11 +315,16 @@ def _result(my_score: int, opp_score: int) -> str:
 
 # ── HTTP Endpoints ────────────────────────────────────────────────────────────
 
+class QuickMatchRequest(BaseModel):
+    round_count: Optional[int] = 5
+
+
 @router.post("/quick-match")
-async def quick_match(current_user: User = Depends(get_current_user_dependency)):
+async def quick_match(body: Optional[QuickMatchRequest] = None, current_user: User = Depends(get_current_user_dependency)):
     """Join matchmaking. Pairs with waiting player or creates a new room."""
     user_id = str(current_user.id)
     uname = current_user.username or "Player"
+    rc = max(1, min((body.round_count if body else None) or 5, 20))
 
     global matchmaking_queue
 
@@ -287,14 +344,20 @@ async def quick_match(current_user: User = Depends(get_current_user_dependency))
 
     # Create room and wait
     room_id = secrets.token_urlsafe(8)
-    rooms[room_id] = DuelRoom(room_id, user_id, uname)
+    rooms[room_id] = DuelRoom(room_id, user_id, uname, round_count=rc)
     matchmaking_queue.append((user_id, uname, room_id))
     return {"room_id": room_id, "status": "waiting", "opponent_username": None}
+
+
+class ChallengeRequest(BaseModel):
+    card_ids: Optional[List[dict]] = None  # preset deck cards [{id,question,answer,subject}]
+    round_count: Optional[int] = 5
 
 
 @router.post("/challenge/{username}")
 async def challenge_user(
     username: str,
+    body: Optional[ChallengeRequest] = None,
     current_user: User = Depends(get_current_user_dependency),
 ):
     """Challenge any user by username. Sends them a notification."""
@@ -307,8 +370,10 @@ async def challenge_user(
     if target_id == str(current_user.id):
         raise HTTPException(status_code=400, detail="Can't challenge yourself")
 
+    preset = (body.card_ids or None) if body else None
+    rc = max(1, min((body.round_count if body else None) or 5, 20))
     room_id = secrets.token_urlsafe(8)
-    rooms[room_id] = DuelRoom(room_id, str(current_user.id), current_user.username or "Player")
+    rooms[room_id] = DuelRoom(room_id, str(current_user.id), current_user.username or "Player", preset_cards=preset, round_count=rc)
     # Persist to DB so room survives server restarts
     await db.duel_rooms.insert_one({
         "room_id": room_id,
@@ -423,7 +488,7 @@ async def duel_ws(websocket: WebSocket, room_id: str, token: str):
                 await websocket.send_json({
                     "type": "round_start",
                     "round": idx + 1,
-                    "total": ROUND_COUNT,
+                    "total": room.round_count,
                     "question": card["question"],
                     "subject": card["subject"],
                     "choices": card["choices"],

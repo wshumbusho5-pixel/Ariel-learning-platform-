@@ -36,6 +36,7 @@ class Deck(BaseModel):
     # Social
     visibility: DeckVisibility = DeckVisibility.PRIVATE
     is_featured: bool = False  # Admin can feature quality decks
+    caption: Optional[str] = None  # Short message shown in feed when posted publicly
 
     # Engagement
     likes: int = 0
@@ -63,6 +64,7 @@ class DeckCreate(BaseModel):
     tags: List[str] = []
     visibility: DeckVisibility = DeckVisibility.PRIVATE
     card_ids: List[str] = []
+    caption: Optional[str] = None
 
 class DeckUpdate(BaseModel):
     title: Optional[str] = None
@@ -74,6 +76,7 @@ class DeckUpdate(BaseModel):
     tags: Optional[List[str]] = None
     visibility: Optional[DeckVisibility] = None
     card_ids: Optional[List[str]] = None
+    caption: Optional[str] = None
 
 class DeckPost(BaseModel):
     """Response when getting a deck in social feed"""
@@ -105,8 +108,9 @@ class DeckPost(BaseModel):
     author_is_verified: bool
 
     # Social context
-    is_liked: bool = False  # Did current user like this?
-    is_saved: bool = False  # Did current user save this?
+    is_liked: bool = False
+    is_saved: bool = False
+    caption: Optional[str] = None
 
     created_at: datetime
     published_at: Optional[datetime]

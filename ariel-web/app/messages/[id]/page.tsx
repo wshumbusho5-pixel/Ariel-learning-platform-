@@ -387,11 +387,11 @@ export default function ConversationPage() {
     <>
       <SideNav />
       <div
-        className="fixed inset-0 lg:left-[72px] bg-[#09090b] flex flex-col"
+        className="fixed inset-0 lg:left-[72px] bg-black flex flex-col"
         onClick={() => { setSelectedMsgId(null); setShowEmoji(false); setShowPicker(false); }}
       >
         {/* Header — bleeds into status bar, hides when reading old messages */}
-        <div className={`flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out border-b bg-[#09090b] z-10 ${headerHidden ? 'max-h-0 border-transparent' : 'max-h-28 border-zinc-800'}`}>
+        <div className={`flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out border-b bg-black z-10 ${headerHidden ? 'max-h-0 border-transparent' : 'max-h-28 border-[#2f3336]'}`}>
         <div className="flex items-end gap-3 px-3 pb-3" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}>
           <button onClick={() => router.push('/messages')} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800/60 flex-shrink-0" aria-label="Back to Rooms">
             <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -403,11 +403,11 @@ export default function ConversationPage() {
             <div className="relative flex-shrink-0">
               <Avatar name={otherName} src={convoInfo?.other_user_profile_picture} size="sm" />
               {isOnline(convoInfo?.other_user_last_seen) && (
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#09090b] animate-pulse" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-black animate-pulse" />
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-white truncate">{otherName}</p>
+              <p className="text-sm font-bold truncate" style={{ color: '#e7e9ea' }}>{otherName}</p>
               <p className={`text-[11px] font-medium ${isOnline(convoInfo?.other_user_last_seen) ? 'text-emerald-500' : 'text-zinc-500'}`}>
                 {lastSeenLabel(convoInfo?.other_user_last_seen) || (otherUsername ? `@${otherUsername}` : '')}
               </p>
@@ -420,7 +420,7 @@ export default function ConversationPage() {
         <div
           ref={scrollContainerRef}
           className="flex-1 overflow-y-auto px-3 py-4"
-          style={{ WebkitOverflowScrolling: 'touch', backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.022) 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+          style={{ WebkitOverflowScrolling: 'touch', background: '#000000' }}
           onScroll={e => {
             const el = e.currentTarget;
             const scrollTop = el.scrollTop;
@@ -439,7 +439,7 @@ export default function ConversationPage() {
           ) : grouped.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Avatar name={otherName} src={convoInfo?.other_user_profile_picture} size="md" />
-              <p className="text-sm font-bold text-white mt-3">{otherName}</p>
+              <p className="text-sm font-bold mt-3" style={{ color: '#e7e9ea' }}>{otherName}</p>
               {otherUsername && <p className="text-xs text-zinc-500 mt-0.5">@{otherUsername}</p>}
               <p className="text-xs text-zinc-500 mt-3">No messages yet — say hello 👋</p>
             </div>
@@ -459,7 +459,7 @@ export default function ConversationPage() {
                     {/* Date label */}
                     {showDateLabel && (
                       <div className="flex justify-center my-4">
-                        <span className="text-[11px] text-zinc-500 font-medium bg-zinc-900 px-3 py-1 rounded-full">
+                        <span className="text-[11px] font-medium bg-zinc-900 px-3 py-1 rounded-full" style={{ color: '#8b9099' }}>
                           {formatDateLabel(msg.created_at)}
                         </span>
                       </div>
@@ -467,7 +467,7 @@ export default function ConversationPage() {
                     {/* Time label */}
                     {showTime && !showDateLabel && (
                       <div className="flex justify-center my-3">
-                        <span className="text-[11px] text-zinc-600 font-medium">
+                        <span className="text-[11px] font-medium" style={{ color: '#8b9099' }}>
                           {formatTime(msg.created_at)}
                         </span>
                       </div>
@@ -602,9 +602,9 @@ export default function ConversationPage() {
 
         {/* Content picker — cards & reels */}
         {showPicker && (
-          <div className="flex-shrink-0 border-t border-zinc-800 bg-[#0c0c0e]" onClick={e => e.stopPropagation()}>
+          <div className="flex-shrink-0 border-t border-[#2f3336] bg-black" onClick={e => e.stopPropagation()}>
             {/* Tabs */}
-            <div className="flex border-b border-zinc-800 px-3 pt-2">
+            <div className="flex border-b border-[#2f3336] px-3 pt-2">
               {(['cards', 'reels'] as const).map(tab => (
                 <button
                   key={tab}
@@ -656,12 +656,12 @@ export default function ConversationPage() {
                       onClick={() => handleSendReel(reel)}
                       className="flex-shrink-0 w-28 text-left active:scale-95 transition-transform"
                     >
-                      <div className="w-28 rounded-xl overflow-hidden bg-zinc-200" style={{ aspectRatio: '9/16' }}>
+                      <div className="w-28 rounded-xl overflow-hidden bg-zinc-900" style={{ aspectRatio: '9/16' }}>
                         {reel.thumbnail_url ? (
                           <img src={reel.thumbnail_url.replace(/^https?:\/\/[^/]+/, '')} alt={reel.title} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-zinc-200">
-                            <svg className="w-6 h-6 text-zinc-400" fill="currentColor" viewBox="0 0 24 24">
+                          <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                            <svg className="w-6 h-6 text-zinc-600" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
                             </svg>
                           </div>
@@ -679,7 +679,7 @@ export default function ConversationPage() {
 
         {/* Emoji picker */}
         {showEmoji && (
-          <div className="flex-shrink-0 border-t border-zinc-800 bg-[#0c0c0e]" onClick={e => e.stopPropagation()}>
+          <div className="flex-shrink-0 border-t border-[#2f3336] bg-black" onClick={e => e.stopPropagation()}>
             <div className="grid grid-cols-10 gap-0 px-2 py-2 max-h-40 overflow-y-auto">
               {EMOJIS.map(emoji => (
                 <button
@@ -696,7 +696,7 @@ export default function ConversationPage() {
 
         {/* Reply bar */}
         {replyTo && (
-          <div className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-t border-zinc-800" onClick={e => e.stopPropagation()}>
+          <div className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-zinc-900/80 border-t border-[#2f3336]" onClick={e => e.stopPropagation()}>
             <div className="w-0.5 h-8 bg-violet-500 rounded-full flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold text-violet-400">{replyTo.username}</p>
@@ -711,7 +711,7 @@ export default function ConversationPage() {
         )}
 
         {/* Input bar */}
-        <div className="flex-shrink-0 px-3 pt-2 border-t border-zinc-800 bg-[#09090b]" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }} onClick={e => e.stopPropagation()}>
+        <div className="flex-shrink-0 px-3 pt-2 border-t border-[#2f3336] bg-black" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }} onClick={e => e.stopPropagation()}>
           <div className="flex items-center gap-2">
             {/* Emoji toggle */}
             <button
