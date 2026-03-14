@@ -296,7 +296,7 @@ function PhoneMockup() {
       border: '1.5px solid rgba(255,255,255,0.13)',
       background: '#000', overflow: 'hidden', flexShrink: 0,
       position: 'relative', display: 'flex', flexDirection: 'column',
-      boxShadow: '0 40px 100px rgba(124,92,252,0.20), 0 8px 40px rgba(0,0,0,0.7)',
+      boxShadow: '0 24px 60px rgba(0,0,0,0.8)',
     }}>
       {/* Status bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px 4px', flexShrink: 0 }}>
@@ -516,11 +516,9 @@ export default function Home() {
         <div className="flex-1 flex items-center justify-center" style={{
           minHeight: '100vh',
           borderLeft: '1px solid rgba(255,255,255,0.05)',
-          background: 'radial-gradient(ellipse at 60% 50%, rgba(124,92,252,0.10) 0%, rgba(124,92,252,0.03) 40%, transparent 70%)',
-          position: 'relative',
+          background: '#000',
         }}>
-          <div style={{ position: 'absolute', width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,92,252,0.13) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ transform: 'scale(1.2)', transformOrigin: 'center center', position: 'relative' }}>
+          <div style={{ transform: 'scale(1.2)', transformOrigin: 'center center' }}>
             <PhoneMockup />
           </div>
         </div>
