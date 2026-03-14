@@ -72,22 +72,32 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#09090b] z-50 flex flex-col">
-      {/* Progress */}
-      <div className="h-0.5 bg-zinc-800">
-        <div className="h-full bg-violet-400 transition-all duration-500" style={{ width: `${(step / 2) * 100}%` }} />
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+      {/* Progress bar */}
+      <div className="h-0.5 bg-black">
+        <div
+          className="h-full bg-violet-400 transition-all duration-500"
+          style={{ width: `${(step / 2) * 100}%` }}
+        />
       </div>
 
       {/* Header */}
-      <div className="px-6 py-5 border-b border-zinc-800">
+      <div className="px-6 py-5" style={{ borderBottom: '1px solid #2f3336' }}>
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-violet-400 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">A</span>
-            </div>
-            <h1 className="text-base font-bold text-white">Set up Ariel</h1>
-          </div>
-          <span className="text-sm text-zinc-600">{step} of 2</span>
+          {/* Ariel wordmark */}
+          <span
+            style={{
+              fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
+              fontStyle: 'italic',
+              fontWeight: 700,
+              fontSize: 22,
+              color: '#fff',
+              letterSpacing: 1,
+            }}
+          >
+            ar<span style={{ color: '#9B7FFF' }}>i</span>el
+          </span>
+          <span style={{ fontSize: 13, color: '#8b9099' }}>Step {step} of 2</span>
         </div>
       </div>
 
@@ -98,26 +108,40 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           {step === 1 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold text-white">Where are you learning?</h2>
+                <h2 style={{ fontSize: 28, fontWeight: 900, color: '#fff', lineHeight: 1.15 }}>
+                  Where are you learning?
+                </h2>
                 <p className="text-zinc-500 text-sm mt-1">This helps us personalise your experience.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {EDUCATION_LEVELS.map((level) => (
-                  <button
-                    key={level.id}
-                    onClick={() => setData({ ...data, educationLevel: level.id })}
-                    className={`p-5 rounded-2xl border-2 text-left transition-all ${
-                      data.educationLevel === level.id
-                        ? 'border-violet-300 bg-violet-300/10'
-                        : 'border-zinc-800 hover:border-zinc-600'
-                    }`}
-                  >
-                    <span className="text-2xl mb-2 block">{level.icon}</span>
-                    <p className={`font-semibold text-sm ${data.educationLevel === level.id ? 'text-violet-300' : 'text-zinc-300'}`}>
-                      {level.label}
-                    </p>
-                  </button>
-                ))}
+                {EDUCATION_LEVELS.map((level) => {
+                  const selected = data.educationLevel === level.id;
+                  return (
+                    <button
+                      key={level.id}
+                      onClick={() => setData({ ...data, educationLevel: level.id })}
+                      className="p-5 rounded-2xl text-left transition-all"
+                      style={{
+                        border: selected ? '2px solid #fff' : '2px solid #27272a',
+                        background: selected ? 'rgba(255,255,255,0.08)' : 'transparent',
+                      }}
+                      onMouseEnter={e => {
+                        if (!selected) (e.currentTarget as HTMLButtonElement).style.borderColor = '#52525b';
+                      }}
+                      onMouseLeave={e => {
+                        if (!selected) (e.currentTarget as HTMLButtonElement).style.borderColor = '#27272a';
+                      }}
+                    >
+                      <span className="text-2xl mb-2 block">{level.icon}</span>
+                      <p
+                        className="font-semibold text-sm"
+                        style={{ color: selected ? '#fff' : '#d4d4d8' }}
+                      >
+                        {level.label}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -125,57 +149,104 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-bold text-white">What do you want to learn?</h2>
-                <p className="text-zinc-500 text-sm mt-1">Pick everything that interests you. You can change this later.</p>
+                <h2 style={{ fontSize: 28, fontWeight: 900, color: '#fff', lineHeight: 1.15 }}>
+                  What do you want to learn?
+                </h2>
+                <p className="text-zinc-500 text-sm mt-1">
+                  Pick everything that interests you. You can change this later.
+                </p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {SUBJECT_OPTIONS.map((subject) => {
                   const selected = data.subjects.includes(subject.id);
                   return (
                     <button
                       key={subject.id}
                       onClick={() => toggleSubject(subject.id)}
-                      className={`p-4 rounded-2xl border-2 text-left transition-all ${
-                        selected
-                          ? 'border-violet-300 bg-violet-300/10'
-                          : 'border-zinc-800 hover:border-zinc-600'
-                      }`}
+                      className="rounded-2xl text-left transition-all"
+                      style={{
+                        border: selected ? '2px solid #fff' : '2px solid #27272a',
+                        background: selected ? 'rgba(255,255,255,0.08)' : 'transparent',
+                        padding: '12px',
+                      }}
+                      onMouseEnter={e => {
+                        if (!selected) (e.currentTarget as HTMLButtonElement).style.borderColor = '#52525b';
+                      }}
+                      onMouseLeave={e => {
+                        if (!selected) (e.currentTarget as HTMLButtonElement).style.borderColor = '#27272a';
+                      }}
                     >
-                      <span className="text-xl mb-1.5 block">{subject.icon}</span>
-                      <p className={`font-semibold text-sm leading-tight ${selected ? 'text-violet-300' : 'text-zinc-300'}`}>
+                      <span className="text-lg mb-1.5 block">{subject.icon}</span>
+                      <p
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          lineHeight: 1.3,
+                          color: selected ? '#fff' : '#d4d4d8',
+                        }}
+                      >
                         {subject.label}
                       </p>
                     </button>
                   );
                 })}
               </div>
-              {data.subjects.length > 0 && (
-                <p className="text-sm text-zinc-600">{data.subjects.length} selected</p>
-              )}
             </div>
           )}
         </div>
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-5 border-t border-zinc-800">
-        <div className="max-w-lg mx-auto flex gap-3">
+      <div className="px-6 py-5" style={{ borderTop: '1px solid #2f3336' }}>
+        <div className="max-w-lg mx-auto flex items-center gap-3">
+          {/* Back button */}
           {step > 1 && (
             <button
               onClick={() => setStep(1)}
-              className="px-6 py-3.5 rounded-2xl border border-zinc-700 text-zinc-300 font-semibold hover:bg-zinc-800 transition-all text-sm"
+              className="transition-all font-semibold text-sm"
+              style={{
+                paddingLeft: 24,
+                paddingRight: 24,
+                paddingTop: 14,
+                paddingBottom: 14,
+                borderRadius: 999,
+                border: '1px solid #3f3f46',
+                color: '#d4d4d8',
+                background: 'transparent',
+              }}
             >
               Back
             </button>
           )}
+
+          {/* N selected label (step 2 only) */}
+          {step === 2 && (
+            <span
+              className="font-semibold"
+              style={{ fontSize: 13, color: '#8b9099' }}
+            >
+              {data.subjects.length} selected
+            </span>
+          )}
+
+          <div className="flex-1" />
+
+          {/* Next / Get started button */}
           <button
             onClick={handleNext}
             disabled={!canContinue || saving}
-            className={`flex-1 py-3.5 rounded-2xl font-bold text-sm transition-all ${
-              canContinue && !saving
-                ? 'bg-violet-400 hover:bg-violet-300 text-white'
-                : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-            }`}
+            className="transition-all font-bold text-sm"
+            style={{
+              paddingLeft: 32,
+              paddingRight: 32,
+              paddingTop: 14,
+              paddingBottom: 14,
+              borderRadius: 999,
+              border: 'none',
+              cursor: canContinue && !saving ? 'pointer' : 'not-allowed',
+              background: canContinue && !saving ? '#fff' : '#27272a',
+              color: canContinue && !saving ? '#000' : '#52525b',
+            }}
           >
             {saving ? 'Saving...' : step === 2 ? 'Get started' : 'Continue'}
           </button>
