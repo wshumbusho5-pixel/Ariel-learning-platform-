@@ -453,7 +453,7 @@ export default function Home() {
             Go deeper.
           </h1>
           <p style={{ fontSize: 14, color: '#8b9099', marginTop: 10, lineHeight: 1.6 }}>
-            Cards, clips &amp; community — for students, self-learners, and anyone endlessly curious.
+            Not just content — real insight. Ariel deepens your understanding whether you&apos;re cramming, growing, or just curious.
           </p>
         </div>
 
@@ -485,10 +485,10 @@ export default function Home() {
           </h1>
 
           <p style={{ fontSize: 17, color: '#8b9099', lineHeight: 1.6, maxWidth: 420 }}>
-            The social feed that makes you smarter.
+            A smarter feed that builds real understanding — not just information, but insight.
           </p>
           <p style={{ fontSize: 14, color: '#52525b', marginTop: 6, maxWidth: 420 }}>
-            Whether you&apos;re cramming for an exam, building new skills, or just endlessly curious — Ariel meets you where you are.
+            Cramming for an exam, growing your skills, or just following your curiosity — Ariel deepens your knowledge and meets you exactly where you are.
           </p>
 
           <FeaturePills />
