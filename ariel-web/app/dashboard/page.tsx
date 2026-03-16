@@ -358,8 +358,12 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
     }
   };
 
-  // Load comments on mount
-  useEffect(() => { loadComments(); }, []);
+  // Load comments on mount + poll every 15s for new comments
+  useEffect(() => {
+    loadComments();
+    const interval = setInterval(loadComments, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="relative py-4">
@@ -544,10 +548,15 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                   <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0 mt-0.5">
                     <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center">
                       {c.author_profile_picture ? (
-                        <img src={c.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')} className="w-7 h-7 object-cover" />
-                      ) : (
-                        <span className="text-[11px] font-bold text-zinc-400">{(c.author_username || 'U')[0].toUpperCase()}</span>
-                      )}
+                        <img
+                          src={c.author_profile_picture}
+                          className="w-7 h-7 object-cover"
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('style'); }}
+                        />
+                      ) : null}
+                      <span className="text-[11px] font-bold text-zinc-400" style={c.author_profile_picture ? { display: 'none' } : {}}>
+                        {(c.author_username || 'U')[0].toUpperCase()}
+                      </span>
                     </div>
                   </button>
                   <div className="flex-1 min-w-0">
@@ -639,19 +648,18 @@ function StoriesRow({ users, onUserTap }: {
           onClick={() => onUserTap(user.id)}
           className="flex flex-col items-center gap-1.5 flex-shrink-0 active:scale-95 transition-transform"
         >
-          <div className="w-14 h-14 rounded-full ring-2 ring-violet-500/60 ring-offset-2 ring-offset-[#000000] overflow-hidden flex-shrink-0">
+          <div className="w-14 h-14 rounded-full ring-2 ring-violet-500/60 ring-offset-2 ring-offset-[#000000] overflow-hidden flex-shrink-0 bg-gradient-to-br from-violet-500 to-violet-800 flex items-center justify-center">
             {user.profile_picture ? (
               <img
-                src={user.profile_picture.replace(/^https?:\/\/[^/]+/, '')}
+                src={user.profile_picture}
                 alt={user.username}
                 className="w-full h-full object-cover"
                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-violet-500 to-violet-800 flex items-center justify-center">
-                <span className="text-sm font-bold text-white">{(user.username || 'U')[0].toUpperCase()}</span>
-              </div>
-            )}
+            ) : null}
+            <span className="text-sm font-bold text-white" style={user.profile_picture ? { display: 'none' } : {}}>
+              {(user.username || 'U')[0].toUpperCase()}
+            </span>
           </div>
           <span className="text-[11px] text-zinc-500 font-medium truncate max-w-[56px]">
             {user.username}
