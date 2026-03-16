@@ -581,6 +581,16 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
           {/* ── Input ── */}
           <div className="flex items-center gap-2 mt-3">
+            {/* Current user avatar */}
+            <div className="w-7 h-7 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
+              {user?.profile_picture ? (
+                <img src={user.profile_picture} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[11px] font-bold text-zinc-400">
+                  {(user?.full_name?.[0] || user?.username?.[0] || 'Y').toUpperCase()}
+                </span>
+              )}
+            </div>
             <div className="flex-1 border-b border-zinc-800 focus-within:border-zinc-600 transition-colors pb-1">
               {replyingTo && (
                 <div className="flex items-center gap-1 mb-1">
