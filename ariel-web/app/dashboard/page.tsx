@@ -188,6 +188,7 @@ function renderWithMentions(text: string) {
 // ─── Card Tile (square, 1:1) ─────────────────────────────────────────────────
 
 function CardTile({ card, onComment, flush = false }: { card: FeedCard; onComment: (id: string) => void; flush?: boolean }) {
+  const { user } = useAuth();
   const [flipped, setFlipped] = useState(false);
   const [liked, setLiked] = useState(() => {
     if (card.is_liked_by_user) return true;
