@@ -192,6 +192,60 @@ async def get_ai_credentials(current_user=Depends(get_current_user_dependency)):
     }
 
 
+class CaptionRequest(BaseModel):
+    question: str
+    answer: str
+    subject: Optional[str] = None
+    topic: Optional[str] = None
+
+@router.post("/caption")
+async def generate_caption(
+    request: CaptionRequest,
+    raw_request: Request,
+    current_user=Depends(get_current_user_dependency)
+):
+    """Generate a short, personal social caption for a flashcard being posted publicly."""
+    try:
+        creds: ResolvedAICredentials = resolve_ai_credentials(raw_request, current_user)
+        provider = creds.provider or settings.DEFAULT_AI_PROVIDER
+        ai = AIService(provider=provider, api_key=creds.api_key, model=creds.model)
+
+        context_parts = []
+        if request.subject: context_parts.append(f"Subject: {request.subject}")
+        if request.topic: context_parts.append(f"Topic: {request.topic}")
+        context_parts.append(f"Question: {request.question}")
+        context_parts.append(f"Answer: {request.answer}")
+        context_str = "\n".join(context_parts)
+
+        prompt = (
+            "You are writing a short, personal social media caption for a study flashcard being shared on a learning platform. "
+            "Write exactly ONE caption (max 120 characters). "
+            "Make it feel authentic — like a real student sharing something they studied. "
+            "Reference the subject or topic naturally. Use 1 relevant emoji. No hashtags. No quotes. Just the caption text.\n\n"
+            f"{context_str}\n\nCaption:"
+        )
+
+        if provider == "ollama":
+            result = await ai._ollama_generate(prompt)
+        else:
+            result = await ai.generate_answer(question=prompt, context=None, include_explanation=False)
+
+        caption = ""
+        if isinstance(result, dict):
+            caption = result.get("answer") or result.get("reply") or result.get("response") or ""
+        elif isinstance(result, str):
+            caption = result
+
+        # Clean up — strip quotes, trim whitespace
+        caption = caption.strip().strip('"').strip("'").strip()
+        if len(caption) > 160:
+            caption = caption[:157] + "..."
+
+        return {"caption": caption}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.put("/credentials", response_model=AICredentialResponse)
 async def save_ai_credentials(
     update: AICredentialUpdate,

@@ -321,6 +321,13 @@ export const aiChatAPI = {
 };
 
 // AI Credentials (BYO keys)
+export const aiCaptionAPI = {
+  generate: async (params: { question: string; answer: string; subject?: string; topic?: string }) => {
+    const response = await api.post('/api/ai/caption', params);
+    return response.data as { caption: string };
+  },
+};
+
 export const aiCredentialsAPI = {
   get: async () => {
     const response = await api.get('/api/ai/credentials');

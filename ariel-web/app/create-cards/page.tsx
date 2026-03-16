@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { cardsAPI } from '@/lib/api';
+import { cardsAPI, aiCaptionAPI } from '@/lib/api';
 import { useAuth } from '@/lib/useAuth';
 import SideNav from '@/components/SideNav';
 import BottomNav from '@/components/BottomNav';
@@ -103,6 +103,7 @@ export default function CreateCardsPage() {
   };
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [caption, setCaption] = useState('');
+  const [generatingCaption, setGeneratingCaption] = useState(false);
 
   // ── Cards ──────────────────────────────────────────────────────
   const [cards, setCards] = useState<CardDraft[]>([
@@ -130,6 +131,22 @@ export default function CreateCardsPage() {
   };
 
   const validCards = cards.filter(c => c.question.trim() && c.answer.trim());
+
+  const handleGenerateCaption = async () => {
+    const first = validCards[0];
+    if (!first) return;
+    setGeneratingCaption(true);
+    try {
+      const { caption: generated } = await aiCaptionAPI.generate({
+        question: first.question,
+        answer: first.answer,
+        subject: effectiveSubject || undefined,
+        topic: topic || undefined,
+      });
+      if (generated) setCaption(generated);
+    } catch {}
+    setGeneratingCaption(false);
+  };
 
   const handleSave = async () => {
     if (authLoading) return; // still checking auth — wait
@@ -296,7 +313,22 @@ export default function CreateCardsPage() {
                   {/* Caption — only when public */}
                   {visibility === 'public' && (
                     <div className="mt-3">
-                      <label className="text-xs font-semibold text-zinc-400 mb-1.5 block">Caption <span className="text-zinc-600 font-normal">(optional)</span></label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-zinc-400">Caption <span className="text-zinc-600 font-normal">(optional)</span></label>
+                        <button
+                          type="button"
+                          onClick={handleGenerateCaption}
+                          disabled={generatingCaption || validCards.length === 0}
+                          className="flex items-center gap-1 text-[11px] font-semibold text-violet-400 hover:text-violet-300 disabled:opacity-40 transition-colors"
+                        >
+                          {generatingCaption ? (
+                            <span className="inline-block w-3 h-3 border border-violet-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <span>✨</span>
+                          )}
+                          {generatingCaption ? 'Generating…' : 'AI Generate'}
+                        </button>
+                      </div>
                       <textarea
                         value={caption}
                         onChange={e => setCaption(e.target.value)}
