@@ -405,11 +405,9 @@ async def like_card(
     card_id: str,
     current_user: User = Depends(get_current_user_dependency)
 ):
-    """Like a card"""
-    success = await CardRepository.like_card(card_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Card not found")
-    return {"success": True, "message": "Card liked"}
+    """Toggle like on a card"""
+    result = await CardRepository.like_card(card_id, current_user.id)
+    return {"success": True, "liked": result["liked"], "likes": result["likes"]}
 
 @router.post("/{card_id}/save", response_model=Card)
 async def save_card_to_deck(
@@ -552,7 +550,8 @@ async def like_comment(
                 }
             )
 
-        return {"success": True}
+        new_count = max(0, comment.get("likes", 0) + (1 if not is_liked else -1))
+        return {"success": True, "liked": not is_liked, "likes": new_count}
 
     except Exception as e:
         logger.error(f"Error liking comment: {e}")

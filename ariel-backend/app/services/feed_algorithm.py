@@ -307,8 +307,9 @@ async def enrich_deck_with_author(db, deck: Dict, current_user_id: str) -> Dict:
         "author_is_teacher": author.get("is_teacher", False) if author else False,
         "author_is_verified": author.get("is_verified", False) if author else False,
 
-        # Social context
+        # Social context (is_liked_by_user for frontend compatibility)
         "is_liked": current_user_id in deck.get("liked_by", []) if current_user_id else False,
+        "is_liked_by_user": current_user_id in deck.get("liked_by", []) if current_user_id else False,
         "is_saved": current_user_id in deck.get("saved_by", []) if current_user_id else False,
 
         # Caption

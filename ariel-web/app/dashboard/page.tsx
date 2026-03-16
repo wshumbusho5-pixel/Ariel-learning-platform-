@@ -212,7 +212,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   const { user } = useAuth();
   const [flipped, setFlipped] = useState(false);
   const [liked, setLiked] = useState(() => {
-    if (card.is_liked_by_user) return true;
+    if ((card as any).is_liked || card.is_liked_by_user) return true;
     try { return JSON.parse(localStorage.getItem('ariel_liked') || '[]').includes(card.id); } catch { return false; }
   });
   const [likeCount, setLikeCount] = useState(card.likes ?? 0);
@@ -281,15 +281,23 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   };
 
   const handleCommentLongPress = (commentId: string) => {
-    if (likedComments[commentId]) return;
-    const updated = { ...likedComments, [commentId]: true };
+    const alreadyLiked = likedComments[commentId];
+    const updated = { ...likedComments, [commentId]: !alreadyLiked };
     setLikedComments(updated);
     try { localStorage.setItem(`ariel_clikes_${card.id}`, JSON.stringify(updated)); } catch {}
+    // Optimistic update
     setCardComments(prev => prev.map(c =>
-      c.id === commentId ? { ...c, likes: (c.likes || 0) + 1 } : c
+      c.id === commentId ? { ...c, likes: Math.max(0, (c.likes || 0) + (alreadyLiked ? -1 : 1)) } : c
     ));
     import('@/lib/api').then(({ commentsAPI }) => {
-      commentsAPI.toggleLike(commentId).catch(() => {});
+      commentsAPI.toggleLike(commentId)
+        .then((res: any) => {
+          // Sync server count back
+          if (typeof res?.likes === 'number') {
+            setCardComments(prev => prev.map(c => c.id === commentId ? { ...c, likes: res.likes } : c));
+          }
+        })
+        .catch(() => {});
     });
   };
 
@@ -320,8 +328,10 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
     if (next) {
       setLikeAnim(true);
       setTimeout(() => setLikeAnim(false), 400);
-      cardsAPI.likeCard(card.id).catch(() => {});
     }
+    cardsAPI.likeCard(card.id)
+      .then((res: any) => { if (typeof res?.likes === 'number') setLikeCount(res.likes); })
+      .catch(() => {});
     try {
       const stored: string[] = JSON.parse(localStorage.getItem('ariel_liked') || '[]');
       const updated = next ? [...stored.filter(id => id !== card.id), card.id] : stored.filter(id => id !== card.id);
@@ -589,12 +599,12 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                       </button>
                       <p className="text-[15px] leading-relaxed break-words" style={{ color: '#e7e9ea' }}>
                         {renderWithMentions(c.content)}
-                        {(c.likes > 0 || likedComments[c.id]) && (
+                        {(c.likes > 0) && (
                           <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
-                            <svg className="w-3 h-3 text-violet-400 inline" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                            <svg className={`w-3 h-3 inline ${likedComments[c.id] ? 'text-red-400' : 'text-zinc-500'}`} fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                             </svg>
-                            {c.likes > 0 && <span className="text-[11px] text-violet-400 font-semibold">{c.likes}</span>}
+                            <span className={`text-[11px] font-semibold ${likedComments[c.id] ? 'text-red-400' : 'text-zinc-500'}`}>{c.likes}</span>
                           </span>
                         )}
                       </p>

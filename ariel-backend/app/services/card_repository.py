@@ -246,16 +246,30 @@ class CardRepository:
         return await CardRepository.get_card(card_id, user_id)
 
     @staticmethod
-    async def like_card(card_id: str) -> bool:
-        """Like a card (increment likes)"""
+    async def like_card(card_id: str, user_id: str) -> dict:
+        """Toggle like on a card. Returns {liked: bool, likes: int}"""
         db = db_service.get_db()
+        card = await db[CardRepository.collection_name].find_one({"_id": ObjectId(card_id)})
+        if not card:
+            return {"liked": False, "likes": 0}
 
-        result = await db[CardRepository.collection_name].update_one(
-            {"_id": ObjectId(card_id)},
-            {"$inc": {"likes": 1}}
-        )
+        liked_by = card.get("liked_by", [])
+        already_liked = user_id in liked_by
 
-        return result.modified_count > 0
+        if already_liked:
+            await db[CardRepository.collection_name].update_one(
+                {"_id": ObjectId(card_id)},
+                {"$pull": {"liked_by": user_id}, "$inc": {"likes": -1}}
+            )
+            new_count = max(0, card.get("likes", 0) - 1)
+        else:
+            await db[CardRepository.collection_name].update_one(
+                {"_id": ObjectId(card_id)},
+                {"$addToSet": {"liked_by": user_id}, "$inc": {"likes": 1}}
+            )
+            new_count = card.get("likes", 0) + 1
+
+        return {"liked": not already_liked, "likes": new_count}
 
     @staticmethod
     async def save_card(card_id: str, user_id: str) -> Optional[Card]:
