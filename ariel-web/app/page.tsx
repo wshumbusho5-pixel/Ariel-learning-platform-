@@ -349,7 +349,7 @@ function PhoneMockup() {
       </div>
 
       {/* Feed item */}
-      <div style={{ flex: 1, overflow: 'hidden', transition: 'opacity 0.35s, transform 0.35s', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(10px)' }}>
+      <div style={{ flex: 1, overflow: 'hidden', transition: 'opacity 0.3s', opacity: visible ? 1 : 0 }}>
         {item.type === 'card'
           ? <CardFeedItem item={item as CardItem} flipped={flipped} />
           : <ReelFeedItem item={item as ReelItem} />

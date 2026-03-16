@@ -12,6 +12,16 @@
     -moz-osx-font-smoothing: grayscale;
     overscroll-behavior: none;
     background-color: #09090b;
+    overflow-x: hidden;
+    /* Prevent layout shift from mobile browser bar */
+    min-height: 100dvh;
+  }
+
+  /* Use dvh for min-h-screen on mobile to avoid address bar jump */
+  @supports (min-height: 100dvh) {
+    .min-h-screen {
+      min-height: 100dvh;
+    }
   }
 
   ::-webkit-scrollbar {
