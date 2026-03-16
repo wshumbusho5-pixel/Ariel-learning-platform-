@@ -185,6 +185,27 @@ function renderWithMentions(text: string) {
   );
 }
 
+function AuthorAvatar({ card, meta }: { card: FeedCard; meta: any }) {
+  const [broken, setBroken] = useState(false);
+  if (card.author_profile_picture && !broken) {
+    return (
+      <img
+        src={card.author_profile_picture}
+        alt={card.author_username}
+        className="w-10 h-10 rounded-full object-cover"
+        onError={() => setBroken(true)}
+      />
+    );
+  }
+  return (
+    <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
+      <span className="text-sm font-bold text-white">
+        {card.author_username?.[0]?.toUpperCase() ?? meta.icon}
+      </span>
+    </div>
+  );
+}
+
 // ─── Card Tile (square, 1:1) ─────────────────────────────────────────────────
 
 function CardTile({ card, onComment, flush = false }: { card: FeedCard; onComment: (id: string) => void; flush?: boolean }) {
@@ -381,20 +402,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       <div className="flex gap-3">
         {/* ── Left column: avatar ── */}
         <div className="flex-shrink-0 pt-0.5">
-          {card.author_profile_picture ? (
-            <img
-              src={card.author_profile_picture.replace(/^https?:\/\/[^/]+/, '')}
-              alt={card.author_username}
-              className="w-10 h-10 rounded-full object-cover"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          ) : (
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
-              <span className="text-sm font-bold text-white">
-                {card.author_username?.[0]?.toUpperCase() ?? meta.icon}
-              </span>
-            </div>
-          )}
+          <AuthorAvatar card={card} meta={meta} />
         </div>
 
         {/* ── Right column: everything ── */}
