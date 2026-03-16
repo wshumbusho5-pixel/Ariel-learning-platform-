@@ -27,8 +27,10 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:3001",
-        "http://localhost:19006"
+        "http://localhost:19006",
+        "https://ariel-learning-platform-production.up.railway.app",
     ]
+    EXTRA_ALLOWED_ORIGINS: str = ""  # comma-separated, set via env var for Vercel URL
 
     class Config:
         env_file = ".env"
