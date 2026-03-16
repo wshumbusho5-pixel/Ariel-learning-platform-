@@ -241,8 +241,6 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
     try { return JSON.parse(localStorage.getItem(`ariel_clikes_${card.id}`) || '{}'); } catch { return {}; }
   });
   const inputRef = useRef<HTMLInputElement>(null);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pressStart = useRef<number>(0);
 
   const fetchComments = useCallback(async () => {
     try {
@@ -280,41 +278,29 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
     setPostingComment(false);
   };
 
-  const handleCommentLongPress = (commentId: string) => {
+  const handleCommentLike = (commentId: string) => {
     const alreadyLiked = likedComments[commentId];
     const updated = { ...likedComments, [commentId]: !alreadyLiked };
     setLikedComments(updated);
     try { localStorage.setItem(`ariel_clikes_${card.id}`, JSON.stringify(updated)); } catch {}
-    // Optimistic update
     setCardComments(prev => prev.map(c =>
       c.id === commentId ? { ...c, likes: Math.max(0, (c.likes || 0) + (alreadyLiked ? -1 : 1)) } : c
     ));
     import('@/lib/api').then(({ commentsAPI }) => {
       commentsAPI.toggleLike(commentId)
         .then((res: any) => {
-          // Sync server count back
           if (typeof res?.likes === 'number') {
             setCardComments(prev => prev.map(c => c.id === commentId ? { ...c, likes: res.likes } : c));
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          // Revert on failure
+          setLikedComments(prev => ({ ...prev, [commentId]: alreadyLiked }));
+          setCardComments(prev => prev.map(c =>
+            c.id === commentId ? { ...c, likes: Math.max(0, (c.likes || 0) + (alreadyLiked ? 1 : -1)) } : c
+          ));
+        });
     });
-  };
-
-  const startLongPress = (commentId: string) => {
-    pressStart.current = Date.now();
-    longPressTimer.current = setTimeout(() => handleCommentLongPress(commentId), 500);
-  };
-
-  const cancelLongPress = (commentId?: string) => {
-    // If finger held long enough when released, still trigger (fixes iOS pointercancel)
-    if (commentId && Date.now() - pressStart.current >= 480) {
-      handleCommentLongPress(commentId);
-    }
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
   };
 
   const key = getSubjectKey(card);
@@ -329,9 +315,11 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       setLikeAnim(true);
       setTimeout(() => setLikeAnim(false), 400);
     }
-    cardsAPI.likeCard(card.id)
-      .then((res: any) => { if (typeof res?.likes === 'number') setLikeCount(res.likes); })
-      .catch(() => {});
+    cardsAPI.likeCard(card.id).catch(() => {
+      // Revert on failure
+      setLiked(!next);
+      setLikeCount(c => next ? Math.max(0, c - 1) : c + 1);
+    });
     try {
       const stored: string[] = JSON.parse(localStorage.getItem('ariel_liked') || '[]');
       const updated = next ? [...stored.filter(id => id !== card.id), card.id] : stored.filter(id => id !== card.id);
@@ -569,12 +557,9 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                 {(showAllComments ? cardComments : cardComments.slice(0, 3)).map((c, i) => (
                   <div
                     key={c.id}
-                    className={`flex items-start gap-2.5 ${i > 0 ? 'mt-4' : ''} select-none`}
-                    onPointerDown={() => startLongPress(c.id)}
-                    onPointerUp={() => cancelLongPress(c.id)}
-                    onPointerLeave={() => cancelLongPress()}
-                    onPointerCancel={() => cancelLongPress(c.id)}
+                    className={`flex items-start gap-2.5 ${i > 0 ? 'mt-4' : ''}`}
                   >
+                    {/* Avatar */}
                     <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0 mt-0.5">
                       <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center">
                         {c.author_profile_picture ? (
@@ -589,6 +574,8 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                         </span>
                       </div>
                     </button>
+
+                    {/* Username + text */}
                     <div className="flex-1 min-w-0">
                       <button
                         onClick={() => { setReplyingTo({ id: c.id, username: c.author_username || 'user' }); setTimeout(() => inputRef.current?.focus(), 50); }}
@@ -599,16 +586,29 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                       </button>
                       <p className="text-[15px] leading-relaxed break-words" style={{ color: '#e7e9ea' }}>
                         {renderWithMentions(c.content)}
-                        {(c.likes > 0) && (
-                          <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
-                            <svg className={`w-3 h-3 inline ${likedComments[c.id] ? 'text-red-400' : 'text-zinc-500'}`} fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg>
-                            <span className={`text-[11px] font-semibold ${likedComments[c.id] ? 'text-red-400' : 'text-zinc-500'}`}>{c.likes}</span>
-                          </span>
-                        )}
                       </p>
                     </div>
+
+                    {/* Like button — right side, thumbs up, violet */}
+                    <button
+                      onClick={() => handleCommentLike(c.id)}
+                      className="flex-shrink-0 flex flex-col items-center gap-0.5 pt-0.5 min-w-[28px]"
+                    >
+                      <svg
+                        className={`w-4 h-4 transition-colors ${likedComments[c.id] ? 'text-violet-400' : 'text-zinc-600'}`}
+                        fill={likedComments[c.id] ? 'currentColor' : 'none'}
+                        stroke="currentColor"
+                        strokeWidth={1.75}
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.633 10.5c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V3a.75.75 0 01.75-.75A2.25 2.25 0 0116.5 4.5c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M14.25 9h2.25M5.904 18.75c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 01-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 10.203 4.167 9.75 5 9.75h1.053c.472 0 .745.556.5.96a8.958 8.958 0 00-1.302 4.665c0 1.194.232 2.333.654 3.375z" />
+                      </svg>
+                      {c.likes > 0 && (
+                        <span className={`text-[10px] font-semibold leading-none ${likedComments[c.id] ? 'text-violet-400' : 'text-zinc-600'}`}>
+                          {c.likes}
+                        </span>
+                      )}
+                    </button>
                   </div>
                 ))}
               </div>
