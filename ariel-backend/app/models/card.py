@@ -20,6 +20,9 @@ class Card(BaseModel):
     topic: Optional[str] = None    # e.g., "Algebra", "Cell Division"
     tags: List[str] = []           # e.g., ["midterm", "chapter-5"]
 
+    # Caption (set when deck is created/published)
+    caption: Optional[str] = None
+
     # Social features
     visibility: CardVisibility = CardVisibility.PRIVATE
     class_id: Optional[str] = None  # If shared with a class

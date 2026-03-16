@@ -54,7 +54,7 @@ async def create_cards_bulk(
             card.visibility = bulk_data.visibility
             cards_data.append(card)
 
-        cards = await CardRepository.create_cards_bulk(cards_data, current_user.id)
+        cards = await CardRepository.create_cards_bulk(cards_data, current_user.id, deck_caption=bulk_data.caption)
         card_ids = [str(c.id) for c in cards]
 
         # Award points for creating cards

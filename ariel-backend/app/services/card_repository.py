@@ -44,12 +44,12 @@ class CardRepository:
         return Card(**card_dict)
 
     @staticmethod
-    async def create_cards_bulk(cards_data: List[CardCreate], user_id: str) -> List[Card]:
+    async def create_cards_bulk(cards_data: List[CardCreate], user_id: str, deck_caption: Optional[str] = None) -> List[Card]:
         """Create multiple cards at once"""
         db = db_service.get_db()
 
         cards_to_insert = []
-        for card_data in cards_data:
+        for i, card_data in enumerate(cards_data):
             card_dict = {
                 "user_id": user_id,
                 "question": card_data.question,
@@ -60,6 +60,8 @@ class CardRepository:
                 "tags": card_data.tags,
                 "visibility": card_data.visibility,
                 "class_id": card_data.class_id,
+                # Caption only on first card so it shows once in the feed
+                "caption": deck_caption if (i == 0 and deck_caption) else None,
                 "likes": 0,
                 "saves": 0,
                 "review_count": 0,
