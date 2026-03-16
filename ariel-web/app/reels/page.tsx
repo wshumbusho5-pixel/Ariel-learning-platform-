@@ -689,23 +689,50 @@ export default function ReelsPage() {
         {/* Content */}
         <div className="py-3 pb-28 lg:pb-8">
           {reels.length === 0 ? (
-            <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="text-center px-6">
-                <ArielLoader size={56} className="mb-5" />
-                <p className="text-[15px] font-bold text-white">
-                  {tab === 'following' ? 'No clips from people you follow' : 'No clips yet'}
+            <div className="px-4 pb-28 lg:pb-8">
+              {/* Empty state header */}
+              <div className="text-center pt-6 pb-8 px-4">
+                <p className="text-[17px] font-bold text-white mb-1">
+                  {tab === 'following' ? 'No clips from people you follow yet' : 'Be the first to post a clip'}
                 </p>
-                <p className="text-[13px] text-zinc-500 mt-2 leading-relaxed max-w-[220px] mx-auto">
+                <p className="text-[13px] text-zinc-500 leading-relaxed max-w-[260px] mx-auto">
                   {tab === 'following'
-                    ? 'Follow educators to see their clips here.'
-                    : 'Be the first to share a learning clip.'}
+                    ? 'Follow educators to see their short clips here.'
+                    : 'Short educational clips — like TikTok but for learning. Upload yours below.'}
                 </p>
                 <button
                   onClick={() => router.push('/reels/upload')}
-                  className="mt-5 px-5 py-2.5 bg-violet-500 text-white text-sm font-bold rounded-full shadow-[0_0_12px_rgba(139,92,246,0.4)] active:scale-95 transition-all"
+                  className="mt-4 px-5 py-2.5 bg-violet-500 text-white text-sm font-bold rounded-full shadow-[0_0_12px_rgba(139,92,246,0.4)] active:scale-95 transition-all"
                 >
                   Upload a clip
                 </button>
+              </div>
+
+              {/* Ghost preview grid — shows users what reels look like */}
+              <p className="text-[11px] font-semibold text-zinc-600 uppercase tracking-widest mb-3 px-1">What clips look like</p>
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                {[
+                  { label: 'Physics — Newton\'s Laws', sub: '@prof_alex', color: 'from-blue-900/60 to-blue-950' },
+                  { label: 'Economics — Supply & Demand', sub: '@econ_daily', color: 'from-emerald-900/60 to-emerald-950' },
+                  { label: 'History — World War II', sub: '@history_hub', color: 'from-amber-900/60 to-amber-950' },
+                  { label: 'Math — Calculus Basics', sub: '@math_mentor', color: 'from-violet-900/60 to-violet-950' },
+                  { label: 'Biology — Cell Division', sub: '@bio_shorts', color: 'from-pink-900/60 to-pink-950' },
+                  { label: 'Law — Constitutional Rights', sub: '@law_clips', color: 'from-red-900/60 to-red-950' },
+                ].map((g, i) => (
+                  <div key={i} className={`relative rounded-xl overflow-hidden bg-gradient-to-b ${g.color} aspect-[9/16] flex flex-col justify-between p-3`}>
+                    {/* Play icon */}
+                    <div className="flex justify-center items-center flex-1">
+                      <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+                      </div>
+                    </div>
+                    {/* Info */}
+                    <div>
+                      <p className="text-white text-[11px] font-bold leading-tight line-clamp-2">{g.label}</p>
+                      <p className="text-zinc-400 text-[10px] mt-0.5">{g.sub}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ) : (
