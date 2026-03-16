@@ -50,7 +50,7 @@ export default function CreateStreamPage() {
         <div className="max-w-2xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4 mb-8">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push('/live')}
               className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
             >
               <svg className="w-6 h-6 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -142,7 +142,7 @@ export default function CreateStreamPage() {
 
             <div className="flex gap-3 pt-4">
               <button
-                onClick={() => router.back()}
+                onClick={() => router.push('/live')}
                 className="flex-1 px-6 py-3 bg-zinc-800 text-white font-semibold rounded-lg hover:bg-zinc-700 transition-colors"
                 disabled={loading}
               >

@@ -41,7 +41,7 @@ export default function CardDetailPage() {
         {/* Header */}
         <div className="flex-shrink-0 flex items-center gap-3 px-4 h-14 border-b border-zinc-800">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/dashboard')}
             className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800"
           >
             <svg className="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -70,7 +70,7 @@ export default function CardDetailPage() {
           ) : !card ? (
             <div className="text-center">
               <p className="text-zinc-400 text-sm">Card not found.</p>
-              <button onClick={() => router.back()} className="mt-4 text-violet-400 text-sm font-semibold">Go back</button>
+              <button onClick={() => router.push('/dashboard')} className="mt-4 text-violet-400 text-sm font-semibold">Go back</button>
             </div>
           ) : (
             <div className="w-full max-w-sm space-y-4">

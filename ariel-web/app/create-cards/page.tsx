@@ -180,7 +180,7 @@ export default function CreateCardsPage() {
         <header className="sticky top-0 z-30 bg-[#09090b]/95 backdrop-blur border-b border-zinc-800">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push('/deck')}
               className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800 flex-shrink-0"
             >
               <svg className="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">

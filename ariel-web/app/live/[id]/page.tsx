@@ -210,7 +210,7 @@ export default function LiveStreamPage() {
         {/* Floating Controls */}
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/live')}
             className="w-10 h-10 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/70 transition-colors"
           >
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

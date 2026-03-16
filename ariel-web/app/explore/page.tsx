@@ -246,7 +246,7 @@ function ExploreContent() {
           {/* Row 1: back + search bar */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push('/dashboard')}
               className="w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0 transition-colors"
               style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
             >

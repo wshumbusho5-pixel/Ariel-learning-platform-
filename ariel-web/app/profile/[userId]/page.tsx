@@ -103,7 +103,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <p className="text-[17px] font-bold mb-2" style={{ color: '#e7e9ea' }}>Profile not found</p>
-          <button onClick={() => router.back()} className="text-[14px]" style={{ color: '#8b9099' }}>Go back</button>
+          <button onClick={() => router.push('/dashboard')} className="text-[14px]" style={{ color: '#8b9099' }}>Go back</button>
         </div>
       </div>
     );
@@ -120,7 +120,7 @@ export default function ProfilePage() {
 
       {/* Back button */}
       <div className="sticky top-0 z-40 bg-black border-b border-[#2f3336] px-4 h-14 flex items-center gap-4">
-        <button onClick={() => router.back()} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-900 transition-colors">
+        <button onClick={() => router.push('/dashboard')} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-900 transition-colors">
           <svg className="w-5 h-5" style={{ color: '#e7e9ea' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
           </svg>

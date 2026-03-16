@@ -85,7 +85,7 @@ export default function NotificationsSettingsPage() {
         <header className="sticky top-0 bg-[#09090b]/95 backdrop-blur-md border-b border-zinc-800/50 z-30">
           <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push('/notifications')}
               className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
             >
               <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

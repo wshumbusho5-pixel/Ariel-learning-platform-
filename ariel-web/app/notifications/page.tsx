@@ -152,7 +152,7 @@ export default function NotificationsPage() {
         {/* Header */}
         <div className="sticky top-0 z-40 bg-black border-b border-[#2f3336]">
           <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
-            <button onClick={() => router.back()} className="p-1 -ml-1">
+            <button onClick={() => router.push('/dashboard')} className="p-1 -ml-1">
               <svg className="w-6 h-6 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>

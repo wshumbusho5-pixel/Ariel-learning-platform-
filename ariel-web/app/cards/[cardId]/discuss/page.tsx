@@ -149,7 +149,7 @@ export default function CardDiscussPage() {
       <div className="fixed inset-0 lg:left-[72px] bg-white flex flex-col">
         {/* Header */}
         <div className="flex-shrink-0 flex items-center gap-3 px-4 h-14 border-b border-gray-100 bg-white z-10">
-          <button onClick={() => router.back()} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
+          <button onClick={() => router.push(`/cards/${cardId}`)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
             <svg className="w-5 h-5 text-zinc-700" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>

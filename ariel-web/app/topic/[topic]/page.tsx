@@ -136,7 +136,7 @@ function TopicPageInner() {
         <header className="sticky top-0 z-30 bg-black/95 backdrop-blur border-b border-zinc-800">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push('/explore')}
               className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

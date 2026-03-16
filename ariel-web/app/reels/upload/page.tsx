@@ -107,7 +107,7 @@ export default function ReelUploadPage() {
       <header className="sticky top-0 bg-black border-b border-gray-800 z-30">
         <div className="flex items-center justify-between px-4 py-3">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/reels')}
             className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-900 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
