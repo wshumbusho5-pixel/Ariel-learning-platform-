@@ -12,6 +12,12 @@ const kalam = Kalam({ subsets: ["latin"], weight: ["400", "700"], variable: "--f
 export const metadata: Metadata = {
   title: "Ariel — Learn smarter",
   description: "Flashcards, reels, and spaced repetition — built for focused learning.",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 };
 
 export default function RootLayout({
