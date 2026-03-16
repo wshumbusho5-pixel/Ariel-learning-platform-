@@ -227,7 +227,7 @@ export default function MessagesPage() {
                   <div className="relative flex-shrink-0">
                     {convo.other_user_profile_picture ? (
                       <img
-                        src={convo.other_user_profile_picture.replace(/^https?:\/\/[^/]+/, '')}
+                        src={convo.other_user_profile_picture}
                         alt={name}
                         className="w-11 h-11 rounded-full object-cover"
                       />

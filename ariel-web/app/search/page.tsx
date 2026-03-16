@@ -24,7 +24,7 @@ function Avatar({ person }: { person: Person }) {
   if (person.profile_picture && !broken) {
     return (
       <img
-        src={person.profile_picture.replace(/^https?:\/\/[^/]+/, '')}
+        src={person.profile_picture}
         alt={person.username}
         className="w-12 h-12 rounded-full object-cover flex-shrink-0"
         onError={() => setBroken(true)}
@@ -39,9 +39,6 @@ function Avatar({ person }: { person: Person }) {
 }
 
 function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onToggleFollow: (id: string) => void; onOpenDM: (id: string) => void }) {
-  const mutual = person.is_following && person.follows_you;
-  const waitingFollowBack = person.is_following && !person.follows_you;
-
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <Avatar person={person} />
@@ -61,21 +58,14 @@ function PersonRow({ person, onToggleFollow, onOpenDM }: { person: Person; onTog
         </div>
         <p className="text-xs truncate" style={{ color: '#8b9099' }}>@{person.username}</p>
         {person.bio && <p className="text-xs truncate mt-0.5" style={{ color: '#8b9099' }}>{person.bio}</p>}
-        {waitingFollowBack && (
-          <p className="text-[10px] mt-0.5" style={{ color: '#8b9099' }}>Follow back to message</p>
-        )}
       </div>
-      {mutual ? (
+      {person.is_following ? (
         <button
           onClick={() => onOpenDM(person.id)}
           className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white transition-colors"
         >
           Message
         </button>
-      ) : waitingFollowBack ? (
-        <span className="flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold border border-zinc-700 text-zinc-300 bg-transparent">
-          Following
-        </span>
       ) : (
         <button
           onClick={() => onToggleFollow(person.id)}

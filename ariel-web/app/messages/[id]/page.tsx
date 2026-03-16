@@ -119,7 +119,7 @@ function Avatar({ name, src, size = 'sm' }: { name?: string; src?: string; size?
   const [broken, setBroken] = useState(false);
   const sizes = { sm: 'w-8 h-8 text-xs', md: 'w-10 h-10 text-sm' };
   if (src && !broken) {
-    return <img src={src.replace(/^https?:\/\/[^/]+/, '')} alt={name} className={`${sizes[size]} rounded-full object-cover flex-shrink-0`} onError={() => setBroken(true)} />;
+    return <img src={src} alt={name} className={`${sizes[size]} rounded-full object-cover flex-shrink-0`} onError={() => setBroken(true)} />;
   }
   return (
     <div className={`${sizes[size]} rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-bold text-zinc-300 flex-shrink-0`}>
@@ -161,6 +161,7 @@ export default function ConversationPage() {
   const [pickerCards, setPickerCards] = useState<{ id: string; question: string; subject?: string }[]>([]);
   const [pickerReels, setPickerReels] = useState<{ id: string; title: string; thumbnail_url?: string; creator_username: string }[]>([]);
   const [pickerLoading, setPickerLoading] = useState(false);
+  const [activeSwipe, setActiveSwipe] = useState<{ id: string; x: number } | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -171,6 +172,9 @@ export default function ConversationPage() {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const presencePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTapRef = useRef<Record<string, number>>({});
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const swipeLockRef = useRef<'none' | 'h' | 'v'>('none');
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     bottomRef.current?.scrollIntoView({ behavior });
@@ -473,8 +477,47 @@ export default function ConversationPage() {
                       </div>
                     )}
 
-                    {/* Message row */}
-                    <div className={`flex items-end gap-1.5 ${isMine ? 'flex-row-reverse' : 'flex-row'} ${isLastInGroup ? 'mb-1' : 'mb-0.5'}`}>
+                    {/* Message row — swipe right to reply */}
+                    <div
+                      className="relative"
+                      onTouchStart={(e) => {
+                        touchStartXRef.current = e.touches[0].clientX;
+                        touchStartYRef.current = e.touches[0].clientY;
+                        swipeLockRef.current = 'none';
+                      }}
+                      onTouchMove={(e) => {
+                        const dx = e.touches[0].clientX - touchStartXRef.current;
+                        const dy = e.touches[0].clientY - touchStartYRef.current;
+                        if (swipeLockRef.current === 'none') {
+                          swipeLockRef.current = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+                        }
+                        if (swipeLockRef.current === 'h' && dx > 0) {
+                          setActiveSwipe({ id: msg.id, x: Math.min(72, dx) });
+                        }
+                      }}
+                      onTouchEnd={() => {
+                        if (activeSwipe?.id === msg.id && activeSwipe.x >= 56) {
+                          handleReply(msg);
+                        }
+                        setActiveSwipe(null);
+                      }}
+                    >
+                      {/* Reply icon revealed behind message on swipe */}
+                      <div
+                        className="absolute left-2 top-1/2 -translate-y-1/2 text-violet-400 pointer-events-none"
+                        style={{ opacity: activeSwipe?.id === msg.id ? Math.min(1, activeSwipe.x / 48) : 0 }}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        </svg>
+                      </div>
+                    <div
+                      className={`flex items-end gap-1.5 ${isMine ? 'flex-row-reverse' : 'flex-row'} ${isLastInGroup ? 'mb-1' : 'mb-0.5'}`}
+                      style={{
+                        transform: activeSwipe?.id === msg.id ? `translateX(${activeSwipe.x}px)` : 'translateX(0)',
+                        transition: activeSwipe?.id === msg.id ? 'none' : 'transform 0.2s ease-out',
+                      }}
+                    >
                       {/* Avatar slot for received messages */}
                       {!isMine && (
                         isLastInGroup
@@ -581,6 +624,7 @@ export default function ConversationPage() {
                         )}
                       </div>
                     </div>
+                    </div>{/* end swipe wrapper */}
 
                     {/* Timestamp + read receipt */}
                     {isLastInGroup && (
@@ -658,7 +702,7 @@ export default function ConversationPage() {
                     >
                       <div className="w-28 rounded-xl overflow-hidden bg-zinc-900" style={{ aspectRatio: '9/16' }}>
                         {reel.thumbnail_url ? (
-                          <img src={reel.thumbnail_url.replace(/^https?:\/\/[^/]+/, '')} alt={reel.title} className="w-full h-full object-cover" />
+                          <img src={reel.thumbnail_url} alt={reel.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-zinc-900">
                             <svg className="w-6 h-6 text-zinc-600" fill="currentColor" viewBox="0 0 24 24">
@@ -677,9 +721,9 @@ export default function ConversationPage() {
           </div>
         )}
 
-        {/* Emoji picker */}
+        {/* Emoji picker — desktop only */}
         {showEmoji && (
-          <div className="flex-shrink-0 border-t border-[#2f3336] bg-black" onClick={e => e.stopPropagation()}>
+          <div className="hidden sm:block flex-shrink-0 border-t border-[#2f3336] bg-black" onClick={e => e.stopPropagation()}>
             <div className="grid grid-cols-10 gap-0 px-2 py-2 max-h-40 overflow-y-auto">
               {EMOJIS.map(emoji => (
                 <button
@@ -713,10 +757,10 @@ export default function ConversationPage() {
         {/* Input bar */}
         <div className="flex-shrink-0 px-3 pt-2 border-t border-[#2f3336] bg-black" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }} onClick={e => e.stopPropagation()}>
           <div className="flex items-center gap-2">
-            {/* Emoji toggle */}
+            {/* Emoji toggle — desktop only */}
             <button
               onClick={() => { setShowEmoji(v => !v); setSelectedMsgId(null); setShowPicker(false); }}
-              className={`w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0 transition-colors ${showEmoji ? 'bg-violet-500/20 text-violet-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+              className={`w-9 h-9 hidden sm:flex items-center justify-center rounded-full flex-shrink-0 transition-colors ${showEmoji ? 'bg-violet-500/20 text-violet-400' : 'text-zinc-500 hover:text-zinc-300'}`}
             >
               <span className="text-xl">😊</span>
             </button>
