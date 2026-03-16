@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
-import api, { gamificationAPI, cardsAPI, messagesAPI, notificationsAPI } from '@/lib/api';
+import api, { gamificationAPI, cardsAPI, messagesAPI, notificationsAPI, commentsAPI } from '@/lib/api';
 import { useAriel } from '@/lib/arielContext';
 import { useComments } from '@/lib/commentsContext';
 import BottomNav, { drawerItems } from '@/components/BottomNav';
@@ -244,7 +244,6 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
   const fetchComments = useCallback(async () => {
     try {
-      const { commentsAPI } = await import('@/lib/api');
       const data = await commentsAPI.getCardComments(card.id, 50);
       let localLikes: Record<string, boolean> = {};
       try { localLikes = JSON.parse(localStorage.getItem(`ariel_clikes_${card.id}`) || '{}'); } catch {}
@@ -267,7 +266,6 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
     if (!text || postingComment) return;
     setPostingComment(true);
     try {
-      const { commentsAPI } = await import('@/lib/api');
       const content = replyingTo ? `@${replyingTo.username} ${text}` : text;
       const newComment = await commentsAPI.postCardComment(card.id, content);
       setCardComments(prev => [newComment, ...prev]);
@@ -279,28 +277,22 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   };
 
   const handleCommentLike = (commentId: string) => {
-    const alreadyLiked = likedComments[commentId];
+    const alreadyLiked = !!likedComments[commentId];
+    // Optimistic update
     const updated = { ...likedComments, [commentId]: !alreadyLiked };
     setLikedComments(updated);
     try { localStorage.setItem(`ariel_clikes_${card.id}`, JSON.stringify(updated)); } catch {}
     setCardComments(prev => prev.map(c =>
       c.id === commentId ? { ...c, likes: Math.max(0, (c.likes || 0) + (alreadyLiked ? -1 : 1)) } : c
     ));
-    import('@/lib/api').then(({ commentsAPI }) => {
-      commentsAPI.toggleLike(commentId)
-        .then((res: any) => {
-          if (typeof res?.likes === 'number') {
-            setCardComments(prev => prev.map(c => c.id === commentId ? { ...c, likes: res.likes } : c));
-          }
-        })
-        .catch(() => {
-          // Revert on failure
-          setLikedComments(prev => ({ ...prev, [commentId]: alreadyLiked }));
-          setCardComments(prev => prev.map(c =>
-            c.id === commentId ? { ...c, likes: Math.max(0, (c.likes || 0) + (alreadyLiked ? 1 : -1)) } : c
-          ));
-        });
-    });
+    // Fire and forget — optimistic state stays regardless
+    commentsAPI.toggleLike(commentId)
+      .then((res: any) => {
+        if (typeof res?.likes === 'number') {
+          setCardComments(prev => prev.map(c => c.id === commentId ? { ...c, likes: res.likes } : c));
+        }
+      })
+      .catch(() => { /* keep optimistic state */ });
   };
 
   const key = getSubjectKey(card);
