@@ -943,38 +943,11 @@ export default function Dashboard() {
       setGamification(gam || {});
       setDueCards((due as DueCard[]) || []);
       // Map created_by fields to author_* fields expected by dashboard
-      const buildCaption = (card: any, i: number): string => {
-        if (card.caption) return card.caption;
-        const subj = (card.subject || '').toLowerCase();
-        const topic = card.topic || card.subject || '';
-        const pools: Record<string, string[]> = {
-          biology:    [`This ${topic} concept finally clicked for me 🧬`, `Biology makes more sense after this one 🔬`, `${topic} — harder than it sounds until it isn't 🌿`],
-          chemistry:  [`This ${topic} reaction had me stuck for weeks ⚗️`, `Chemistry finals? This one will definitely come up 🔥`, `Once you see why ${topic} works, you can't unsee it`],
-          mathematics:[`${topic} finally making sense 📐`, `This tripped me up on the midterm — don't let it trip you 😅`, `The proof is cleaner than it looks 🔢`],
-          physics:    [`${topic} clicked after this one ⚡`, `Physics is beautiful when it actually makes sense 🌌`, `Don't skip ${topic} — it comes back every exam`],
-          history:    [`This moment in ${topic} changed everything 📜`, `Context makes all the difference here 🌍`, `${topic} — knowing this separates the A students`],
-          economics:  [`This ${topic} concept literally runs the world 💹`, `Once you understand this, everything else connects 📊`, `Economics isn't scary once you get ${topic}`],
-          english:    [`This ${topic} point comes up in every essay 📝`, `English lit finally making sense 📖`, `The insight here is deeper than it first appears`],
-          geography:  [`${topic} is more interesting than most people realize 🗺️`, `Geography connects to everything — start here 🌐`, `This one's always on the exam 📍`],
-        };
-        for (const [key, captions] of Object.entries(pools)) {
-          if (subj.includes(key)) return captions[i % captions.length];
-        }
-        const fallback = [
-          topic ? `This ${topic} question trips everyone up the first time 🔥` : `Most people get this wrong on the first try`,
-          topic ? `Failed ${topic} before this finally clicked 😅` : `Took me forever — hope it helps you faster`,
-          topic ? `Sharing this ${topic} card with my study group 🎯` : `Shared this with my study group — we all passed 🎯`,
-          `Short but important — this one always shows up on exams 📚`,
-          topic ? `${topic} making sense, finally` : `The answer surprised me when I first saw it 👀`,
-        ];
-        return fallback[i % fallback.length];
-      };
-      const mappedFeed = ((feed as any[]) || []).map((card: any, i: number) => ({
+      const mappedFeed = ((feed as any[]) || []).map((card: any) => ({
         ...card,
         author_username: card.author_username || card.created_by?.username,
         author_full_name: card.author_full_name || card.created_by?.full_name,
         author_profile_picture: card.author_profile_picture || card.created_by?.profile_picture,
-        caption: buildCaption(card, i),
       }));
       setFeedCards(mappedFeed as FeedCard[]);
       const allReels: Reel[] = (reelsRes as any).data ?? [];
