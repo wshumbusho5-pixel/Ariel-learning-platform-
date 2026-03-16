@@ -223,12 +223,10 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressStart = useRef<number>(0);
 
-  const loadComments = useCallback(async () => {
-    if (commentsLoaded) return;
+  const fetchComments = useCallback(async () => {
     try {
       const { commentsAPI } = await import('@/lib/api');
       const data = await commentsAPI.getCardComments(card.id, 50);
-      // Merge any locally liked comments so optimistic likes survive remounts
       let localLikes: Record<string, boolean> = {};
       try { localLikes = JSON.parse(localStorage.getItem(`ariel_clikes_${card.id}`) || '{}'); } catch {}
       const merged = data.map((c: any) =>
@@ -238,7 +236,12 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       if (data.length > 0) setCommentCount(prev => Math.max(prev, data.length));
     } catch {}
     setCommentsLoaded(true);
-  }, [card.id, commentsLoaded]);
+  }, [card.id]);
+
+  const loadComments = useCallback(async () => {
+    if (commentsLoaded) return;
+    fetchComments();
+  }, [commentsLoaded, fetchComments]);
 
   const submitComment = async () => {
     const text = commentInput.trim();
@@ -361,10 +364,10 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
   // Load comments on mount + poll every 15s for new comments
   useEffect(() => {
-    loadComments();
-    const interval = setInterval(loadComments, 15000);
+    fetchComments();
+    const interval = setInterval(fetchComments, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchComments]);
 
   return (
     <div className="relative py-4">
@@ -591,13 +594,13 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                   </div>
                 ))}
               </div>
-              {commentCount > 3 && (
+              {cardComments.length > 3 && (
                 <button
                   onClick={() => setShowAllComments(v => !v)}
                   className="text-[13px] mt-2.5 block transition-colors"
                   style={{ color: '#8b9099' }}
                 >
-                  {showAllComments ? 'Show less' : `View all ${commentCount} replies ↓`}
+                  {showAllComments ? 'Show less' : `View all ${cardComments.length} replies ↓`}
                 </button>
               )}
             </div>
