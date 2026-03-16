@@ -13,6 +13,7 @@ interface User {
   current_streak: number;
   onboarding_completed?: boolean;
   subjects?: string[];
+  education_level?: string;
 }
 
 interface AuthState {
