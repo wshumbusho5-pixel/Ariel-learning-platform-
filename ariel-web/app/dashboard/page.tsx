@@ -212,6 +212,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
   const [cardComments, setCardComments] = useState<any[]>([]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
   const [commentInput, setCommentInput] = useState('');
   const [postingComment, setPostingComment] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{id: string; username: string} | null>(null);
@@ -226,7 +227,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
     if (commentsLoaded) return;
     try {
       const { commentsAPI } = await import('@/lib/api');
-      const data = await commentsAPI.getCardComments(card.id, 5);
+      const data = await commentsAPI.getCardComments(card.id, 50);
       // Merge any locally liked comments so optimistic likes survive remounts
       let localLikes: Record<string, boolean> = {};
       try { localLikes = JSON.parse(localStorage.getItem(`ariel_clikes_${card.id}`) || '{}'); } catch {}
@@ -536,54 +537,67 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
           {/* ── Comments ── */}
           {cardComments.length > 0 && (
             <div className="mt-3 pt-1">
-              {cardComments.slice(0, 3).map((c, i) => (
-                <div
-                  key={c.id}
-                  className={`flex items-start gap-2.5 ${i > 0 ? 'mt-4' : ''} select-none`}
-                  onPointerDown={() => startLongPress(c.id)}
-                  onPointerUp={() => cancelLongPress(c.id)}
-                  onPointerLeave={() => cancelLongPress()}
-                  onPointerCancel={() => cancelLongPress(c.id)}
-                >
-                  <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0 mt-0.5">
-                    <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center">
-                      {c.author_profile_picture ? (
-                        <img
-                          src={c.author_profile_picture}
-                          className="w-7 h-7 object-cover"
-                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('style'); }}
-                        />
-                      ) : null}
-                      <span className="text-[11px] font-bold text-zinc-400" style={c.author_profile_picture ? { display: 'none' } : {}}>
-                        {(c.author_username || 'U')[0].toUpperCase()}
-                      </span>
-                    </div>
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <button
-                      onClick={() => { setReplyingTo({ id: c.id, username: c.author_username || 'user' }); setTimeout(() => inputRef.current?.focus(), 50); }}
-                      className="text-[15px] font-bold leading-none mb-1 block"
-                      style={{ color: '#e7e9ea' }}
-                    >
-                      {c.author_username || 'user'}
-                    </button>
-                    <p className="text-[15px] leading-relaxed break-words" style={{ color: '#e7e9ea' }}>
-                      {renderWithMentions(c.content)}
-                      {(c.likes > 0 || likedComments[c.id]) && (
-                        <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
-                          <svg className="w-3 h-3 text-violet-400 inline" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                          </svg>
-                          {c.likes > 0 && <span className="text-[11px] text-violet-400 font-semibold">{c.likes}</span>}
+              {/* Scrollable container when expanded */}
+              <div
+                className="overflow-y-auto transition-all duration-300"
+                style={{
+                  maxHeight: showAllComments ? '320px' : 'none',
+                  scrollbarWidth: 'none',
+                }}
+              >
+                {(showAllComments ? cardComments : cardComments.slice(0, 3)).map((c, i) => (
+                  <div
+                    key={c.id}
+                    className={`flex items-start gap-2.5 ${i > 0 ? 'mt-4' : ''} select-none`}
+                    onPointerDown={() => startLongPress(c.id)}
+                    onPointerUp={() => cancelLongPress(c.id)}
+                    onPointerLeave={() => cancelLongPress()}
+                    onPointerCancel={() => cancelLongPress(c.id)}
+                  >
+                    <button onClick={() => c.user_id && window.location.assign(`/profile/${c.user_id}`)} className="flex-shrink-0 mt-0.5">
+                      <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center">
+                        {c.author_profile_picture ? (
+                          <img
+                            src={c.author_profile_picture}
+                            className="w-7 h-7 object-cover"
+                            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('style'); }}
+                          />
+                        ) : null}
+                        <span className="text-[11px] font-bold text-zinc-400" style={c.author_profile_picture ? { display: 'none' } : {}}>
+                          {(c.author_username || 'U')[0].toUpperCase()}
                         </span>
-                      )}
-                    </p>
+                      </div>
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <button
+                        onClick={() => { setReplyingTo({ id: c.id, username: c.author_username || 'user' }); setTimeout(() => inputRef.current?.focus(), 50); }}
+                        className="text-[15px] font-bold leading-none mb-1 block"
+                        style={{ color: '#e7e9ea' }}
+                      >
+                        {c.author_username || 'user'}
+                      </button>
+                      <p className="text-[15px] leading-relaxed break-words" style={{ color: '#e7e9ea' }}>
+                        {renderWithMentions(c.content)}
+                        {(c.likes > 0 || likedComments[c.id]) && (
+                          <span className="inline-flex items-center gap-0.5 ml-2 align-middle">
+                            <svg className="w-3 h-3 text-violet-400 inline" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                            </svg>
+                            {c.likes > 0 && <span className="text-[11px] text-violet-400 font-semibold">{c.likes}</span>}
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
               {commentCount > 3 && (
-                <button onClick={() => onComment(card.id)} className="text-[13px] mt-2.5 block hover:underline transition-colors" style={{ color: '#8b9099' }}>
-                  View all {commentCount} replies
+                <button
+                  onClick={() => setShowAllComments(v => !v)}
+                  className="text-[13px] mt-2.5 block transition-colors"
+                  style={{ color: '#8b9099' }}
+                >
+                  {showAllComments ? 'Show less' : `View all ${commentCount} replies ↓`}
                 </button>
               )}
             </div>
