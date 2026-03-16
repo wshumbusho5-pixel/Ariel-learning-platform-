@@ -38,6 +38,9 @@ async def create_cards_bulk(
 ):
     """Create multiple flashcards at once (from question set)"""
     try:
+        from datetime import datetime
+        from app.models.deck import Deck, DeckVisibility
+
         # Apply default subject/topic/tags if provided
         cards_data = []
         for card in bulk_data.cards:
@@ -52,6 +55,7 @@ async def create_cards_bulk(
             cards_data.append(card)
 
         cards = await CardRepository.create_cards_bulk(cards_data, current_user.id)
+        card_ids = [str(c.id) for c in cards]
 
         # Award points for creating cards
         points_earned = len(cards) * GamificationService.POINTS_NEW_CARD
@@ -59,6 +63,34 @@ async def create_cards_bulk(
             current_user.id,
             {"total_points": current_user.total_points + points_earned}
         )
+
+        # Map card visibility to deck visibility
+        visibility_map = {
+            "private": DeckVisibility.PRIVATE,
+            "class": DeckVisibility.FRIENDS_ONLY,
+            "public": DeckVisibility.PUBLIC,
+        }
+        deck_visibility = visibility_map.get(bulk_data.visibility.value, DeckVisibility.PRIVATE)
+
+        # Build deck title from subject/topic
+        deck_title = bulk_data.subject or "My Deck"
+        if bulk_data.topic:
+            deck_title = f"{deck_title} – {bulk_data.topic}"
+
+        # Create a deck entry so this shows up in the feed
+        deck_doc = Deck(
+            user_id=str(current_user.id),
+            title=deck_title,
+            subject=bulk_data.subject or "General",
+            topic=bulk_data.topic,
+            tags=bulk_data.tags,
+            visibility=deck_visibility,
+            caption=bulk_data.caption,
+            card_ids=card_ids,
+            card_count=len(card_ids),
+            published_at=datetime.utcnow() if deck_visibility != DeckVisibility.PRIVATE else None,
+        )
+        await db.decks.insert_one(deck_doc.dict(exclude={"id"}))
 
         # Create activity for deck creation
         if len(cards) >= 5:  # Only create activity if creating significant number of cards

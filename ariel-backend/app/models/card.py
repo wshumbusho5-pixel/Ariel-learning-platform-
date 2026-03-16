@@ -84,3 +84,4 @@ class BulkCardCreate(BaseModel):
     topic: Optional[str] = None
     tags: List[str] = []
     visibility: CardVisibility = CardVisibility.PRIVATE
+    caption: Optional[str] = None

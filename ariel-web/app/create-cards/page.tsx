@@ -151,7 +151,7 @@ export default function CreateCardsPage() {
         topic || undefined,
         [],
         visibility,
-        visibility === 'public' && caption.trim() ? caption.trim() : undefined
+        caption.trim() || undefined
       );
       setSaved(true);
       setTimeout(() => router.push('/deck'), 1200);
