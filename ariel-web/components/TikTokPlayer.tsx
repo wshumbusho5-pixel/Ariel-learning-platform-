@@ -62,6 +62,7 @@ export default function TikTokPlayer({
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [bufferingIndex, setBufferingIndex] = useState<number | null>(null);
+  const [errorIndex, setErrorIndex] = useState<number | null>(null);
   const [muteToast, setMuteToast] = useState<string | null>(null);
   const [poppedSave, setPoppedSave] = useState<string | null>(null);
   const [poppedFollow, setPoppedFollow] = useState<string | null>(null);
@@ -290,14 +291,23 @@ export default function TikTokPlayer({
                 playsInline
                 muted
                 onWaiting={() => setBufferingIndex(index)}
-                onPlaying={() => setBufferingIndex(b => b === index ? null : b)}
+                onPlaying={() => { setBufferingIndex(b => b === index ? null : b); setErrorIndex(null); }}
                 onTimeUpdate={e => handleTimeUpdate(e, index)}
+                onError={() => { setBufferingIndex(null); setErrorIndex(index); }}
               />
 
               {/* Buffering spinner */}
-              {isBuffering && (
+              {isBuffering && errorIndex !== index && (
                 <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                   <div className="w-12 h-12 rounded-full border-2 border-white/20 border-t-white/80 animate-spin" />
+                </div>
+              )}
+
+              {/* Video error state */}
+              {errorIndex === index && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 pointer-events-none gap-2">
+                  <svg width="32" height="32" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.182 16.318A4.486 4.486 0 0012.016 15a4.486 4.486 0 00-3.198 1.318M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75s.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75zm-.375 0h.008v.015h-.008V9.75z" /></svg>
+                  <p className="text-white/50 text-xs">Video unavailable</p>
                 </div>
               )}
 
