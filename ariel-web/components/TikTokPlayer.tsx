@@ -23,9 +23,13 @@ function proxyUrl(url?: string): string | undefined {
   if (!url) return undefined;
   try {
     const u = new URL(url);
+    // Only rewrite localhost URLs — leave all other URLs (Cloudinary, etc.) untouched
     if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return u.pathname + u.search;
-  } catch {}
-  return url.replace(/^https?:\/\/[^/]+(?=\/)/, '');
+    return url;
+  } catch {
+    // Relative URL — return as-is (proxied by next.config.js rewrites)
+    return url;
+  }
 }
 
 function formatViews(n?: number): string {
