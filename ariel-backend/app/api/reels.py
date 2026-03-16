@@ -7,12 +7,9 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 import json
-import os
 import uuid
-import asyncio
-import subprocess
-import aiofiles
-from pathlib import Path
+import cloudinary
+import cloudinary.uploader
 
 from app.services.database_service import db_service
 from app.api.auth import get_current_user_dependency
@@ -21,39 +18,12 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-FFMPEG_PATH = "/opt/homebrew/bin/ffmpeg"
+cloudinary.config(
+    cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+    api_key=settings.CLOUDINARY_API_KEY,
+    api_secret=settings.CLOUDINARY_API_SECRET,
+)
 
-async def generate_thumbnail(video_path: Path, thumbnail_path: Path) -> bool:
-    """Extract a frame at 1s (or first frame) from a video using ffmpeg."""
-    try:
-        cmd = [
-            FFMPEG_PATH, "-y",
-            "-ss", "00:00:01",        # seek to 1 second
-            "-i", str(video_path),
-            "-vframes", "1",          # extract 1 frame
-            "-vf", "scale=480:-2",    # resize to 480px wide, preserve aspect
-            "-q:v", "3",              # quality (lower = better, 2–5 is good)
-            str(thumbnail_path),
-        ]
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        _, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
-        if proc.returncode != 0 or not thumbnail_path.exists():
-            # Retry at 0s if video is shorter than 1s
-            cmd[3] = "00:00:00"
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            await asyncio.wait_for(proc.communicate(), timeout=30)
-        return thumbnail_path.exists()
-    except Exception as e:
-        logger.warning(f"Thumbnail generation failed: {e}")
-        return False
 router = APIRouter(prefix="/api/reels", tags=["reels"])
 
 
@@ -385,30 +355,23 @@ async def upload_reel(
             except:
                 hashtag_list = [h.strip() for h in hashtags.split('#') if h.strip()]
 
-        # Create uploads directory
-        upload_dir = Path("uploads/reels")
-        upload_dir.mkdir(parents=True, exist_ok=True)
+        # Upload video to Cloudinary
+        content = await video.read()
+        public_id = f"reels/{uuid.uuid4()}"
+        result = cloudinary.uploader.upload(
+            content,
+            public_id=public_id,
+            resource_type="video",
+            overwrite=True,
+        )
+        video_url = result["secure_url"]
 
-        # Generate unique filename
-        file_extension = os.path.splitext(video.filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_extension}"
-        file_path = upload_dir / unique_filename
-
-        # Save video file
-        async with aiofiles.open(file_path, 'wb') as f:
-            content = await video.read()
-            await f.write(content)
-
-        # Store relative paths so the frontend proxy handles them
-        video_url = f"/uploads/reels/{unique_filename}"
-
-        # Generate thumbnail from first frame
-        thumb_filename = f"{uuid.uuid4()}.jpg"
-        thumb_dir = Path("uploads/thumbnails")
-        thumb_dir.mkdir(parents=True, exist_ok=True)
-        thumb_path = thumb_dir / thumb_filename
-        success = await generate_thumbnail(file_path, thumb_path)
-        thumbnail_url = f"/uploads/thumbnails/{thumb_filename}" if success else None
+        # Cloudinary auto-generates a thumbnail from the first frame
+        thumbnail_url = (
+            result["secure_url"]
+            .replace("/video/upload/", "/video/upload/so_0,f_jpg/")
+            .rsplit(".", 1)[0] + ".jpg"
+        )
 
         # Create reel document
         reel_doc = {

@@ -1,16 +1,21 @@
 from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
-import os
 import uuid
-import aiofiles
-from pathlib import Path
+import cloudinary
+import cloudinary.uploader
 from app.models.user import (
     UserCreate, UserLogin, Token, User, OAuthLoginRequest, AuthProvider, UserProfileUpdate
 )
 from app.services.user_repository import UserRepository
 from app.services.auth_service import AuthService
 from app.core.config import settings
+
+cloudinary.config(
+    cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+    api_key=settings.CLOUDINARY_API_KEY,
+    api_secret=settings.CLOUDINARY_API_SECRET,
+)
 
 router = APIRouter()
 security = HTTPBearer()
@@ -197,20 +202,17 @@ async def upload_profile_picture(
     if not (file.content_type or "").startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
 
-    # Save file
-    upload_dir = Path("uploads/avatars")
-    upload_dir.mkdir(parents=True, exist_ok=True)
-
-    ext = os.path.splitext(file.filename or "pic.jpg")[1] or ".jpg"
-    unique_filename = f"{uuid.uuid4()}{ext}"
-    file_path = upload_dir / unique_filename
-
-    async with aiofiles.open(file_path, 'wb') as f:
-        content = await file.read()
-        await f.write(content)
-
-    # Store a relative path so the frontend proxy (/uploads/...) handles it
-    picture_url = f"/uploads/avatars/{unique_filename}"
+    # Upload to Cloudinary
+    content = await file.read()
+    public_id = f"avatars/{uuid.uuid4()}"
+    result = cloudinary.uploader.upload(
+        content,
+        public_id=public_id,
+        resource_type="image",
+        overwrite=True,
+        transformation=[{"width": 400, "height": 400, "crop": "fill", "gravity": "face"}],
+    )
+    picture_url = result["secure_url"]
 
     user = await UserRepository.update_user(token_data.user_id, {"profile_picture": picture_url})
     if not user:
