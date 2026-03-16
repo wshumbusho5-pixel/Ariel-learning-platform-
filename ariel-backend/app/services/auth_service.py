@@ -55,15 +55,38 @@ class AuthService:
 
     @staticmethod
     async def verify_google_token(access_token: str) -> Optional[dict]:
-        """Verify Google OAuth token and get user info"""
+        """Verify Google OAuth token or ID token and get user info.
+
+        Supports two flows:
+        - ID token (JWT credential from @react-oauth/google GoogleLogin component)
+          Verified via tokeninfo endpoint.
+        - Access token (implicit flow)
+          Verified via userinfo endpoint.
+        """
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(
+                # Try ID token first (preferred — from GoogleLogin credential)
+                id_token_response = await client.get(
+                    "https://oauth2.googleapis.com/tokeninfo",
+                    params={"id_token": access_token}
+                )
+                if id_token_response.status_code == 200:
+                    info = id_token_response.json()
+                    return {
+                        "email": info.get("email"),
+                        "full_name": info.get("name"),
+                        "profile_picture": info.get("picture"),
+                        "provider_id": info.get("sub"),
+                        "is_verified": info.get("email_verified") == "true"
+                    }
+
+                # Fall back to access token (userinfo endpoint)
+                userinfo_response = await client.get(
                     "https://www.googleapis.com/oauth2/v2/userinfo",
                     headers={"Authorization": f"Bearer {access_token}"}
                 )
-                if response.status_code == 200:
-                    user_info = response.json()
+                if userinfo_response.status_code == 200:
+                    user_info = userinfo_response.json()
                     return {
                         "email": user_info.get("email"),
                         "full_name": user_info.get("name"),
@@ -71,6 +94,9 @@ class AuthService:
                         "provider_id": user_info.get("id"),
                         "is_verified": user_info.get("verified_email", False)
                     }
+
+                logger.error(f"Google token verification failed: {id_token_response.status_code}")
+                return None
         except Exception as e:
             logger.error(f"Google OAuth error: {e}")
             return None
