@@ -435,37 +435,36 @@ export default function Home() {
       />
 
       {/* ── Mobile ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center min-h-screen px-6 lg:hidden" style={{ paddingTop: 40, paddingBottom: 32 }}>
+      <div className="flex flex-col items-center justify-between h-screen px-6 lg:hidden" style={{ paddingTop: 28, paddingBottom: 24 }}>
 
         {/* Wordmark */}
-        <div className="flex justify-center mb-5">
-          <ArielWordmark size={48} variant="dark" showTagline={false} animate />
+        <div className="flex justify-center">
+          <ArielWordmark size={36} variant="dark" showTagline={false} animate />
         </div>
 
-        {/* Phone first — let the product speak before any text */}
-        <div className="flex justify-center mb-7">
+        {/* Phone — scaled down to fit */}
+        <div className="flex justify-center" style={{ transform: 'scale(0.72)', transformOrigin: 'center center', margin: '-40px 0' }}>
           <PhoneMockup />
         </div>
 
-        {/* Headline below phone */}
-        <div className="text-center mb-8">
-          <h1 style={{ fontSize: 36, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em' }}>
-            Go deeper.
-          </h1>
-          <p style={{ fontSize: 14, color: '#8b9099', marginTop: 10, lineHeight: 1.6 }}>
-            Not just content — real insight. Ariel deepens your understanding whether you&apos;re cramming, growing, or just curious.
-          </p>
-        </div>
-
-        {/* CTAs */}
+        {/* Bottom section: headline + CTAs */}
         <div className="w-full">
-          <button onClick={openSignup} style={{ width: '100%', background: '#fff', color: '#000', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'block' }}>
+          <div className="text-center mb-5">
+            <h1 style={{ fontSize: 30, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em' }}>
+              Go deeper.
+            </h1>
+            <p style={{ fontSize: 13, color: '#8b9099', marginTop: 8, lineHeight: 1.5 }}>
+              Real insight — not just content. Built for cramming, growing, and staying curious.
+            </p>
+          </div>
+
+          <button onClick={openSignup} style={{ width: '100%', background: '#fff', color: '#000', borderRadius: 999, padding: '13px 0', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'block' }}>
             Create account
           </button>
-          <button onClick={openLogin} style={{ width: '100%', background: 'transparent', color: '#e7e9ea', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 700, border: '1px solid #3f3f46', cursor: 'pointer', display: 'block', marginTop: 10 }}>
+          <button onClick={openLogin} style={{ width: '100%', background: 'transparent', color: '#e7e9ea', borderRadius: 999, padding: '13px 0', fontSize: 15, fontWeight: 700, border: '1px solid #3f3f46', cursor: 'pointer', display: 'block', marginTop: 10 }}>
             Log in
           </button>
-          <p style={{ fontSize: 11, color: '#52525b', textAlign: 'center', marginTop: 14 }}>
+          <p style={{ fontSize: 11, color: '#52525b', textAlign: 'center', marginTop: 12 }}>
             By signing up you agree to our <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Terms</span> and <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Privacy Policy</span>.
           </p>
         </div>

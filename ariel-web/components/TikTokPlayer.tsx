@@ -389,45 +389,39 @@ export default function TikTokPlayer({
               </div>
 
               {/* Right-side action buttons — mobile only; desktop uses sidebar */}
-              <div className="lg:hidden absolute bottom-[80px] right-3 z-20 flex flex-col items-center gap-5">
+              <div className="lg:hidden absolute bottom-[80px] right-4 z-20 flex flex-col items-center gap-6">
 
                 {/* Discuss */}
-                <button onClick={(e) => { e.stopPropagation(); onComment(reel.id); }} className="flex flex-col items-center gap-1.5">
-                  <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                    <svg className="w-[22px] h-[22px] text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z" />
-                    </svg>
-                  </div>
-                  <span className="text-white/70 text-[10px] font-semibold">Discuss</span>
+                <button onClick={(e) => { e.stopPropagation(); onComment(reel.id); }} className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
+                  <svg className="w-7 h-7 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2z" />
+                  </svg>
+                  <span className="text-white text-[10px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">Discuss</span>
                 </button>
 
                 {/* Save — optimistic */}
-                <button onClick={e => handleSave(e, reel.id)} className="flex flex-col items-center gap-1.5">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-colors ${isSaved ? 'bg-violet-500/40' : 'bg-white/10'} ${poppedSave === reel.id ? 'animate-heart-pop' : ''}`}>
-                    <svg
-                      className={`w-[22px] h-[22px] transition-colors ${isSaved ? 'text-violet-300' : 'text-white'}`}
-                      fill={isSaved ? 'currentColor' : 'none'}
-                      stroke="currentColor"
-                      strokeWidth={1.75}
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                    </svg>
-                  </div>
-                  <span className={`text-[10px] font-semibold transition-colors ${isSaved ? 'text-violet-300' : 'text-white/70'}`}>
+                <button onClick={e => handleSave(e, reel.id)} className={`flex flex-col items-center gap-1 active:scale-90 transition-transform ${poppedSave === reel.id ? 'animate-heart-pop' : ''}`}>
+                  <svg
+                    className={`w-7 h-7 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] transition-colors ${isSaved ? 'text-violet-400' : 'text-white'}`}
+                    fill={isSaved ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                  <span className={`text-[10px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] transition-colors ${isSaved ? 'text-violet-400' : 'text-white'}`}>
                     {isSaved ? 'Saved' : 'Save'}
                   </span>
                 </button>
 
                 {/* Send */}
                 {onDMShare && (
-                  <button onClick={(e) => { e.stopPropagation(); onDMShare(reel); }} className="flex flex-col items-center gap-1.5">
-                    <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                      <svg className="w-[22px] h-[22px] text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                      </svg>
-                    </div>
-                    <span className="text-white/70 text-[10px] font-semibold">Send</span>
+                  <button onClick={(e) => { e.stopPropagation(); onDMShare(reel); }} className="flex flex-col items-center gap-1 active:scale-90 transition-transform">
+                    <svg className="w-7 h-7 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                    </svg>
+                    <span className="text-white text-[10px] font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">Send</span>
                   </button>
                 )}
               </div>
