@@ -2,6 +2,7 @@ from typing import Optional, List
 from app.models.card import Card, CardCreate, CardUpdate, DeckStats
 from app.services.database_service import db_service
 from app.services.spaced_repetition import SpacedRepetitionService
+from app.core.subjects import normalize_subject
 from bson import ObjectId
 from datetime import datetime, timedelta
 
@@ -21,7 +22,7 @@ class CardRepository:
             "question": card_data.question,
             "answer": card_data.answer,
             "explanation": card_data.explanation,
-            "subject": card_data.subject,
+            "subject": normalize_subject(card_data.subject),
             "topic": card_data.topic,
             "tags": card_data.tags,
             "visibility": card_data.visibility,
@@ -55,7 +56,7 @@ class CardRepository:
                 "question": card_data.question,
                 "answer": card_data.answer,
                 "explanation": card_data.explanation,
-                "subject": card_data.subject,
+                "subject": normalize_subject(card_data.subject),
                 "topic": card_data.topic,
                 "tags": card_data.tags,
                 "visibility": card_data.visibility,

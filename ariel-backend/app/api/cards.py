@@ -5,6 +5,7 @@ from bson import ObjectId
 
 logger = logging.getLogger(__name__)
 from app.models.card import Card, CardCreate, CardUpdate, DeckStats, BulkCardCreate, CardReview
+from app.core.subjects import normalize_subject
 from app.models.user import User
 from app.models.activity import ActivityType
 from app.services.card_repository import CardRepository
@@ -40,6 +41,10 @@ async def create_cards_bulk(
     try:
         from datetime import datetime
         from app.models.deck import Deck, DeckVisibility
+
+        # Normalize the bulk subject once
+        if bulk_data.subject:
+            bulk_data.subject = normalize_subject(bulk_data.subject)
 
         # Apply default subject/topic/tags if provided
         cards_data = []
@@ -384,6 +389,8 @@ async def update_card(
     current_user: User = Depends(get_current_user_dependency)
 ):
     """Update a card"""
+    if update_data.subject is not None:
+        update_data.subject = normalize_subject(update_data.subject)
     card = await CardRepository.update_card(card_id, current_user.id, update_data)
     if not card:
         raise HTTPException(status_code=404, detail="Card not found or not owned by you")

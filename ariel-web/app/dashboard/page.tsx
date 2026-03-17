@@ -13,6 +13,7 @@ import ArielIcon from '@/components/ArielIcon';
 import ArielWordmark from '@/components/ArielWordmark';
 import ArielLoader from '@/components/ArielLoader';
 import SubjectIcon from '@/components/SubjectIcon';
+import { SUBJECT_META, TOPICS_BY_SUBJECT, getTopics, getSubjectKey as getSubjectKeyFromLib } from '@/lib/subjects';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,59 +89,10 @@ interface Reel {
   category?: string;
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
-
-const SUBJECT_META: Record<string, {
-  label: string; short: string; icon: string;
-  gradient: string; ring: string; keywords: string[];
-}> = {
-  gospel:      { label: 'Gospel & Faith',   short: 'Gospel',     icon: '✝️',  gradient: 'from-amber-400 to-transparent',   ring: 'ring-amber-500',   keywords: ['bible','gospel','faith','theology','scripture','church','religion'] },
-  business:    { label: 'Business',          short: 'Business',   icon: '💼',  gradient: 'from-sky-400 to-transparent',     ring: 'ring-amber-500',   keywords: ['business','marketing','finance','management','accounting','sales'] },
-  economics:   { label: 'Economics',         short: 'Economics',  icon: '📈',  gradient: 'from-violet-400 to-transparent',  ring: 'ring-violet-300',  keywords: ['economics','gdp','inflation','trade','monetary','fiscal','economy'] },
-  technology:  { label: 'Technology',        short: 'Tech',       icon: '💻',  gradient: 'from-zinc-500 to-transparent',    ring: 'ring-zinc-400',    keywords: ['programming','software','coding','javascript','python','ai','data'] },
-  health:      { label: 'Health & Medicine', short: 'Health',     icon: '🧬',  gradient: 'from-rose-400 to-transparent',    ring: 'ring-rose-500',    keywords: ['health','medicine','anatomy','nutrition','fitness','psychology'] },
-  mathematics: { label: 'Mathematics',       short: 'Maths',      icon: '📐',  gradient: 'from-indigo-400 to-transparent',  ring: 'ring-emerald-500', keywords: ['mathematics','calculus','algebra','geometry','statistics','math'] },
-  sciences:    { label: 'Sciences',          short: 'Sciences',   icon: '🔬',  gradient: 'from-emerald-400 to-transparent', ring: 'ring-emerald-500', keywords: ['biology','chemistry','physics','science','lab'] },
-  history:     { label: 'History',           short: 'History',    icon: '🏛️',  gradient: 'from-amber-400 to-transparent',   ring: 'ring-stone-400',   keywords: ['history','historical','civilization','war','ancient'] },
-  literature:  { label: 'Literature',        short: 'Lit',        icon: '📚',  gradient: 'from-orange-400 to-transparent',  ring: 'ring-orange-500',  keywords: ['literature','english','writing','poetry','novel'] },
-  languages:   { label: 'Languages',         short: 'Languages',  icon: '🌍',  gradient: 'from-teal-400 to-transparent',    ring: 'ring-teal-500',    keywords: ['language','french','spanish','swahili','grammar','vocabulary'] },
-  law:         { label: 'Law',               short: 'Law',        icon: '⚖️',  gradient: 'from-slate-400 to-transparent',   ring: 'ring-gray-400',    keywords: ['law','legal','constitution','rights','court'] },
-  arts:        { label: 'Arts & Music',      short: 'Arts',       icon: '🎨',  gradient: 'from-fuchsia-400 to-transparent', ring: 'ring-fuchsia-500', keywords: ['art','music','design','creative','paint'] },
-  psychology:  { label: 'Psychology',        short: 'Psych',      icon: '🧠',  gradient: 'from-cyan-400 to-transparent',    ring: 'ring-cyan-500',    keywords: ['psychology','mental','behavior','cognitive','therapy'] },
-  engineering: { label: 'Engineering',       short: 'Eng.',       icon: '⚙️',  gradient: 'from-yellow-400 to-transparent',  ring: 'ring-yellow-500',  keywords: ['engineering','mechanical','electrical','civil','structure'] },
-  geography:   { label: 'Geography',         short: 'Geography',  icon: '🗺️',  gradient: 'from-lime-400 to-transparent',    ring: 'ring-lime-500',    keywords: ['geography','map','climate','continent','country'] },
-  other:       { label: 'General',           short: 'General',    icon: '✨',  gradient: 'from-zinc-500 to-transparent',    ring: 'ring-zinc-600',    keywords: [] },
-};
-
-const TOPICS_BY_SUBJECT: Record<string, Record<string, string[]>> = {
-  gospel:      { default: ['Bible Stories','New Testament','Psalms & Proverbs','Theology Basics','Church History','The Life of Jesus'] },
-  business:    { 'high-school': ['Entrepreneurship','Personal Finance','Business Ethics','Marketing Basics'], university: ['Financial Accounting','Business Strategy','Marketing 101','Operations Management','Corporate Finance'], professional: ['Leadership','Strategic Management','Corporate Finance','Business Analytics'], default: ['Marketing 101','Financial Accounting','Entrepreneurship','Business Strategy'] },
-  economics:   { 'high-school': ['Supply & Demand','GDP Basics','Personal Finance'], university: ['Macroeconomics','Microeconomics','Global Trade','Monetary Policy','Stock Market Basics'], professional: ['Monetary Policy','Fiscal Policy','Investment Theory'], default: ['Macroeconomics','Microeconomics','Global Trade','Monetary Policy'] },
-  technology:  { 'high-school': ['Python Basics','Web Development','Digital Literacy'], university: ['Data Structures','Algorithms','Machine Learning','Web Development','Database Systems','Cybersecurity'], professional: ['System Design','Machine Learning','Cloud Computing','DevOps'], default: ['Python Basics','Data Structures','Web Development','Machine Learning'] },
-  health:      { 'high-school': ['Human Anatomy','Nutrition Science','First Aid'], university: ['Human Anatomy','Pharmacology','Nutrition Science','Mental Health','Physiology'], professional: ['Pharmacology','Clinical Skills','Medical Ethics','Pathology'], default: ['Human Anatomy','Nutrition Science','Mental Health','Pharmacology'] },
-  mathematics: { 'high-school': ['Algebra','Geometry','Trigonometry','Statistics'], university: ['Calculus','Linear Algebra','Statistics','Differential Equations','Discrete Math'], professional: ['Statistics','Linear Algebra','Optimization'], default: ['Calculus','Algebra','Statistics','Geometry'] },
-  sciences:    { 'high-school': ['Biology Basics','Chemistry Basics','Physics Basics'], university: ['Biology','Chemistry','Physics','Genetics','Ecology','Organic Chemistry'], professional: ['Research Methods','Genetics','Biochemistry'], default: ['Biology','Chemistry','Physics','Ecology'] },
-  history:     { default: ['World War II','Ancient Rome','African History','Cold War','Medieval Europe','The French Revolution'] },
-  literature:  { default: ['Shakespeare','Poetry Analysis','African Literature','Essay Writing','Grammar Mastery','Literary Devices'] },
-  languages:   { default: ['French Basics','Spanish A1','Swahili Vocab','Kinyarwanda','Mandarin Intro','English Grammar'] },
-  law:         { 'high-school': ['Human Rights','Constitutional Law Basics'], university: ['Constitutional Law','Contract Law','Criminal Law','Human Rights','International Law'], professional: ['Corporate Law','Litigation','Constitutional Law'], default: ['Constitutional Law','Contract Law','Criminal Law','Human Rights'] },
-  arts:        { default: ['Music Theory','Art History','Design Principles','Photography','Film Studies','Colour Theory'] },
-  psychology:  { 'high-school': ['Intro to Psychology','Emotional Intelligence'], university: ['Cognitive Psychology','Developmental Psychology','Abnormal Psychology','Social Psychology'], professional: ['Organisational Psychology','Neuroscience','Therapy Models'], default: ['Cognitive Psychology','Developmental Psychology','Social Psychology','Neuroscience'] },
-  engineering: { 'high-school': ['Engineering Basics','Simple Machines'], university: ['Mechanics','Thermodynamics','Circuit Analysis','Structural Engineering','Materials Science'], professional: ['Structural Engineering','Systems Design','Thermodynamics'], default: ['Mechanics','Thermodynamics','Circuit Analysis','Structural Engineering'] },
-  geography:   { default: ['Physical Geography','Human Geography','Climate & Weather','Countries & Capitals','Geopolitics'] },
-  other:       { default: ['General Knowledge','Critical Thinking','Study Skills'] },
-};
-
-function getTopics(key: string, level?: string): string[] {
-  const s = TOPICS_BY_SUBJECT[key] || TOPICS_BY_SUBJECT.other;
-  return s[level ?? 'default'] ?? s.default ?? [];
-}
+// ─── Data — imported from lib/subjects (single source of truth) ───────────────
 
 function getSubjectKey(card: FeedCard): string {
-  const hay = `${card.subject ?? ''} ${card.topic ?? ''}`.toLowerCase();
-  return (
-    Object.entries(SUBJECT_META).find(([k, v]) => k !== 'other' && v.keywords.some(kw => hay.includes(kw)))?.[0] ?? 'other'
-  );
+  return getSubjectKeyFromLib({ subject: card.subject, topic: card.topic });
 }
 
 function timeAgo(d?: string) {
