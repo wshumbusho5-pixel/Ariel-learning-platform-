@@ -27,6 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Google Identity Services — loaded async, no React provider needed */}
+        <script src="https://accounts.google.com/gsi/client" async defer />
+      </head>
       <body className={`${GeistSans.className} ${syne.variable} ${dmSans.variable} ${cormorant.variable} ${kalam.variable} antialiased`}>
         <ClientProviders>
           {children}
