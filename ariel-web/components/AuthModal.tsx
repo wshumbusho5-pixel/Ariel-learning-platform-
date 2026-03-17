@@ -118,7 +118,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
   const handleOAuth = (provider: 'google' | 'github') => {
     if (provider === 'google') {
-      googleLogin();
+      try {
+        googleLogin();
+      } catch {
+        setError('Google login is not configured. Please use email/password.');
+      }
     } else {
       alert('GitHub login coming soon.');
     }
