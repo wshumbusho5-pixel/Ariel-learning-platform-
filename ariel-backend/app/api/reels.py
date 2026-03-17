@@ -639,6 +639,50 @@ async def get_saved_reels(
         raise HTTPException(status_code=500, detail=f"Failed to load saved reels: {str(e)}")
 
 
+@router.delete("/{reel_id}")
+async def delete_reel(
+    reel_id: str,
+    current_user: User = Depends(get_current_user_dependency)
+):
+    """Delete a reel the current user uploaded"""
+    db = db_service.get_db()
+    try:
+        from bson import ObjectId
+        reel = await db["reels"].find_one({"_id": ObjectId(reel_id)})
+        if not reel:
+            raise HTTPException(status_code=404, detail="Reel not found")
+        if str(reel["creator_id"]) != current_user.id:
+            raise HTTPException(status_code=403, detail="You can only delete your own reels")
+
+        # Remove from Cloudinary if URL present
+        try:
+            video_url = reel.get("video_url", "")
+            if "cloudinary" in video_url:
+                # Extract public_id from Cloudinary URL
+                # URL pattern: .../video/upload/v.../reels/uuid.ext
+                parts = video_url.split("/upload/")
+                if len(parts) == 2:
+                    public_id = parts[1].rsplit(".", 1)[0]
+                    # Strip version prefix (v1234567/)
+                    if public_id.startswith("v") and "/" in public_id:
+                        public_id = public_id.split("/", 1)[1]
+                    cloudinary.uploader.destroy(public_id, resource_type="video")
+        except Exception as e:
+            logger.warning(f"Could not delete from Cloudinary: {e}")
+
+        await db["reels"].delete_one({"_id": ObjectId(reel_id)})
+        await db["reel_likes"].delete_many({"reel_id": ObjectId(reel_id)})
+        await db["reel_saves"].delete_many({"reel_id": reel_id})
+
+        return {"success": True, "message": "Clip deleted"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting reel: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete reel: {str(e)}")
+
+
 @router.get("/{reel_id}", response_model=ReelResponse)
 async def get_reel(
     reel_id: str,

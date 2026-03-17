@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from 'next/navigation';
-import api, { socialAPI } from '@/lib/api';
+import api, { socialAPI, reelsAPI } from '@/lib/api';
 import { useAuth } from '@/lib/useAuth';
 import { useComments } from '@/lib/commentsContext';
 import BottomNav from '@/components/BottomNav';
@@ -370,7 +370,10 @@ export default function ReelsPage() {
   const { openComments } = useComments();
 
   const [reels, setReels] = useState<Reel[]>([]);
-  const [tab, setTab] = useState<'foryou' | 'following'>('foryou');
+  const [tab, setTab] = useState<'foryou' | 'following' | 'mine'>('foryou');
+  const [myReels, setMyReels] = useState<Reel[]>([]);
+  const [myReelsLoading, setMyReelsLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [headerHidden, setHeaderHidden] = useState(false);
 
@@ -409,11 +412,41 @@ export default function ReelsPage() {
 
   // Reset and reload when tab changes
   useEffect(() => {
+    if (tab === 'mine') {
+      loadMyReels();
+      return;
+    }
     setReels([]);
     setOffset(0);
     setHasMore(true);
     loadReels(0, true);
   }, [tab]);
+
+  const loadMyReels = async () => {
+    setMyReelsLoading(true);
+    try {
+      const data = await reelsAPI.getMyReels();
+      setMyReels(data);
+    } catch {
+      setMyReels([]);
+    } finally {
+      setMyReelsLoading(false);
+    }
+  };
+
+  const handleDelete = async (reelId: string) => {
+    if (!confirm('Delete this clip? This cannot be undone.')) return;
+    setDeletingId(reelId);
+    try {
+      await reelsAPI.deleteReel(reelId);
+      setMyReels(prev => prev.filter(r => r.id !== reelId));
+      showToast('Clip deleted');
+    } catch {
+      showToast('Failed to delete');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const loadReels = async (currentOffset: number, reset = false) => {
     if (reset) setLoading(true);
@@ -673,14 +706,18 @@ export default function ReelsPage() {
           )}
           {/* Row 2: tabs */}
           <div className="flex items-center gap-6">
-            {(['foryou', 'following'] as const).map(t => (
+            {([
+              { key: 'foryou', label: 'For You' },
+              { key: 'following', label: 'Following' },
+              { key: 'mine', label: 'Mine' },
+            ] as const).map(t => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`relative text-[14px] font-black tracking-tight transition-all pb-2.5 ${tab === t ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`relative text-[14px] font-black tracking-tight transition-all pb-2.5 ${tab === t.key ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
               >
-                {t === 'foryou' ? 'For You' : 'Following'}
-                <span className={`absolute bottom-0 left-0 right-0 h-[3px] bg-violet-400 rounded-full transition-all duration-200 ${tab === t ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}`} />
+                {t.label}
+                <span className={`absolute bottom-0 left-0 right-0 h-[3px] bg-violet-400 rounded-full transition-all duration-200 ${tab === t.key ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}`} />
               </button>
             ))}
           </div>
@@ -688,7 +725,83 @@ export default function ReelsPage() {
 
         {/* Content */}
         <div className="py-3 pb-28 lg:pb-8">
-          {reels.length === 0 ? (
+
+          {/* ── Mine tab ── */}
+          {tab === 'mine' && (
+            <div className="px-4">
+              {myReelsLoading ? (
+                <div className="flex justify-center py-16">
+                  <div className="w-6 h-6 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
+                </div>
+              ) : myReels.length === 0 ? (
+                <div className="text-center pt-10 pb-8">
+                  <p className="text-[17px] font-bold text-white mb-1">No clips yet</p>
+                  <p className="text-[13px] text-zinc-500 mb-4">Upload your first educational clip</p>
+                  <button
+                    onClick={() => router.push('/reels/upload')}
+                    className="px-5 py-2.5 bg-violet-500 text-white text-sm font-bold rounded-full shadow-[0_0_12px_rgba(139,92,246,0.4)] active:scale-95 transition-all"
+                  >
+                    Upload a clip
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                  {myReels.map(reel => (
+                    <div key={reel.id} className="relative group rounded-xl overflow-hidden bg-zinc-900 aspect-[9/16]">
+                      {reel.thumbnail_url ? (
+                        <img src={proxyUrl(reel.thumbnail_url)} alt={reel.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-950 flex items-center justify-center">
+                          <span className="text-white/10 font-black text-4xl">{reel.title[0]?.toUpperCase()}</span>
+                        </div>
+                      )}
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      {/* Play button */}
+                      <button
+                        onClick={() => setActiveReel(reel)}
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-black/40 border border-white/20 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                      </button>
+                      {/* Delete button */}
+                      <button
+                        onClick={() => handleDelete(reel.id)}
+                        disabled={deletingId === reel.id}
+                        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center text-red-400 hover:bg-red-500/20 active:scale-90 transition-all disabled:opacity-50"
+                      >
+                        {deletingId === reel.id ? (
+                          <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
+                      {/* Title */}
+                      <div className="absolute bottom-0 inset-x-0 p-2">
+                        <p className="text-white text-[11px] font-bold line-clamp-2 leading-tight">{reel.title}</p>
+                        {reel.view_count ? <p className="text-zinc-400 text-[10px] mt-0.5">{formatViews(reel.view_count)} views</p> : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Upload more */}
+              {myReels.length > 0 && (
+                <button
+                  onClick={() => router.push('/reels/upload')}
+                  className="mt-4 w-full py-3 border border-dashed border-zinc-700 rounded-xl text-zinc-500 text-sm font-semibold hover:border-violet-500 hover:text-violet-400 transition-colors"
+                >
+                  + Upload another clip
+                </button>
+              )}
+            </div>
+          )}
+
+          {tab !== 'mine' && (reels.length === 0 ? (
             <div className="px-4 pb-28 lg:pb-8">
               {/* Empty state header */}
               <div className="text-center pt-6 pb-8 px-4">
@@ -787,7 +900,7 @@ export default function ReelsPage() {
                 </div>
               )}
             </>
-          )}
+          ))}
         </div>
       </main>
 

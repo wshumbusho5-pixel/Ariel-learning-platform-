@@ -1321,6 +1321,13 @@ export default function Dashboard() {
                 </button>
               ))}
               <button
+                onClick={() => router.push('/reels')}
+                className="relative text-[15px] font-bold tracking-tight pb-3 hover:text-zinc-400 transition-colors"
+                style={{ color: '#8b9099' }}
+              >
+                Clips
+              </button>
+              <button
                 onClick={() => router.push('/explore')}
                 className="relative text-[15px] font-bold tracking-tight pb-3 hover:text-zinc-400 transition-colors"
                 style={{ color: '#8b9099' }}

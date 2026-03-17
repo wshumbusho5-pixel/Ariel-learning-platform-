@@ -719,6 +719,11 @@ export const reelsAPI = {
     const response = await api.get(`/api/reels/saved?limit=${limit}&offset=${offset}`);
     return response.data;
   },
+
+  deleteReel: async (reelId: string) => {
+    const response = await api.delete(`/api/reels/${reelId}`);
+    return response.data;
+  },
 };
 
 export default api;

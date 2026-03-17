@@ -114,6 +114,7 @@ export default function CardFeed({
   const [ratedEntryKey, setRatedEntryKey] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<{ id: string; title: string; subtitle?: string } | null>(null);
+  const [deletingCardId, setDeletingCardId] = useState<string | null>(null);
   const snapContainerRef = useRef<HTMLDivElement>(null);
   const [stripVisible, setStripVisible] = useState(true);
   const stripTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -241,6 +242,21 @@ export default function CardFeed({
   const handleDiscuss = (cardId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     openComments(cardId);
+  };
+
+  const handleDeleteCard = async (cardId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Delete this card? This cannot be undone.')) return;
+    setDeletingCardId(cardId);
+    try {
+      await cardsAPI.deleteCard(cardId);
+      setCards(prev => prev.filter(c => c.id !== cardId));
+      showToast('Card deleted');
+    } catch {
+      showToast('Failed to delete');
+    } finally {
+      setDeletingCardId(null);
+    }
   };
 
   const handleShare = async (cardId: string, e: React.MouseEvent) => {
@@ -727,7 +743,23 @@ export default function CardFeed({
 
         {type === 'my-deck' ? (
           <div className="px-3 py-2.5 bg-zinc-900">
-            {renderRatingButtons(card, false)}
+            <div className="flex items-center gap-2">
+              <div className="flex-1">{renderRatingButtons(card, false)}</div>
+              <button
+                onClick={e => handleDeleteCard(card.id, e)}
+                disabled={deletingCardId === card.id}
+                className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-zinc-600 hover:text-red-400 hover:bg-red-500/10 active:scale-90 transition-all disabled:opacity-40"
+                title="Delete card"
+              >
+                {deletingCardId === card.id ? (
+                  <div className="w-3 h-3 border border-zinc-500 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="px-4 py-2.5 bg-zinc-900 flex items-center gap-4">
