@@ -789,6 +789,7 @@ export default function DuelsPage() {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 const ROUND_OPTIONS = [5, 10, 15, 20];
+const ROUND_TIMES: Record<number, string> = { 5: '~2m', 10: '~4m', 15: '~6m', 20: '~8m' };
 
 function RoundSelector({ rounds, onChange }: { rounds: number; onChange: (n: number) => void }) {
   return (
@@ -799,11 +800,12 @@ function RoundSelector({ rounds, onChange }: { rounds: number; onChange: (n: num
           <button
             key={n}
             onClick={() => onChange(n)}
-            className={`w-9 h-8 rounded-lg text-xs font-bold transition-colors ${
-              rounds === n ? 'bg-violet-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+            className={`px-2.5 h-8 rounded-lg text-xs font-bold transition-all ${
+              rounds === n ? 'bg-violet-600 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
             }`}
           >
             {n}
+            {rounds === n && <span className="ml-1 text-[9px] font-medium opacity-75">{ROUND_TIMES[n]}</span>}
           </button>
         ))}
       </div>
@@ -825,7 +827,10 @@ function SoloLobby({ opponent, onStart, isDeckChallenge, rounds, onRoundsChange 
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-center">
         <div className="flex items-center justify-center gap-8 mb-6">
           <PlayerAvatar label="You" letter="Y" color="sky" />
-          <div className="text-zinc-600 font-bold text-lg">VS</div>
+          <div className="flex flex-col items-center gap-0.5">
+            <svg className="w-5 h-5 text-violet-400 opacity-70" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L4.5 13H11l-1 9 9.5-11H13l1-9z"/></svg>
+            <span className="text-zinc-500 font-black text-sm tracking-widest">VS</span>
+          </div>
           <PlayerAvatar label={opponent} letter={opponent[0]} color="zinc" />
         </div>
         <div className="flex justify-center mb-4">
@@ -834,8 +839,9 @@ function SoloLobby({ opponent, onStart, isDeckChallenge, rounds, onRoundsChange 
         <RulesList rounds={rounds} />
         <button
           onClick={onStart}
-          className="w-full py-4 bg-violet-400 hover:bg-violet-400 text-white font-bold rounded-xl transition-colors"
+          className="w-full py-4 bg-violet-600 hover:bg-violet-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-900/40 hover:shadow-violet-800/60 flex items-center justify-center gap-2"
         >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2L4.5 13H11l-1 9 9.5-11H13l1-9z"/></svg>
           Start duel
         </button>
       </div>
@@ -913,7 +919,7 @@ function OnlineLobby({
           <button
             onClick={onQuickMatch}
             disabled={matchmakingLoading}
-            className="w-full py-4 bg-violet-400 hover:bg-violet-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-violet-900/40"
           >
             {matchmakingLoading ? (
               <>
@@ -957,7 +963,7 @@ function OnlineLobby({
                       <button
                         onClick={() => onChallenge(user.username)}
                         disabled={challengeSending === user.username}
-                        className="px-4 py-1.5 bg-violet-400 hover:bg-violet-400 disabled:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+                        className="px-4 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
                       >
                         {challengeSending === user.username ? (
                           <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1166,15 +1172,26 @@ function GameComplete({
   );
 }
 
-function PlayerAvatar({ label, letter, color }: { label: string; letter: string; color: 'sky' | 'zinc' }) {
+function PlayerAvatar({ label, letter, color }: { label: string; letter: string; color: 'sky' | 'zinc' | string }) {
+  const isBot = color === 'zinc';
   return (
-    <div className="text-center">
-      <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 ${
-        color === 'sky' ? 'bg-violet-900/40 border-2 border-violet-500' : 'bg-zinc-800 border-2 border-zinc-600'
+    <div className="flex flex-col items-center gap-2">
+      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-black ${
+        isBot
+          ? 'bg-zinc-800 border-2 border-zinc-600 text-zinc-400'
+          : 'bg-sky-500/20 border-2 border-sky-400/50 text-sky-300'
       }`}>
-        <span className={`text-2xl font-bold ${color === 'sky' ? 'text-violet-300' : 'text-zinc-400'}`}>{letter}</span>
+        {isBot ? (
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <rect x="5" y="11" width="14" height="10" rx="2" />
+            <path strokeLinecap="round" d="M9 15h.01M15 15h.01M9 18h6" />
+            <path strokeLinecap="round" d="M12 11V7" />
+            <circle cx="12" cy="5.5" r="1.5" />
+            <path strokeLinecap="round" d="M7 11V9a5 5 0 0110 0v2" />
+          </svg>
+        ) : letter}
       </div>
-      <p className={`text-sm font-semibold ${color === 'sky' ? 'text-white' : 'text-zinc-400'}`}>{label}</p>
+      <span className="text-xs font-semibold text-zinc-400">{label}</span>
     </div>
   );
 }

@@ -72,10 +72,10 @@ function FollowBackButton({ actorId }: { actorId: string }) {
     <button
       onClick={toggle}
       disabled={loading}
-      className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
+      className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
         isFollowing
-          ? 'border border-zinc-700 text-zinc-300 rounded-full bg-transparent'
-          : 'bg-white text-black rounded-full'
+          ? 'border border-zinc-700 text-zinc-400 bg-transparent'
+          : 'border border-zinc-500 text-zinc-200 bg-transparent hover:border-white hover:text-white'
       } disabled:opacity-50`}
     >
       {loading ? '...' : isFollowing ? 'Following' : 'Follow Back'}
@@ -193,8 +193,10 @@ export default function NotificationsPage() {
 
           {!loading && earlierNotifs.length > 0 && (
             <>
-              <div className="px-4 pt-5 pb-2">
-                <p className="text-[13px] font-bold" style={{ color: '#8b9099' }}>Earlier</p>
+              <div className="px-4 pt-6 pb-3 flex items-center gap-3">
+                <div className="flex-1 h-px bg-zinc-800" />
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600">Earlier</p>
+                <div className="flex-1 h-px bg-zinc-800" />
               </div>
               <div className="divide-y divide-zinc-800/30">
                 {earlierNotifs.map(n => <NotificationRow key={n.id} n={n} />)}

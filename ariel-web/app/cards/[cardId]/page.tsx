@@ -18,6 +18,24 @@ interface Card {
   saves: number;
 }
 
+function subjectGradient(subject?: string): string {
+  const s = (subject || '').toLowerCase();
+  if (s.includes('spanish') || s.includes('french') || s.includes('language')) return 'radial-gradient(ellipse at 30% 0%, rgba(234,88,12,0.08) 0%, transparent 60%)';
+  if (s.includes('math') || s.includes('physics') || s.includes('science')) return 'radial-gradient(ellipse at 70% 0%, rgba(14,165,233,0.08) 0%, transparent 60%)';
+  if (s.includes('bio') || s.includes('nature') || s.includes('environment')) return 'radial-gradient(ellipse at 50% 0%, rgba(34,197,94,0.07) 0%, transparent 60%)';
+  if (s.includes('history') || s.includes('social') || s.includes('economics')) return 'radial-gradient(ellipse at 20% 20%, rgba(168,85,247,0.08) 0%, transparent 60%)';
+  return 'radial-gradient(ellipse at 50% 0%, rgba(124,92,252,0.07) 0%, transparent 60%)';
+}
+
+function subjectAccentColor(subject?: string): string {
+  const s = (subject || '').toLowerCase();
+  if (s.includes('spanish') || s.includes('french') || s.includes('language')) return '#f97316';
+  if (s.includes('math') || s.includes('physics') || s.includes('science')) return '#38bdf8';
+  if (s.includes('bio') || s.includes('nature') || s.includes('environment')) return '#4ade80';
+  if (s.includes('history') || s.includes('social') || s.includes('economics')) return '#c084fc';
+  return '#a78bfa';
+}
+
 export default function CardDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -64,7 +82,10 @@ export default function CardDetailPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto flex items-center justify-center p-6">
+        <div className="flex-1 overflow-y-auto flex items-center justify-center p-6 relative">
+          {/* Subject gradient background */}
+          {card && <div style={{ position: 'absolute', inset: 0, background: subjectGradient(card.subject), pointerEvents: 'none' }} />}
+
           {loading ? (
             <div className="w-8 h-8 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
           ) : !card ? (
@@ -73,33 +94,44 @@ export default function CardDetailPage() {
               <button onClick={() => router.push('/dashboard')} className="mt-4 text-violet-400 text-sm font-semibold">Go back</button>
             </div>
           ) : (
-            <div className="w-full max-w-sm space-y-4">
+            <div className="relative z-10 w-full max-w-sm space-y-4">
               {/* Question card */}
               <div
-                className="bg-zinc-900 border border-zinc-800 rounded-3xl p-7 cursor-pointer active:scale-[0.98] transition-transform"
+                className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-7 cursor-pointer active:scale-[0.98] transition-transform backdrop-blur-sm"
                 onClick={() => setRevealed(v => !v)}
               >
-                {card.subject && (
-                  <span className="inline-block px-2.5 py-1 bg-violet-400/10 text-violet-400 text-[10px] font-bold rounded-full mb-4">
-                    {card.subject}
-                  </span>
-                )}
+                {/* Eyebrow label */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-0.5 rounded-full" style={{ background: subjectAccentColor(card.subject) }} />
+                    <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: subjectAccentColor(card.subject) }}>
+                      {revealed ? 'Answer' : 'Question'}
+                    </span>
+                  </div>
+                  {card.subject && (
+                    <span className="text-[10px] font-semibold text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">
+                      {card.subject}
+                    </span>
+                  )}
+                </div>
+
                 <p className="text-white text-lg font-semibold leading-snug">{card.question}</p>
 
                 {!revealed && (
-                  <p className="text-zinc-600 text-sm mt-5 flex items-center gap-1.5">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    Tap to reveal answer
-                  </p>
+                  <div className="mt-6 flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-1.5 animate-pulse">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: subjectAccentColor(card.subject) }} />
+                      <span className="text-xs font-semibold" style={{ color: subjectAccentColor(card.subject), opacity: 0.7 }}>tap to reveal</span>
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: subjectAccentColor(card.subject) }} />
+                    </div>
+                    <div className="w-12 h-px" style={{ background: `linear-gradient(to right, transparent, ${subjectAccentColor(card.subject)}60, transparent)` }} />
+                  </div>
                 )}
 
                 {revealed && (
                   <div className="mt-5 pt-5 border-t border-zinc-800">
                     <div className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: subjectAccentColor(card.subject) }}>
                         <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
@@ -125,8 +157,6 @@ export default function CardDetailPage() {
                   ))}
                 </div>
               )}
-
-              <p className="text-center text-zinc-700 text-xs pt-2">Tap the card to {revealed ? 'hide' : 'reveal'} the answer</p>
 
               <button
                 onClick={() => router.push(`/cards/${cardId}/discuss`)}

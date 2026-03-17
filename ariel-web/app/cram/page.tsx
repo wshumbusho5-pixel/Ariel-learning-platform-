@@ -120,10 +120,14 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
           {!plan ? (
             <div className="space-y-5">
               {/* Urgency banner */}
-              <div className="bg-red-900/20 border border-red-800/40 rounded-xl p-4 flex items-center gap-3">
-                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse flex-shrink-0" />
-                <p className="text-sm text-red-300 font-medium">
-                  Tell Ariel your situation. It will build the most efficient study plan for the time you have left.
+              <div className="bg-violet-900/20 border border-violet-700/30 rounded-xl p-4 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-violet-300" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/>
+                  </svg>
+                </div>
+                <p className="text-sm text-violet-200 font-medium">
+                  Tell Ariel your situation — it'll build the most efficient study plan for the time you have left.
                 </p>
               </div>
 
@@ -137,7 +141,7 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
                       onClick={() => setSubject(s)}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                         subject === s
-                          ? 'bg-red-500 border-red-500 text-white'
+                          ? 'bg-violet-600 border-violet-600 text-white'
                           : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
                       }`}
                     >
@@ -150,7 +154,7 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
                     value={customSubject}
                     onChange={e => setCustomSubject(e.target.value)}
                     placeholder="Enter subject..."
-                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-red-500 placeholder:text-zinc-600"
+                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-violet-500 placeholder:text-zinc-600 transition-colors"
                   />
                 )}
               </div>
@@ -158,19 +162,28 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
               {/* Hours left */}
               <div>
                 <label className="block text-sm font-semibold text-white mb-2">Hours until exam</label>
-                <div className="flex gap-2">
-                  {['1', '2', '3', '4', '6', '8', '12', '24'].map(h => (
-                    <button
-                      key={h}
-                      onClick={() => setHoursLeft(h)}
-                      className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
-                        hoursLeft === h
-                          ? 'bg-red-500 border-red-500 text-white'
-                          : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
-                      }`}
-                    >
-                      {h}h
-                    </button>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Critical', hours: ['1', '2'], color: { sel: 'bg-red-600 border-red-600 text-white', badge: 'text-red-400', unsel: 'bg-zinc-900 border-red-900/50 text-zinc-400 hover:border-red-700/60' } },
+                    { label: 'Tight', hours: ['3', '4', '6'], color: { sel: 'bg-amber-600 border-amber-600 text-white', badge: 'text-amber-400', unsel: 'bg-zinc-900 border-amber-900/40 text-zinc-400 hover:border-amber-700/50' } },
+                    { label: 'Comfortable', hours: ['8', '12', '24'], color: { sel: 'bg-emerald-600 border-emerald-600 text-white', badge: 'text-emerald-400', unsel: 'bg-zinc-900 border-emerald-900/40 text-zinc-400 hover:border-emerald-700/50' } },
+                  ].map(group => (
+                    <div key={group.label} className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold w-[70px] flex-shrink-0 ${group.color.badge}`}>{group.label}</span>
+                      <div className="flex gap-1.5 flex-1">
+                        {group.hours.map(h => (
+                          <button
+                            key={h}
+                            onClick={() => setHoursLeft(h)}
+                            className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                              hoursLeft === h ? group.color.sel : group.color.unsel
+                            }`}
+                          >
+                            {h}h
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -185,7 +198,7 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
                   onChange={e => setTopics(e.target.value)}
                   placeholder="e.g., Mitosis, DNA replication, Protein synthesis..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-red-500 placeholder:text-zinc-600 resize-none"
+                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-violet-500 placeholder:text-zinc-600 resize-none transition-colors"
                 />
               </div>
 
@@ -199,7 +212,7 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
                   onChange={e => setWeakAreas(e.target.value)}
                   placeholder="e.g., I always confuse meiosis vs mitosis..."
                   rows={2}
-                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-red-500 placeholder:text-zinc-600 resize-none"
+                  className="w-full px-4 py-3 bg-zinc-900 border border-zinc-700 text-white rounded-xl focus:outline-none focus:border-violet-500 placeholder:text-zinc-600 resize-none transition-colors"
                 />
               </div>
 
@@ -210,7 +223,7 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
               <button
                 onClick={handleGenerate}
                 disabled={!finalSubject.trim() || !hoursLeft || loading}
-                className="w-full py-4 bg-red-500 hover:bg-red-400 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                className="w-full py-4 bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -218,7 +231,10 @@ Rules: blocks should add up to total_minutes. Prioritize high-yield topics. Max 
                     Building your plan...
                   </>
                 ) : (
-                  'Build cram plan'
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/></svg>
+                    Build cram plan
+                  </>
                 )}
               </button>
             </div>
