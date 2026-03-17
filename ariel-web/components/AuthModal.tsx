@@ -18,6 +18,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
 
   const switchMode = (newMode: 'login' | 'register') => {
     setMode(newMode);
@@ -100,8 +101,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       setLoading(false);
     }
   };
-
-  const [oauthLoading, setOauthLoading] = useState(false);
 
   const handleGoogleLogin = () => {
     const google = (window as any).google;
