@@ -12,6 +12,7 @@ import Onboarding from '@/components/Onboarding';
 import ArielIcon from '@/components/ArielIcon';
 import ArielWordmark from '@/components/ArielWordmark';
 import ArielLoader from '@/components/ArielLoader';
+import SubjectIcon from '@/components/SubjectIcon';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -200,7 +201,7 @@ function AuthorAvatar({ card, meta }: { card: FeedCard; meta: any }) {
   return (
     <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${meta.gradient} flex items-center justify-center`}>
       <span className="text-sm font-bold text-white">
-        {card.author_username?.[0]?.toUpperCase() ?? meta.icon}
+        {card.author_username?.[0]?.toUpperCase() ?? '?'}
       </span>
     </div>
   );
@@ -457,7 +458,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                   {flipped ? 'Answer' : 'Question'}
                 </span>
                 <span className="text-[10px] font-medium text-zinc-400 flex items-center gap-1">
-                  <span>{meta.icon}</span>{meta.short}
+                  <SubjectIcon subject={key} size={11} />{meta.short}
                 </span>
               </div>
 
@@ -1253,7 +1254,7 @@ export default function Dashboard() {
                           isActive ? 'bg-violet-500 text-white shadow-[0_0_10px_rgba(139,92,246,0.3)]' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
                         }`}
                       >
-                        <span>{m.icon}</span>
+                        <SubjectIcon subject={key} size={11} />
                         <span>{m.short}</span>
                       </button>
                     );
@@ -1499,7 +1500,7 @@ export default function Dashboard() {
                   const m = SUBJECT_META[key];
                   return (
                     <button key={key} onClick={() => addSubject(key)} className="flex items-center gap-3 p-4 rounded-2xl border border-zinc-800 hover:border-violet-300/40 hover:bg-violet-400/5 transition-all text-left">
-                      <span className="text-2xl">{m.icon}</span>
+                      <SubjectIcon subject={key} size={22} />
                       <p className="text-sm font-semibold text-zinc-300">{m.label}</p>
                     </button>
                   );

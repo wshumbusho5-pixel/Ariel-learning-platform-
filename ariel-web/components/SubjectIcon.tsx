@@ -128,6 +128,10 @@ function normalizeSubject(subject: string): string {
   if (s.includes('gospel') || s.includes('bible') || s.includes('theol') || s.includes('relig') || s.includes('faith') || s.includes('church')) return 'gospel';
   if (s.includes('art') || s.includes('music') || s.includes('design') || s.includes('visual')) return 'art';
   if (s.includes('science')) return 'bio'; // generic science → biology-ish
+  if (s.includes('tech') || s === 'it') return 'cs';
+  if (s.includes('health') || s.includes('medic') || s.includes('nurs')) return 'bio';
+  if (s.includes('law') || s.includes('legal')) return 'literature';
+  if (s.includes('engineer')) return 'physics';
   return '';
 }
 
