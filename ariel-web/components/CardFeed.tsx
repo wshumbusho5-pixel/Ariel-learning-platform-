@@ -392,8 +392,32 @@ export default function CardFeed({
   // ── Rating buttons (reusable) ───────────────────────────────────────────────
   const renderRatingButtons = (card: Card, snap = false, entryKey?: string) => {
     const counts = reviewCounts[card.id] ?? { hard: 0, easy: 0, nailed: 0 };
-    // Active only if this specific queue entry was the one rated
     const thisEntryRated = entryKey ? ratedEntryKey[card.id] === entryKey : true;
+
+    const BUTTON_ICONS: Record<RatingKey, React.ReactNode> = {
+      hard: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      ),
+      easy: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+      ),
+      nailed: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      ),
+    };
+
+    const INACTIVE_STYLE: Record<RatingKey, string> = {
+      hard:   'bg-rose-500/10 border-rose-500/30 text-rose-400',
+      easy:   'bg-amber-400/10 border-amber-400/30 text-amber-400',
+      nailed: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
+    };
+
     return (
       <div className={`flex items-end ${snap ? 'justify-around gap-2' : 'gap-2'}`}>
         {(Object.keys(RATING_META) as RatingKey[]).map(key => {
@@ -407,16 +431,12 @@ export default function CardFeed({
             >
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center border-2 transition-all duration-150 ${
                 active
-                  ? `${m.solidBg} border-transparent shadow-lg`
-                  : 'border-white/15 bg-white/[0.04]'
+                  ? `${m.solidBg} border-transparent shadow-lg text-white`
+                  : INACTIVE_STYLE[key]
               }`}>
-                {active && (
-                  <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
+                {BUTTON_ICONS[key]}
               </div>
-              <span className={`text-[11px] font-semibold leading-none transition-colors ${active ? m.text : 'text-white/30'}`}>
+              <span className={`text-[11px] font-semibold leading-none transition-colors ${active ? m.text : 'text-white/40'}`}>
                 {m.label}
               </span>
             </button>

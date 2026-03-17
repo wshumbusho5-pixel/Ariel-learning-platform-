@@ -10,6 +10,7 @@ import api, { socialAPI } from '@/lib/api';
 import SideNav from '@/components/SideNav';
 import TikTokPlayer, { type TikTokReel } from '@/components/TikTokPlayer';
 import { useComments } from '@/lib/commentsContext';
+import SubjectIcon, { SubjectPill } from '@/components/SubjectIcon';
 
 interface DeckStats {
   total_cards: number;
@@ -319,24 +320,20 @@ export default function DeckPage() {
                 onClick={() => setSubjectFilter('all')}
                 className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
                   subjectFilter === 'all'
-                    ? 'bg-violet-400 text-white border-violet-300'
-                    : 'bg-black/40 backdrop-blur-sm text-white border-white/20 hover:border-white/40'
+                    ? 'bg-violet-500 text-white border-violet-400'
+                    : 'bg-black/40 backdrop-blur-sm text-zinc-400 border-white/10 hover:border-white/20 hover:text-zinc-200'
                 }`}
               >
                 All
               </button>
               {subjects.map((subject) => (
-                <button
-                  key={subject}
-                  onClick={() => setSubjectFilter(subject)}
-                  className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${
-                    subjectFilter === subject
-                      ? 'bg-violet-400 text-white border-violet-300'
-                      : 'bg-black/40 backdrop-blur-sm text-white border-white/20 hover:border-white/40'
-                  }`}
-                >
-                  {subject}
-                </button>
+                <div key={subject} className="flex-shrink-0">
+                  <SubjectPill
+                    subject={subject}
+                    selected={subjectFilter === subject}
+                    onClick={() => setSubjectFilter(subject)}
+                  />
+                </div>
               ))}
             </div>
           )}
