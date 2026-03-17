@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import ClientProviders from "@/components/ClientProviders";
 import { Syne, DM_Sans, Cormorant_Garamond, Kalam } from "next/font/google";
+import Script from "next/script";
 
 const syne = Syne({ subsets: ["latin"], weight: ["800"], variable: "--font-syne", display: "swap" });
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["200", "300"], variable: "--font-dm-sans", display: "swap" });
@@ -27,11 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        {/* Google Identity Services — loaded async, no React provider needed */}
-        <script src="https://accounts.google.com/gsi/client" async defer />
-      </head>
       <body className={`${GeistSans.className} ${syne.variable} ${dmSans.variable} ${cormorant.variable} ${kalam.variable} antialiased`}>
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
         <ClientProviders>
           {children}
         </ClientProviders>
