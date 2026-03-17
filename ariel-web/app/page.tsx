@@ -380,22 +380,46 @@ function PhoneMockup() {
 // ─── Feature pills ─────────────────────────────────────────────────────────────
 
 function FeaturePills() {
+  const [hovered, setHovered] = useState<string | null>(null);
+  const pills = [
+    { icon: '⚡', label: 'Cram Mode',    desc: 'High-speed card review with spaced repetition' },
+    { icon: '⚔️', label: 'Study Duels',  desc: 'Challenge friends to live knowledge battles' },
+    { icon: '🎬', label: 'Short Clips',  desc: 'Learn from 60-second educational videos' },
+    { icon: '🃏', label: 'Flashcards',   desc: 'Build and share decks on any topic' },
+  ];
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 24 }}>
-      {[
-        { icon: '⚡', label: 'Cram Mode' },
-        { icon: '⚔️', label: 'Study Duels' },
-        { icon: '🎬', label: 'Short Clips' },
-        { icon: '🃏', label: 'Flashcards' },
-      ].map(f => (
-        <div key={f.label} style={{
-          display: 'flex', alignItems: 'center', gap: 5,
-          padding: '6px 13px', borderRadius: 999,
-          background: 'rgba(124,92,252,0.08)',
-          border: '1px solid rgba(124,92,252,0.2)',
-          fontSize: 12, color: '#a78bfa', fontWeight: 500,
-        }}>
-          <span style={{ fontSize: 13 }}>{f.icon}</span>{f.label}
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 28 }}>
+      {pills.map(f => (
+        <div
+          key={f.label}
+          onMouseEnter={() => setHovered(f.label)}
+          onMouseLeave={() => setHovered(null)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: hovered === f.label ? '6px 14px 6px 12px' : '6px 14px',
+            borderRadius: 999,
+            background: hovered === f.label ? 'rgba(155,127,255,0.15)' : 'rgba(155,127,255,0.07)',
+            border: `1px solid ${hovered === f.label ? 'rgba(155,127,255,0.4)' : 'rgba(155,127,255,0.18)'}`,
+            fontSize: 12, color: hovered === f.label ? '#c4b5fd' : '#a78bfa', fontWeight: 600,
+            letterSpacing: '0.01em',
+            transition: 'all 0.18s ease',
+            cursor: 'default',
+            position: 'relative',
+          }}
+        >
+          <span style={{ fontSize: 13 }}>{f.icon}</span>
+          {f.label}
+          {hovered === f.label && (
+            <span style={{
+              position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
+              background: 'rgba(20,20,20,0.96)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8, padding: '5px 10px', fontSize: 10.5, color: '#a1a1aa',
+              whiteSpace: 'nowrap', pointerEvents: 'none', fontWeight: 400,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+            }}>
+              {f.desc}
+            </span>
+          )}
         </div>
       ))}
     </div>
@@ -435,92 +459,226 @@ export default function Home() {
       />
 
       {/* ── Mobile ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center justify-between h-screen px-6 lg:hidden" style={{ paddingTop: 28, paddingBottom: 24 }}>
+      <div className="flex flex-col items-center justify-between h-screen px-6 lg:hidden" style={{ paddingTop: 28, paddingBottom: 24, position: 'relative', overflow: 'hidden' }}>
+
+        {/* Background depth — radial glow behind the phone */}
+        <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,92,252,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
         {/* Wordmark */}
-        <div className="flex justify-center">
+        <div className="flex justify-center" style={{ position: 'relative', zIndex: 1 }}>
           <ArielWordmark size={36} variant="dark" showTagline={false} animate />
         </div>
 
         {/* Phone — scaled down to fit */}
-        <div className="flex justify-center" style={{ transform: 'scale(0.72)', transformOrigin: 'center center', margin: '-40px 0' }}>
+        <div className="flex justify-center" style={{ transform: 'scale(0.72)', transformOrigin: 'center center', margin: '-40px 0', position: 'relative', zIndex: 1 }}>
           <PhoneMockup />
         </div>
 
-        {/* Bottom section: headline + CTAs */}
-        <div className="w-full">
-          <div className="text-center mb-5">
-            <h1 style={{ fontSize: 30, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.025em' }}>
-              Go deeper.
+        {/* Bottom: headline + CTAs */}
+        <div className="w-full" style={{ position: 'relative', zIndex: 1 }}>
+          <div className="text-center mb-6">
+            <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 0 }}>
+              Go{' '}
+              <span style={{
+                fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
+                fontStyle: 'italic',
+                fontWeight: 700,
+                fontSize: 38,
+                color: '#9B7FFF',
+                letterSpacing: '-0.01em',
+              }}>deeper.</span>
             </h1>
-            <p style={{ fontSize: 13, color: '#8b9099', marginTop: 8, lineHeight: 1.5 }}>
-              Real insight — not just content. Built for cramming, growing, and staying curious.
+            <p style={{ fontSize: 13, color: '#71717a', marginTop: 10, lineHeight: 1.6, maxWidth: 280, margin: '10px auto 0' }}>
+              Real insight, not just content — built for cramming, growing, and staying curious.
             </p>
           </div>
 
-          <button onClick={openSignup} style={{ width: '100%', background: '#fff', color: '#000', borderRadius: 999, padding: '13px 0', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'block' }}>
+          {/* Primary CTA — full weight */}
+          <button
+            onClick={openSignup}
+            style={{ width: '100%', background: '#fff', color: '#000', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 800, border: 'none', cursor: 'pointer', display: 'block', letterSpacing: '-0.01em', transition: 'transform 0.1s, box-shadow 0.1s' }}
+            onMouseEnter={e => { (e.target as HTMLButtonElement).style.transform = 'scale(1.02)'; }}
+            onMouseLeave={e => { (e.target as HTMLButtonElement).style.transform = 'scale(1)'; }}
+          >
             Create account
           </button>
-          <button onClick={openLogin} style={{ width: '100%', background: 'transparent', color: '#e7e9ea', borderRadius: 999, padding: '13px 0', fontSize: 15, fontWeight: 700, border: '1px solid #3f3f46', cursor: 'pointer', display: 'block', marginTop: 10 }}>
+
+          {/* Divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0' }}>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+            <span style={{ fontSize: 11, color: '#3f3f46', fontWeight: 500 }}>or</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+          </div>
+
+          {/* Secondary CTA — lower visual weight */}
+          <button
+            onClick={openLogin}
+            style={{ width: '100%', background: 'transparent', color: '#a1a1aa', borderRadius: 999, padding: '12px 0', fontSize: 14, fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', display: 'block', letterSpacing: '0.005em' }}
+          >
             Log in
           </button>
-          <p style={{ fontSize: 11, color: '#52525b', textAlign: 'center', marginTop: 12 }}>
-            By signing up you agree to our <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Terms</span> and <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Privacy Policy</span>.
+
+          <p style={{ fontSize: 10, color: '#3f3f46', textAlign: 'center', marginTop: 12, letterSpacing: '0.01em' }}>
+            By signing up you agree to our{' '}
+            <span style={{ color: '#6d28d9', cursor: 'pointer' }}>Terms</span>
+            {' & '}
+            <span style={{ color: '#6d28d9', cursor: 'pointer' }}>Privacy</span>
           </p>
         </div>
       </div>
 
       {/* ── Desktop ─────────────────────────────────────────────────────── */}
-      <div className="hidden lg:flex min-h-screen items-center">
+      <div className="hidden lg:flex min-h-screen items-center" style={{ position: 'relative', overflow: 'hidden' }}>
 
-        {/* Left */}
-        <div className="flex-1 flex flex-col justify-center" style={{ paddingLeft: 80, paddingRight: 60, maxWidth: 580 }}>
-          <div style={{ marginBottom: 40 }}>
+        {/* Global background grain + glow */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 0,
+          background: 'radial-gradient(ellipse 70% 80% at 65% 50%, rgba(124,92,252,0.09) 0%, transparent 65%)',
+          pointerEvents: 'none',
+        }} />
+        {/* Subtle top-left accent */}
+        <div style={{
+          position: 'absolute', top: -120, left: -80, width: 480, height: 480,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(14,165,233,0.05) 0%, transparent 70%)',
+          pointerEvents: 'none', zIndex: 0,
+        }} />
+
+        {/* Left — asymmetric: narrower column, content pushed slightly left-of-center */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          width: '48%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          paddingLeft: 'max(64px, 7vw)', paddingRight: 48, paddingTop: 48, paddingBottom: 48,
+        }}>
+          <div style={{ marginBottom: 44, animation: 'fadeUp 0.6s ease both' }}>
             <ArielWordmark size={52} variant="dark" showTagline={false} animate />
           </div>
 
-          <h1 style={{ fontSize: 58, fontWeight: 900, color: '#fff', lineHeight: 0.98, letterSpacing: '-0.03em', marginBottom: 18 }}>
-            Go deeper.
+          <h1 style={{
+            fontWeight: 900, color: '#fff', lineHeight: 0.96,
+            letterSpacing: '-0.035em', marginBottom: 22,
+            animation: 'fadeUp 0.6s 0.1s ease both',
+          }}>
+            <span style={{ fontSize: 'clamp(52px,5.5vw,72px)', display: 'block' }}>Go</span>
+            <span style={{
+              fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
+              fontStyle: 'italic', fontWeight: 700,
+              fontSize: 'clamp(60px,6.5vw,84px)',
+              color: '#9B7FFF',
+              letterSpacing: '-0.02em',
+              display: 'block', lineHeight: 0.95,
+            }}>deeper.</span>
           </h1>
 
-          <p style={{ fontSize: 17, color: '#8b9099', lineHeight: 1.6, maxWidth: 420 }}>
+          <p style={{
+            fontSize: 'clamp(15px,1.4vw,18px)', color: '#8b9099', lineHeight: 1.65,
+            maxWidth: 400, animation: 'fadeUp 0.6s 0.2s ease both',
+          }}>
             A smarter feed that builds real understanding — not just information, but insight.
           </p>
-          <p style={{ fontSize: 14, color: '#52525b', marginTop: 6, maxWidth: 420 }}>
-            Cramming for an exam, growing your skills, or just following your curiosity — Ariel deepens your knowledge and meets you exactly where you are.
+          <p style={{
+            fontSize: 13, color: '#52525b', marginTop: 8, maxWidth: 400, lineHeight: 1.6,
+            animation: 'fadeUp 0.6s 0.25s ease both',
+          }}>
+            Cramming for an exam, growing your skills, or just staying curious — Ariel meets you exactly where you are.
           </p>
 
-          <FeaturePills />
+          <div style={{ animation: 'fadeUp 0.6s 0.3s ease both' }}>
+            <FeaturePills />
+          </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 360, marginTop: 36 }}>
-            <button onClick={openSignup} style={{ background: '#fff', color: '#000', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', width: '100%' }}>
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: 12,
+            maxWidth: 340, marginTop: 40,
+            animation: 'fadeUp 0.6s 0.38s ease both',
+          }}>
+            <button
+              onClick={openSignup}
+              style={{
+                background: '#fff', color: '#000', borderRadius: 999,
+                padding: '15px 0', fontSize: 15, fontWeight: 800,
+                border: 'none', cursor: 'pointer', width: '100%',
+                letterSpacing: '-0.01em',
+                transition: 'transform 0.12s ease, box-shadow 0.12s ease',
+                boxShadow: '0 0 0 rgba(255,255,255,0)',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.025)';
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 32px rgba(255,255,255,0.12)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 0 0 rgba(255,255,255,0)';
+              }}
+            >
               Create account
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
-              <span style={{ fontSize: 12, color: '#52525b' }}>or</span>
+              <span style={{ fontSize: 12, color: '#3f3f46', fontWeight: 500 }}>or</span>
               <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
             </div>
-            <button onClick={openLogin} style={{ background: 'transparent', color: '#e7e9ea', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 700, border: '1px solid #3f3f46', cursor: 'pointer', width: '100%' }}>
+            <button
+              onClick={openLogin}
+              style={{
+                background: 'transparent', color: '#a1a1aa', borderRadius: 999,
+                padding: '14px 0', fontSize: 14, fontWeight: 600,
+                border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', width: '100%',
+                transition: 'border-color 0.15s ease, color 0.15s ease',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.22)';
+                (e.currentTarget as HTMLButtonElement).style.color = '#e7e9ea';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)';
+                (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa';
+              }}
+            >
               Log in
             </button>
           </div>
 
-          <p style={{ fontSize: 11, color: '#52525b', marginTop: 20, maxWidth: 360 }}>
-            By signing up you agree to our <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Terms</span> and <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Privacy Policy</span>.
+          <p style={{ fontSize: 11, color: '#3f3f46', marginTop: 18, maxWidth: 340, animation: 'fadeUp 0.6s 0.45s ease both' }}>
+            By signing up you agree to our{' '}
+            <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Terms</span>
+            {' and '}
+            <span style={{ color: '#9B7FFF', cursor: 'pointer' }}>Privacy Policy</span>.
           </p>
         </div>
 
-        {/* Right */}
-        <div className="flex-1 flex items-center justify-center" style={{
-          minHeight: '100vh',
-          borderLeft: '1px solid rgba(255,255,255,0.05)',
-          background: '#000',
+        {/* Right — wider panel, phone floats with glow */}
+        <div style={{
+          position: 'relative', zIndex: 1,
+          width: '52%', minHeight: '100vh',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderLeft: '1px solid rgba(255,255,255,0.04)',
         }}>
-          <div style={{ transform: 'scale(1.2)', transformOrigin: 'center center' }}>
+          {/* Phone glow */}
+          <div style={{
+            position: 'absolute', width: 380, height: 380, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(124,92,252,0.18) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            transform: 'scale(1.22)', transformOrigin: 'center center',
+            animation: 'phoneIn 0.8s 0.15s cubic-bezier(0.22,1,0.36,1) both',
+          }}>
             <PhoneMockup />
           </div>
         </div>
+
+        {/* Keyframe styles */}
+        <style>{`
+          @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes phoneIn {
+            from { opacity: 0; transform: scale(1.1) translateY(24px); }
+            to   { opacity: 1; transform: scale(1.22) translateY(0); }
+          }
+        `}</style>
 
       </div>
     </main>

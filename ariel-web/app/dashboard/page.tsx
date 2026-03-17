@@ -515,13 +515,12 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
               </svg>
             </button>
 
-            {/* Views — Ariel reach pulse icon */}
+            {/* Views — Twitter/X bar chart icon */}
             <div className="flex items-center gap-1.5">
-              <svg className="w-[19px] h-[19px] text-zinc-400" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" />
-                <path d="M9 8.5 A6 6 0 0 1 9 15.5" />
-                <path d="M12.5 6 A9.5 9.5 0 0 1 12.5 18" />
-                <path d="M16 3.5 A13 13 0 0 1 16 20.5" />
+              <svg className="w-[17px] h-[17px] text-zinc-400" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="2" y="14" width="4" height="7" rx="1" />
+                <rect x="9" y="8" width="4" height="13" rx="1" />
+                <rect x="16" y="3" width="4" height="18" rx="1" />
               </svg>
               <span className="text-[13px] font-normal" style={{ color: '#8b9099' }}>{seedViews(card.id, card.created_at)}</span>
             </div>
