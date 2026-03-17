@@ -301,10 +301,10 @@ export default function DeckPage() {
               <button
                 key={t}
                 onClick={() => setActiveTab(t)}
-                className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors capitalize ${
+                className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all ${
                   activeTab === t
-                    ? 'bg-violet-400/20 text-violet-200 border border-violet-400/30'
-                    : 'text-zinc-500 hover:text-zinc-300'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 {t === 'clips' && clips.length > 0 ? `Clips · ${clips.length}` : t === 'cards' ? 'Cards' : 'Clips'}

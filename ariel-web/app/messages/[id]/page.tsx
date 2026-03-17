@@ -462,10 +462,12 @@ export default function ConversationPage() {
                   <div key={msg.id}>
                     {/* Date label */}
                     {showDateLabel && (
-                      <div className="flex justify-center my-4">
-                        <span className="text-[11px] font-medium bg-zinc-900 px-3 py-1 rounded-full" style={{ color: '#8b9099' }}>
+                      <div className="flex items-center gap-3 my-5 px-2">
+                        <div className="flex-1 h-px bg-zinc-800" />
+                        <span className="text-[11px] font-semibold uppercase tracking-widest flex-shrink-0" style={{ color: '#52525b' }}>
                           {formatDateLabel(msg.created_at)}
                         </span>
+                        <div className="flex-1 h-px bg-zinc-800" />
                       </div>
                     )}
                     {/* Time label */}
@@ -769,7 +771,8 @@ export default function ConversationPage() {
             <button
               onClick={() => { openPicker(); setShowEmoji(false); }}
               className={`w-9 h-9 flex items-center justify-center rounded-full flex-shrink-0 transition-colors ${showPicker ? 'bg-violet-500/20 text-violet-400' : 'text-zinc-500 hover:text-zinc-300'}`}
-              title="Share a card or video"
+              title="Share card or video"
+              aria-label="Share card or video"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

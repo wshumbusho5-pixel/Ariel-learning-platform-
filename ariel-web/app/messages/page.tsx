@@ -120,6 +120,8 @@ export default function MessagesPage() {
             <h1 className="text-base font-bold text-white">Rooms</h1>
             <button
               onClick={() => router.push('/search?dm=1')}
+              title="New message"
+              aria-label="New message"
               className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-800 transition-colors"
             >
               <svg className="w-5 h-5 text-zinc-400" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" /></svg>
@@ -267,6 +269,7 @@ export default function MessagesPage() {
                   {/* Star / Buddy toggle */}
                   <button
                     onClick={(e) => toggleBuddy(e, convo.id)}
+                    title={isBuddy ? 'Remove from Buddies' : 'Add to Buddies'}
                     className="flex-shrink-0 p-1.5 rounded-full hover:bg-zinc-800 transition-colors"
                   >
                     <svg

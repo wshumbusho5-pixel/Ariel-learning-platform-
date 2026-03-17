@@ -1198,17 +1198,45 @@ function PlayerAvatar({ label, letter, color }: { label: string; letter: string;
 
 function RulesList({ rounds }: { rounds: number }) {
   const rules = [
-    `${rounds} rounds · 15 seconds per question`,
-    'Choose the correct answer from 4 options',
-    'Fastest correct answer wins the round',
-    'Most rounds won takes the duel',
+    {
+      icon: (
+        <svg className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" /><path strokeLinecap="round" d="M12 6v6l4 2" />
+        </svg>
+      ),
+      text: `${rounds} rounds · 15 seconds per question`,
+    },
+    {
+      icon: (
+        <svg className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      text: 'Choose the correct answer from 4 options',
+    },
+    {
+      icon: (
+        <svg className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L4.5 13H11l-1 9 9.5-11H13l1-9z" />
+        </svg>
+      ),
+      text: 'Fastest correct answer wins the round',
+    },
+    {
+      icon: (
+        <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8M12 17v4M5 3h14l-1.5 8H6.5L5 3zM5 3a2 2 0 00-2 2v0a2 2 0 002 2h14a2 2 0 002-2v0a2 2 0 00-2-2" />
+        </svg>
+      ),
+      text: 'Most rounds won takes the duel',
+    },
   ];
   return (
     <div className="space-y-2 text-left mb-6">
       {rules.map((rule, i) => (
-        <div key={i} className="flex items-center gap-2 text-sm text-zinc-400">
-          <div className="w-1.5 h-1.5 bg-zinc-600 rounded-full flex-shrink-0" />
-          {rule}
+        <div key={i} className="flex items-center gap-2.5">
+          {rule.icon}
+          <span className="text-xs text-zinc-400">{rule.text}</span>
         </div>
       ))}
     </div>
