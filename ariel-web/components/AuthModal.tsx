@@ -41,6 +41,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       setUsername('');
       setFullName('');
       setMode('login');
+
+      // Lazy-load Google Identity Services script
+      if (!document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        document.head.appendChild(script);
+      }
     }
   }, [isOpen]);
 
