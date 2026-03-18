@@ -539,20 +539,14 @@ export default function Home() {
             Create account
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0' }}>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-            <span style={{ fontSize: 11, color: '#3f3f46', fontWeight: 500 }}>or</span>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-          </div>
+          <p style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: '#52525b' }}>
+            Already have an account?{' '}
+            <button onClick={openLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a78bfa', fontWeight: 600, fontSize: 13, padding: 0 }}>
+              Log in
+            </button>
+          </p>
 
-          <button
-            onClick={openLogin}
-            style={{ width: '100%', background: 'transparent', color: '#a1a1aa', borderRadius: 999, padding: '12px 0', fontSize: 14, fontWeight: 600, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', display: 'block' }}
-          >
-            Log in
-          </button>
-
-          <p style={{ fontSize: 10, color: '#3f3f46', textAlign: 'center', marginTop: 12 }}>
+          <p style={{ fontSize: 10, color: '#3f3f46', textAlign: 'center', marginTop: 10 }}>
             By signing up you agree to our{' '}
             <span style={{ color: '#6d28d9', cursor: 'pointer' }}>Terms</span>
             {' & '}
@@ -599,7 +593,7 @@ export default function Home() {
             <FeaturePills />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 340, marginTop: 40, animation: 'fadeUp 0.6s 0.38s ease both' }}>
+          <div style={{ maxWidth: 340, marginTop: 40, animation: 'fadeUp 0.6s 0.38s ease both' }}>
             <button
               onClick={openSignup}
               style={{ background: '#fff', color: '#000', borderRadius: 999, padding: '15px 0', fontSize: 15, fontWeight: 800, border: 'none', cursor: 'pointer', width: '100%', letterSpacing: '-0.01em', transition: 'transform 0.12s ease, box-shadow 0.12s ease' }}
@@ -608,19 +602,17 @@ export default function Home() {
             >
               Create account
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
-              <span style={{ fontSize: 12, color: '#3f3f46', fontWeight: 500 }}>or</span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
-            </div>
-            <button
-              onClick={openLogin}
-              style={{ background: 'transparent', color: '#a1a1aa', borderRadius: 999, padding: '14px 0', fontSize: 14, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', cursor: 'pointer', width: '100%', transition: 'border-color 0.15s ease, color 0.15s ease' }}
-              onMouseEnter={e => { (e.currentTarget).style.borderColor = 'rgba(255,255,255,0.22)'; (e.currentTarget).style.color = '#e7e9ea'; }}
-              onMouseLeave={e => { (e.currentTarget).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget).style.color = '#a1a1aa'; }}
-            >
-              Log in
-            </button>
+            <p style={{ marginTop: 16, fontSize: 13.5, color: '#52525b' }}>
+              Already have an account?{' '}
+              <button
+                onClick={openLogin}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a78bfa', fontWeight: 600, fontSize: 13.5, padding: 0, transition: 'color 0.15s' }}
+                onMouseEnter={e => { (e.currentTarget).style.color = '#c4b5fd'; }}
+                onMouseLeave={e => { (e.currentTarget).style.color = '#a78bfa'; }}
+              >
+                Log in
+              </button>
+            </p>
           </div>
 
           <p style={{ fontSize: 11, color: '#3f3f46', marginTop: 18, maxWidth: 340, animation: 'fadeUp 0.6s 0.45s ease both' }}>
