@@ -519,9 +519,11 @@ export default function Home() {
         {/* Phone + Copy — centered together in remaining space */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', zIndex: 1 }}>
 
-          {/* Phone: scale so visual bottom sits flush above copy */}
-          <div style={{ flexShrink: 0, transform: 'scale(0.60)', transformOrigin: 'center top', marginBottom: '-224px' }}>
-            <PhoneMockup />
+          {/* Phone: honest-size wrapper — layout sees visual dimensions, no margin hacks */}
+          <div style={{ width: 200, height: 420, position: 'relative', flexShrink: 0, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, transform: 'scale(0.735)', transformOrigin: 'top left' }}>
+              <PhoneMockup />
+            </div>
           </div>
 
           {/* Copy — flows directly under phone visual bottom */}
