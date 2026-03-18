@@ -514,22 +514,25 @@ export default function Home() {
           <ArielWordmark size={52} variant="dark" showTagline={false} animate />
         </div>
 
-        <div className="flex justify-center" style={{ transform: 'scale(0.68)', transformOrigin: 'center top', marginBottom: '-86px', position: 'relative', zIndex: 1 }}>
+        <div className="flex justify-center" style={{ transform: 'scale(0.68)', transformOrigin: 'center top', marginBottom: '-72px', position: 'relative', zIndex: 1 }}>
           <PhoneMockup />
         </div>
 
         <div className="w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <div className="text-center mb-5">
+          <div className="text-center mb-4">
             <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#52525b', textTransform: 'uppercase', marginBottom: 8 }}>
               The Social Study App
             </p>
-            <h1 style={{ fontSize: 34, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 8 }}>
+            <h1 style={{ fontSize: 34, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 10 }}>
               Go{' '}
               <span style={{
                 fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
                 fontStyle: 'italic', fontWeight: 700, fontSize: 40, color: '#9B7FFF',
               }}>deeper.</span>
             </h1>
+            <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.55, maxWidth: 270, margin: '0 auto' }}>
+              Flashcards, a social feed, and short clips — the whole learning stack in one place.
+            </p>
           </div>
 
           {/* Social proof */}
