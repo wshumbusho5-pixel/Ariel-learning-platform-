@@ -468,13 +468,11 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
               </svg>
             </button>
 
-            {/* Reach — signal/wifi arcs */}
+            {/* Views — eye */}
             <div className="flex items-center gap-1.5">
-              <svg className="w-[17px] h-[17px] text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round">
-                <path d="M12 19.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" fill="currentColor" stroke="none" />
-                <path d="M8.5 16.5a5 5 0 0 1 7 0" />
-                <path d="M5 13a9.5 9.5 0 0 1 14 0" />
-                <path d="M1.5 9.5a14 14 0 0 1 21 0" />
+              <svg className="w-[17px] h-[17px] text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
               </svg>
               <span className="text-[13px] font-normal" style={{ color: '#8b9099' }}>{seedViews(card.id, card.created_at)}</span>
             </div>
