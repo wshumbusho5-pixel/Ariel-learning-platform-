@@ -40,23 +40,23 @@ class ReelCreate(BaseModel):
 class ReelResponse(BaseModel):
     """Reel data"""
     id: str
-    video_url: str
-    thumbnail_url: Optional[str]
-    title: str
-    description: Optional[str]
-    creator_id: str
-    creator_username: str
-    creator_profile_picture: Optional[str]
+    video_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    title: str = ""
+    description: Optional[str] = None
+    creator_id: str = ""
+    creator_username: str = ""
+    creator_profile_picture: Optional[str] = None
     creator_verified: bool = False
     creator_badge_type: Optional[str] = None
-    likes: int
-    comments_count: int
-    shares_count: int
-    views: int
-    created_at: str
+    likes: int = 0
+    comments_count: int = 0
+    shares_count: int = 0
+    views: int = 0
+    created_at: str = ""
     liked_by_current_user: bool = False
     following_creator: bool = False
-    category: Optional[str]
+    category: Optional[str] = None
     hashtags: Optional[List[str]]
 
 
@@ -84,9 +84,17 @@ async def get_reels_feed(
 
         # Query reels with personalization
         pipeline = [
+            # Only return reels that have an actual video URL
+            {"$match": {"video_url": {"$exists": True, "$ne": None, "$ne": ""}}},
             {
                 "$addFields": {
-                    "creator_id_obj": {"$toObjectId": "$creator_id"}
+                    "creator_id_obj": {
+                        "$cond": {
+                            "if": {"$regexMatch": {"input": "$creator_id", "regex": "^[0-9a-fA-F]{24}$"}},
+                            "then": {"$toObjectId": "$creator_id"},
+                            "else": None
+                        }
+                    }
                 }
             },
             {
@@ -97,7 +105,7 @@ async def get_reels_feed(
                     "as": "creator"
                 }
             },
-            {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": False}},
+            {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": True}},
             {
                 "$lookup": {
                     "from": "reel_likes",
@@ -172,12 +180,12 @@ async def get_reels_feed(
                     "id": {"$toString": "$_id"},
                     "video_url": 1,
                     "thumbnail_url": 1,
-                    "title": 1,
+                    "title": {"$ifNull": ["$title", ""]},
                     "description": 1,
-                    "creator_id": {"$toString": "$creator_id"},
-                    "creator_username": "$creator.username",
+                    "creator_id": {"$ifNull": ["$creator_id", ""]},
+                    "creator_username": {"$ifNull": ["$creator.username", "unknown"]},
                     "creator_profile_picture": "$creator.profile_picture",
-                    "creator_verified": "$creator.is_verified",
+                    "creator_verified": {"$ifNull": ["$creator.is_verified", False]},
                     "creator_badge_type": {
                         "$cond": [
                             "$creator.is_teacher",
@@ -185,10 +193,10 @@ async def get_reels_feed(
                             "student"
                         ]
                     },
-                    "likes": 1,
-                    "comments_count": 1,
-                    "shares_count": 1,
-                    "views": 1,
+                    "likes": {"$ifNull": ["$likes", 0]},
+                    "comments_count": {"$ifNull": ["$comments_count", 0]},
+                    "shares_count": {"$ifNull": ["$shares_count", 0]},
+                    "views": {"$ifNull": ["$views", 0]},
                     "created_at": {"$toString": "$created_at"},
                     "liked_by_current_user": 1,
                     "following_creator": 1,
@@ -200,11 +208,17 @@ async def get_reels_feed(
 
         reels = await db["reels"].aggregate(pipeline).to_list(length=limit)
 
-        # Increment view counts
-        reel_ids = [r["id"] for r in reels]
-        if reel_ids:
+        # Increment view counts (ObjectId required for _id matching)
+        from bson import ObjectId as BsonObjectId
+        reel_oids = []
+        for r in reels:
+            try:
+                reel_oids.append(BsonObjectId(r["id"]))
+            except Exception:
+                pass
+        if reel_oids:
             await db["reels"].update_many(
-                {"_id": {"$in": reel_ids}},
+                {"_id": {"$in": reel_oids}},
                 {"$inc": {"views": 1}}
             )
 
@@ -239,10 +253,16 @@ async def get_following_reels(
 
         # Query reels from followed creators
         pipeline = [
-            {"$match": {"creator_id": {"$in": following_ids}}},
+            {"$match": {"creator_id": {"$in": following_ids}, "video_url": {"$exists": True, "$ne": None, "$ne": ""}}},
             {
                 "$addFields": {
-                    "creator_id_obj": {"$toObjectId": "$creator_id"}
+                    "creator_id_obj": {
+                        "$cond": {
+                            "if": {"$regexMatch": {"input": "$creator_id", "regex": "^[0-9a-fA-F]{24}$"}},
+                            "then": {"$toObjectId": "$creator_id"},
+                            "else": None
+                        }
+                    }
                 }
             },
             {
@@ -253,7 +273,7 @@ async def get_following_reels(
                     "as": "creator"
                 }
             },
-            {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": False}},
+            {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": True}},
             {
                 "$lookup": {
                     "from": "reel_likes",
@@ -287,12 +307,12 @@ async def get_following_reels(
                     "id": {"$toString": "$_id"},
                     "video_url": 1,
                     "thumbnail_url": 1,
-                    "title": 1,
+                    "title": {"$ifNull": ["$title", ""]},
                     "description": 1,
-                    "creator_id": {"$toString": "$creator_id"},
-                    "creator_username": "$creator.username",
+                    "creator_id": {"$ifNull": ["$creator_id", ""]},
+                    "creator_username": {"$ifNull": ["$creator.username", "unknown"]},
                     "creator_profile_picture": "$creator.profile_picture",
-                    "creator_verified": "$creator.is_verified",
+                    "creator_verified": {"$ifNull": ["$creator.is_verified", False]},
                     "creator_badge_type": {
                         "$cond": [
                             "$creator.is_teacher",
@@ -300,10 +320,10 @@ async def get_following_reels(
                             "student"
                         ]
                     },
-                    "likes": 1,
-                    "comments_count": 1,
-                    "shares_count": 1,
-                    "views": 1,
+                    "likes": {"$ifNull": ["$likes", 0]},
+                    "comments_count": {"$ifNull": ["$comments_count", 0]},
+                    "shares_count": {"$ifNull": ["$shares_count", 0]},
+                    "views": {"$ifNull": ["$views", 0]},
                     "created_at": {"$toString": "$created_at"},
                     "liked_by_current_user": 1,
                     "following_creator": 1,
@@ -314,14 +334,6 @@ async def get_following_reels(
         ]
 
         reels = await db["reels"].aggregate(pipeline).to_list(length=limit)
-
-        # Increment view counts
-        reel_ids = [r["id"] for r in reels]
-        if reel_ids:
-            await db["reels"].update_many(
-                {"_id": {"$in": reel_ids}},
-                {"$inc": {"views": 1}}
-            )
 
         return reels
 
@@ -525,20 +537,6 @@ async def get_my_reels(
     try:
         pipeline = [
             {"$match": {"creator_id": current_user.id}},
-            {
-                "$addFields": {
-                    "creator_id_obj": {"$toObjectId": "$creator_id"}
-                }
-            },
-            {
-                "$lookup": {
-                    "from": "users",
-                    "localField": "creator_id_obj",
-                    "foreignField": "_id",
-                    "as": "creator"
-                }
-            },
-            {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": True}},
             {"$sort": {"created_at": -1}},
             {"$skip": offset},
             {"$limit": limit},
@@ -547,19 +545,17 @@ async def get_my_reels(
                     "id": {"$toString": "$_id"},
                     "video_url": 1,
                     "thumbnail_url": 1,
-                    "title": 1,
+                    "title": {"$ifNull": ["$title", ""]},
                     "description": 1,
-                    "creator_id": {"$toString": "$creator_id"},
-                    "creator_username": "$creator.username",
-                    "creator_profile_picture": "$creator.profile_picture",
-                    "creator_verified": {"$ifNull": ["$creator.is_verified", False]},
-                    "creator_badge_type": {
-                        "$cond": ["$creator.is_teacher", "teacher", "student"]
-                    },
-                    "likes": 1,
-                    "comments_count": 1,
-                    "shares_count": 1,
-                    "views": 1,
+                    "creator_id": {"$ifNull": ["$creator_id", ""]},
+                    "creator_username": current_user.username,
+                    "creator_profile_picture": getattr(current_user, 'profile_picture', None),
+                    "creator_verified": False,
+                    "creator_badge_type": "student",
+                    "likes": {"$ifNull": ["$likes", 0]},
+                    "comments_count": {"$ifNull": ["$comments_count", 0]},
+                    "shares_count": {"$ifNull": ["$shares_count", 0]},
+                    "views": {"$ifNull": ["$views", 0]},
                     "created_at": {"$toString": "$created_at"},
                     "liked_by_current_user": {"$literal": False},
                     "following_creator": {"$literal": False},
