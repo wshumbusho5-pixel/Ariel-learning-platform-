@@ -506,69 +506,75 @@ export default function Home() {
       />
 
       {/* ── Mobile ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center justify-between h-screen px-6 lg:hidden" style={{ paddingTop: 28, paddingBottom: 24, position: 'relative', overflow: 'hidden' }}>
+      <div className="flex flex-col items-center px-6 lg:hidden" style={{ height: '100dvh', paddingTop: 14, overflow: 'hidden', position: 'relative' }}>
 
-        <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,92,252,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Background glow */}
+        <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%,-50%)', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,92,252,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        <div className="flex justify-center" style={{ position: 'relative', zIndex: 1, marginTop: 8, marginBottom: 8 }}>
+        {/* Logo — fixed at top */}
+        <div style={{ flexShrink: 0, position: 'relative', zIndex: 1, marginBottom: 0 }}>
           <ArielWordmark size={52} variant="dark" showTagline={false} animate />
         </div>
 
-        <div className="flex justify-center" style={{ transform: 'scale(0.68)', transformOrigin: 'center top', marginBottom: '-72px', position: 'relative', zIndex: 1 }}>
-          <PhoneMockup />
-        </div>
+        {/* Phone + Copy — centered together in remaining space */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', position: 'relative', zIndex: 1 }}>
 
-        <div className="w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <div className="text-center mb-4">
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#52525b', textTransform: 'uppercase', marginBottom: 8 }}>
-              The Social Study App
-            </p>
-            <h1 style={{ fontSize: 34, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 10 }}>
-              Go{' '}
-              <span style={{
-                fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
-                fontStyle: 'italic', fontWeight: 700, fontSize: 40, color: '#9B7FFF',
-              }}>deeper.</span>
-            </h1>
-            <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.55, maxWidth: 270, margin: '0 auto' }}>
-              Flashcards, a social feed, and short clips — the whole learning stack in one place.
-            </p>
+          {/* Phone: scale so visual bottom sits flush above copy */}
+          <div style={{ flexShrink: 0, transform: 'scale(0.60)', transformOrigin: 'center top', marginBottom: '-224px' }}>
+            <PhoneMockup />
           </div>
 
-          {/* Social proof */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16 }}>
-            <div style={{ display: 'flex' }}>
-              {['#7c5cfc','#0ea5e9','#22c55e','#f59e0b','#f43f5e'].map((color, i) => (
-                <div key={i} style={{ width: 26, height: 26, borderRadius: '50%', background: color, border: '2px solid #000', marginLeft: i === 0 ? 0 : -8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff' }}>
-                  {['A','M','K','J','S'][i]}
-                </div>
-              ))}
+          {/* Copy — flows directly under phone visual bottom */}
+          <div style={{ width: '100%', flexShrink: 0 }}>
+            <div className="text-center" style={{ marginBottom: 10 }}>
+              <p style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.14em', color: '#52525b', textTransform: 'uppercase', marginBottom: 6 }}>
+                The Social Study App
+              </p>
+              <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 8 }}>
+                Go{' '}
+                <span style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 700, fontSize: 38, color: '#9B7FFF' }}>deeper.</span>
+              </h1>
+              <p style={{ fontSize: 12.5, color: '#71717a', lineHeight: 1.5, maxWidth: 270, margin: '0 auto' }}>
+                Flashcards, a social feed, and short clips — the whole learning stack in one place.
+              </p>
             </div>
-            <span style={{ fontSize: 12, color: '#71717a' }}>
-              Join <span style={{ color: '#e7e9ea', fontWeight: 700 }}>500+</span> students already learning
-            </span>
+
+            {/* Social proof */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
+              <div style={{ display: 'flex' }}>
+                {['#7c5cfc','#0ea5e9','#22c55e','#f59e0b','#f43f5e'].map((color, i) => (
+                  <div key={i} style={{ width: 24, height: 24, borderRadius: '50%', background: color, border: '2px solid #000', marginLeft: i === 0 ? 0 : -7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8.5, fontWeight: 700, color: '#fff' }}>
+                    {['A','M','K','J','S'][i]}
+                  </div>
+                ))}
+              </div>
+              <span style={{ fontSize: 11.5, color: '#71717a' }}>
+                Join <span style={{ color: '#e7e9ea', fontWeight: 700 }}>500+</span> students already learning
+              </span>
+            </div>
+
+            <button
+              onClick={openSignup}
+              style={{ width: '100%', background: '#fff', color: '#000', borderRadius: 999, padding: '13px 0', fontSize: 14.5, fontWeight: 800, border: 'none', cursor: 'pointer', display: 'block', letterSpacing: '-0.01em' }}
+            >
+              Create account
+            </button>
+
+            <p style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#52525b' }}>
+              Already have an account?{' '}
+              <button onClick={openLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a78bfa', fontWeight: 600, fontSize: 12, padding: 0 }}>
+                Log in
+              </button>
+            </p>
+
+            <p style={{ fontSize: 9.5, color: '#3f3f46', textAlign: 'center', marginTop: 7, paddingBottom: 10 }}>
+              By signing up you agree to our{' '}
+              <span style={{ color: '#6d28d9', cursor: 'pointer' }}>Terms</span>
+              {' & '}
+              <span style={{ color: '#6d28d9', cursor: 'pointer' }}>Privacy</span>
+            </p>
           </div>
 
-          <button
-            onClick={openSignup}
-            style={{ width: '100%', background: '#fff', color: '#000', borderRadius: 999, padding: '14px 0', fontSize: 15, fontWeight: 800, border: 'none', cursor: 'pointer', display: 'block', letterSpacing: '-0.01em' }}
-          >
-            Create account
-          </button>
-
-          <p style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: '#52525b' }}>
-            Already have an account?{' '}
-            <button onClick={openLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a78bfa', fontWeight: 600, fontSize: 13, padding: 0 }}>
-              Log in
-            </button>
-          </p>
-
-          <p style={{ fontSize: 10, color: '#3f3f46', textAlign: 'center', marginTop: 10 }}>
-            By signing up you agree to our{' '}
-            <span style={{ color: '#6d28d9', cursor: 'pointer' }}>Terms</span>
-            {' & '}
-            <span style={{ color: '#6d28d9', cursor: 'pointer' }}>Privacy</span>
-          </p>
         </div>
       </div>
 
