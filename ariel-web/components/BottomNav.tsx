@@ -1,53 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import ArielIcon from '@/components/ArielIcon';
-import ArielWordmark from '@/components/ArielWordmark';
 
-const mainNav = [
-  {
-    name: 'Today',
-    path: '/dashboard',
-    exact: true,
-    icon: (active: boolean) => (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
-  },
-  {
-    name: 'Deck',
-    path: '/deck',
-    exact: false,
-    icon: (active: boolean) => (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-    ),
-  },
-  {
-    name: 'Duels',
-    path: '/duels',
-    exact: false,
-    icon: (active: boolean) => (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M14.121 14.121L19 19m-7-7l7-7-3 3M9.879 9.879L5 5l3 3M5 19l5-5M19 5l-5 5" />
-      </svg>
-    ),
-  },
-  {
-    name: 'Cram',
-    path: '/cram',
-    exact: false,
-    icon: (active: boolean) => (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
-  },
-];
-
+// Exported so dashboard can render the full "more" drawer
 export const drawerItems = [
   {
     name: 'Create Cards',
@@ -59,29 +15,11 @@ export const drawerItems = [
     ),
   },
   {
-    name: 'Duels',
-    path: '/duels',
+    name: 'Cram',
+    path: '/cram',
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-      </svg>
-    ),
-  },
-  {
-    name: 'Rooms',
-    path: '/messages',
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.836 1.359 5.373 3.497 7.07L4.5 22l4.193-1.668A10.7 10.7 0 0012 20.486c5.523 0 10-4.144 10-9.243S17.523 2 12 2z" />
-      </svg>
-    ),
-  },
-  {
-    name: 'Profile',
-    path: '/profile',
-    icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
       </svg>
     ),
   },
@@ -91,6 +29,15 @@ export const drawerItems = [
     icon: (
       <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Rooms',
+    path: '/messages',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.477 2 2 6.145 2 11.243c0 2.836 1.359 5.373 3.497 7.07L4.5 22l4.193-1.668A10.7 10.7 0 0012 20.486c5.523 0 10-4.144 10-9.243S17.523 2 12 2z" />
       </svg>
     ),
   },
@@ -141,10 +88,55 @@ export const drawerItems = [
   },
 ];
 
+// ─── Main nav tabs ─────────────────────────────────────────────────────────────
+
+const TABS = [
+  {
+    name: 'Deck',
+    path: '/deck',
+    exact: false,
+    icon: (active: boolean) => (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2 : 1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Feed',
+    path: '/dashboard',
+    exact: true,
+    icon: (active: boolean) => (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+      </svg>
+    ),
+  },
+  // center slot — handled separately
+  {
+    name: 'Duels',
+    path: '/duels',
+    exact: false,
+    icon: (active: boolean) => (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Profile',
+    path: '/profile',
+    exact: false,
+    icon: (active: boolean) => (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+      </svg>
+    ),
+  },
+];
+
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   useEffect(() => {
@@ -155,112 +147,114 @@ export default function BottomNav() {
     });
   }, []);
 
+  const isActive = (path: string, exact: boolean) =>
+    exact ? pathname === path : pathname === path || pathname?.startsWith(path + '/');
+
+  const isCreateActive = pathname === '/create-cards';
+
   return (
-    <>
-      {/* Drawer — still accessible programmatically */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-[100] lg:hidden" onClick={() => setDrawerOpen(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-[#000000] border-t border-zinc-800/60 rounded-t-3xl pb-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex flex-col items-center pt-3 pb-5 gap-3">
-              <div className="w-10 h-1 rounded-full bg-zinc-700" />
-              <ArielWordmark size={38} variant="dark" showTagline />
-            </div>
-            <div className="grid grid-cols-4 gap-1 px-4">
-              {drawerItems.map((item) => {
-                const isActive = pathname === item.path || pathname?.startsWith(item.path + '/');
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => { router.push(item.path); setDrawerOpen(false); }}
-                    className={`flex flex-col items-center gap-2 py-4 rounded-2xl transition-colors ${
-                      isActive ? 'bg-violet-500/15 text-violet-400' : 'text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300'
-                    }`}
-                  >
-                    <div className="relative">
-                      {item.icon}
-                      {item.path === '/messages' && unreadMessages > 0 && (
-                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-violet-500 rounded-full flex items-center justify-center px-0.5">
-                          <span className="text-[9px] font-black text-white leading-none">{unreadMessages > 9 ? '9+' : unreadMessages}</span>
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[11px] font-medium">{item.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+    <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden" style={{ background: '#000', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="flex items-end h-[64px] max-w-screen-sm mx-auto px-1 pb-2">
+
+        {/* Deck */}
+        <TabButton
+          label="Deck"
+          active={isActive('/deck', false)}
+          onClick={() => router.push('/deck')}
+        >
+          {TABS[0].icon(isActive('/deck', false))}
+        </TabButton>
+
+        {/* Feed */}
+        <TabButton
+          label="Feed"
+          active={isActive('/dashboard', true)}
+          onClick={() => router.push('/dashboard')}
+        >
+          {TABS[1].icon(isActive('/dashboard', true))}
+        </TabButton>
+
+        {/* Create — center FAB */}
+        <button
+          onClick={() => router.push('/create-cards')}
+          className="flex-1 flex flex-col items-center pb-0.5"
+          style={{ gap: 3 }}
+        >
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center -mt-5 transition-transform duration-150 active:scale-95 ${
+            isCreateActive
+              ? 'bg-violet-400 shadow-[0_0_20px_rgba(167,139,250,0.55)]'
+              : 'bg-violet-500 shadow-[0_0_16px_rgba(139,92,246,0.4)]'
+          }`}>
+            <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
           </div>
-        </div>
-      )}
+          <span className="text-[10px] font-medium" style={{ color: isCreateActive ? '#a78bfa' : 'rgba(255,255,255,0.35)' }}>
+            Create
+          </span>
+        </button>
 
-      {/* Bottom nav bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[#000000] border-t border-zinc-800">
-        <div className="flex items-stretch h-[60px] max-w-screen-sm mx-auto">
+        {/* Duels */}
+        <TabButton
+          label="Duels"
+          active={isActive('/duels', false)}
+          onClick={() => router.push('/duels')}
+        >
+          {TABS[2].icon(isActive('/duels', false))}
+        </TabButton>
 
-          {/* Today, Deck */}
-          {mainNav.slice(0, 2).map((item) => {
-            const isActive = item.exact
-              ? pathname === item.path
-              : pathname === item.path || pathname?.startsWith(item.path + '/');
-            return (
-              <button
-                key={item.name}
-                onClick={() => router.push(item.path)}
-                className="flex-1 flex flex-col items-center justify-center transition-all"
-              >
-                <div className="flex flex-col items-center gap-1.5">
-                  <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-500'}`}>
-                    {item.icon(isActive)}
-                  </span>
-                  <div className={`h-[2px] rounded-full transition-all duration-200 ${isActive ? 'w-4 bg-violet-400' : 'w-0 bg-transparent'}`} />
-                </div>
-              </button>
-            );
-          })}
+        {/* Profile */}
+        <TabButton
+          label="Profile"
+          active={isActive('/profile', false)}
+          onClick={() => router.push('/profile')}
+          badge={unreadMessages > 0 ? unreadMessages : undefined}
+        >
+          {TABS[3].icon(isActive('/profile', false))}
+        </TabButton>
 
-          {/* Create — hero center button with Ariel icon */}
-          <button
-            onClick={() => router.push('/create-cards')}
-            className="flex-1 flex flex-col items-center justify-center pb-1"
-          >
-            <div className="relative">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center -mt-5 border transition-transform duration-150 active:scale-95 ${
-                pathname === '/create-cards'
-                  ? 'bg-violet-400 border-violet-300/30 shadow-[0_0_20px_rgba(167,139,250,0.5)]'
-                  : 'bg-violet-500 border-violet-400/30 shadow-[0_0_16px_rgba(139,92,246,0.45)]'
-              }`}>
-                <ArielIcon size={30} variant="purple" />
-              </div>
-            </div>
-          </button>
-
-          {/* Duels, Cram */}
-          {mainNav.slice(2).map((item) => {
-            const isActive = item.exact
-              ? pathname === item.path
-              : pathname === item.path || pathname?.startsWith(item.path + '/');
-            return (
-              <button
-                key={item.name}
-                onClick={() => router.push(item.path)}
-                className="flex-1 flex flex-col items-center justify-center transition-all"
-              >
-                <div className="flex flex-col items-center gap-1.5">
-                  <span className={`transition-colors duration-200 ${isActive ? 'text-violet-400' : 'text-zinc-500'}`}>
-                    {item.icon(isActive)}
-                  </span>
-                  <div className={`h-[2px] rounded-full transition-all duration-200 ${isActive ? 'w-4 bg-violet-400' : 'w-0 bg-transparent'}`} />
-                </div>
-              </button>
-            );
-          })}
-
-        </div>
       </div>
-    </>
+    </div>
+  );
+}
+
+// ─── Shared tab button ─────────────────────────────────────────────────────────
+
+function TabButton({
+  label,
+  active,
+  onClick,
+  badge,
+  children,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  badge?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex-1 flex flex-col items-center justify-end pb-0.5 transition-colors"
+      style={{ gap: 3 }}
+    >
+      <div className="relative">
+        <span style={{ color: active ? '#a78bfa' : 'rgba(255,255,255,0.4)' }}>
+          {children}
+        </span>
+        {badge !== undefined && (
+          <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] bg-violet-500 rounded-full flex items-center justify-center px-0.5">
+            <span className="text-[9px] font-black text-white leading-none">{badge > 9 ? '9+' : badge}</span>
+          </span>
+        )}
+      </div>
+      <span
+        className="text-[10px] font-medium leading-none"
+        style={{ color: active ? '#a78bfa' : 'rgba(255,255,255,0.35)' }}
+      >
+        {label}
+      </span>
+    </button>
   );
 }

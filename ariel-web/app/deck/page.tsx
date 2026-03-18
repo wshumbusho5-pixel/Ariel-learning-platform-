@@ -288,12 +288,24 @@ export default function DeckPage() {
           {/* Title row */}
           <div className="flex items-center justify-between mb-3 pointer-events-auto">
             <h1 className="text-lg font-bold text-white drop-shadow">My Deck</h1>
-            {stats && stats.due_today > 0 && activeTab === 'cards' && (
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-orange-500/10 border border-orange-500/25 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                <span className="text-orange-400 text-xs font-bold">{stats.due_today} due</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {stats && stats.due_today > 0 && activeTab === 'cards' && (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-orange-500/10 border border-orange-500/25 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                  <span className="text-orange-400 text-xs font-bold">{stats.due_today} due</span>
+                </div>
+              )}
+              <button
+                onClick={() => router.push('/cram')}
+                className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-opacity active:opacity-70"
+                style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.35)', color: '#a78bfa' }}
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Cram
+              </button>
+            </div>
           </div>
 
           {/* Tabs: Cards | Clips */}
