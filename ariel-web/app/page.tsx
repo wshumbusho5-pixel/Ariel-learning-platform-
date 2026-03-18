@@ -44,7 +44,7 @@ function BellIcon() {
 function StatusBar() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px 4px', flexShrink: 0 }}>
-      <span style={{ fontSize: 10, color: '#71717a', fontWeight: 600 }}>9:41</span>
+      <span style={{ fontSize: 10, color: '#5c5c68', fontWeight: 600 }}>9:41</span>
       <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end' }}>
         {[3, 4, 5, 5].map((h, i) => (
           <div key={i} style={{ width: 2.5, height: h, background: i < 3 ? '#8b9099' : '#3f3f46', borderRadius: 1 }} />
@@ -107,7 +107,7 @@ function CramScreen({ flipped }: { flipped: boolean }) {
             }}>
               {flipped ? 'ANSWER' : 'QUESTION'}
             </span>
-            <span style={{ fontSize: 9, color: '#a1a1aa' }}>📜 History</span>
+            <span style={{ fontSize: 9, color: '#71717a' }}>📜 History</span>
           </div>
           <div style={{ height: 1, background: flipped ? '#bbf7d0' : 'rgba(0,0,0,0.07)', marginBottom: 10 }} />
           <div style={{ position: 'relative', minHeight: 80 }}>
@@ -202,13 +202,13 @@ function FeedScreen() {
             <span style={{ fontSize: 9, color: '#52525b', marginLeft: 'auto' }}>4h</span>
           </div>
         </div>
-        <p style={{ fontSize: 10, color: '#a1a1aa', marginBottom: 6, lineHeight: 1.35 }}>Most people confuse these two. Once you see the difference, you can't unsee it.</p>
+        <p style={{ fontSize: 10, color: '#71717a', marginBottom: 6, lineHeight: 1.35 }}>Most people confuse these two. Once you see the difference, you can't unsee it.</p>
 
         {/* Card */}
         <div style={{ background: '#fff', borderRadius: 10, border: '1px solid rgba(0,0,0,0.08)', padding: '9px 10px 8px', boxShadow: '0 1px 6px rgba(0,0,0,0.12)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
             <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: '0.06em', color: '#7c3aed', background: 'rgba(124,58,237,0.08)', padding: '1.5px 6px', borderRadius: 999 }}>QUESTION</span>
-            <span style={{ fontSize: 9, color: '#a1a1aa' }}>💰 Economics</span>
+            <span style={{ fontSize: 9, color: '#71717a' }}>💰 Economics</span>
           </div>
           <div style={{ height: 1, background: 'rgba(0,0,0,0.07)', marginBottom: 6 }} />
           <p style={{ fontSize: 12.5, fontWeight: 700, color: '#18181b', lineHeight: 1.3 }}>
@@ -218,7 +218,7 @@ function FeedScreen() {
         </div>
 
         {/* Action row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 7, color: '#71717a' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 7, color: '#5c5c68' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9.5 }}><HeartIcon filled />24</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 9.5 }}><CommentIcon />7</span>
           <span style={{ fontSize: 9, color: '#444', marginLeft: 'auto' }}>1.4k</span>
@@ -233,8 +233,8 @@ function FeedScreen() {
             <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', background: c.color, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: '#fff' }}>{c.avatar}</div>
               <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '4px 8px', flex: 1 }}>
-                <span style={{ fontSize: 8.5, fontWeight: 700, color: '#a1a1aa' }}>{c.name} </span>
-                <span style={{ fontSize: 8.5, color: '#71717a' }}>{c.text}</span>
+                <span style={{ fontSize: 8.5, fontWeight: 700, color: '#71717a' }}>{c.name} </span>
+                <span style={{ fontSize: 8.5, color: '#5c5c68' }}>{c.text}</span>
               </div>
             </div>
           ))}
@@ -460,7 +460,7 @@ function FeaturePills() {
             <span style={{
               position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
               background: 'rgba(20,20,20,0.96)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 8, padding: '5px 10px', fontSize: 10.5, color: '#a1a1aa',
+              borderRadius: 8, padding: '5px 10px', fontSize: 10.5, color: '#71717a',
               whiteSpace: 'nowrap', pointerEvents: 'none', fontWeight: 400,
               boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
             }}>
@@ -536,7 +536,7 @@ export default function Home() {
                 Go{' '}
                 <span style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 700, fontSize: 38, color: '#9B7FFF' }}>deeper.</span>
               </h1>
-              <p style={{ fontSize: 12.5, color: '#71717a', lineHeight: 1.5, maxWidth: 270, margin: '0 auto' }}>
+              <p style={{ fontSize: 12.5, color: '#5c5c68', lineHeight: 1.5, maxWidth: 270, margin: '0 auto' }}>
                 Flashcards, a social feed, and short clips — the whole learning stack in one place.
               </p>
             </div>
@@ -550,7 +550,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <span style={{ fontSize: 11.5, color: '#71717a' }}>
+              <span style={{ fontSize: 11.5, color: '#5c5c68' }}>
                 Join <span style={{ color: '#e7e9ea', fontWeight: 700 }}>500+</span> students already learning
               </span>
             </div>
@@ -564,7 +564,7 @@ export default function Home() {
 
             <p style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#52525b' }}>
               Already have an account?{' '}
-              <button onClick={openLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#71717a', fontWeight: 600, fontSize: 12, padding: 0 }}>
+              <button onClick={openLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5c5c68', fontWeight: 600, fontSize: 12, padding: 0 }}>
                 Log in
               </button>
             </p>
@@ -632,7 +632,7 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <span style={{ fontSize: 13, color: '#71717a', lineHeight: 1.4 }}>
+              <span style={{ fontSize: 13, color: '#5c5c68', lineHeight: 1.4 }}>
                 Join <span style={{ color: '#e7e9ea', fontWeight: 700 }}>500+</span> students<br />already learning
               </span>
             </div>
@@ -649,9 +649,9 @@ export default function Home() {
               Already have an account?{' '}
               <button
                 onClick={openLogin}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#71717a', fontWeight: 600, fontSize: 13.5, padding: 0, transition: 'color 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget).style.color = '#a1a1aa'; }}
-                onMouseLeave={e => { (e.currentTarget).style.color = '#71717a'; }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#5c5c68', fontWeight: 600, fontSize: 13.5, padding: 0, transition: 'color 0.15s' }}
+                onMouseEnter={e => { (e.currentTarget).style.color = '#71717a'; }}
+                onMouseLeave={e => { (e.currentTarget).style.color = '#5c5c68'; }}
               >
                 Log in
               </button>
