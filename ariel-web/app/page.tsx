@@ -510,8 +510,8 @@ export default function Home() {
 
         <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,92,252,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        <div className="flex justify-center" style={{ position: 'relative', zIndex: 1 }}>
-          <ArielWordmark size={36} variant="dark" showTagline={false} animate />
+        <div className="flex justify-center" style={{ position: 'relative', zIndex: 1, marginBottom: 4 }}>
+          <ArielWordmark size={48} variant="dark" showTagline={false} animate />
         </div>
 
         <div className="flex justify-center" style={{ transform: 'scale(0.68)', transformOrigin: 'center center', margin: '-48px 0', position: 'relative', zIndex: 1 }}>
@@ -520,12 +520,15 @@ export default function Home() {
 
         <div className="w-full" style={{ position: 'relative', zIndex: 1 }}>
           <div className="text-center mb-6">
-            <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 0 }}>
-              Study smarter.{' '}
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#52525b', textTransform: 'uppercase', marginBottom: 10 }}>
+              The Social Study App
+            </p>
+            <h1 style={{ fontSize: 34, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 0 }}>
+              Go{' '}
               <span style={{
                 fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
-                fontStyle: 'italic', fontWeight: 700, fontSize: 36, color: '#9B7FFF',
-              }}>Together.</span>
+                fontStyle: 'italic', fontWeight: 700, fontSize: 40, color: '#9B7FFF',
+              }}>deeper.</span>
             </h1>
             <p style={{ fontSize: 13, color: '#71717a', marginTop: 10, lineHeight: 1.6, maxWidth: 280, margin: '10px auto 0' }}>
               Flashcards, a social feed, and short clips — the whole learning stack in one place.
@@ -567,19 +570,23 @@ export default function Home() {
           width: '48%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
           paddingLeft: 'max(64px, 7vw)', paddingRight: 48, paddingTop: 48, paddingBottom: 48,
         }}>
-          <div style={{ marginBottom: 44, animation: 'fadeUp 0.6s ease both' }}>
-            <ArielWordmark size={52} variant="dark" showTagline={false} animate />
+          <div style={{ marginBottom: 52, animation: 'fadeUp 0.6s ease both' }}>
+            <ArielWordmark size={64} variant="dark" showTagline={false} animate />
           </div>
 
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: '#52525b', textTransform: 'uppercase', marginBottom: 14, animation: 'fadeUp 0.6s 0.08s ease both' }}>
+            The Social Study App
+          </p>
+
           <h1 style={{ fontWeight: 900, color: '#fff', lineHeight: 0.96, letterSpacing: '-0.035em', marginBottom: 22, animation: 'fadeUp 0.6s 0.1s ease both' }}>
-            <span style={{ fontSize: 'clamp(48px,5vw,66px)', display: 'block' }}>Study smarter.</span>
+            <span style={{ fontSize: 'clamp(52px,5.5vw,72px)', display: 'block' }}>Go</span>
             <span style={{
               fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
               fontStyle: 'italic', fontWeight: 700,
-              fontSize: 'clamp(58px,6vw,80px)',
+              fontSize: 'clamp(62px,6.5vw,86px)',
               color: '#9B7FFF', letterSpacing: '-0.02em',
               display: 'block', lineHeight: 0.95,
-            }}>Together.</span>
+            }}>deeper.</span>
           </h1>
 
           <p style={{ fontSize: 'clamp(15px,1.4vw,18px)', color: '#8b9099', lineHeight: 1.65, maxWidth: 400, animation: 'fadeUp 0.6s 0.2s ease both' }}>
