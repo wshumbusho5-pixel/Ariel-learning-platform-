@@ -564,7 +564,7 @@ export default function Home() {
 
             <p style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: '#52525b' }}>
               Already have an account?{' '}
-              <button onClick={openLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a78bfa', fontWeight: 600, fontSize: 12, padding: 0 }}>
+              <button onClick={openLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#71717a', fontWeight: 600, fontSize: 12, padding: 0 }}>
                 Log in
               </button>
             </p>
@@ -649,9 +649,9 @@ export default function Home() {
               Already have an account?{' '}
               <button
                 onClick={openLogin}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a78bfa', fontWeight: 600, fontSize: 13.5, padding: 0, transition: 'color 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget).style.color = '#c4b5fd'; }}
-                onMouseLeave={e => { (e.currentTarget).style.color = '#a78bfa'; }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#71717a', fontWeight: 600, fontSize: 13.5, padding: 0, transition: 'color 0.15s' }}
+                onMouseEnter={e => { (e.currentTarget).style.color = '#a1a1aa'; }}
+                onMouseLeave={e => { (e.currentTarget).style.color = '#71717a'; }}
               >
                 Log in
               </button>
