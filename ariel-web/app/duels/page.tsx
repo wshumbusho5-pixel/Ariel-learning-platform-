@@ -70,7 +70,8 @@ export default function DuelsPage() {
 
   // Solo
   const [botName] = useState(BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)]);
-  const [botDelay] = useState(BOT_DELAYS[Math.floor(Math.random() * BOT_DELAYS.length)]);
+  const botCorrectRef = useRef(false);  // whether the bot actually got this round right
+  const botAnsweredRef = useRef(false); // whether the bot has "buzzed in" yet
 
   // Online multiplayer
   const [roomId, setRoomId] = useState('');
@@ -226,7 +227,7 @@ export default function DuelsPage() {
       setTimeLeft(t => {
         if (t <= 1) {
           clearInterval(timerRef.current!);
-          resolveRound(false, false, idx + 1, allCards);
+          resolveRound(false, botAnsweredRef.current && botCorrectRef.current, idx + 1, allCards);
           return 0;
         }
         return t - 1;
@@ -234,10 +235,16 @@ export default function DuelsPage() {
     }, 1000);
 
     if (mode === 'solo') {
-      const delay = Math.min(botDelay, 12000);
-      botRef.current = setTimeout(() => setOpponentAnswered(true), delay);
+      // Fresh delay + correctness each round so the bot doesn't always win/lose
+      botAnsweredRef.current = false;
+      botCorrectRef.current = Math.random() < 0.65; // bot gets ~65% right
+      const delay = BOT_DELAYS[Math.floor(Math.random() * BOT_DELAYS.length)];
+      botRef.current = setTimeout(() => {
+        botAnsweredRef.current = true;
+        setOpponentAnswered(true);
+      }, delay);
     }
-  }, [botDelay, mode]); // eslint-disable-line
+  }, [mode]); // eslint-disable-line
 
   const resolveRound = useCallback((userCorrect: boolean, opponentCorrect: boolean, nextIdx: number, allCards: DuelCard[]) => {
     clearTimers();
@@ -281,7 +288,7 @@ export default function DuelsPage() {
     const correct = choice.trim().toLowerCase() === currentCard.answer.trim().toLowerCase();
 
     if (mode === 'solo') {
-      resolveRound(correct, opponentAnswered, currentIndex + 1, cards);
+      resolveRound(correct, botAnsweredRef.current && botCorrectRef.current, currentIndex + 1, cards);
     } else {
       // Online: tell server, wait for round_result
       wsRef.current?.send(JSON.stringify({ type: 'submit_answer', answer: choice }));
