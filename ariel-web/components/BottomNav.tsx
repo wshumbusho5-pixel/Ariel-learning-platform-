@@ -156,15 +156,6 @@ export default function BottomNav() {
     <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden" style={{ background: '#000', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="flex items-end h-[64px] max-w-screen-sm mx-auto px-1 pb-2">
 
-        {/* Deck */}
-        <TabButton
-          label="Deck"
-          active={isActive('/deck', false)}
-          onClick={() => router.push('/deck')}
-        >
-          {TABS[0].icon(isActive('/deck', false))}
-        </TabButton>
-
         {/* Feed */}
         <TabButton
           label="Feed"
@@ -172,6 +163,15 @@ export default function BottomNav() {
           onClick={() => router.push('/dashboard')}
         >
           {TABS[1].icon(isActive('/dashboard', true))}
+        </TabButton>
+
+        {/* Deck */}
+        <TabButton
+          label="Deck"
+          active={isActive('/deck', false)}
+          onClick={() => router.push('/deck')}
+        >
+          {TABS[0].icon(isActive('/deck', false))}
         </TabButton>
 
         {/* Create — center FAB */}
