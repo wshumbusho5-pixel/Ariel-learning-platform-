@@ -453,90 +453,87 @@ function ExploreContent() {
 
                   {/* Tap to flip */}
                   <div
-                    className="absolute inset-0 flex flex-col justify-center px-5 pb-28 pt-36 cursor-pointer"
+                    className="absolute inset-0 flex flex-col justify-center px-6 cursor-pointer"
+                    style={{ paddingTop: '144px', paddingBottom: '148px' }}
                     onClick={() => handleFlip(card.id)}
                   >
-                    {/* Subject / Topic pills */}
-                    <div className="flex items-center gap-2 flex-wrap mb-5">
-                      {card.subject && (
-                        <span className="px-3 py-1 rounded-full bg-violet-500/20 border border-violet-500/30 text-violet-300 text-[11px] font-bold uppercase tracking-wide">
-                          {card.subject}
-                        </span>
-                      )}
-                      {card.topic && (
-                        <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-400 text-[11px] font-medium">
-                          {card.topic}
-                        </span>
-                      )}
-                    </div>
+                    {!isFlipped ? (
+                      <div className="space-y-5">
+                        {/* Subject inline above question — no pills */}
+                        <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                          {[card.subject, card.topic].filter(Boolean).join(' · ') || 'Question'}
+                        </p>
 
-                    {/* Card content */}
-                    <div className="flex-1 flex flex-col justify-center">
-                      {!isFlipped ? (
-                        <div className="space-y-6">
-                          <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Question</p>
-                          <h2 className="text-white text-3xl leading-snug" style={{ fontFamily: "var(--font-caveat), cursive" }}>
-                            {card.question}
-                          </h2>
-                          <div className="flex items-center gap-2 mt-4">
-                            <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-                            <span className="text-zinc-500 text-sm">Tap to reveal answer</span>
+                        {/* Question — size scales to length */}
+                        <h2
+                          className={`text-white font-semibold leading-snug ${
+                            card.question.length > 120 ? 'text-[22px]' :
+                            card.question.length > 70  ? 'text-[28px]' :
+                                                         'text-[36px]'
+                          }`}
+                          style={{ fontFamily: "var(--font-caveat), cursive" }}
+                        >
+                          {card.question}
+                        </h2>
+
+                        {/* Tap hint */}
+                        <div className="flex items-center gap-2 pt-1">
+                          <div className="w-1 h-1 rounded-full bg-white/20 animate-pulse" />
+                          <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.25)' }}>tap to reveal</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-5">
+                        <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest">Answer</p>
+                        <p
+                          className={`text-white font-semibold leading-snug ${
+                            card.answer.length > 120 ? 'text-[22px]' :
+                            card.answer.length > 70  ? 'text-[28px]' :
+                                                       'text-[36px]'
+                          }`}
+                          style={{ fontFamily: "var(--font-caveat), cursive" }}
+                        >
+                          {card.answer}
+                        </p>
+                        {card.explanation && (
+                          <div className="p-4 rounded-2xl bg-white/5 border border-white/8">
+                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Why</p>
+                            <p className="text-zinc-300 text-[15px] leading-relaxed" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.explanation}</p>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <p className="text-[11px] font-bold text-emerald-500 uppercase tracking-widest">Answer</p>
-                          <p className="text-white text-2xl leading-relaxed" style={{ fontFamily: "var(--font-caveat), cursive" }}>
-                            {card.answer}
-                          </p>
-                          {card.explanation && (
-                            <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10">
-                              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Explanation</p>
-                              <p className="text-zinc-300 text-base leading-relaxed" style={{ fontFamily: "var(--font-caveat), cursive" }}>{card.explanation}</p>
-                            </div>
-                          )}
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleFlip(card.id); }}
-                            className="mt-2 text-sm text-zinc-600 hover:text-zinc-400"
-                          >
-                            Tap to see question again
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                        <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.2)' }}>tap to see question</p>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Creator info — bottom left */}
-                  <div className="absolute bottom-28 left-5 right-20 z-10">
+                  {/* Creator info — bottom left, single line */}
+                  <div className="absolute bottom-28 left-5 right-20 z-10 flex items-center gap-2.5">
                     <button
                       onClick={(e) => { e.stopPropagation(); if (card.created_by?.username) router.push(`/profile/${card.created_by.username}`); }}
-                      className="flex items-center gap-3"
+                      className="flex items-center gap-2 min-w-0 flex-1"
                     >
-                      <Avatar creator={card.created_by} size={42} />
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-white font-bold text-sm">
-                            {card.created_by?.full_name || card.created_by?.username || 'Ariel'}
-                          </span>
-                          {card.created_by?.is_verified && (
-                            <svg className="w-3.5 h-3.5 text-violet-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                        <p className="text-zinc-400 text-xs">@{card.created_by?.username || 'ariel'}</p>
+                      <Avatar creator={card.created_by} size={32} />
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-white font-semibold text-sm truncate">
+                          {card.created_by?.full_name || card.created_by?.username || 'Ariel'}
+                        </span>
+                        {card.created_by?.is_verified && (
+                          <svg className="w-3 h-3 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        )}
                       </div>
                     </button>
                     {card.created_by?.id && (
                       <button
                         onClick={(e) => handleFollow(e, card.created_by?.id)}
-                        className={`mt-2 px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                        className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-bold border transition-all ${
                           isFollowing
-                            ? 'bg-transparent border-white/30 text-white/60'
-                            : 'bg-white text-black border-transparent'
+                            ? 'border-white/20 text-white/40'
+                            : 'border-white/40 text-white hover:bg-white hover:text-black'
                         }`}
                       >
-                        {isFollowing ? 'Following' : '+ Follow'}
+                        {isFollowing ? 'Following' : 'Follow'}
                       </button>
                     )}
                   </div>
