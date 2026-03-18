@@ -1384,19 +1384,21 @@ export default function Dashboard() {
                 {displayCards.map((card, i) => (
                   <div key={card.id}>
                     <CardTile card={card} onComment={openComments} />
-                    {/* Ariel prompt every 5 cards */}
+                    {/* Create cards prompt every 5 cards */}
                     {!searchQuery && i === 4 && (
                       <div className="-mx-4 mb-5">
-                        <button onClick={openAriel} className="w-full text-left border-t border-b border-zinc-900 p-4" style={{ background: '#111113' }}>
+                        <button onClick={() => router.push('/create-cards')} className="w-full text-left border-t border-b border-zinc-900 p-4" style={{ background: '#111113' }}>
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-xl bg-[#0d0d18] border border-violet-500/20 flex items-center justify-center flex-shrink-0">
-                              <span style={{ fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif", fontStyle: 'italic', fontWeight: 300, fontSize: 24, color: '#c4b0ff', lineHeight: 1 }}>a</span>
+                              <svg className="w-5 h-5 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 4v16m8-8H4" />
+                              </svg>
                             </div>
                             <div>
-                              <p className="text-sm font-bold text-white leading-none">Ask Ariel</p>
-                              <p className="text-xs text-zinc-500 mt-0.5">Generate cards, explain topics, build a study plan</p>
+                              <p className="text-sm font-bold text-white leading-none">Create a card</p>
+                              <p className="text-xs text-zinc-500 mt-0.5">Share what you're studying with the community</p>
                             </div>
-                            <span className="ml-auto text-xs font-bold text-violet-400 flex-shrink-0">Try it →</span>
+                            <span className="ml-auto text-xs font-bold text-violet-400 flex-shrink-0">Start →</span>
                           </div>
                         </button>
                       </div>
@@ -1411,22 +1413,24 @@ export default function Dashboard() {
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-              <div className="relative mb-5">
-                <ArielLoader size={56} />
+              <div className="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-5">
+                <svg className="w-7 h-7 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
               </div>
               <p className="text-base font-bold text-white">
-                {activeSubject || activeTopic ? 'Nothing here yet' : 'Your feed is wide open'}
+                {activeSubject || activeTopic ? 'Nothing here yet' : 'The feed is empty'}
               </p>
               <p className="text-sm text-zinc-500 mt-2 leading-relaxed max-w-[240px]">
                 {activeSubject || activeTopic
                   ? 'No cards in this area yet — be the first to add some.'
-                  : "Tell me what you're studying and I'll fill this up for you."}
+                  : 'Be the first to post. Create a card and share what you know.'}
               </p>
               <button
-                onClick={openAriel}
-                className="mt-6 px-6 py-2.5 rounded-full bg-violet-400 hover:bg-violet-400 active:scale-95 text-white text-sm font-bold transition-all"
+                onClick={() => router.push('/create-cards')}
+                className="mt-6 px-6 py-2.5 rounded-full bg-violet-500 active:scale-95 text-white text-sm font-bold transition-all"
               >
-                {activeSubject || activeTopic ? 'Create cards' : 'Start with Ariel'}
+                Create a card
               </button>
             </div>
           )}
