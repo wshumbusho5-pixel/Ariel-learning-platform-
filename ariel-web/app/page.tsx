@@ -510,29 +510,40 @@ export default function Home() {
 
         <div style={{ position: 'absolute', top: '30%', left: '50%', transform: 'translate(-50%, -50%)', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,92,252,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        <div className="flex justify-center" style={{ position: 'relative', zIndex: 1, marginBottom: 4 }}>
-          <ArielWordmark size={48} variant="dark" showTagline={false} animate />
+        <div className="flex justify-center" style={{ position: 'relative', zIndex: 1, marginTop: 8, marginBottom: 8 }}>
+          <ArielWordmark size={52} variant="dark" showTagline={false} animate />
         </div>
 
-        <div className="flex justify-center" style={{ transform: 'scale(0.68)', transformOrigin: 'center center', margin: '-48px 0', position: 'relative', zIndex: 1 }}>
+        <div className="flex justify-center" style={{ transform: 'scale(0.68)', transformOrigin: 'center top', marginBottom: '-86px', position: 'relative', zIndex: 1 }}>
           <PhoneMockup />
         </div>
 
         <div className="w-full" style={{ position: 'relative', zIndex: 1 }}>
-          <div className="text-center mb-6">
-            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#52525b', textTransform: 'uppercase', marginBottom: 10 }}>
+          <div className="text-center mb-5">
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', color: '#52525b', textTransform: 'uppercase', marginBottom: 8 }}>
               The Social Study App
             </p>
-            <h1 style={{ fontSize: 34, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 0 }}>
+            <h1 style={{ fontSize: 34, fontWeight: 900, color: '#fff', lineHeight: 1.0, letterSpacing: '-0.03em', marginBottom: 8 }}>
               Go{' '}
               <span style={{
                 fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
                 fontStyle: 'italic', fontWeight: 700, fontSize: 40, color: '#9B7FFF',
               }}>deeper.</span>
             </h1>
-            <p style={{ fontSize: 13, color: '#71717a', marginTop: 10, lineHeight: 1.6, maxWidth: 280, margin: '10px auto 0' }}>
-              Flashcards, a social feed, and short clips — the whole learning stack in one place.
-            </p>
+          </div>
+
+          {/* Social proof */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 16 }}>
+            <div style={{ display: 'flex' }}>
+              {['#7c5cfc','#0ea5e9','#22c55e','#f59e0b','#f43f5e'].map((color, i) => (
+                <div key={i} style={{ width: 26, height: 26, borderRadius: '50%', background: color, border: '2px solid #000', marginLeft: i === 0 ? 0 : -8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff' }}>
+                  {['A','M','K','J','S'][i]}
+                </div>
+              ))}
+            </div>
+            <span style={{ fontSize: 12, color: '#71717a' }}>
+              Join <span style={{ color: '#e7e9ea', fontWeight: 700 }}>500+</span> students already learning
+            </span>
           </div>
 
           <button
@@ -570,8 +581,8 @@ export default function Home() {
           width: '48%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
           paddingLeft: 'max(64px, 7vw)', paddingRight: 48, paddingTop: 48, paddingBottom: 48,
         }}>
-          <div style={{ marginBottom: 52, animation: 'fadeUp 0.6s ease both' }}>
-            <ArielWordmark size={64} variant="dark" showTagline={false} animate />
+          <div style={{ marginBottom: 60, marginTop: 8, animation: 'fadeUp 0.6s ease both' }}>
+            <ArielWordmark size={72} variant="dark" showTagline={false} animate />
           </div>
 
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: '#52525b', textTransform: 'uppercase', marginBottom: 14, animation: 'fadeUp 0.6s 0.08s ease both' }}>
@@ -601,6 +612,20 @@ export default function Home() {
           </div>
 
           <div style={{ maxWidth: 340, marginTop: 40, animation: 'fadeUp 0.6s 0.38s ease both' }}>
+            {/* Social proof */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+              <div style={{ display: 'flex' }}>
+                {['#7c5cfc','#0ea5e9','#22c55e','#f59e0b','#f43f5e'].map((color, i) => (
+                  <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: color, border: '2px solid #000', marginLeft: i === 0 ? 0 : -9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff' }}>
+                    {['A','M','K','J','S'][i]}
+                  </div>
+                ))}
+              </div>
+              <span style={{ fontSize: 13, color: '#71717a', lineHeight: 1.4 }}>
+                Join <span style={{ color: '#e7e9ea', fontWeight: 700 }}>500+</span> students<br />already learning
+              </span>
+            </div>
+
             <button
               onClick={openSignup}
               style={{ background: '#fff', color: '#000', borderRadius: 999, padding: '15px 0', fontSize: 15, fontWeight: 800, border: 'none', cursor: 'pointer', width: '100%', letterSpacing: '-0.01em', transition: 'transform 0.12s ease, box-shadow 0.12s ease' }}
