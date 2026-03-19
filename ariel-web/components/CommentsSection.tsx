@@ -186,7 +186,7 @@ export default function CommentsSection({ deckId }: CommentsSectionProps) {
           <div className="bg-gray-100 rounded-2xl px-4 py-2">
             <div className="flex items-center gap-2 mb-1">
               <Link href={`/profile/${comment.user_id}`} className="font-semibold text-gray-900 text-sm hover:underline">
-                {comment.author_full_name || comment.author_username || 'User'}
+                {comment.author_username || comment.author_full_name || 'User'}
               </Link>
               {comment.author_is_verified && (
                 <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
