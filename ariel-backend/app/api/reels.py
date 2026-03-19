@@ -2,16 +2,18 @@
 Reels API - TikTok-style educational video shorts
 """
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form, Body
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 import json
 import uuid
+import time
 import asyncio
 from functools import partial
 import cloudinary
 import cloudinary.uploader
+import cloudinary.utils
 
 from app.services.database_service import db_service
 from app.api.auth import get_current_user_dependency
@@ -345,6 +347,84 @@ async def get_following_reels(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to load following reels: {str(e)}"
         )
+
+
+@router.get("/sign-upload")
+async def sign_upload(current_user: User = Depends(get_current_user_dependency)):
+    """Return a Cloudinary signed upload params so the frontend can upload directly."""
+    timestamp = int(time.time())
+    public_id = f"reels/{uuid.uuid4()}"
+    params_to_sign = {"timestamp": timestamp, "public_id": public_id}
+    signature = cloudinary.utils.api_sign_request(params_to_sign, settings.CLOUDINARY_API_SECRET)
+    return {
+        "signature": signature,
+        "timestamp": timestamp,
+        "public_id": public_id,
+        "api_key": settings.CLOUDINARY_API_KEY,
+        "cloud_name": settings.CLOUDINARY_CLOUD_NAME,
+    }
+
+
+class SaveReelRequest(BaseModel):
+    video_url: str
+    title: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    hashtags: Optional[List[str]] = None
+
+
+@router.post("/save")
+async def save_reel(
+    body: SaveReelRequest,
+    current_user: User = Depends(get_current_user_dependency)
+):
+    """Save a reel after the frontend has uploaded the video directly to Cloudinary."""
+    db = db_service.get_db()
+    try:
+        # Inject eo_60 trim transformation into the Cloudinary URL
+        video_url = body.video_url.replace("/video/upload/", "/video/upload/eo_60/")
+        thumbnail_url = (
+            video_url
+            .replace("/video/upload/eo_60/", "/video/upload/eo_60,so_0,f_jpg/")
+            .rsplit(".", 1)[0] + ".jpg"
+        )
+
+        reel_doc = {
+            "video_url": video_url,
+            "thumbnail_url": thumbnail_url,
+            "title": body.title,
+            "description": body.description,
+            "category": body.category,
+            "hashtags": body.hashtags,
+            "creator_id": current_user.id,
+            "likes": 0,
+            "comments_count": 0,
+            "shares_count": 0,
+            "views": 0,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+        }
+        result = await db["reels"].insert_one(reel_doc)
+
+        await db["activities"].insert_one({
+            "user_id": current_user.id,
+            "username": current_user.username,
+            "profile_picture": getattr(current_user, "profile_picture", None),
+            "activity_type": "reel_posted",
+            "metadata": {
+                "reel_id": str(result.inserted_id),
+                "title": body.title,
+                "category": body.category,
+            },
+            "created_at": datetime.utcnow(),
+            "likes": 0,
+            "liked_by": [],
+        })
+
+        return {"success": True, "reel_id": str(result.inserted_id), "video_url": video_url}
+    except Exception as e:
+        logger.error(f"Error saving reel: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save reel: {str(e)}")
 
 
 @router.post("/upload")
