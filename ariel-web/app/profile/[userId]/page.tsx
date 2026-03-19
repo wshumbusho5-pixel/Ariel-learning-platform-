@@ -38,6 +38,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [showUnfollowConfirm, setShowUnfollowConfirm] = useState(false);
 
   useEffect(() => { loadProfile(); }, [userId]);
 
@@ -73,19 +74,25 @@ export default function ProfilePage() {
     else if (activeTab === 'following') loadFollowing();
   }, [activeTab, userId]);
 
-  const handleFollowToggle = async () => {
+  const handleFollow = async () => {
     if (!profile) return;
     setIsActionLoading(true);
     try {
-      if (isFollowing) {
-        await socialAPI.unfollowUser(userId);
-        setIsFollowing(false);
-        setProfile({ ...profile, followers_count: profile.followers_count - 1 });
-      } else {
-        await socialAPI.followUser(userId);
-        setIsFollowing(true);
-        setProfile({ ...profile, followers_count: profile.followers_count + 1 });
-      }
+      await socialAPI.followUser(userId);
+      setIsFollowing(true);
+      setProfile({ ...profile, followers_count: profile.followers_count + 1 });
+    } catch {}
+    setIsActionLoading(false);
+  };
+
+  const handleUnfollow = async () => {
+    if (!profile) return;
+    setShowUnfollowConfirm(false);
+    setIsActionLoading(true);
+    try {
+      await socialAPI.unfollowUser(userId);
+      setIsFollowing(false);
+      setProfile({ ...profile, followers_count: profile.followers_count - 1 });
     } catch {}
     setIsActionLoading(false);
   };
@@ -152,17 +159,33 @@ export default function ProfilePage() {
           {/* Follow button */}
           <div className="flex-1 flex justify-end pt-1">
             <button
-              onClick={handleFollowToggle}
+              onClick={isFollowing ? () => setShowUnfollowConfirm(true) : handleFollow}
               disabled={isActionLoading}
               className={`px-5 py-1.5 rounded-full text-[14px] font-bold transition-all ${
                 isFollowing
-                  ? 'bg-transparent border border-zinc-700 text-zinc-300 hover:border-red-500/60 hover:text-red-400'
+                  ? 'bg-transparent border border-zinc-700 text-zinc-300'
                   : 'bg-white text-black hover:bg-zinc-200'
               } ${isActionLoading ? 'opacity-50' : ''}`}
             >
               {isActionLoading ? '…' : isFollowing ? 'Following' : 'Follow'}
             </button>
           </div>
+
+          {/* Unfollow confirmation sheet */}
+          {showUnfollowConfirm && (
+            <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={() => setShowUnfollowConfirm(false)}>
+              <div className="w-full max-w-sm bg-zinc-900 rounded-t-2xl p-4 pb-8" onClick={e => e.stopPropagation()}>
+                <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4" />
+                <p className="text-center text-zinc-400 text-sm mb-4">Unfollow <span className="text-white font-semibold">@{profile?.username}</span>?</p>
+                <button onClick={handleUnfollow} className="w-full py-3 rounded-xl bg-red-500/20 text-red-400 font-bold text-sm mb-2 border border-red-500/30">
+                  Unfollow
+                </button>
+                <button onClick={() => setShowUnfollowConfirm(false)} className="w-full py-3 rounded-xl bg-zinc-800 text-zinc-300 font-bold text-sm">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Name + username */}

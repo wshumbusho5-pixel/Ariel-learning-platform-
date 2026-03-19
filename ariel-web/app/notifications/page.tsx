@@ -47,8 +47,9 @@ function NotifAvatar({ n }: { n: Notification }) {
 function FollowBackButton({ actorId }: { actorId: string }) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [confirm, setConfirm] = useState(false);
 
-  const toggle = async () => {
+  const follow = async () => {
     setLoading(true);
     try {
       const res = await socialAPI.followUser(actorId);
@@ -57,9 +58,29 @@ function FollowBackButton({ actorId }: { actorId: string }) {
     setLoading(false);
   };
 
+  const unfollow = async () => {
+    setLoading(true);
+    setConfirm(false);
+    try {
+      const res = await socialAPI.followUser(actorId);
+      setIsFollowing(res.is_following);
+    } catch {}
+    setLoading(false);
+  };
+
+  if (confirm) {
+    return (
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <span className="text-xs text-zinc-400">Unfollow?</span>
+        <button onClick={unfollow} className="px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">Yes</button>
+        <button onClick={() => setConfirm(false)} className="px-3 py-1 rounded-full text-xs font-bold border border-zinc-700 text-zinc-400">No</button>
+      </div>
+    );
+  }
+
   return (
     <button
-      onClick={toggle}
+      onClick={isFollowing ? () => setConfirm(true) : follow}
       disabled={loading}
       className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
         isFollowing
