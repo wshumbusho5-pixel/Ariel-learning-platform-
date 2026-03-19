@@ -155,8 +155,11 @@ export default function CreateCardsPage() {
       );
       setSaved(true);
       setTimeout(() => router.push('/deck'), 1200);
-    } catch {
-      setError('Something went wrong. Please try again.');
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || err?.message || 'Something went wrong.';
+      setError(msg.includes('timeout') || msg.includes('Network')
+        ? 'Could not reach the server. Check your connection and try again.'
+        : msg);
     } finally {
       setSaving(false);
     }
@@ -429,6 +432,12 @@ export default function CreateCardsPage() {
                     <textarea
                       value={bulkText}
                       onChange={e => { setBulkText(e.target.value); setBulkError(''); }}
+                      onPaste={e => {
+                        e.preventDefault();
+                        const text = e.clipboardData.getData('text/plain');
+                        setBulkText(text);
+                        setBulkError('');
+                      }}
                       placeholder={`What is photosynthesis?\tProcess plants use to convert light to energy\nWhat is mitosis?\tCell division producing identical daughter cells`}
                       rows={6}
                       className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/40 resize-none leading-relaxed font-mono text-xs"
