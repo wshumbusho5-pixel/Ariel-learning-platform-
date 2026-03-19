@@ -12,6 +12,7 @@ import Onboarding from '@/components/Onboarding';
 import ArielIcon from '@/components/ArielIcon';
 import ArielWordmark from '@/components/ArielWordmark';
 import ArielLoader from '@/components/ArielLoader';
+import { timeAgo } from '@/lib/time';
 import SubjectIcon from '@/components/SubjectIcon';
 import { SUBJECT_META, TOPICS_BY_SUBJECT, getTopics, getSubjectKey as getSubjectKeyFromLib } from '@/lib/subjects';
 
@@ -95,13 +96,6 @@ function getSubjectKey(card: FeedCard): string {
   return getSubjectKeyFromLib({ subject: card.subject, topic: card.topic });
 }
 
-function timeAgo(d?: string) {
-  if (!d) return '';
-  const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
-  if (s < 3600) return `${Math.floor(s / 60)}m`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h`;
-  return `${Math.floor(s / 86400)}d`;
-}
 
 // Time-aware seeded view count — grows with post age, capped at 5k, varies per card
 function seedViews(cardId: string, createdAt?: string): string {

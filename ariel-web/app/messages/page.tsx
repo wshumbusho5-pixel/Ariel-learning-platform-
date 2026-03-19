@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { messagesAPI, authAPI } from '@/lib/api';
+import { timeAgo, parseUTC } from '@/lib/time';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 
@@ -23,18 +24,9 @@ interface Conversation {
 
 type Tab = 'all' | 'unread' | 'buddies';
 
-function timeAgo(d?: string) {
-  if (!d) return '';
-  const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
-  if (s < 60) return 'now';
-  if (s < 3600) return `${Math.floor(s / 60)}m`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h`;
-  return `${Math.floor(s / 86400)}d`;
-}
-
 function isOnline(lastSeen?: string): boolean {
   if (!lastSeen) return false;
-  return Date.now() - new Date(lastSeen).getTime() < 2 * 60 * 1000;
+  return Date.now() - parseUTC(lastSeen).getTime() < 2 * 60 * 1000;
 }
 
 function Avatar({ name, size = 'md' }: { name?: string; size?: 'sm' | 'md' | 'lg' }) {

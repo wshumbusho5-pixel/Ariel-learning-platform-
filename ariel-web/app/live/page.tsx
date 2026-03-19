@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { parseUTC } from '@/lib/time';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
 
@@ -74,9 +75,8 @@ export default function LivePage() {
 
   const formatTime = (dateString?: string) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = date.getTime() - now.getTime();
+    const date = parseUTC(dateString);
+    const diff = date.getTime() - Date.now();
     const hours = Math.abs(Math.floor(diff / (1000 * 60 * 60)));
     const minutes = Math.abs(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)));
 
