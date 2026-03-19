@@ -8,6 +8,8 @@ from datetime import datetime
 from pydantic import BaseModel
 import json
 import uuid
+import asyncio
+from functools import partial
 import cloudinary
 import cloudinary.uploader
 
@@ -370,24 +372,28 @@ async def upload_reel(
         # Upload video to Cloudinary
         content = await video.read()
         public_id = f"reels/{uuid.uuid4()}"
-        result = cloudinary.uploader.upload(
-            content,
-            public_id=public_id,
-            resource_type="video",
-            overwrite=True,
-            eager=[{"end_offset": "60", "format": "mp4"}],
-            eager_async=False,
+        # Run blocking Cloudinary upload in a thread so it doesn't freeze the event loop
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            partial(
+                cloudinary.uploader.upload,
+                content,
+                public_id=public_id,
+                resource_type="video",
+                overwrite=True,
+            )
         )
-        # Use the trimmed (≤60s) version if Cloudinary generated it, else fall back
-        if result.get("eager") and len(result["eager"]) > 0:
-            video_url = result["eager"][0]["secure_url"]
-        else:
-            video_url = result["secure_url"]
+        raw_url = result["secure_url"]
 
-        # Cloudinary auto-generates a thumbnail from the first frame
+        # Inject eo_60 (end-offset 60s) into the URL so Cloudinary CDN trims at playback.
+        # No extra processing time — trimming is applied lazily on the CDN edge.
+        video_url = raw_url.replace("/video/upload/", "/video/upload/eo_60/")
+
+        # Thumbnail from first frame of trimmed video
         thumbnail_url = (
             video_url
-            .replace("/video/upload/", "/video/upload/so_0,f_jpg/")
+            .replace("/video/upload/eo_60/", "/video/upload/eo_60,so_0,f_jpg/")
             .rsplit(".", 1)[0] + ".jpg"
         )
 
