@@ -365,7 +365,7 @@ export default function ProfilePage() {
 
             <div className="mb-4">
               <p className="text-[17px] font-black text-white mb-0.5">
-                {user?.full_name || user?.username}
+                {user?.username || user?.full_name}
               </p>
               <div className="flex items-center gap-3 mt-0.5">
                 <span className="text-xs font-semibold text-zinc-500">Level {level}</span>

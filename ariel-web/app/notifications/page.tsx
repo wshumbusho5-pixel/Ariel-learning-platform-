@@ -36,7 +36,7 @@ function NotifAvatar({ n }: { n: Notification }) {
       />
     );
   }
-  const initial = (n.actor_full_name || n.actor_username || '?')[0].toUpperCase();
+  const initial = (n.actor_username || n.actor_full_name || '?')[0].toUpperCase();
   return (
     <div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
       <span className="text-white font-bold text-base">{initial}</span>
@@ -97,7 +97,7 @@ function NotificationRow({ n }: { n: Notification }) {
   const router = useRouter();
   const isFollow = n.notification_type === 'new_follower';
   const isDuel = n.notification_type === 'duel_challenge';
-  const name = n.actor_full_name || n.actor_username;
+  const name = n.actor_username || n.actor_full_name;
   const roomId = n.metadata?.room_id;
 
   const handleTap = () => {

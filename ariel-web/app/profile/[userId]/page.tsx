@@ -188,11 +188,11 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Name + username */}
+        {/* Name + username — username is primary (like Instagram) */}
         <div className="mt-3">
           <div className="flex items-center gap-2">
             <h1 className="text-[20px] font-bold" style={{ color: '#e7e9ea' }}>
-              {profile.full_name || profile.username || 'Anonymous'}
+              {profile.username || profile.full_name || 'Anonymous'}
             </h1>
             {profile.is_verified && (
               <svg className="w-5 h-5 text-violet-400" fill="currentColor" viewBox="0 0 20 20">
@@ -205,8 +205,8 @@ export default function ProfilePage() {
               </span>
             )}
           </div>
-          {profile.username && (
-            <p className="text-[14px] mt-0.5" style={{ color: '#8b9099' }}>@{profile.username}</p>
+          {profile.full_name && (
+            <p className="text-[14px] mt-0.5" style={{ color: '#8b9099' }}>{profile.full_name}</p>
           )}
           {profile.follows_you && (
             <span className="inline-block mt-1 px-2 py-0.5 text-[11px] font-semibold bg-zinc-800 text-zinc-400 rounded-full">
