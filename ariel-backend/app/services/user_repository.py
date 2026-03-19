@@ -72,24 +72,28 @@ class UserRepository:
     @staticmethod
     async def create_oauth_user(user_info: dict, provider: AuthProvider) -> User:
         """Create or update user from OAuth provider"""
+        import re
         db = db_service.get_db()
 
-        # Check if user exists
+        # Case-insensitive email lookup so Google's lowercase email matches
+        # accounts created with mixed-case emails (or vice versa)
+        email = user_info["email"].strip()
         existing = await db[UserRepository.collection_name].find_one(
-            {"email": user_info["email"]}
+            {"email": {"$regex": f"^{re.escape(email)}$", "$options": "i"}}
         )
 
         if existing:
-            # Update existing user
+            # Only set profile_picture from OAuth if the user has none yet
+            update_fields: dict = {"last_login": datetime.utcnow()}
+            if not existing.get("profile_picture") and user_info.get("profile_picture"):
+                update_fields["profile_picture"] = user_info["profile_picture"]
+
             await db[UserRepository.collection_name].update_one(
                 {"_id": existing["_id"]},
-                {
-                    "$set": {
-                        "last_login": datetime.utcnow(),
-                        "profile_picture": user_info.get("profile_picture"),
-                    }
-                }
+                {"$set": update_fields}
             )
+            # Return fresh data (merge update_fields into existing before hydrating)
+            existing.update(update_fields)
             return UserRepository._hydrate_user(existing)
 
         # Create new OAuth user
