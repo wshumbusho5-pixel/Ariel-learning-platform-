@@ -375,12 +375,18 @@ async def upload_reel(
             public_id=public_id,
             resource_type="video",
             overwrite=True,
+            eager=[{"end_offset": "60", "format": "mp4"}],
+            eager_async=False,
         )
-        video_url = result["secure_url"]
+        # Use the trimmed (≤60s) version if Cloudinary generated it, else fall back
+        if result.get("eager") and len(result["eager"]) > 0:
+            video_url = result["eager"][0]["secure_url"]
+        else:
+            video_url = result["secure_url"]
 
         # Cloudinary auto-generates a thumbnail from the first frame
         thumbnail_url = (
-            result["secure_url"]
+            video_url
             .replace("/video/upload/", "/video/upload/so_0,f_jpg/")
             .rsplit(".", 1)[0] + ".jpg"
         )

@@ -41,13 +41,6 @@ export default function ReelUploadPage() {
       return;
     }
 
-    // Validate file size (max 100MB)
-    const maxSize = 100 * 1024 * 1024; // 100MB
-    if (file.size > maxSize) {
-      alert('Video file is too large. Maximum size is 100MB');
-      return;
-    }
-
     setSelectedFile(file);
     setVideoPreview(URL.createObjectURL(file));
   };
@@ -145,7 +138,7 @@ export default function ReelUploadPage() {
               </div>
               <div className="text-center">
                 <p className="text-white font-semibold text-lg mb-1">Select video to upload</p>
-                <p className="text-gray-400 text-sm">Max 60 seconds, up to 100MB</p>
+                <p className="text-gray-400 text-sm">Videos longer than 60s are trimmed automatically</p>
               </div>
             </button>
           ) : (
