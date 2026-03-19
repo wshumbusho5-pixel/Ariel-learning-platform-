@@ -281,6 +281,7 @@ function SectionRow({
   isUserTopic,
   isNew: isFreshSection,
   heroLayout,
+  gridLayout,
   onTap,
 }: {
   label: string;
@@ -289,6 +290,7 @@ function SectionRow({
   isUserTopic: boolean;
   isNew?: boolean;
   heroLayout?: boolean;
+  gridLayout?: boolean;
   onTap: (reel: Reel) => void;
 }) {
   const router = useRouter();
@@ -322,7 +324,20 @@ function SectionRow({
         </button>
       </div>
 
-      {heroLayout && reels.length > 0 ? (
+      {gridLayout && reels.length > 0 ? (
+        /* 2-col portrait grid (mobile) → 3-col (lg) → 4-col (xl)
+           Fixed height with internal scroll so it doesn't blow up the page */
+        <div
+          className="px-4 overflow-y-auto"
+          style={{ maxHeight: 560, scrollbarWidth: 'none' } as React.CSSProperties}
+        >
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-2">
+            {reels.map(reel => (
+              <ReelCard key={reel.id} reel={reel} onTap={() => onTap(reel)} isNew={isFreshSection} />
+            ))}
+          </div>
+        </div>
+      ) : heroLayout && reels.length > 0 ? (
         <>
           {/* Hero — full-width 16:9 */}
           <HeroCard reel={reels[0]} onTap={() => onTap(reels[0])} />
@@ -859,7 +874,7 @@ export default function ReelsPage() {
                   reels={newThisWeek}
                   isUserTopic={false}
                   isNew
-                  heroLayout
+                  gridLayout
                   onTap={setActiveReel}
                 />
               ) : recentlyAdded.length > 0 ? (
@@ -869,7 +884,7 @@ export default function ReelsPage() {
                   subjectKey="recent"
                   reels={recentlyAdded}
                   isUserTopic={false}
-                  heroLayout
+                  gridLayout
                   onTap={setActiveReel}
                 />
               ) : null}
