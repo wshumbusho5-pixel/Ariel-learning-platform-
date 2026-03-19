@@ -128,7 +128,10 @@ async def oauth_login(oauth_request: OAuthLoginRequest):
                 "role": user.role,
                 "total_points": user.total_points,
                 "level": user.level,
-                "current_streak": user.current_streak
+                "current_streak": user.current_streak,
+                "onboarding_completed": user.onboarding_completed,
+                "subjects": user.subjects,
+                "education_level": user.education_level,
             }
         )
     except HTTPException:
