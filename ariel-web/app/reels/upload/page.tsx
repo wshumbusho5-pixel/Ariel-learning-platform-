@@ -43,57 +43,46 @@ export default function ReelUploadPage() {
 
     setUploading(true);
     setUploadProgress(0);
-    setStatusText('Preparing upload…');
+    setStatusText('Uploading video…');
 
     try {
-      // 1. Get Cloudinary signed params from backend
-      const { data: sig } = await api.get('/api/reels/sign-upload');
-
-      // 2. Upload directly to Cloudinary via XHR so we get real progress
-      setStatusText('Uploading video…');
-      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${sig.cloud_name}/video/upload`;
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const token = localStorage.getItem('auth_token') || '';
 
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('api_key', sig.api_key);
-      formData.append('timestamp', sig.timestamp);
-      formData.append('signature', sig.signature);
-      formData.append('public_id', sig.public_id);
+      formData.append('video', selectedFile);
+      formData.append('title', title.trim());
+      if (description.trim()) formData.append('description', description.trim());
+      if (category) formData.append('category', category);
+      if (hashtags.trim()) {
+        const tags = hashtags.split('#').filter(t => t.trim()).map(t => t.trim());
+        formData.append('hashtags', JSON.stringify(tags));
+      }
 
-      const videoUrl = await new Promise<string>((resolve, reject) => {
+      // Use XHR instead of axios — no timeout, real upload progress
+      await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', cloudinaryUrl);
+        xhr.open('POST', `${apiBase}/api/reels/upload`);
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
-            setUploadProgress(Math.round((e.loaded / e.total) * 90));
+            setUploadProgress(Math.round((e.loaded / e.total) * 95));
           }
         };
         xhr.onload = () => {
-          if (xhr.status === 200) {
-            const res = JSON.parse(xhr.responseText);
-            resolve(res.secure_url);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
           } else {
-            reject(new Error(`Cloudinary error: ${xhr.responseText}`));
+            try {
+              const err = JSON.parse(xhr.responseText);
+              reject(new Error(err.detail || 'Upload failed'));
+            } catch {
+              reject(new Error(`Upload failed (${xhr.status})`));
+            }
           }
         };
-        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.onerror = () => reject(new Error('Upload failed — check your connection'));
         xhr.send(formData);
-      });
-
-      // 3. Save reel metadata to our backend
-      setStatusText('Saving…');
-      setUploadProgress(95);
-
-      const tags = hashtags
-        ? hashtags.split('#').filter(t => t.trim()).map(t => t.trim())
-        : [];
-
-      await api.post('/api/reels/save', {
-        video_url: videoUrl,
-        title: title.trim(),
-        description: description.trim() || null,
-        category: category || null,
-        hashtags: tags.length ? tags : null,
       });
 
       setUploadProgress(100);
