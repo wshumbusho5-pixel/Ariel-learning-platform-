@@ -10,6 +10,9 @@ import json
 import uuid
 import time
 import asyncio
+import tempfile
+import os
+import subprocess
 from functools import partial
 import cloudinary
 import cloudinary.uploader
@@ -449,30 +452,59 @@ async def upload_reel(
             except:
                 hashtag_list = [h.strip() for h in hashtags.split('#') if h.strip()]
 
-        # Upload video to Cloudinary using chunked upload (avoids loading full file into memory)
+        # Save upload to a temp file so ffmpeg can process it
+        suffix = os.path.splitext(video.filename or "video.mp4")[1] or ".mp4"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_in:
+            tmp_in_path = tmp_in.name
+            content = await video.read()
+            tmp_in.write(content)
+
+        tmp_out_path = tmp_in_path.replace(suffix, "_out.mp4")
+        try:
+            # Trim to 60s and compress to ~50MB target (2500k video + 128k audio)
+            proc = await asyncio.create_subprocess_exec(
+                "ffmpeg", "-y",
+                "-i", tmp_in_path,
+                "-t", "60",
+                "-vcodec", "libx264", "-b:v", "2500k", "-preset", "fast",
+                "-acodec", "aac", "-b:a", "128k",
+                "-movflags", "+faststart",
+                tmp_out_path,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            await proc.communicate()
+            upload_path = tmp_out_path if os.path.exists(tmp_out_path) else tmp_in_path
+        except Exception:
+            upload_path = tmp_in_path  # ffmpeg not available, upload original
+
+        # Upload compressed file to Cloudinary
         public_id = f"reels/{uuid.uuid4()}"
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
             None,
             partial(
                 cloudinary.uploader.upload_large,
-                video.file,
+                upload_path,
                 public_id=public_id,
                 resource_type="video",
                 overwrite=True,
-                chunk_size=6 * 1024 * 1024,  # 6MB chunks
+                chunk_size=6 * 1024 * 1024,
             )
         )
+
+        # Clean up temp files
+        for p in [tmp_in_path, tmp_out_path]:
+            try: os.unlink(p)
+            except Exception: pass
+
         raw_url = result["secure_url"]
+        video_url = raw_url
 
-        # Inject eo_60 (end-offset 60s) into the URL so Cloudinary CDN trims at playback.
-        # No extra processing time — trimming is applied lazily on the CDN edge.
-        video_url = raw_url.replace("/video/upload/", "/video/upload/eo_60/")
-
-        # Thumbnail from first frame of trimmed video
+        # Thumbnail from first frame
         thumbnail_url = (
             video_url
-            .replace("/video/upload/eo_60/", "/video/upload/eo_60,so_0,f_jpg/")
+            .replace("/video/upload/", "/video/upload/so_0,f_jpg/")
             .rsplit(".", 1)[0] + ".jpg"
         )
 
