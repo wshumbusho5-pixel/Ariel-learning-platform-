@@ -714,6 +714,7 @@ function ReelsRow({ reels, fallbackTopics, onNavigate }: {
   onNavigate: (path: string) => void;
 }) {
   const hasReal = reels.length > 0;
+  if (!hasReal) return null;
 
   return (
     <div className="-mx-4">
