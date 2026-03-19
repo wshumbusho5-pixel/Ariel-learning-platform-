@@ -369,19 +369,18 @@ async def upload_reel(
             except:
                 hashtag_list = [h.strip() for h in hashtags.split('#') if h.strip()]
 
-        # Upload video to Cloudinary
-        content = await video.read()
+        # Upload video to Cloudinary using chunked upload (avoids loading full file into memory)
         public_id = f"reels/{uuid.uuid4()}"
-        # Run blocking Cloudinary upload in a thread so it doesn't freeze the event loop
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
             None,
             partial(
-                cloudinary.uploader.upload,
-                content,
+                cloudinary.uploader.upload_large,
+                video.file,
                 public_id=public_id,
                 resource_type="video",
                 overwrite=True,
+                chunk_size=6 * 1024 * 1024,  # 6MB chunks
             )
         )
         raw_url = result["secure_url"]
