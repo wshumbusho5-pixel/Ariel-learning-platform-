@@ -115,9 +115,17 @@ async def main():
         if u:
             bot_lookup[bot_id] = u
 
+    # Delete old bot comments from BOTH collections
+    print("\nDeleting old bot comments from comments collection...")
+    bot_oids = [ObjectId(bid) for bid in bot_ids]
+    del2 = await db.comments.delete_many({"user_id": {"$in": bot_oids}})
+    print(f"  Deleted {del2.deleted_count} old bot comments from comments collection")
+
     # For each card, pick 1-3 random bots (not the card's owner) to leave comments
-    print("Seeding card comments...")
+    print("Seeding comments into BOTH collections...")
+    total_card_comments = 0
     total_comments = 0
+
     for card in bot_cards:
         card_id_str = str(card["_id"])
         card_owner_id = str(card["user_id"])
@@ -134,26 +142,48 @@ async def main():
             if not commenter:
                 continue
             days_ago = random.randint(1, 30)
-            comment_doc = {
+            text = random.choice(COMMENT_POOL)
+            created = datetime.utcnow() - timedelta(days=days_ago)
+            likes = random.randint(0, 22)
+
+            # ── card_comments collection (CommentsDrawer in practice feed) ──
+            await db.card_comments.insert_one({
                 "_id": ObjectId(),
                 "card_id": card_id_str,
-                "user_id": commenter_id,           # string — matches how the API stores it
+                "user_id": commenter_id,           # string
                 "username": commenter.get("username", ""),
                 "profile_picture": commenter.get("profile_picture"),
-                "content": random.choice(COMMENT_POOL),
-                "created_at": datetime.utcnow() - timedelta(days=days_ago),
-                "likes": random.randint(0, 22),
+                "content": text,
+                "created_at": created,
+                "likes": likes,
                 "liked_by": [],
                 "is_deleted": False,
-            }
-            await db.card_comments.insert_one(comment_doc)
+            })
+            total_card_comments += 1
+
+            # ── comments collection (dashboard inline comments) ──
+            await db.comments.insert_one({
+                "_id": ObjectId(),
+                "deck_id": card_id_str,            # card_id stored as deck_id
+                "user_id": ObjectId(commenter_id), # ObjectId — for author lookup
+                "content": text,
+                "parent_comment_id": None,
+                "likes": likes,
+                "liked_by": [],
+                "is_deleted": False,
+                "is_edited": False,
+                "created_at": created,
+                "updated_at": created,
+            })
             total_comments += 1
 
-    print(f"  Seeded {total_comments} card comments across {len(bot_cards)} cards")
+    print(f"  Seeded {total_card_comments} card_comments + {total_comments} comments")
 
-    # Quick sanity check
-    count = await db.card_comments.count_documents({"is_deleted": {"$ne": True}})
-    print(f"\nTotal card_comments in DB: {count}")
+    # Sanity check
+    cc = await db.card_comments.count_documents({"is_deleted": {"$ne": True}})
+    dc = await db.comments.count_documents({"is_deleted": False, "parent_comment_id": None})
+    print(f"\ncard_comments total: {cc}")
+    print(f"comments total (top-level): {dc}")
 
     client.close()
     print("\nDone.")

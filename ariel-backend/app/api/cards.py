@@ -214,7 +214,7 @@ async def get_trending_cards(
                     "profile_picture": creator.get("profile_picture"),
                     "is_verified": creator.get("is_verified", False),
                 }
-            # Attach comment count + 3 preview comments
+            # comment_count + preview_comments from card_comments (for practice feed drawer)
             card_dict["comment_count"] = await db.card_comments.count_documents(
                 {"card_id": card_id_str, "is_deleted": {"$ne": True}}
             )
@@ -228,6 +228,10 @@ async def get_trending_cards(
                     "text": c.get("content", ""),
                 })
             card_dict["preview_comments"] = preview
+            # Also count from comments collection (for dashboard inline section)
+            card_dict["comments_count"] = await db.comments.count_documents(
+                {"deck_id": card_id_str, "is_deleted": False, "parent_comment_id": None}
+            )
             enriched.append(card_dict)
         return enriched
     except Exception as e:
@@ -296,21 +300,11 @@ async def get_personalized_feed(
             if cstats:
                 card_dict["community_reviews"] = cstats["total_reviews"]
                 card_dict["community_pct_correct"] = cstats["pct_correct"]
-            # Attach comment count + 3 preview comments
+            # comments_count from `comments` collection (what the dashboard inline section reads)
             card_id_str = str(card.id)
-            card_dict["comment_count"] = await db.card_comments.count_documents(
-                {"card_id": card_id_str, "is_deleted": {"$ne": True}}
+            card_dict["comments_count"] = await db.comments.count_documents(
+                {"deck_id": card_id_str, "is_deleted": False, "parent_comment_id": None}
             )
-            preview = []
-            async for c in db.card_comments.find(
-                {"card_id": card_id_str, "is_deleted": {"$ne": True}}
-            ).sort("created_at", -1).limit(3):
-                preview.append({
-                    "username": c.get("username", ""),
-                    "profile_picture": c.get("profile_picture"),
-                    "text": c.get("content", ""),
-                })
-            card_dict["preview_comments"] = preview
             enriched.append(card_dict)
 
         return enriched
