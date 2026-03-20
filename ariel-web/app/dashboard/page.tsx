@@ -98,7 +98,7 @@ function getSubjectKey(card: FeedCard): string {
 
 
 // Time-aware seeded view count — grows with post age, capped at 5k, varies per card
-function seedViews(cardId: string, createdAt?: string): string {
+function seedViews(cardId: string, createdAt?: string, likes: number = 0): string {
   // Deterministic 0–1 variation factor from card ID
   let h = 0;
   for (let i = 0; i < cardId.length; i++) {
@@ -109,17 +109,19 @@ function seedViews(cardId: string, createdAt?: string): string {
   let n: number;
   if (createdAt) {
     const ageDays = (Date.now() - new Date(createdAt).getTime()) / 86_400_000;
-    if      (ageDays < 0.04) n = Math.floor(5   + v * 30);    //  < 1 hr:  5–35
-    else if (ageDays < 1)    n = Math.floor(30  + v * 120);   //  < 1 day: 30–150
-    else if (ageDays < 3)    n = Math.floor(150 + v * 500);   //  1–3 d:   150–650
-    else if (ageDays < 7)    n = Math.floor(500 + v * 1000);  //  3–7 d:   500–1500
-    else if (ageDays < 30)   n = Math.floor(1200 + v * 2000); //  1–4 wk:  1.2k–3.2k
-    else                     n = Math.floor(3000 + v * 2000); //  1+ mo:   3k–5k
+    if      (ageDays < 0.04) n = Math.floor(200  + v * 300);  //  < 1 hr:  200–500
+    else if (ageDays < 1)    n = Math.floor(400  + v * 600);  //  < 1 day: 400–1000
+    else if (ageDays < 3)    n = Math.floor(800  + v * 1200); //  1–3 d:   800–2000
+    else if (ageDays < 7)    n = Math.floor(1500 + v * 2000); //  3–7 d:   1.5k–3.5k
+    else if (ageDays < 30)   n = Math.floor(3000 + v * 4000); //  1–4 wk:  3k–7k
+    else                     n = Math.floor(6000 + v * 6000); //  1+ mo:   6k–12k
   } else {
-    n = Math.floor(200 + v * 800); // fallback: 200–1000
+    n = Math.floor(500 + v * 1500); // fallback: 500–2000
   }
 
-  n = Math.min(n, 5000);
+  // Views must always significantly exceed likes (views ≥ likes × 8)
+  n = Math.max(n, likes * 8);
+  n = Math.min(n, 99000);
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
 }
 
@@ -468,7 +470,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                 <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              <span className="text-[13px] font-normal" style={{ color: '#8b9099' }}>{seedViews(card.id, card.created_at)}</span>
+              <span className="text-[13px] font-normal" style={{ color: '#8b9099' }}>{seedViews(card.id, card.created_at, card.likes ?? 0)}</span>
             </div>
 
             {/* Save */}
