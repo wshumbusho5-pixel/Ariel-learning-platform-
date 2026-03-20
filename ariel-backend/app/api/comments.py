@@ -413,10 +413,11 @@ async def get_card_comments(
             continue
         reply_count = await db.comments.count_documents({"parent_comment_id": str(comment["_id"]), "is_deleted": False})
         is_liked = current_user_id in comment.get("liked_by", [])
+        uid_str = str(comment["user_id"])
         comments.append(CommentWithAuthor(
             id=str(comment["_id"]),
             deck_id=comment["deck_id"],
-            user_id=comment["user_id"],
+            user_id=uid_str,
             content=comment["content"],
             parent_comment_id=comment.get("parent_comment_id"),
             author_username=author.get("username"),
@@ -428,7 +429,7 @@ async def get_card_comments(
             reply_count=reply_count,
             is_edited=comment.get("is_edited", False),
             edited_at=comment.get("edited_at"),
-            is_author=(comment["user_id"] == current_user_id),
+            is_author=(uid_str == current_user_id),
             created_at=comment["created_at"]
         ))
     return comments

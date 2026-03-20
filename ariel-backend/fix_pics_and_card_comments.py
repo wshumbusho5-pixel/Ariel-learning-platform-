@@ -164,8 +164,8 @@ async def main():
             # ── comments collection (dashboard inline comments) ──
             await db.comments.insert_one({
                 "_id": ObjectId(),
-                "deck_id": card_id_str,            # card_id stored as deck_id
-                "user_id": ObjectId(commenter_id), # ObjectId — for author lookup
+                "deck_id": card_id_str,  # card_id stored as deck_id
+                "user_id": commenter_id, # string — consistent with real comments; endpoint wraps in ObjectId() for lookup
                 "content": text,
                 "parent_comment_id": None,
                 "likes": likes,
