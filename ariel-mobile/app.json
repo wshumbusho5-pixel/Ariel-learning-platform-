@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Ariel",
+    "slug": "ariel",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#09090b"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ariel.app",
+      "newArchEnabled": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#09090b"
+      },
+      "package": "com.ariel.app",
+      "newArchEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "ariel",
+    "plugins": [
+      "expo-camera",
+      "expo-image-picker",
+      "expo-av",
+      [
+        "expo-notifications",
+        {
+          "color": "#7c3aed"
+        }
+      ],
+      "expo-asset"
+    ]
+  }
+}

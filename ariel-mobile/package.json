@@ -1,0 +1,50 @@
+{
+  "name": "ariel-mobile",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^14.0.2",
+    "@gorhom/bottom-sheet": "^4.6.4",
+    "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-navigation/bottom-tabs": "^7.2.0",
+    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/native-stack": "^7.2.0",
+    "@tanstack/react-query": "^5.62.16",
+    "axios": "^1.7.9",
+    "expo": "^52.0.0",
+    "expo-asset": "~11.0.5",
+    "expo-av": "^15.0.1",
+    "expo-camera": "^16.0.6",
+    "expo-haptics": "^14.0.0",
+    "expo-image-picker": "^16.0.3",
+    "expo-linear-gradient": "~14.0.2",
+    "expo-notifications": "^0.29.9",
+    "expo-secure-store": "^14.0.0",
+    "expo-status-bar": "~2.0.0",
+    "moti": "^0.30.0",
+    "nativewind": "^4.1.23",
+    "react": "18.3.1",
+    "react-native": "0.76.5",
+    "react-native-gesture-handler": "~2.20.2",
+    "react-native-reanimated": "~3.16.1",
+    "react-native-safe-area-context": "4.12.0",
+    "react-native-screens": "~4.4.0",
+    "react-native-svg": "15.8.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "~18.3.12",
+    "@types/react-native": "^0.73.0",
+    "typescript": "^5.3.3",
+    "tailwindcss": "^3.4.17"
+  },
+  "private": true
+}
