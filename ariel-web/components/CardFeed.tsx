@@ -7,6 +7,12 @@ import { useComments } from '@/lib/commentsContext';
 import ShareSheet from '@/components/ShareSheet';
 import ArielLoader from '@/components/ArielLoader';
 
+interface PreviewComment {
+  username: string;
+  profile_picture?: string;
+  text: string;
+}
+
 interface Card {
   id: string;
   question: string;
@@ -22,6 +28,8 @@ interface Card {
   review_count?: number;
   interval?: number;
   next_review?: string | null;
+  comment_count?: number;
+  preview_comments?: PreviewComment[];
 }
 
 type CardStatus = 'due' | 'new' | 'learning' | 'mastered';
@@ -782,6 +790,7 @@ export default function CardFeed({
             </div>
           </div>
         ) : (
+          <>
           <div className="px-4 py-2.5 bg-zinc-900 flex items-center gap-4">
             <button onClick={e => handleLike(card.id, e)} className="flex items-center gap-1.5 group">
               <svg className={`w-5 h-5 ${isLiked ? 'text-red-500' : 'text-zinc-500 group-hover:text-white'}`} fill={isLiked ? 'currentColor' : 'none'} stroke={isLiked ? 'none' : 'currentColor'} strokeWidth={2} viewBox="0 0 24 24">
@@ -789,10 +798,11 @@ export default function CardFeed({
               </svg>
               {card.likes > 0 && <span className="text-xs text-zinc-500">{card.likes}</span>}
             </button>
-            <button onClick={e => handleDiscuss(card.id, e)} className="text-zinc-500 hover:text-white">
+            <button onClick={e => handleDiscuss(card.id, e)} className="flex items-center gap-1.5 text-zinc-500 hover:text-white">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
+              {(card.comment_count ?? 0) > 0 && <span className="text-xs text-zinc-500">{card.comment_count}</span>}
             </button>
             <button onClick={e => handleShare(card.id, e)} className="text-zinc-500 hover:text-white">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -810,6 +820,36 @@ export default function CardFeed({
               </svg>
             </button>
           </div>
+
+          {/* Inline comment preview — first 3 visible, "View all" opens full drawer */}
+          {(card.preview_comments?.length ?? 0) > 0 && (
+            <div className="px-4 pb-3 space-y-1.5 bg-zinc-900">
+              {card.preview_comments!.slice(0, 3).map((c, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  {c.profile_picture ? (
+                    <img src={c.profile_picture} alt={c.username} className="w-5 h-5 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-[9px] text-zinc-400 font-bold">{c.username?.[0]?.toUpperCase()}</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-zinc-400 leading-relaxed line-clamp-2">
+                    <span className="font-semibold text-zinc-300">{c.username}</span>{' '}
+                    {c.text}
+                  </p>
+                </div>
+              ))}
+              {(card.comment_count ?? 0) > 3 && (
+                <button
+                  onClick={e => handleDiscuss(card.id, e)}
+                  className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors mt-0.5"
+                >
+                  View all {card.comment_count} comments
+                </button>
+              )}
+            </div>
+          )}
+          </>
         )}
       </div>
     );

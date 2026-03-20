@@ -198,11 +198,15 @@ export default function CommentsDrawer() {
               return (
                 <div key={comment.id} className="flex items-start gap-3">
                   {/* Avatar */}
-                  <div className="w-8 h-8 rounded-full bg-violet-300/15 border border-violet-300/30 flex items-center justify-center flex-shrink-0">
-                    <span className="text-violet-300 text-xs font-bold">
-                      {comment.username?.[0]?.toUpperCase() ?? '?'}
-                    </span>
-                  </div>
+                  {comment.profile_picture ? (
+                    <img src={comment.profile_picture} alt={comment.username} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-violet-300/15 border border-violet-300/30 flex items-center justify-center flex-shrink-0">
+                      <span className="text-violet-300 text-xs font-bold">
+                        {comment.username?.[0]?.toUpperCase() ?? '?'}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Body */}
                   <div className="flex-1 min-w-0">

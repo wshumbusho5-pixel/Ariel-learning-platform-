@@ -204,6 +204,7 @@ async def get_trending_cards(
         enriched = []
         for card in cards:
             card_dict = card.dict()
+            card_id_str = str(card.id)
             creator = await get_user(card.user_id)
             if creator:
                 card_dict["created_by"] = {
@@ -213,6 +214,20 @@ async def get_trending_cards(
                     "profile_picture": creator.get("profile_picture"),
                     "is_verified": creator.get("is_verified", False),
                 }
+            # Attach comment count + 3 preview comments
+            card_dict["comment_count"] = await db.card_comments.count_documents(
+                {"card_id": card_id_str, "is_deleted": {"$ne": True}}
+            )
+            preview = []
+            async for c in db.card_comments.find(
+                {"card_id": card_id_str, "is_deleted": {"$ne": True}}
+            ).sort("created_at", -1).limit(3):
+                preview.append({
+                    "username": c.get("username", ""),
+                    "profile_picture": c.get("profile_picture"),
+                    "text": c.get("content", ""),
+                })
+            card_dict["preview_comments"] = preview
             enriched.append(card_dict)
         return enriched
     except Exception as e:
@@ -281,6 +296,21 @@ async def get_personalized_feed(
             if cstats:
                 card_dict["community_reviews"] = cstats["total_reviews"]
                 card_dict["community_pct_correct"] = cstats["pct_correct"]
+            # Attach comment count + 3 preview comments
+            card_id_str = str(card.id)
+            card_dict["comment_count"] = await db.card_comments.count_documents(
+                {"card_id": card_id_str, "is_deleted": {"$ne": True}}
+            )
+            preview = []
+            async for c in db.card_comments.find(
+                {"card_id": card_id_str, "is_deleted": {"$ne": True}}
+            ).sort("created_at", -1).limit(3):
+                preview.append({
+                    "username": c.get("username", ""),
+                    "profile_picture": c.get("profile_picture"),
+                    "text": c.get("content", ""),
+                })
+            card_dict["preview_comments"] = preview
             enriched.append(card_dict)
 
         return enriched
