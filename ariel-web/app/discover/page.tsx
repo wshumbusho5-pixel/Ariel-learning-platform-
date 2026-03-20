@@ -29,7 +29,7 @@ export default function DiscoverPage() {
   const loadSuggestedUsers = async () => {
     try {
       setIsLoading(true);
-      const data = await socialAPI.getSuggestedUsers(20);
+      const data = await socialAPI.getSuggestedUsers(100);
       setSuggestedUsers(data);
     } catch (error) {
       console.error('Error loading suggested users:', error);

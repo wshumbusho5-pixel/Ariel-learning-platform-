@@ -96,7 +96,7 @@ export default function SearchPage() {
 
   // Load suggested users on mount
   useEffect(() => {
-    socialAPI.getSuggestedUsers(30)
+    socialAPI.getSuggestedUsers(100)
       .then(data => setSuggested(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoadingSuggested(false));
