@@ -17,8 +17,9 @@ import { ArielWordmark } from '@/shared/components/ArielWordmark';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
 
 const { width: SW, height: SH } = Dimensions.get('window');
-const PHONE_H = SH * 0.36;
-const PHONE_W = PHONE_H * 0.503;
+// Match real iPhone aspect ratio (9:19.5 ≈ 0.462) so screenshots fill perfectly
+const PHONE_W = SW * 0.58;
+const PHONE_H = PHONE_W / 0.462;
 
 type Tab = 'Flashcards' | 'Social Feed' | 'Clips';
 const TABS: Tab[] = ['Flashcards', 'Social Feed', 'Clips'];
@@ -36,13 +37,23 @@ const SCREEN_IMAGES: Record<Tab, ReturnType<typeof require>> = {
 function PhoneMockup({ activeTab, fade }: { activeTab: Tab; fade: Animated.Value }) {
   return (
     <View style={s.phoneWrap}>
+      {/* Purple glow behind */}
       <View style={s.phoneGlow} />
+
+      {/* Phone shell */}
       <View style={s.phoneFrame}>
+        {/* Dynamic Island */}
+        <View style={s.dynamicIsland} />
+
+        {/* Screenshot fills the screen area */}
         <Animated.Image
           source={SCREEN_IMAGES[activeTab]}
           style={[s.phoneScreenshot, { opacity: fade }]}
           resizeMode="cover"
         />
+
+        {/* Home indicator */}
+        <View style={s.homeIndicator} />
       </View>
     </View>
   );
@@ -151,7 +162,7 @@ export function WelcomeScreen({ navigation }: Props) {
 
       {/* Wordmark */}
       <View style={s.wordmarkWrap}>
-        <ArielWordmark size={44} />
+        <ArielWordmark size={38} />
       </View>
 
       {/* Tab pills */}
@@ -217,14 +228,14 @@ const s = StyleSheet.create({
   },
 
   wordmarkWrap: {
-    marginTop: 12,
-    marginBottom: 10,
+    marginTop: 8,
+    marginBottom: 8,
   },
 
   tabRow: {
     flexDirection: 'row',
     gap: 6,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   tabPill: {
     paddingHorizontal: 12,
@@ -242,38 +253,65 @@ const s = StyleSheet.create({
 
   // Phone frame
   phoneWrap: {
-    width: PHONE_W,
-    height: PHONE_H,
+    width: PHONE_W + 16,
+    height: PHONE_H + 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   phoneGlow: {
     position: 'absolute',
-    width: PHONE_W * 0.9,
-    height: PHONE_H * 0.7,
+    width: PHONE_W * 0.85,
+    height: PHONE_H * 0.6,
     borderRadius: 999,
-    backgroundColor: 'rgba(124,92,252,0.14)',
+    backgroundColor: 'rgba(124,92,252,0.18)',
+    top: '15%',
   },
   phoneFrame: {
     width: PHONE_W,
     height: PHONE_H,
-    borderRadius: 28,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.13)',
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.15)',
     overflow: 'hidden',
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#000',
+    // Subtle shadow to lift the phone off the bg
+    shadowColor: '#7c3aed',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 16,
+  },
+  dynamicIsland: {
+    position: 'absolute',
+    top: 12,
+    alignSelf: 'center',
+    width: 90,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#000',
+    zIndex: 10,
   },
   phoneScreenshot: {
     width: '100%',
     height: '100%',
+  },
+  homeIndicator: {
+    position: 'absolute',
+    bottom: 8,
+    alignSelf: 'center',
+    width: 100,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+    zIndex: 10,
   },
 
   // Hero block
   heroBlock: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginTop: 14,
-    gap: 5,
+    marginTop: 10,
+    gap: 3,
   },
   eyebrow: {
     color: '#3f3f46',
@@ -287,7 +325,7 @@ const s = StyleSheet.create({
   },
   headlineBold: {
     color: '#fff',
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
@@ -295,14 +333,14 @@ const s = StyleSheet.create({
     fontFamily: 'CormorantGaramond_700Bold_Italic',
     fontStyle: 'italic',
     color: '#9B7FFF',
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
   },
   subtitle: {
     color: '#52525b',
-    fontSize: 12,
+    fontSize: 11,
     textAlign: 'center',
-    lineHeight: 17,
+    lineHeight: 16,
   },
 
   // Avatar stack
