@@ -16,6 +16,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../AuthNavigator';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '@/shared/auth/authStore';
+import { ArielWordmark } from '@/shared/components/ArielWordmark';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -55,7 +56,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
         <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
           {/* Brand */}
           <View style={styles.brandBlock}>
-            <Text style={styles.brandName}>Ariel</Text>
+            <ArielWordmark size={40} />
             <Text style={styles.brandTagline}>Learn smarter. Compete harder.</Text>
           </View>
 
@@ -121,7 +122,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: '#000',
   },
   container: {
     flex: 1,

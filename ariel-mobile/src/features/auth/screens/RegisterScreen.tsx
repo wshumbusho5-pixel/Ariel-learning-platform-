@@ -16,6 +16,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../AuthNavigator';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '@/shared/auth/authStore';
+import { ArielWordmark } from '@/shared/components/ArielWordmark';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
@@ -80,8 +81,9 @@ export function RegisterScreen({ navigation }: Props): React.ReactElement {
           </TouchableOpacity>
 
           <View style={styles.headerBlock}>
+            <ArielWordmark size={34} />
             <Text style={styles.title}>Create account</Text>
-            <Text style={styles.subtitle}>Join thousands of learners on Ariel</Text>
+            <Text style={styles.subtitle}>Join thousands of learners</Text>
           </View>
 
           <View style={styles.form}>
@@ -200,7 +202,7 @@ function FieldGroup({
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: '#000',
   },
   container: {
     flex: 1,

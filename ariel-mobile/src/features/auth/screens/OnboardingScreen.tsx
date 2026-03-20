@@ -15,6 +15,7 @@ import { authApi } from '../api/authApi';
 import { useAuthStore } from '@/shared/auth/authStore';
 import { CANONICAL_SUBJECT_KEYS, SUBJECT_META } from '@/shared/constants/subjects';
 import { EducationLevel } from '@/shared/types/user';
+import { ArielWordmark } from '@/shared/components/ArielWordmark';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
@@ -25,8 +26,10 @@ const EDUCATION_OPTIONS: { value: EducationLevel; label: string; emoji: string }
   { value: EducationLevel.SELF_STUDY,   label: 'Self Study',   emoji: '📖' },
 ];
 
+const TOTAL_STEPS = 2;
+
 export function OnboardingScreen({ navigation }: Props): React.ReactElement {
-  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [step, setStep] = useState<1 | 2>(1);
   const [educationLevel, setEducationLevel] = useState<EducationLevel | null>(null);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -40,11 +43,14 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
     );
   };
 
-  const handleFinish = async () => {
-    if (selectedSubjects.length === 0) {
-      Alert.alert('Pick at least one subject', 'Choose what you want to study.');
+  const canContinue = step === 1 ? educationLevel !== null : selectedSubjects.length > 0;
+
+  const handleNext = async () => {
+    if (step === 1) {
+      setStep(2);
       return;
     }
+    if (selectedSubjects.length === 0) return;
     setSaving(true);
     try {
       const updated = await authApi.updateProfile({
@@ -60,156 +66,83 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
     }
   };
 
-  // ─── Step 0 — Welcome ─────────────────────────────────────────────────────
-  if (step === 0) {
-    return (
-      <View style={[styles.screen, { paddingTop: insets.top + 24 }]}>
-        <View style={styles.welcomeContent}>
-          <Text style={styles.welcomeEmoji}>🎓</Text>
-          <Text style={styles.welcomeTitle}>Welcome to Ariel</Text>
-          <Text style={styles.welcomeSubtitle}>
-            Learn with flashcards, compete in duels, and grow your knowledge — every day.
-          </Text>
+  const progressPct = `${(step / TOTAL_STEPS) * 100}%`;
 
-          <View style={styles.featureList}>
-            <FeatureRow icon="⚡" text="Spaced repetition that actually works" />
-            <FeatureRow icon="⚔️" text="Real-time duels against other students" />
-            <FeatureRow icon="🃏" text="AI-generated decks on any subject" />
-            <FeatureRow icon="🔥" text="Streaks, levels, and achievements" />
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.primaryBtn, { marginHorizontal: 24, marginBottom: insets.bottom + 24 }]}
-          onPress={() => setStep(1)}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.primaryBtnText}>Get started →</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  // ─── Step 1 — Education level ─────────────────────────────────────────────
-  if (step === 1) {
-    return (
-      <View style={[styles.screen, { paddingTop: insets.top + 24 }]}>
-        <View style={styles.stepContent}>
-          <StepIndicator current={1} total={2} />
-          <Text style={styles.stepTitle}>What level are you at?</Text>
-          <Text style={styles.stepSubtitle}>We'll tune your experience to fit.</Text>
-
-          <View style={styles.optionList}>
-            {EDUCATION_OPTIONS.map((opt) => {
-              const active = educationLevel === opt.value;
-              return (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[
-                    styles.optionRow,
-                    active ? styles.optionRowActive : styles.optionRowInactive,
-                  ]}
-                  onPress={() => setEducationLevel(opt.value)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.optionEmoji}>{opt.emoji}</Text>
-                  <Text style={[styles.optionLabel, active && styles.optionLabelActive]}>
-                    {opt.label}
-                  </Text>
-                  {active && (
-                    <View style={styles.checkCircle}>
-                      <Text style={styles.checkMark}>✓</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={[styles.navRow, { paddingBottom: insets.bottom + 24 }]}>
-          <TouchableOpacity style={styles.secondaryBtn} onPress={() => setStep(0)} activeOpacity={0.8}>
-            <Text style={styles.secondaryBtnText}>Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.primaryBtn, { flex: 2, paddingHorizontal: 32 }]}
-            onPress={() => setStep(2)}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.primaryBtnText}>Next →</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // ─── Step 2 — Subject selection ───────────────────────────────────────────
   return (
-    <View style={[styles.screen, { paddingTop: insets.top + 24 }]}>
-      <View style={styles.stepContent}>
-        <StepIndicator current={2} total={2} />
-        <Text style={styles.stepTitle}>Pick your subjects</Text>
-        <Text style={styles.stepSubtitle}>Choose at least one. You can change this later.</Text>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      {/* Top progress bar */}
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: progressPct as any }]} />
       </View>
 
-      <ScrollView
-        style={{ flex: 1, marginTop: 16 }}
-        contentContainerStyle={styles.subjectGrid}
-        showsVerticalScrollIndicator={false}
-      >
-        {CANONICAL_SUBJECT_KEYS.map((key) => {
-          const meta = SUBJECT_META[key];
-          const active = selectedSubjects.includes(key);
-          return (
-            <TouchableOpacity
-              key={key}
-              onPress={() => toggleSubject(key)}
-              activeOpacity={0.8}
-              style={[
-                styles.subjectChip,
-                {
-                  borderColor: active ? meta.color : '#3f3f46',
-                  backgroundColor: active ? `${meta.color}20` : '#18181b',
-                },
-              ]}
-            >
-              <Text style={{ fontSize: 16 }}>{meta.icon}</Text>
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontWeight: active ? '600' : '400',
-                  color: active ? meta.color : '#a1a1aa',
-                }}
-              >
-                {meta.short}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      {/* Header row: wordmark + step counter */}
+      <View style={styles.headerRow}>
+        <ArielWordmark size={22} />
+        <Text style={styles.stepCounter}>Step {step} of {TOTAL_STEPS}</Text>
+      </View>
 
-      <View style={[styles.bottomSection, { paddingBottom: insets.bottom + 24 }]}>
-        {selectedSubjects.length > 0 && (
-          <Text style={styles.selectedCount}>{selectedSubjects.length} selected</Text>
-        )}
-        <View style={styles.navRow}>
-          <TouchableOpacity style={styles.secondaryBtn} onPress={() => setStep(1)} activeOpacity={0.8}>
-            <Text style={styles.secondaryBtnText}>Back</Text>
-          </TouchableOpacity>
+      {/* Content */}
+      {step === 1 ? (
+        <EducationStep
+          selected={educationLevel}
+          onSelect={setEducationLevel}
+        />
+      ) : (
+        <SubjectStep
+          selected={selectedSubjects}
+          onToggle={toggleSubject}
+        />
+      )}
+
+      {/* Footer */}
+      <View
+        style={[
+          styles.footer,
+          { paddingBottom: Math.max(insets.bottom, 20) + 8 },
+        ]}
+      >
+        <View style={styles.footerInner}>
+          {/* Back button (step 2 only) */}
+          {step === 2 && (
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => setStep(1)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.backBtnText}>Back</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* N selected label (step 2 only) */}
+          {step === 2 && selectedSubjects.length > 0 && (
+            <Text style={styles.selectedCount}>
+              {selectedSubjects.length} selected
+            </Text>
+          )}
+
+          <View style={{ flex: 1 }} />
+
+          {/* Continue / Get started */}
           <TouchableOpacity
             style={[
-              styles.primaryBtn,
-              { flex: 2, paddingHorizontal: 32 },
-              selectedSubjects.length === 0 && { opacity: 0.5 },
+              styles.continueBtn,
+              !canContinue && styles.continueBtnDisabled,
             ]}
-            onPress={handleFinish}
-            disabled={saving || selectedSubjects.length === 0}
+            onPress={handleNext}
+            disabled={!canContinue || saving}
             activeOpacity={0.85}
           >
             {saving ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#000" />
             ) : (
-              <Text style={styles.primaryBtnText}>Start learning →</Text>
+              <Text
+                style={[
+                  styles.continueBtnText,
+                  !canContinue && styles.continueBtnTextDisabled,
+                ]}
+              >
+                {step === 2 ? 'Get started' : 'Continue'}
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -218,30 +151,100 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Education Step ────────────────────────────────────────────────────────────
 
-function FeatureRow({ icon, text }: { icon: string; text: string }) {
+function EducationStep({
+  selected,
+  onSelect,
+}: {
+  selected: EducationLevel | null;
+  onSelect: (v: EducationLevel) => void;
+}) {
   return (
-    <View style={styles.featureRow}>
-      <Text style={styles.featureIcon}>{icon}</Text>
-      <Text style={styles.featureText}>{text}</Text>
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Where are you learning?</Text>
+      <Text style={styles.stepSubtitle}>We'll tune your experience to fit.</Text>
+
+      {/* 2×2 grid */}
+      <View style={styles.educationGrid}>
+        {EDUCATION_OPTIONS.map((opt) => {
+          const active = selected === opt.value;
+          return (
+            <TouchableOpacity
+              key={opt.value}
+              style={[
+                styles.educationCard,
+                active ? styles.educationCardActive : styles.educationCardInactive,
+              ]}
+              onPress={() => onSelect(opt.value)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.educationEmoji}>{opt.emoji}</Text>
+              <Text
+                style={[
+                  styles.educationLabel,
+                  active && styles.educationLabelActive,
+                ]}
+              >
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
+// ─── Subject Step ──────────────────────────────────────────────────────────────
+
+function SubjectStep({
+  selected,
+  onToggle,
+}: {
+  selected: string[];
+  onToggle: (key: string) => void;
+}) {
   return (
-    <View style={styles.stepIndicator}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.stepDot,
-            { backgroundColor: i + 1 <= current ? '#7c3aed' : '#3f3f46' },
-          ]}
-        />
-      ))}
-    </View>
+    <>
+      <View style={styles.stepContent}>
+        <Text style={styles.stepTitle}>What do you want to learn?</Text>
+        <Text style={styles.stepSubtitle}>Choose at least one. You can change this later.</Text>
+      </View>
+
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.subjectGrid}
+        showsVerticalScrollIndicator={false}
+      >
+        {CANONICAL_SUBJECT_KEYS.map((key) => {
+          const meta = SUBJECT_META[key];
+          const active = selected.includes(key);
+          return (
+            <TouchableOpacity
+              key={key}
+              onPress={() => onToggle(key)}
+              activeOpacity={0.8}
+              style={[
+                styles.subjectCard,
+                active ? styles.subjectCardActive : styles.subjectCardInactive,
+              ]}
+            >
+              <Text style={styles.subjectEmoji}>{meta.icon}</Text>
+              <Text
+                style={[
+                  styles.subjectLabel,
+                  active && styles.subjectLabelActive,
+                ]}
+                numberOfLines={2}
+              >
+                {meta.short ?? meta.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </>
   );
 }
 
@@ -250,171 +253,177 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#09090b',
+    backgroundColor: '#000',
   },
-  welcomeContent: {
-    flex: 1,
-    paddingHorizontal: 24,
-    justifyContent: 'center',
+
+  // Progress bar at top edge
+  progressTrack: {
+    height: 2,
+    backgroundColor: '#27272a',
+    width: '100%',
   },
-  welcomeEmoji: {
-    fontSize: 52,
-    textAlign: 'center',
-    marginBottom: 16,
+  progressFill: {
+    height: 2,
+    backgroundColor: '#7c3aed',
   },
-  welcomeTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#fafafa',
-    textAlign: 'center',
-  },
-  welcomeSubtitle: {
-    color: '#a1a1aa',
-    textAlign: 'center',
-    marginTop: 12,
-    lineHeight: 22,
-    fontSize: 14,
-  },
-  featureList: {
-    marginTop: 32,
-    gap: 12,
-  },
-  featureRow: {
+
+  // Header
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1a1a1a',
   },
-  featureIcon: {
-    fontSize: 20,
-    width: 32,
-    textAlign: 'center',
+  stepCounter: {
+    color: '#71717a',
+    fontSize: 13,
+    fontWeight: '500',
   },
-  featureText: {
-    color: '#a1a1aa',
-    fontSize: 14,
-    flex: 1,
-  },
+
+  // Step content
   stepContent: {
     paddingHorizontal: 24,
-  },
-  stepIndicator: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20,
-  },
-  stepDot: {
-    height: 4,
-    flex: 1,
-    borderRadius: 2,
+    paddingTop: 28,
+    paddingBottom: 8,
   },
   stepTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: '#fafafa',
+    letterSpacing: -0.3,
   },
   stepSubtitle: {
-    color: '#a1a1aa',
+    color: '#71717a',
     fontSize: 14,
-    marginTop: 8,
+    marginTop: 6,
+    lineHeight: 20,
   },
-  optionList: {
-    marginTop: 24,
-    gap: 12,
-  },
-  optionRow: {
+
+  // Education 2×2 grid
+  educationGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 24,
   },
-  optionRowActive: {
-    borderColor: '#7c3aed',
-    backgroundColor: 'rgba(124,58,237,0.1)',
+  educationCard: {
+    width: '47%',
+    aspectRatio: 1.2,
+    borderRadius: 16,
+    borderWidth: 2,
+    padding: 20,
+    justifyContent: 'flex-end',
   },
-  optionRowInactive: {
-    borderColor: '#3f3f46',
-    backgroundColor: '#18181b',
+  educationCardActive: {
+    borderColor: '#ffffff',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  optionEmoji: {
-    fontSize: 22,
+  educationCardInactive: {
+    borderColor: '#27272a',
+    backgroundColor: 'transparent',
   },
-  optionLabel: {
-    fontSize: 15,
-    fontWeight: '500',
+  educationEmoji: {
+    fontSize: 28,
+    marginBottom: 10,
+  },
+  educationLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#a1a1aa',
+  },
+  educationLabelActive: {
     color: '#fafafa',
-    flex: 1,
   },
-  optionLabelActive: {
-    color: '#a78bfa',
-  },
-  checkCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#7c3aed',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkMark: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
-  },
+
+  // Subject 3-column grid
   subjectGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
     paddingHorizontal: 24,
+    paddingTop: 16,
     paddingBottom: 16,
+    gap: 10,
   },
-  subjectChip: {
-    flexDirection: 'row',
+  subjectCard: {
+    width: '30%',
+    borderRadius: 16,
+    borderWidth: 2,
+    padding: 14,
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 100,
-    borderWidth: 1,
+    gap: 8,
   },
-  bottomSection: {
-    paddingHorizontal: 24,
-    gap: 12,
+  subjectCardActive: {
+    borderColor: '#ffffff',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  selectedCount: {
+  subjectCardInactive: {
+    borderColor: '#27272a',
+    backgroundColor: 'transparent',
+  },
+  subjectEmoji: {
+    fontSize: 22,
+  },
+  subjectLabel: {
+    fontSize: 11,
+    fontWeight: '500',
     color: '#71717a',
-    fontSize: 13,
     textAlign: 'center',
+    lineHeight: 14,
   },
-  navRow: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 24,
-  },
-  primaryBtn: {
-    backgroundColor: '#7c3aed',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryBtnText: {
-    color: '#fff',
+  subjectLabelActive: {
+    color: '#fafafa',
     fontWeight: '600',
-    fontSize: 15,
   },
-  secondaryBtn: {
-    flex: 1,
+
+  // Footer
+  footer: {
+    borderTopWidth: 1,
+    borderTopColor: '#1a1a1a',
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  footerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: '#3f3f46',
-    borderRadius: 12,
-    paddingVertical: 16,
+  },
+  backBtnText: {
+    color: '#d4d4d8',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  selectedCount: {
+    color: '#8b9099',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  continueBtn: {
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 999,
+    backgroundColor: '#ffffff',
+    minWidth: 140,
     alignItems: 'center',
   },
-  secondaryBtnText: {
-    color: '#a1a1aa',
-    fontWeight: '500',
-    fontSize: 15,
+  continueBtnDisabled: {
+    backgroundColor: '#27272a',
+  },
+  continueBtnText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  continueBtnTextDisabled: {
+    color: '#52525b',
   },
 });
