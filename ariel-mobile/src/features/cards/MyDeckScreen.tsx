@@ -18,6 +18,39 @@ import type { Card } from '@/shared/types/card';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// ─── Stats bar ────────────────────────────────────────────────────────────────
+
+function StatsBar({ allCards }: { allCards: Card[] }) {
+  const due = allCards.filter((c) => {
+    if (c.review_count === 0) return false;
+    if (c.interval >= 21) return false;
+    return c.next_review && new Date(c.next_review) <= new Date();
+  }).length;
+  const newCards = allCards.filter((c) => c.review_count === 0).length;
+  const mastered = allCards.filter((c) => c.interval >= 21).length;
+
+  const items = [
+    { label: 'Total', value: allCards.length, color: '#a1a1aa' },
+    { label: 'Due', value: due, color: '#fb923c' },
+    { label: 'New', value: newCards, color: '#38bdf8' },
+    { label: 'Mastered', value: mastered, color: '#4ade80' },
+  ];
+
+  return (
+    <View style={styles.statsBar}>
+      {items.map((item, i) => (
+        <React.Fragment key={item.label}>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: item.color }]}>{item.value}</Text>
+            <Text style={styles.statLabel}>{item.label}</Text>
+          </View>
+          {i < items.length - 1 && <View style={styles.statDivider} />}
+        </React.Fragment>
+      ))}
+    </View>
+  );
+}
+
 // ─── Filter chips ─────────────────────────────────────────────────────────────
 
 const FILTER_OPTIONS: { key: DeckFilter; label: string }[] = [
@@ -82,7 +115,7 @@ function EmptyDeck({ filter }: { filter: DeckFilter }) {
 export function MyDeckScreen() {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<DeckFilter>('all');
-  const { cards, isLoading } = useMyDeck({ filter });
+  const { cards, allCards, isLoading } = useMyDeck({ filter });
   const { reviewCard } = useReviewCard();
 
   const scrollRef = useRef<ScrollView>(null);
@@ -193,6 +226,9 @@ export function MyDeckScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Deck</Text>
 
+        {/* Stats bar */}
+        {!isLoading && allCards.length > 0 && <StatsBar allCards={allCards} />}
+
         {/* Filter chips */}
         <View style={styles.filterRow}>
           {FILTER_OPTIONS.map((opt) => (
@@ -285,6 +321,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#09090b',
   },
+  // Stats bar
+  statsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#18181b',
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#27272a',
+  },
+  statItem: { flex: 1, alignItems: 'center', gap: 2 },
+  statValue: { fontSize: 18, fontWeight: '700' },
+  statLabel: { color: '#52525b', fontSize: 11, fontWeight: '500' },
+  statDivider: { width: 1, height: 28, backgroundColor: '#27272a' },
+
   header: {
     paddingHorizontal: 16,
     paddingTop: 12,
