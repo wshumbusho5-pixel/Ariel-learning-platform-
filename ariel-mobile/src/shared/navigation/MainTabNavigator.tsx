@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -14,15 +14,8 @@ import { MyDeckScreen } from '@/features/cards/MyDeckScreen';
 import { DuelsNavigator } from '@/features/duels/DuelsNavigator';
 import { ProfileNavigator } from '@/features/profile/ProfileNavigator';
 
-// ─── Create tab (modal — launches AI card generation) ────────────────────────
-function CreateScreen(): React.ReactElement {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#09090b' }}>
-      <Text style={{ color: '#fafafa', fontSize: 18, fontWeight: '600' }}>✨ Create</Text>
-      <Text style={{ color: '#71717a', fontSize: 13, marginTop: 8 }}>AI card generation coming soon</Text>
-    </View>
-  );
-}
+// ─── Create tab ───────────────────────────────────────────────────────────────
+import { CreateCardsScreen } from '@/features/create/CreateCardsScreen';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,7 +80,7 @@ export function MainTabNavigator(): React.ReactElement {
       {/* Tab 3 — Create+ (center, larger icon) */}
       <Tab.Screen
         name="Create"
-        component={CreateScreen}
+        component={CreateCardsScreen}
         options={{
           tabBarLabel: '',
           tabBarIcon: ({ focused }) => (
