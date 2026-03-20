@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   StatusBar,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -159,17 +160,25 @@ function MiniBottomNav({ active, dark }: { active: number; dark?: boolean }) {
 
 // ─── Avatar stack ─────────────────────────────────────────────────────────────
 
-const AV_COLORS = ['#7c3aed', '#22c55e', '#eab308', '#ef4444', '#3b82f6'];
-const AV_LETTERS = ['A', 'M', 'K', 'J', 'S'];
+// Real human face photos (diverse, student-aged, free stock)
+const AVATAR_URIS = [
+  'https://i.pravatar.cc/100?img=47',
+  'https://i.pravatar.cc/100?img=32',
+  'https://i.pravatar.cc/100?img=11',
+  'https://i.pravatar.cc/100?img=25',
+  'https://i.pravatar.cc/100?img=68',
+];
 
 function AvatarStack() {
   return (
     <View style={s.avatarRow}>
       <View style={s.avatarStack}>
-        {AV_COLORS.map((color, i) => (
-          <View key={i} style={[s.avatar, { backgroundColor: color, marginLeft: i === 0 ? 0 : -7, zIndex: 5 - i }]}>
-            <Text style={s.avatarLetter}>{AV_LETTERS[i]}</Text>
-          </View>
+        {AVATAR_URIS.map((uri, i) => (
+          <Image
+            key={i}
+            source={{ uri }}
+            style={[s.avatar, { marginLeft: i === 0 ? 0 : -8, zIndex: 5 - i }]}
+          />
         ))}
       </View>
       <Text style={s.avatarLabel}>
@@ -442,15 +451,12 @@ const s = StyleSheet.create({
   },
   avatarStack: { flexDirection: 'row', alignItems: 'center' },
   avatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
     borderColor: '#000',
   },
-  avatarLetter: { color: '#fff', fontSize: 8, fontWeight: '700' },
   avatarLabel: { color: '#52525b', fontSize: 11 },
   avatarBold: { color: '#fff', fontWeight: '700' },
 
