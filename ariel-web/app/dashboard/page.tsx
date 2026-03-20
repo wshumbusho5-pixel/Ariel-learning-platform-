@@ -569,7 +569,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                 <img src={user.profile_picture} alt="" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-[11px] font-bold text-zinc-400">
-                  {(user?.full_name?.[0] || user?.username?.[0] || 'Y').toUpperCase()}
+                  {(user?.username?.[0] || user?.full_name?.[0] || 'Y').toUpperCase()}
                 </span>
               )}
             </div>
@@ -1008,7 +1008,7 @@ export default function Dashboard() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const firstName = (user as any)?.full_name?.split(' ')[0] || user?.username || '';
+  const firstName = user?.username || (user as any)?.full_name?.split(' ')[0] || '';
   const allSubjectKeys = Object.keys(SUBJECT_META).filter(k => k !== 'other');
 
   // Topic chips for active subject (or all subjects combined)
@@ -1113,7 +1113,7 @@ export default function Dashboard() {
                     ) : (
                       <div className="w-11 h-11 rounded-full bg-zinc-700 flex items-center justify-center">
                         <span className="text-base font-black text-white">
-                          {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
+                          {(user?.username || user?.full_name || 'U')[0].toUpperCase()}
                         </span>
                       </div>
                     )}
