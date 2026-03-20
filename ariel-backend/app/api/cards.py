@@ -193,8 +193,34 @@ async def get_trending_cards(
     """Get trending public cards enriched with creator info."""
     try:
         cards = await CardRepository.get_trending_cards(limit)
-        user_cache: dict = {}
+        card_ids = [str(card.id) for card in cards]
 
+        # ── Batch 1: comment counts + preview from card_comments (1 aggregation) ──
+        cc_counts: dict = {}
+        cc_previews: dict = {}
+        async for doc in db.card_comments.aggregate([
+            {"$match": {"card_id": {"$in": card_ids}, "is_deleted": {"$ne": True}}},
+            {"$sort": {"created_at": -1}},
+            {"$group": {
+                "_id": "$card_id",
+                "count": {"$sum": 1},
+                "previews": {"$push": {"username": "$username", "profile_picture": "$profile_picture", "text": "$content"}},
+            }},
+            {"$project": {"count": 1, "previews": {"$slice": ["$previews", 3]}}},
+        ]):
+            cc_counts[doc["_id"]] = doc["count"]
+            cc_previews[doc["_id"]] = doc["previews"]
+
+        # ── Batch 2: comment counts from comments collection (1 aggregation) ──
+        dc_counts: dict = {}
+        async for doc in db.comments.aggregate([
+            {"$match": {"deck_id": {"$in": card_ids}, "is_deleted": False, "parent_comment_id": None}},
+            {"$group": {"_id": "$deck_id", "count": {"$sum": 1}}},
+        ]):
+            dc_counts[doc["_id"]] = doc["count"]
+
+        # ── Batch 3: creator lookup (cached per unique user) ──
+        user_cache: dict = {}
         async def get_user(uid: str):
             if uid not in user_cache:
                 u = await db.users.find_one({"_id": ObjectId(uid)})
@@ -204,7 +230,7 @@ async def get_trending_cards(
         enriched = []
         for card in cards:
             card_dict = card.dict()
-            card_id_str = str(card.id)
+            cid = str(card.id)
             creator = await get_user(card.user_id)
             if creator:
                 card_dict["created_by"] = {
@@ -214,24 +240,9 @@ async def get_trending_cards(
                     "profile_picture": creator.get("profile_picture"),
                     "is_verified": creator.get("is_verified", False),
                 }
-            # comment_count + preview_comments from card_comments (for practice feed drawer)
-            card_dict["comment_count"] = await db.card_comments.count_documents(
-                {"card_id": card_id_str, "is_deleted": {"$ne": True}}
-            )
-            preview = []
-            async for c in db.card_comments.find(
-                {"card_id": card_id_str, "is_deleted": {"$ne": True}}
-            ).sort("created_at", -1).limit(3):
-                preview.append({
-                    "username": c.get("username", ""),
-                    "profile_picture": c.get("profile_picture"),
-                    "text": c.get("content", ""),
-                })
-            card_dict["preview_comments"] = preview
-            # Also count from comments collection (for dashboard inline section)
-            card_dict["comments_count"] = await db.comments.count_documents(
-                {"deck_id": card_id_str, "is_deleted": False, "parent_comment_id": None}
-            )
+            card_dict["comment_count"] = cc_counts.get(cid, 0)
+            card_dict["preview_comments"] = cc_previews.get(cid, [])
+            card_dict["comments_count"] = dc_counts.get(cid, 0)
             enriched.append(card_dict)
         return enriched
     except Exception as e:
@@ -283,6 +294,17 @@ async def get_personalized_feed(
         except Exception:
             pass
 
+        # ── Batch: comments_count from comments collection (1 aggregation) ──
+        dc_counts: dict = {}
+        try:
+            async for doc in db.comments.aggregate([
+                {"$match": {"deck_id": {"$in": card_ids}, "is_deleted": False, "parent_comment_id": None}},
+                {"$group": {"_id": "$deck_id", "count": {"$sum": 1}}},
+            ]):
+                dc_counts[doc["_id"]] = doc["count"]
+        except Exception:
+            pass
+
         enriched = []
         for card in feed:
             card_dict = card.dict()
@@ -300,11 +322,7 @@ async def get_personalized_feed(
             if cstats:
                 card_dict["community_reviews"] = cstats["total_reviews"]
                 card_dict["community_pct_correct"] = cstats["pct_correct"]
-            # comments_count from `comments` collection (what the dashboard inline section reads)
-            card_id_str = str(card.id)
-            card_dict["comments_count"] = await db.comments.count_documents(
-                {"deck_id": card_id_str, "is_deleted": False, "parent_comment_id": None}
-            )
+            card_dict["comments_count"] = dc_counts.get(str(card.id), 0)
             enriched.append(card_dict)
 
         return enriched
