@@ -8,97 +8,45 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '@/shared/constants/theme';
-import { normalizeSubjectKey } from '@/shared/constants/subjects';
-import type { SubjectKey } from '@/shared/constants/subjects';
+import { useNavigation } from '@react-navigation/native';
 import type { ReelResponse } from '@/shared/types/reel';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// Map subject key → accent color (from theme subject palette)
-const SUBJECT_COLOR: Partial<Record<SubjectKey, string>> = {
-  mathematics:  COLORS.subject.mathematics,
-  sciences:     COLORS.subject.sciences,
-  technology:   COLORS.subject.technology,
-  history:      COLORS.subject.history,
-  literature:   COLORS.subject.literature,
-  economics:    COLORS.subject.economics,
-  languages:    COLORS.subject.languages,
-  health:       COLORS.subject.health,
-  psychology:   COLORS.subject.psychology,
-  geography:    COLORS.subject.geography,
-  gospel:       COLORS.subject.gospel,
-  business:     COLORS.subject.business,
-  law:          COLORS.subject.law,
-  arts:         COLORS.subject.arts,
-  engineering:  COLORS.subject.engineering,
-};
-
-function getSubjectColor(category?: string | null): string {
-  const key = normalizeSubjectKey(category ?? '') as SubjectKey;
-  return SUBJECT_COLOR[key] ?? COLORS.subject.other;
-}
-
-function formatCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
-
-// ─── Action Button ─────────────────────────────────────────────────────────────
-
-interface ActionButtonProps {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  count?: number;
-  onPress: () => void;
-  active?: boolean;
-  activeColor?: string;
-}
-
-function ActionButton({ icon, count, onPress, active, activeColor = '#a78bfa' }: ActionButtonProps) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={styles.actionBtn}
-      accessibilityRole="button"
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-    >
-      <Ionicons
-        name={icon}
-        size={30}
-        color={active ? activeColor : '#fff'}
-        style={styles.actionIcon}
-      />
-      {count !== undefined && count > 0 && (
-        <Text style={[styles.actionCount, active && { color: activeColor }]}>
-          {formatCount(count)}
-        </Text>
-      )}
-    </TouchableOpacity>
-  );
-}
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // ─── Creator Avatar ────────────────────────────────────────────────────────────
 
 function CreatorAvatar({ uri, username }: { uri?: string | null; username: string }) {
   const [imgErr, setImgErr] = React.useState(false);
-
   if (uri && !imgErr) {
     return (
-      <Image
-        source={{ uri }}
-        style={styles.avatar}
-        onError={() => setImgErr(true)}
-      />
+      <Image source={{ uri }} style={styles.avatar} onError={() => setImgErr(true)} />
     );
   }
-
   return (
     <View style={styles.avatarFallback}>
-      <Text style={styles.avatarFallbackText}>
-        {(username[0] ?? '?').toUpperCase()}
-      </Text>
+      <Text style={styles.avatarFallbackText}>{(username[0] ?? '?').toUpperCase()}</Text>
     </View>
+  );
+}
+
+// ─── Side action button ────────────────────────────────────────────────────────
+
+function SideAction({
+  icon,
+  label,
+  onPress,
+  active,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  onPress: () => void;
+  active?: boolean;
+}) {
+  return (
+    <TouchableOpacity style={styles.sideAction} onPress={onPress} activeOpacity={0.7}>
+      <Ionicons name={icon} size={28} color={active ? '#a78bfa' : '#fff'} />
+      <Text style={[styles.sideActionLabel, active && { color: '#a78bfa' }]}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -123,83 +71,64 @@ export function ReelOverlay({
   onShare,
   onSave,
 }: ReelOverlayProps) {
-  const subjectColor = getSubjectColor(reel.category);
+  const navigation = useNavigation();
 
   return (
     <View style={styles.overlay} pointerEvents="box-none">
-      {/* Top fade — simulated gradient for status bar legibility */}
-      <View style={styles.topFade} pointerEvents="none" />
+      {/* Bottom scrim */}
+      <View style={styles.bottomScrim} pointerEvents="none" />
 
-      {/* Category tag (top-left, below status bar) */}
-      {reel.category ? (
-        <View style={[styles.categoryPill, { borderColor: subjectColor + '55' }]}>
-          <Text style={[styles.categoryText, { color: subjectColor }]}>
-            {reel.category}
-          </Text>
-        </View>
-      ) : null}
+      {/* Top-left: X close */}
+      <TouchableOpacity
+        style={styles.topLeftBtn}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="close" size={20} color="#fff" />
+      </TouchableOpacity>
 
-      {/* Bottom fade — simulated gradient for controls legibility */}
-      <View style={styles.bottomFade} pointerEvents="none" />
+      {/* Top-right: mute */}
+      <TouchableOpacity style={styles.topRightBtn} activeOpacity={0.8}>
+        <Ionicons name="volume-mute-outline" size={20} color="#fff" />
+      </TouchableOpacity>
 
-      {/* Bottom-left: creator info */}
-      <View style={styles.creatorInfo} pointerEvents="box-none">
+      {/* Bottom-left: title + creator */}
+      <View style={styles.bottomLeft} pointerEvents="box-none">
+        {reel.title ? (
+          <Text style={styles.reelTitle} numberOfLines={2}>{reel.title}</Text>
+        ) : null}
         <View style={styles.creatorRow}>
-          <CreatorAvatar
-            uri={reel.creator_profile_picture}
-            username={reel.creator_username}
-          />
-          <View style={styles.creatorTextBlock}>
-            <Text style={styles.creatorUsername} numberOfLines={1}>
-              @{reel.creator_username}
-              {reel.creator_verified ? (
-                <Text style={styles.verifiedDot}> ✓</Text>
-              ) : null}
-            </Text>
-          </View>
+          <CreatorAvatar uri={reel.creator_profile_picture} username={reel.creator_username} />
+          <Text style={styles.creatorUsername}>@{reel.creator_username}</Text>
+          <TouchableOpacity style={styles.followBtn} activeOpacity={0.8}>
+            <Text style={styles.followBtnText}>Follow</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.reelTitle} numberOfLines={2}>
-          {reel.title}
-        </Text>
-        {reel.description ? (
-          <Text style={styles.reelDescription} numberOfLines={2}>
-            {reel.description}
-          </Text>
-        ) : null}
-        {reel.category ? (
-          <View style={[styles.subjectTag, { backgroundColor: subjectColor + '22' }]}>
-            <Text style={[styles.subjectTagText, { color: subjectColor }]}>
-              {reel.category}
-            </Text>
-          </View>
-        ) : null}
       </View>
 
-      {/* Bottom-right: action buttons */}
-      <View style={styles.actions}>
-        <ActionButton
-          icon={liked ? 'heart' : 'heart-outline'}
-          count={reel.likes}
-          onPress={onLike}
-          active={liked}
-          activeColor="#f87171"
-        />
-        <ActionButton
-          icon="chatbubble-ellipses-outline"
-          count={reel.comments_count}
+      {/* Bottom-right: Discuss / Save / Send */}
+      <View style={styles.sideActions} pointerEvents="box-none">
+        <SideAction
+          icon="chatbubble-outline"
+          label="Discuss"
           onPress={onComment}
         />
-        <ActionButton
-          icon="arrow-redo-outline"
-          count={reel.shares_count > 0 ? reel.shares_count : undefined}
-          onPress={onShare}
-        />
-        <ActionButton
+        <SideAction
           icon={saved ? 'bookmark' : 'bookmark-outline'}
+          label="Save"
           onPress={onSave}
           active={saved}
-          activeColor="#a78bfa"
         />
+        <SideAction
+          icon="paper-plane-outline"
+          label="Send"
+          onPress={onShare}
+        />
+      </View>
+
+      {/* Bottom progress bar */}
+      <View style={styles.progressBar} pointerEvents="none">
+        <View style={styles.progressFill} />
       </View>
     </View>
   );
@@ -211,147 +140,138 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
   },
-  // Simulated top gradient (black → transparent) using overlapping View
-  topFade: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 120,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-  },
-  // Simulated bottom gradient (transparent → black)
-  bottomFade: {
+  bottomScrim: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 200,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-  },
-  categoryPill: {
-    position: 'absolute',
-    top: SPACING['5xl'],
-    left: SPACING.lg,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: BORDER_RADIUS.full,
+    height: SCREEN_HEIGHT * 0.45,
     backgroundColor: 'rgba(0,0,0,0.45)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  categoryText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.bold as any,
-    letterSpacing: 0.3,
   },
 
-  // Creator info — bottom-left
-  creatorInfo: {
+  // Top controls
+  topLeftBtn: {
     position: 'absolute',
-    bottom: 120,
-    left: SPACING.lg,
-    right: 80, // leave room for action buttons on the right
+    top: 56,
+    left: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topRightBtn: {
+    position: 'absolute',
+    top: 56,
+    right: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Bottom-left
+  bottomLeft: {
+    position: 'absolute',
+    bottom: 40,
+    left: 16,
+    right: 90,
+    gap: 10,
+  },
+  reelTitle: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
+    lineHeight: 23,
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   creatorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: 6,
+    gap: 8,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.4)',
   },
   avatarFallback: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(139,92,246,0.3)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(139,92,246,0.5)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(124,58,237,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(139,92,246,0.5)',
   },
   avatarFallbackText: {
-    color: COLORS.violet[300],
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.bold as any,
-  },
-  creatorTextBlock: {
-    flex: 1,
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   creatorUsername: {
-    color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.bold as any,
-    textShadowColor: 'rgba(0,0,0,0.8)',
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+    textShadowColor: 'rgba(0,0,0,0.7)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
+    flex: 1,
   },
-  verifiedDot: {
-    color: COLORS.violet[400],
-    fontSize: TYPOGRAPHY.fontSize.sm,
+  followBtn: {
+    borderWidth: 1.5,
+    borderColor: '#fff',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
   },
-  reelTitle: {
-    color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold as any,
-    lineHeight: TYPOGRAPHY.fontSize.base * 1.35,
-    marginBottom: 4,
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  reelDescription: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    lineHeight: TYPOGRAPHY.fontSize.sm * 1.5,
-    marginBottom: 8,
-    textShadowColor: 'rgba(0,0,0,0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  subjectTag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: BORDER_RADIUS.full,
-    marginTop: 2,
-  },
-  subjectTagText: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold as any,
-    letterSpacing: 0.2,
+  followBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
 
-  // Action buttons — bottom-right
-  actions: {
+  // Side actions — bottom-right
+  sideActions: {
     position: 'absolute',
-    bottom: 120,
-    right: SPACING.lg,
+    bottom: 40,
+    right: 16,
     alignItems: 'center',
-    gap: SPACING.xl,
+    gap: 20,
   },
-  actionBtn: {
+  sideAction: {
     alignItems: 'center',
     gap: 4,
   },
-  actionIcon: {
-    textShadowColor: 'rgba(0,0,0,0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  actionCount: {
+  sideActionLabel: {
     color: '#fff',
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold as any,
-    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
     textShadowColor: 'rgba(0,0,0,0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
+  },
+
+  // Progress bar
+  progressBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  progressFill: {
+    width: '30%',
+    height: 2,
+    backgroundColor: '#fff',
   },
 });

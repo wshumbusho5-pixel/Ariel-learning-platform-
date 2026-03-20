@@ -11,6 +11,7 @@ import {
   useFonts,
   CormorantGaramond_700Bold_Italic,
 } from '@expo-google-fonts/cormorant-garamond';
+import { Kalam_400Regular, Kalam_700Bold } from '@expo-google-fonts/kalam';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,7 +29,7 @@ function PushNotificationRegistrar(): null {
 }
 
 export default function App(): React.ReactElement {
-  const [fontsLoaded] = useFonts({ CormorantGaramond_700Bold_Italic });
+  const [fontsLoaded] = useFonts({ CormorantGaramond_700Bold_Italic, Kalam_400Regular, Kalam_700Bold });
   // Render app regardless — fonts will swap in once loaded
   void fontsLoaded;
   return (

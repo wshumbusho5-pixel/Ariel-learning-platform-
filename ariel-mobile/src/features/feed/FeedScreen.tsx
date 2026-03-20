@@ -105,49 +105,50 @@ function FeedTopBar() {
   const navigation = useNavigation<FeedNavProp>();
   const [imgErr, setImgErr] = useState(false);
   const hasAvatar = !!user?.profile_picture && !imgErr;
+  const displayName = user?.username ?? user?.full_name ?? 'You';
 
   return (
     <View style={ss.topBar}>
-      {/* Avatar */}
-      <TouchableOpacity onPress={() => navigation.navigate('Main' as any)}>
-        {hasAvatar ? (
-          <Image
-            source={{ uri: user!.profile_picture! }}
-            style={ss.topBarAvatar}
-            onError={() => setImgErr(true)}
-          />
-        ) : (
-          <View style={[ss.topBarAvatar, ss.topBarAvatarFallback]}>
-            <Text style={ss.topBarAvatarText}>
-              {(user?.username ?? user?.full_name ?? 'A').charAt(0).toUpperCase()}
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
+      {/* Left: avatar + username */}
+      <View style={ss.topBarLeft}>
+        <TouchableOpacity
+          onPress={() => (navigation as any).navigate('Main', { screen: 'Profile' })}
+          activeOpacity={0.8}
+        >
+          {hasAvatar ? (
+            <Image
+              source={{ uri: user!.profile_picture! }}
+              style={ss.topBarAvatar}
+              onError={() => setImgErr(true)}
+            />
+          ) : (
+            <View style={[ss.topBarAvatar, ss.topBarAvatarFallback]}>
+              <Text style={ss.topBarAvatarText}>
+                {displayName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        <Text style={ss.topBarUsername}>{displayName}</Text>
+      </View>
 
-      {/* Brand */}
-      <Text style={ss.brandLogo}>ariel</Text>
-
-      {/* Icons */}
-      <View style={ss.topBarIcons}>
-        <TouchableOpacity
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={() => navigation.navigate('Discover')}
-        >
-          <Ionicons name="search-outline" size={22} color="#a1a1aa" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={() => navigation.navigate('Messages')}
-        >
-          <Ionicons name="chatbubble-outline" size={22} color="#a1a1aa" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          onPress={() => navigation.navigate('Notifications')}
-        >
-          <Ionicons name="notifications-outline" size={22} color="#a1a1aa" />
-        </TouchableOpacity>
+      {/* Right: ariel wordmark + icons */}
+      <View style={ss.topBarRight}>
+        <Text style={ss.brandLogo}>ariel</Text>
+        <View style={ss.topBarIcons}>
+          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Discover')}>
+            <Ionicons name="search-outline" size={22} color="#a1a1aa" />
+          </TouchableOpacity>
+          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Messages')}>
+            <Ionicons name="chatbubble-outline" size={22} color="#a1a1aa" />
+          </TouchableOpacity>
+          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Notifications')}>
+            <Ionicons name="notifications-outline" size={22} color="#a1a1aa" />
+          </TouchableOpacity>
+          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="ellipsis-vertical" size={20} color="#a1a1aa" />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -327,23 +328,39 @@ const ss = StyleSheet.create({
   // Top bar
   topBar: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingTop: 10,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#18181b',
+    borderBottomColor: '#111',
   },
-  topBarAvatar: { width: 36, height: 36, borderRadius: 18, overflow: 'hidden' },
+  topBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  topBarAvatar: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden' },
   topBarAvatarFallback: { backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
-  topBarAvatarText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-  brandLogo: {
-    flex: 1,
-    textAlign: 'center',
+  topBarAvatarText: { color: '#fff', fontWeight: '700', fontSize: 18 },
+  topBarUsername: {
     color: '#fafafa',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
+    letterSpacing: -0.3,
+    marginBottom: 2,
+  },
+  topBarRight: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  brandLogo: {
+    fontFamily: 'CormorantGaramond_700Bold_Italic',
     fontStyle: 'italic',
-    letterSpacing: -0.5,
+    color: '#fafafa',
+    fontSize: 22,
+    letterSpacing: 1,
   },
   topBarIcons: { flexDirection: 'row', gap: 16, alignItems: 'center' },
 
