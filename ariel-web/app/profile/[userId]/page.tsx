@@ -39,6 +39,7 @@ export default function ProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showUnfollowConfirm, setShowUnfollowConfirm] = useState(false);
+  const [showAvatarLightbox, setShowAvatarLightbox] = useState(false);
 
   useEffect(() => { loadProfile(); }, [userId]);
 
@@ -145,8 +146,11 @@ export default function ProfilePage() {
       {/* Avatar + info */}
       <div className="px-4 pt-6 pb-4 border-b border-[#2f3336]">
         <div className="flex items-start gap-4">
-          {/* Avatar */}
-          <div className="w-20 h-20 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
+          {/* Avatar — tap to view full size */}
+          <button
+            onClick={() => profile.profile_picture && setShowAvatarLightbox(true)}
+            className="w-20 h-20 rounded-full bg-zinc-800 flex-shrink-0 overflow-hidden flex items-center justify-center active:opacity-80 transition-opacity"
+          >
             {profile.profile_picture ? (
               <img src={profile.profile_picture} alt={profile.username} className="w-full h-full object-cover" />
             ) : (
@@ -154,7 +158,21 @@ export default function ProfilePage() {
                 {(profile.username?.[0] || profile.full_name?.[0] || 'U').toUpperCase()}
               </span>
             )}
-          </div>
+          </button>
+
+          {/* Profile pic lightbox */}
+          {showAvatarLightbox && profile.profile_picture && (
+            <div
+              className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+              onClick={() => setShowAvatarLightbox(false)}
+            >
+              <img
+                src={profile.profile_picture}
+                alt={profile.username}
+                className="w-72 h-72 rounded-full object-cover shadow-2xl"
+              />
+            </div>
+          )}
 
           {/* Follow button */}
           <div className="flex-1 flex justify-end pt-1">

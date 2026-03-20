@@ -30,12 +30,13 @@ export default function ProfilePage() {
   const CROP_SIZE = 280;
   const [cropperSrc, setCropperSrc] = useState<string | null>(null);
   const [cropImgNatural, setCropImgNatural] = useState({ w: 1, h: 1 });
-  const [cropPos, setCropPos] = useState({ x: 0, y: 0 });
-  const [cropScale, setCropScale] = useState(1); // 1 = exactly covers the circle
-  const [isDragging, setIsDragging] = useState(false);
+  // Live values stored in refs — never cause re-renders during gesture
+  const cropPosRef = useRef({ x: 0, y: 0 });
+  const cropScaleRef = useRef(1);
+  const cropImgRef = useRef<HTMLImageElement | null>(null);
+  const isDraggingRef = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
   const lastPinchDist = useRef<number | null>(null);
-  const lastPinchMid = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -106,8 +107,8 @@ export default function ProfilePage() {
     probe.onload = () => {
       setCropImgNatural({ w: probe.naturalWidth, h: probe.naturalHeight });
       setCropperSrc(url);
-      setCropPos({ x: 0, y: 0 });
-      setCropScale(1); // 1 = cover scale — image exactly fills the circle
+      cropScaleRef.current = 1;
+      cropPosRef.current = { x: 0, y: 0 };
     };
     probe.src = url;
     setAvatarError('');
@@ -116,9 +117,19 @@ export default function ProfilePage() {
 
   // cover scale: smallest multiplier that makes image fill the circle
   const coverScale = Math.max(CROP_SIZE / cropImgNatural.w, CROP_SIZE / cropImgNatural.h);
-  // display dimensions at cropScale=1 (already covers the circle)
   const displayW = cropImgNatural.w * coverScale;
   const displayH = cropImgNatural.h * coverScale;
+
+  // Apply transform directly to DOM — zero re-renders during gesture
+  const applyTransform = () => {
+    const img = cropImgRef.current;
+    if (!img) return;
+    const { x, y } = cropPosRef.current;
+    const s = cropScaleRef.current;
+    img.style.width = `${displayW * s}px`;
+    img.style.height = `${displayH * s}px`;
+    img.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+  };
 
   const handleCropSave = useCallback(async () => {
     if (!cropperSrc) return;
@@ -131,18 +142,18 @@ export default function ProfilePage() {
     canvas.width = outputSize;
     canvas.height = outputSize;
     const ctx = canvas.getContext('2d')!;
-
     ctx.beginPath();
     ctx.arc(outputSize / 2, outputSize / 2, outputSize / 2, 0, Math.PI * 2);
     ctx.clip();
 
-    // Match the preview transform exactly
     const cv = Math.max(CROP_SIZE / img.naturalWidth, CROP_SIZE / img.naturalHeight);
     const dScale = outputSize / CROP_SIZE;
-    const dw = img.naturalWidth  * cv * cropScale * dScale;
-    const dh = img.naturalHeight * cv * cropScale * dScale;
-    const dx = outputSize / 2 + cropPos.x * dScale - dw / 2;
-    const dy = outputSize / 2 + cropPos.y * dScale - dh / 2;
+    const s = cropScaleRef.current;
+    const { x, y } = cropPosRef.current;
+    const dw = img.naturalWidth  * cv * s * dScale;
+    const dh = img.naturalHeight * cv * s * dScale;
+    const dx = outputSize / 2 + x * dScale - dw / 2;
+    const dy = outputSize / 2 + y * dScale - dh / 2;
     ctx.drawImage(img, dx, dy, dw, dh);
 
     canvas.toBlob(async (blob) => {
@@ -161,41 +172,43 @@ export default function ProfilePage() {
         setAvatarUploading(false);
       }
     }, 'image/jpeg', 0.92);
-  }, [cropperSrc, cropPos, cropScale, cropImgNatural]);
+  }, [cropperSrc, cropImgNatural, displayW, displayH]);
 
+  // Pointer (mouse/stylus) handlers
   const handleCropPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'touch') return; // handled by touch events
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    setIsDragging(true);
-    dragStart.current = { x: e.clientX, y: e.clientY, posX: cropPos.x, posY: cropPos.y };
+    isDraggingRef.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY, posX: cropPosRef.current.x, posY: cropPosRef.current.y };
   };
 
   const handleCropPointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    setCropPos({
+    if (e.pointerType === 'touch' || !isDraggingRef.current) return;
+    cropPosRef.current = {
       x: dragStart.current.posX + (e.clientX - dragStart.current.x),
       y: dragStart.current.posY + (e.clientY - dragStart.current.y),
-    });
+    };
+    applyTransform();
   };
 
   const handleCropWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    setCropScale(s => Math.max(1, Math.min(4, s - e.deltaY * 0.003)));
+    cropScaleRef.current = Math.max(1, Math.min(4, cropScaleRef.current - e.deltaY * 0.003));
+    applyTransform();
   };
 
-  // Touch: single finger drag, two finger pinch-zoom
+  // Touch handlers — smooth pinch-zoom + drag with no React re-renders
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
     if (e.touches.length === 2) {
+      isDraggingRef.current = false;
       lastPinchDist.current = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY,
       );
-      lastPinchMid.current = {
-        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
-      };
     } else if (e.touches.length === 1) {
-      setIsDragging(true);
-      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, posX: cropPos.x, posY: cropPos.y };
+      isDraggingRef.current = true;
+      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, posX: cropPosRef.current.x, posY: cropPosRef.current.y };
     }
   };
 
@@ -208,19 +221,21 @@ export default function ProfilePage() {
       );
       if (lastPinchDist.current !== null) {
         const ratio = d / lastPinchDist.current;
-        setCropScale(s => Math.max(1, Math.min(4, s * ratio)));
+        cropScaleRef.current = Math.max(1, Math.min(4, cropScaleRef.current * ratio));
+        applyTransform();
       }
       lastPinchDist.current = d;
-    } else if (e.touches.length === 1 && isDragging) {
-      setCropPos({
+    } else if (e.touches.length === 1 && isDraggingRef.current) {
+      cropPosRef.current = {
         x: dragStart.current.posX + (e.touches[0].clientX - dragStart.current.x),
         y: dragStart.current.posY + (e.touches[0].clientY - dragStart.current.y),
-      });
+      };
+      applyTransform();
     }
   };
 
   const handleTouchEnd = () => {
-    setIsDragging(false);
+    isDraggingRef.current = false;
     lastPinchDist.current = null;
   };
 
@@ -672,11 +687,11 @@ export default function ProfilePage() {
           {/* Full-screen image drag area */}
           <div
             className="flex-1 relative overflow-hidden select-none"
-            style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+            style={{ cursor: 'grab', touchAction: 'none' }}
             onPointerDown={handleCropPointerDown}
             onPointerMove={handleCropPointerMove}
-            onPointerUp={() => setIsDragging(false)}
-            onPointerCancel={() => setIsDragging(false)}
+            onPointerUp={() => { isDraggingRef.current = false; }}
+            onPointerCancel={() => { isDraggingRef.current = false; }}
             onWheel={handleCropWheel}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
@@ -696,21 +711,23 @@ export default function ProfilePage() {
               border: '2px solid rgba(255,255,255,0.8)',
             }} />
 
-            {/* The image */}
+            {/* The image — transform applied directly via ref for smooth gesture */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              ref={cropImgRef}
               src={cropperSrc}
               alt="crop"
               draggable={false}
               style={{
                 position: 'absolute',
-                width: displayW * cropScale,
-                height: displayH * cropScale,
+                width: displayW,
+                height: displayH,
                 top: '50%',
                 left: '50%',
-                transform: `translate(calc(-50% + ${cropPos.x}px), calc(-50% + ${cropPos.y}px))`,
+                transform: 'translate(-50%, -50%)',
                 userSelect: 'none',
                 pointerEvents: 'none',
+                willChange: 'transform, width, height',
               }}
             />
           </div>
@@ -722,8 +739,11 @@ export default function ProfilePage() {
             </svg>
             <input
               type="range" min={1} max={4} step={0.01}
-              value={cropScale}
-              onChange={e => setCropScale(parseFloat(e.target.value))}
+              defaultValue={1}
+              onChange={e => {
+                cropScaleRef.current = parseFloat(e.target.value);
+                applyTransform();
+              }}
               className="flex-1 accent-violet-500 h-1"
             />
             <svg className="w-5 h-5 flex-shrink-0" style={{ color: '#8b9099' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
