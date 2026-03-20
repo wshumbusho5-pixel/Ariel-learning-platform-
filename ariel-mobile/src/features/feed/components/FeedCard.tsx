@@ -105,12 +105,16 @@ function StatusPill({ status }: { status: CardStatus }) {
   const meta = STATUS_META[status];
   return (
     <View
-      style={[
-        styles.statusPill,
-        { backgroundColor: meta.bg, borderColor: meta.border },
-      ]}
+      style={{
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+        borderWidth: 1,
+        backgroundColor: meta.bg,
+        borderColor: meta.border,
+      }}
     >
-      <Text style={[styles.statusPillText, { color: meta.text }]}>
+      <Text style={{ color: meta.text, fontSize: 11, fontWeight: '600', letterSpacing: 0.3 }}>
         {meta.label}
       </Text>
     </View>
