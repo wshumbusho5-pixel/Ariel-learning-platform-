@@ -293,18 +293,18 @@ async def toggle_follow_user(
             "created_at": datetime.utcnow(),
         })
 
-        # Auto-follow-back if target is a bot
+        # Schedule delayed follow-back if target is a bot (5h–48h later, feels natural)
         if target_user.get("is_bot"):
             already_follows_back = current_user_id in target_user.get("following", [])
             if not already_follows_back:
-                await db.users.update_one(
-                    {"_id": ObjectId(user_id)},
-                    {"$addToSet": {"following": current_user_id}, "$inc": {"following_count": 1}}
-                )
-                await db.users.update_one(
-                    {"_id": ObjectId(current_user_id)},
-                    {"$addToSet": {"followers": user_id}, "$inc": {"followers_count": 1}}
-                )
+                import random as _rnd
+                delay_hours = _rnd.uniform(5, 48)
+                execute_at = datetime.utcnow() + timedelta(hours=delay_hours)
+                await db.pending_bot_follows.insert_one({
+                    "bot_id": user_id,
+                    "user_id": current_user_id,
+                    "execute_at": execute_at,
+                })
 
     updated_target = await db.users.find_one({"_id": ObjectId(user_id)})
 

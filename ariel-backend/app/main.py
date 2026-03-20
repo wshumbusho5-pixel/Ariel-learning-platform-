@@ -1,18 +1,75 @@
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
+from datetime import datetime
+from bson import ObjectId
 from app.core.config import settings
 from app.api import questions, scraper, ai, auth, progress, gamification, admin, cards, ai_generator, social, stories, achievements, notifications, comments, messages, activity_feed, study_rooms, challenges, reels, livestream, duels
 from app.services.database_service import db_service
 from app.core.database import connect_to_mongo, close_mongo_connection
+
+
+async def _process_pending_bot_follows():
+    """Background worker: execute delayed bot follow-backs every 60 seconds."""
+    await asyncio.sleep(10)  # let DB connect first
+    while True:
+        try:
+            db = db_service.get_db()
+            now = datetime.utcnow()
+            async for pending in db.pending_bot_follows.find({"execute_at": {"$lte": now}}):
+                bot_id = pending["bot_id"]
+                user_id = pending["user_id"]
+                try:
+                    # Verify bot still exists and user hasn't been followed yet
+                    bot = await db.users.find_one({"_id": ObjectId(bot_id)})
+                    user = await db.users.find_one({"_id": ObjectId(user_id)})
+                    if not bot or not user:
+                        await db.pending_bot_follows.delete_one({"_id": pending["_id"]})
+                        continue
+
+                    already = user_id in bot.get("following", [])
+                    if not already:
+                        await db.users.update_one(
+                            {"_id": ObjectId(bot_id)},
+                            {"$addToSet": {"following": user_id}, "$inc": {"following_count": 1}}
+                        )
+                        await db.users.update_one(
+                            {"_id": ObjectId(user_id)},
+                            {"$addToSet": {"followers": bot_id}, "$inc": {"followers_count": 1}}
+                        )
+                        # Send notification to real user
+                        await db.notifications.insert_one({
+                            "user_id": user_id,
+                            "notification_type": "new_follower",
+                            "title": "New follower",
+                            "message": f"@{bot.get('username', 'someone')} started following you",
+                            "icon": "👤",
+                            "actor_id": bot_id,
+                            "actor_username": bot.get("username"),
+                            "actor_full_name": bot.get("full_name"),
+                            "actor_profile_picture": bot.get("profile_picture"),
+                            "is_read": False,
+                            "is_archived": False,
+                            "created_at": datetime.utcnow(),
+                        })
+
+                    await db.pending_bot_follows.delete_one({"_id": pending["_id"]})
+                except Exception:
+                    pass  # leave it for next cycle if something fails
+        except Exception:
+            pass
+        await asyncio.sleep(60)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     await db_service.connect_db()
     await connect_to_mongo()
+    asyncio.create_task(_process_pending_bot_follows())
     yield
     # Shutdown
     await db_service.close_db()
