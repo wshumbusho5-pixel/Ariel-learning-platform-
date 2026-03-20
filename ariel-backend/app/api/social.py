@@ -498,6 +498,9 @@ async def get_suggested_users(
                 seen_ids.add(uid)
                 suggestions.append(user)
 
+    # Real users first, then bots
+    suggestions.sort(key=lambda u: 1 if u.get("is_bot") else 0)
+
     # Convert to response format
     following_str = set(current_user.following or [])
     result = []
@@ -539,7 +542,7 @@ async def search_users(
     # Search in username, full_name, school
     search_regex = {"$regex": query, "$options": "i"}  # Case-insensitive
 
-    results = []
+    raw_results = []
     async for user in db.users.find({
         "$and": [
             {"$or": [
@@ -550,7 +553,14 @@ async def search_users(
             {"is_active": {"$ne": False}},
             {"_id": {"$ne": current_user.id}},  # exclude self
         ]
-    }).limit(limit):
+    }).limit(limit * 2):  # fetch extra to allow re-sorting
+        raw_results.append(user)
+
+    # Real users always appear before bots
+    raw_results.sort(key=lambda u: 1 if u.get("is_bot") else 0)
+
+    results = []
+    for user in raw_results[:limit]:
         uid = str(user["_id"])
         results.append(FollowListItem(
             id=uid,
