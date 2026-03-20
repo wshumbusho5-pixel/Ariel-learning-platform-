@@ -38,7 +38,7 @@ interface UserResult {
 }
 
 function Avatar({ creator, size = 40 }: { creator?: Creator; size?: number }) {
-  const letter = (creator?.full_name || creator?.username || '?')[0].toUpperCase();
+  const letter = (creator?.username || creator?.full_name || '?')[0].toUpperCase();
   if (creator?.profile_picture) {
     return (
       <img
@@ -515,7 +515,7 @@ function ExploreContent() {
                       <Avatar creator={card.created_by} size={32} />
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="text-white font-semibold text-sm truncate">
-                          {card.created_by?.full_name || card.created_by?.username || 'Ariel'}
+                          {card.created_by?.username || card.created_by?.full_name || 'Ariel'}
                         </span>
                         {card.created_by?.is_verified && (
                           <svg className="w-3 h-3 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

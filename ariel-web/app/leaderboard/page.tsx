@@ -146,7 +146,7 @@ export default function LeaderboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-bold text-white truncate">
-                          {entry.full_name || entry.username || 'User'}
+                          {entry.username || entry.full_name || 'User'}
                         </p>
                         {entry.is_verified && (
                           <svg className="w-4 h-4 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

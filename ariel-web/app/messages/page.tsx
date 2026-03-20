@@ -209,7 +209,7 @@ export default function MessagesPage() {
         ) : (
           <div>
             {filtered.map((convo) => {
-              const name = convo.other_user_full_name || convo.other_user_username || '?';
+              const name = convo.other_user_username || convo.other_user_full_name || '?';
               const isUnread = convo.unread_count > 0;
               const isBuddy = buddies.has(convo.id);
               return (

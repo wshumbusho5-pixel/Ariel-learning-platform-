@@ -30,7 +30,7 @@ function Avatar({ person }: { person: Person }) {
       />
     );
   }
-  const initial = (person.full_name || person.username || '?')[0].toUpperCase();
+  const initial = (person.username || person.full_name || '?')[0].toUpperCase();
   return (
     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center flex-shrink-0">
       <span className="text-white font-bold text-lg">{initial}</span>
@@ -106,7 +106,7 @@ export default function FollowersPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-[14px] font-bold truncate" style={{ color: '#e7e9ea' }}>
-                        {person.full_name || person.username}
+                        {person.username || person.full_name}
                       </span>
                       {person.is_verified && (
                         <svg className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">

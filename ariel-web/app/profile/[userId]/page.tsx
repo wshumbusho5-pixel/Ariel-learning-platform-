@@ -134,7 +134,7 @@ export default function ProfilePage() {
         </button>
         <div>
           <p className="text-[15px] font-bold leading-none" style={{ color: '#e7e9ea' }}>
-            {profile.full_name || profile.username || 'Profile'}
+            {profile.username || profile.full_name || 'Profile'}
           </p>
           {profile.total_points > 0 && (
             <p className="text-[12px]" style={{ color: '#8b9099' }}>{profile.total_points} points</p>

@@ -349,7 +349,7 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-1.5 flex-wrap min-w-0">
               <span className="text-[15px] font-bold leading-none truncate" style={{ color: '#e7e9ea' }}>
-                {card.author_full_name || card.author_username || 'Ariel User'}
+                {card.author_username || card.author_full_name || 'Ariel User'}
               </span>
               <span className="text-[13px]" style={{ color: '#4a5058' }}>·</span>
               <span className="text-[13px] truncate" style={{ color: '#8b9099' }}>{card.subject ?? meta.short}</span>

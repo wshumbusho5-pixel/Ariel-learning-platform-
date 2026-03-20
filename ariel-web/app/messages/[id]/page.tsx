@@ -384,7 +384,7 @@ export default function ConversationPage() {
     }, []
   );
 
-  const otherName = convoInfo?.other_user_full_name || convoInfo?.other_user_username || 'Chat';
+  const otherName = convoInfo?.other_user_username || convoInfo?.other_user_full_name || 'Chat';
   const otherUsername = convoInfo?.other_user_username;
 
   return (

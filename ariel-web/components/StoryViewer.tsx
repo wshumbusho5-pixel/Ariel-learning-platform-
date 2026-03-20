@@ -143,7 +143,7 @@ export default function StoryViewer({ storyGroup, onClose, onNext, onPrevious }:
           <div>
             <div className="flex items-center gap-1">
               <span className="text-white font-medium text-sm">
-                {currentStory.author_full_name || currentStory.author_username || 'User'}
+                {currentStory.author_username || currentStory.author_full_name || 'User'}
               </span>
               {currentStory.author_is_verified && (
                 <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">

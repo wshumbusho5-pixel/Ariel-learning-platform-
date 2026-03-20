@@ -327,13 +327,13 @@ export default function SideNav() {
             ) : (
               <div className="w-8 h-8 rounded-full bg-violet-400 flex items-center justify-center flex-shrink-0 ring-2 ring-zinc-700">
                 <span className="text-xs font-black text-white">
-                  {(user?.full_name || user?.username || 'U')[0].toUpperCase()}
+                  {(user?.username || user?.full_name || 'U')[0].toUpperCase()}
                 </span>
               </div>
             )}
             {expanded && (
               <div className="min-w-0">
-                <p className="text-[13px] font-semibold text-zinc-300 truncate">{user?.full_name || user?.username || 'Profile'}</p>
+                <p className="text-[13px] font-semibold text-zinc-300 truncate">{user?.username || user?.full_name || 'Profile'}</p>
                 <p className="text-[11px] text-zinc-600 truncate">@{user?.username || '—'}</p>
               </div>
             )}
