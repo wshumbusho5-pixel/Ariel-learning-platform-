@@ -17,9 +17,10 @@ import { ArielWordmark } from '@/shared/components/ArielWordmark';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
 
 const { width: SW, height: SH } = Dimensions.get('window');
-// Match real iPhone aspect ratio (9:19.5 ≈ 0.462) so screenshots fill perfectly
-const PHONE_W = SW * 0.58;
-const PHONE_H = PHONE_W / 0.462;
+// 44% of screen width, exact iPhone 16e aspect ratio (390:844 = 1:2.164)
+// Screenshots fill with no crop — resizeMode contain
+const PHONE_W = SW * 0.44;
+const PHONE_H = PHONE_W * 2.164;
 
 type Tab = 'Flashcards' | 'Social Feed' | 'Clips';
 const TABS: Tab[] = ['Flashcards', 'Social Feed', 'Clips'];
@@ -42,18 +43,12 @@ function PhoneMockup({ activeTab, fade }: { activeTab: Tab; fade: Animated.Value
 
       {/* Phone shell */}
       <View style={s.phoneFrame}>
-        {/* Dynamic Island */}
-        <View style={s.dynamicIsland} />
-
-        {/* Screenshot fills the screen area */}
+        {/* Screenshot — contain so full screen shows with no crop */}
         <Animated.Image
           source={SCREEN_IMAGES[activeTab]}
           style={[s.phoneScreenshot, { opacity: fade }]}
-          resizeMode="cover"
+          resizeMode="contain"
         />
-
-        {/* Home indicator */}
-        <View style={s.homeIndicator} />
       </View>
     </View>
   );
@@ -162,7 +157,7 @@ export function WelcomeScreen({ navigation }: Props) {
 
       {/* Wordmark */}
       <View style={s.wordmarkWrap}>
-        <ArielWordmark size={38} />
+        <ArielWordmark size={42} />
       </View>
 
       {/* Tab pills */}
@@ -253,57 +248,36 @@ const s = StyleSheet.create({
 
   // Phone frame
   phoneWrap: {
-    width: PHONE_W + 16,
-    height: PHONE_H + 16,
+    width: PHONE_W + 12,
+    height: PHONE_H + 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   phoneGlow: {
     position: 'absolute',
-    width: PHONE_W * 0.85,
-    height: PHONE_H * 0.6,
+    width: PHONE_W * 0.8,
+    height: PHONE_H * 0.5,
     borderRadius: 999,
-    backgroundColor: 'rgba(124,92,252,0.18)',
-    top: '15%',
+    backgroundColor: 'rgba(124,92,252,0.16)',
+    top: '20%',
   },
   phoneFrame: {
     width: PHONE_W,
     height: PHONE_H,
-    borderRadius: 40,
+    borderRadius: PHONE_W * 0.12, // scales with phone size (~47px on 390 screen)
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: 'rgba(255,255,255,0.18)',
     overflow: 'hidden',
     backgroundColor: '#000',
-    // Subtle shadow to lift the phone off the bg
     shadowColor: '#7c3aed',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 16,
-  },
-  dynamicIsland: {
-    position: 'absolute',
-    top: 12,
-    alignSelf: 'center',
-    width: 90,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#000',
-    zIndex: 10,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 14,
   },
   phoneScreenshot: {
     width: '100%',
     height: '100%',
-  },
-  homeIndicator: {
-    position: 'absolute',
-    bottom: 8,
-    alignSelf: 'center',
-    width: 100,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.35)',
-    zIndex: 10,
   },
 
   // Hero block
