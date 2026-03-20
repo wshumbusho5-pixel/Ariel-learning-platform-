@@ -891,6 +891,26 @@ export default function Dashboard() {
     messagesAPI.getUnreadCount().then((d: any) => setUnreadMessages(d?.unread_count ?? 0)).catch(() => {});
     notificationsAPI.getSummary().then((d: any) => setUnreadNotifications(d?.unread_count ?? 0)).catch(() => {});
 
+    const CACHE_KEY = `ariel_feed_cache_${user?.id}`;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+    // Show cached feed instantly (stale-while-revalidate)
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { ts, data } = JSON.parse(cached);
+        if (Date.now() - ts < CACHE_TTL) {
+          setGamification(data.gam || {});
+          setDueCards(data.due || []);
+          setFeedCards(data.feed || []);
+          setReels(data.reels || []);
+          setFollowingUsers(data.following || []);
+          setDataLoading(false); // show cached data immediately
+        }
+      }
+    } catch {}
+
+    // Always fetch fresh data in background
     Promise.all([
       gamificationAPI.getStats().catch(() => null),
       cardsAPI.getDueCards(50).catch(() => []),
@@ -898,19 +918,29 @@ export default function Dashboard() {
       api.get('/api/reels/feed').catch(() => ({ data: [] })),
       import('@/lib/api').then(m => m.socialAPI.getFollowing(String(user?.id ?? ''))).catch(() => []),
     ]).then(([gam, due, feed, reelsRes, following]) => {
-      setGamification(gam || {});
-      setDueCards((due as DueCard[]) || []);
-      // Map created_by fields to author_* fields expected by dashboard
       const mappedFeed = ((feed as any[]) || []).map((card: any) => ({
         ...card,
         author_username: card.author_username || card.created_by?.username,
         author_full_name: card.author_full_name || card.created_by?.full_name,
         author_profile_picture: card.author_profile_picture || card.created_by?.profile_picture,
       }));
-      setFeedCards(mappedFeed as FeedCard[]);
       const allReels: Reel[] = (reelsRes as any).data ?? [];
-      setReels(allReels.filter(r => r.video_url && r.kind !== 'card'));
-      setFollowingUsers(((following as any[]) || []).slice(0, 12));
+      const filteredReels = allReels.filter(r => r.video_url && r.kind !== 'card');
+      const followingList = ((following as any[]) || []).slice(0, 12);
+
+      setGamification(gam || {});
+      setDueCards((due as DueCard[]) || []);
+      setFeedCards(mappedFeed as FeedCard[]);
+      setReels(filteredReels);
+      setFollowingUsers(followingList);
+
+      // Cache fresh data for next visit
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          ts: Date.now(),
+          data: { gam, due, feed: mappedFeed, reels: filteredReels, following: followingList }
+        }));
+      } catch {}
     }).finally(() => setDataLoading(false));
   }, [isAuthenticated, isLoading, user]);
 

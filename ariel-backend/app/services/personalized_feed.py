@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Dict, Optional
 from app.models.user import User
 from app.models.card import Card
@@ -26,8 +27,28 @@ class PersonalizedFeedService:
         offset: int = 0
     ) -> List[Card]:
 
+        # Run all 5 feed sources in parallel instead of sequentially
+        following_task = PersonalizedFeedService._get_following_cards(user, int(limit * 0.40)) \
+            if user.following else asyncio.sleep(0, result=[])
+        subject_task   = PersonalizedFeedService._get_subject_cards(user, int(limit * 0.25)) \
+            if user.subjects else asyncio.sleep(0, result=[])
+        trending_task  = PersonalizedFeedService._get_recent_trending(int(limit * 0.20))
+        discover_task  = PersonalizedFeedService._get_discover_cards(user, int(limit * 0.10))
+        review_task    = CardRepository.get_due_cards(user.id, int(limit * 0.05))
+
+        following_cards, subject_cards, trending, discover, review_cards = await asyncio.gather(
+            following_task, subject_task, trending_task, discover_task, review_task,
+            return_exceptions=True
+        )
+        # Replace exceptions with empty lists
+        following_cards = following_cards if isinstance(following_cards, list) else []
+        subject_cards   = subject_cards   if isinstance(subject_cards,   list) else []
+        trending        = trending        if isinstance(trending,         list) else []
+        discover        = discover        if isinstance(discover,         list) else []
+        review_cards    = review_cards    if isinstance(review_cards,     list) else []
+
         feed_cards = []
-        seen_ids = set()
+        seen_ids: set = set()
 
         def add_cards(cards: List[Card]):
             for card in cards:
@@ -35,30 +56,11 @@ class PersonalizedFeedService:
                     seen_ids.add(card.id)
                     feed_cards.append(card)
 
-        # 1. Cards from people you follow (40%) — most important, shown first
-        if user.following:
-            following_cards = await PersonalizedFeedService._get_following_cards(
-                user, int(limit * 0.40)
-            )
-            add_cards(following_cards)
-
-        # 2. Cards from enrolled subjects (25%)
-        if user.subjects:
-            subject_cards = await PersonalizedFeedService._get_subject_cards(
-                user, int(limit * 0.25)
-            )
-            add_cards(subject_cards)
-
-        # 3. Recent trending public cards (20%)
-        trending = await PersonalizedFeedService._get_recent_trending(int(limit * 0.20))
+        # Keep following cards first (most relevant), then the rest
+        add_cards(following_cards)
+        add_cards(subject_cards)
         add_cards(trending)
-
-        # 4. Discovery — topics outside your subjects (10%)
-        discover = await PersonalizedFeedService._get_discover_cards(user, int(limit * 0.10))
         add_cards(discover)
-
-        # 5. Your own due cards (5%)
-        review_cards = await CardRepository.get_due_cards(user.id, int(limit * 0.05))
         add_cards(review_cards)
 
         # If feed is still sparse, fill with recent public cards
