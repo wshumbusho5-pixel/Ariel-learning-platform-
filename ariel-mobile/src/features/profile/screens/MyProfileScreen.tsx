@@ -24,7 +24,7 @@ import type { ProfileStackParamList } from '@/features/profile/ProfileNavigator'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Nav = NativeStackNavigationProp<ProfileStackParamList, 'MyProfile'>;
+type Nav = NativeStackNavigationProp<ProfileStackParamList>;
 
 type Tab = 'Decks' | 'Saved' | 'Stats' | 'Achievements';
 
@@ -190,16 +190,26 @@ export function MyProfileScreen() {
             </View>
           )}
           {activeTab === 'Stats' && (
-            <View style={styles.savedPlaceholder}>
+            <TouchableOpacity
+              style={styles.savedPlaceholder}
+              onPress={() => navigation.navigate('Stats')}
+              activeOpacity={0.7}
+            >
               <Text style={styles.savedIcon}>📊</Text>
-              <Text style={styles.savedText}>Study stats coming soon</Text>
-            </View>
+              <Text style={styles.savedText}>View detailed stats</Text>
+              <Text style={[styles.savedText, { color: COLORS.violet[400], marginTop: 4 }]}>Tap to open →</Text>
+            </TouchableOpacity>
           )}
           {activeTab === 'Achievements' && (
-            <View style={styles.savedPlaceholder}>
+            <TouchableOpacity
+              style={styles.savedPlaceholder}
+              onPress={() => navigation.navigate('Achievements')}
+              activeOpacity={0.7}
+            >
               <Text style={styles.savedIcon}>🏆</Text>
-              <Text style={styles.savedText}>Achievements coming soon</Text>
-            </View>
+              <Text style={styles.savedText}>View all achievements</Text>
+              <Text style={[styles.savedText, { color: COLORS.violet[400], marginTop: 4 }]}>Tap to open →</Text>
+            </TouchableOpacity>
           )}
         </ScrollView>
       )}

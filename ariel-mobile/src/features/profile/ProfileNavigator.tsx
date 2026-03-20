@@ -7,6 +7,10 @@ import { EditProfileScreen } from '@/features/profile/screens/EditProfileScreen'
 import { FollowersScreen } from '@/features/profile/screens/FollowersScreen';
 import { FollowingScreen } from '@/features/profile/screens/FollowingScreen';
 import { SettingsScreen } from '@/features/profile/screens/SettingsScreen';
+import { LeaderboardScreen } from '@/features/gamification/screens/LeaderboardScreen';
+import { AchievementsScreen } from '@/features/gamification/screens/AchievementsScreen';
+import { ChallengesScreen } from '@/features/gamification/screens/ChallengesScreen';
+import { StatsScreen } from '@/features/gamification/screens/StatsScreen';
 
 // ─── Param List ───────────────────────────────────────────────────────────────
 
@@ -17,6 +21,10 @@ export type ProfileStackParamList = {
   Followers: { userId: string };
   Following: { userId: string };
   Settings: undefined;
+  Leaderboard: undefined;
+  Achievements: undefined;
+  Challenges: undefined;
+  Stats: undefined;
 };
 
 // ─── Navigator ────────────────────────────────────────────────────────────────
@@ -39,6 +47,10 @@ export function ProfileNavigator(): React.ReactElement {
       <Stack.Screen name="Followers" component={FollowersScreen} />
       <Stack.Screen name="Following" component={FollowingScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
+      <Stack.Screen name="Achievements" component={AchievementsScreen} />
+      <Stack.Screen name="Challenges" component={ChallengesScreen} />
+      <Stack.Screen name="Stats" component={StatsScreen} />
     </Stack.Navigator>
   );
 }

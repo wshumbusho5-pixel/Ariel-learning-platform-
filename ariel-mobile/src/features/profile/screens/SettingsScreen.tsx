@@ -17,7 +17,7 @@ import type { ProfileStackParamList } from '@/features/profile/ProfileNavigator'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Nav = NativeStackNavigationProp<ProfileStackParamList, 'Settings'>;
+type Nav = NativeStackNavigationProp<ProfileStackParamList>;
 
 interface SettingsRowProps {
   icon: string;
@@ -124,6 +124,33 @@ export function SettingsScreen() {
             icon="✏️"
             label="Edit Profile"
             onPress={() => navigation.navigate('EditProfile')}
+          />
+        </Section>
+
+        {/* Gamification */}
+        <Section title="Community">
+          <SettingsRow
+            icon="🏆"
+            label="Leaderboard"
+            onPress={() => navigation.navigate('Leaderboard')}
+          />
+          <View style={styles.rowSeparator} />
+          <SettingsRow
+            icon="🎖️"
+            label="Achievements"
+            onPress={() => navigation.navigate('Achievements')}
+          />
+          <View style={styles.rowSeparator} />
+          <SettingsRow
+            icon="⚡"
+            label="Challenges"
+            onPress={() => navigation.navigate('Challenges')}
+          />
+          <View style={styles.rowSeparator} />
+          <SettingsRow
+            icon="📊"
+            label="My Stats"
+            onPress={() => navigation.navigate('Stats')}
           />
         </Section>
 
