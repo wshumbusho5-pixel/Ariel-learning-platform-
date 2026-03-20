@@ -6,15 +6,16 @@ interface ArielWordmarkProps {
 }
 
 /**
- * The Ariel brand wordmark — italic serif "ariel" with a violet 'i'.
- * Matches the web's Cormorant Garamond italic using system Georgia.
+ * The Ariel brand wordmark — Cormorant Garamond 700 italic "ariel"
+ * with a violet #9B7FFF 'i'. Matches the web exactly.
  */
 export function ArielWordmark({ size = 28 }: ArielWordmarkProps) {
+  const letterSpacing = Math.max(1, (size / 96) * 12);
   return (
     <View style={styles.row}>
-      <Text style={[styles.text, { fontSize: size }]}>ar</Text>
-      <Text style={[styles.text, styles.violet, { fontSize: size }]}>i</Text>
-      <Text style={[styles.text, { fontSize: size }]}>el</Text>
+      <Text style={[styles.text, { fontSize: size, letterSpacing }]}>ar</Text>
+      <Text style={[styles.text, styles.violet, { fontSize: size, letterSpacing }]}>i</Text>
+      <Text style={[styles.text, { fontSize: size, letterSpacing }]}>el</Text>
     </View>
   );
 }
@@ -25,11 +26,9 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   text: {
-    fontFamily: 'Georgia',
+    fontFamily: 'CormorantGaramond_700Bold_Italic',
     fontStyle: 'italic',
-    fontWeight: '600',
-    color: '#fafafa',
-    letterSpacing: -0.5,
+    color: '#ffffff',
   },
   violet: {
     color: '#9B7FFF',

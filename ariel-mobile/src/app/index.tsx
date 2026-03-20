@@ -7,6 +7,10 @@ import { RootNavigator } from '@/shared/navigation/RootNavigator';
 import { navigationRef } from '@/shared/navigation/navigationRef';
 import { linking } from '@/shared/navigation/linking';
 import { usePushNotifications } from '@/shared/hooks/usePushNotifications';
+import {
+  useFonts,
+  CormorantGaramond_700Bold_Italic,
+} from '@expo-google-fonts/cormorant-garamond';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +28,9 @@ function PushNotificationRegistrar(): null {
 }
 
 export default function App(): React.ReactElement {
+  const [fontsLoaded] = useFonts({ CormorantGaramond_700Bold_Italic });
+  // Render app regardless — fonts will swap in once loaded
+  void fontsLoaded;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
