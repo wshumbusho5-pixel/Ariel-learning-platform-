@@ -68,6 +68,7 @@ class User(BaseModel):
     is_active: bool = True
     is_verified: bool = False
     is_teacher: bool = False  # Teacher verification status
+    is_bot: bool = False  # Placeholder/bot accounts that auto-follow back
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: Optional[datetime] = None
     last_seen: Optional[datetime] = None  # Updated every ~30s while active

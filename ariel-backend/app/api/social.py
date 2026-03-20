@@ -293,6 +293,19 @@ async def toggle_follow_user(
             "created_at": datetime.utcnow(),
         })
 
+        # Auto-follow-back if target is a bot
+        if target_user.get("is_bot"):
+            already_follows_back = current_user_id in target_user.get("following", [])
+            if not already_follows_back:
+                await db.users.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$addToSet": {"following": current_user_id}, "$inc": {"following_count": 1}}
+                )
+                await db.users.update_one(
+                    {"_id": ObjectId(current_user_id)},
+                    {"$addToSet": {"followers": user_id}, "$inc": {"followers_count": 1}}
+                )
+
     updated_target = await db.users.find_one({"_id": ObjectId(user_id)})
 
     return {
