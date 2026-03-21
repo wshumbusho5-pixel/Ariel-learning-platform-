@@ -17,7 +17,46 @@ import type { Card } from '@/shared/types/card';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// ─── Subject filter (derived from cards) ──────────────────────────────────────
+// ─── Subject emoji map ────────────────────────────────────────────────────────
+
+const SUBJECT_EMOJI: Record<string, string> = {
+  gospel: '✝️',
+  business: '💼',
+  economics: '📈',
+  technology: '💻',
+  health: '🧬',
+  mathematics: '📐',
+  sciences: '🔬',
+  history: '🏛️',
+  literature: '📚',
+  languages: '🌍',
+  law: '⚖️',
+  arts: '🎨',
+  psychology: '🧠',
+  engineering: '⚙️',
+  geography: '🗺️',
+  other: '✨',
+  'high-school': '🏫',
+  university: '🎓',
+  professional: '💼',
+  'self-study': '📖',
+  physics: '⚛️',
+  chemistry: '🧪',
+  biology: '🧬',
+  'computer-science': '💻',
+  english: '📖',
+  science: '🔬',
+  language: '🌍',
+  math: '📐',
+  art: '🎨',
+};
+
+function getSubjectEmoji(subject: string): string {
+  const lower = subject.toLowerCase();
+  return SUBJECT_EMOJI[lower] ?? '📚';
+}
+
+// ─── Subject filter ───────────────────────────────────────────────────────────
 
 function SubjectFilter({
   subjects,
@@ -34,18 +73,23 @@ function SubjectFilter({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.filterRow}
     >
-      {['All', ...subjects].map((s) => (
-        <TouchableOpacity
-          key={s}
-          style={[styles.filterChip, active === s && styles.filterChipActive]}
-          onPress={() => onSelect(s)}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.filterChipText, active === s && styles.filterChipTextActive]}>
-            {s}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {['All', ...subjects].map((s) => {
+        const isActive = active === s;
+        const emoji = s !== 'All' ? getSubjectEmoji(s) : null;
+        return (
+          <TouchableOpacity
+            key={s}
+            style={[styles.filterChip, isActive && styles.filterChipActive]}
+            onPress={() => onSelect(s)}
+            activeOpacity={0.7}
+          >
+            {emoji ? <Text style={styles.filterChipEmoji}>{emoji}</Text> : null}
+            <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </ScrollView>
   );
 }
@@ -100,7 +144,7 @@ export function MyDeckScreen() {
 
   const [activeSubject, setActiveSubject] = useState('All');
 
-  // Queue
+  // Queue state
   const [queue, setQueue] = useState<Card[]>([]);
   const [queueInitialized, setQueueInitialized] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -109,6 +153,8 @@ export function MyDeckScreen() {
   const [hardCount, setHardCount] = useState(0);
   const [easyCount, setEasyCount] = useState(0);
   const [nailedCount, setNailedCount] = useState(0);
+  // Track easy ratings per card to implement 2nd-easy removal
+  const [easyCountsPerCard, setEasyCountsPerCard] = useState<Record<string, number>>({});
 
   // Filtered cards by subject
   const filteredCards = React.useMemo(() => {
@@ -132,6 +178,7 @@ export function MyDeckScreen() {
     setHardCount(0);
     setEasyCount(0);
     setNailedCount(0);
+    setEasyCountsPerCard({});
   }, [activeSubject]);
 
   // Due count
@@ -142,20 +189,61 @@ export function MyDeckScreen() {
   }).length;
 
   const handleRate = useCallback(
-    (quality: 1 | 3 | 5) => {
+    (quality: 2 | 4 | 5) => {
       const card = queue[currentIndex];
       if (!card || !card.id) return;
+
       reviewCard(card.id, quality);
-      if (quality === 1) setHardCount((n) => n + 1);
-      else if (quality === 3) setEasyCount((n) => n + 1);
+
+      if (quality === 2) setHardCount((n) => n + 1);
+      else if (quality === 4) setEasyCount((n) => n + 1);
       else if (quality === 5) setNailedCount((n) => n + 1);
-      let nextQueue = queue;
-      if (quality === 1) {
-        const insertAt = Math.min(currentIndex + 4, queue.length);
-        nextQueue = [...queue];
-        nextQueue.splice(insertAt, 0, card);
-        setQueue(nextQueue);
+
+      const after = queue.slice(currentIndex + 1);
+      let nextQueue: Card[];
+
+      if (quality === 2) {
+        // Hard: re-insert 4 positions ahead in remaining queue
+        const insertAt = Math.min(4, after.length);
+        nextQueue = [
+          ...queue.slice(0, currentIndex + 1),
+          ...after.slice(0, insertAt),
+          card,
+          ...after.slice(insertAt),
+        ];
+      } else if (quality === 4) {
+        // Easy: track per-card easy count
+        const prevEasy = easyCountsPerCard[card.id] ?? 0;
+        const newEasy = prevEasy + 1;
+        setEasyCountsPerCard((prev) => ({ ...prev, [card.id]: newEasy }));
+
+        if (newEasy >= 2) {
+          // 2nd easy — remove all future occurrences
+          nextQueue = [
+            ...queue.slice(0, currentIndex + 1),
+            ...after.filter((c) => c.id !== card.id),
+          ];
+        } else {
+          // 1st easy — remove future occurrences, insert at 82% position
+          const cleanAfter = after.filter((c) => c.id !== card.id);
+          const insertAt = Math.max(0, Math.floor(cleanAfter.length * 0.82));
+          nextQueue = [
+            ...queue.slice(0, currentIndex + 1),
+            ...cleanAfter.slice(0, insertAt),
+            card,
+            ...cleanAfter.slice(insertAt),
+          ];
+        }
+      } else {
+        // Nailed: remove all future occurrences
+        nextQueue = [
+          ...queue.slice(0, currentIndex + 1),
+          ...after.filter((c) => c.id !== card.id),
+        ];
       }
+
+      setQueue(nextQueue);
+
       const nextIndex = currentIndex + 1;
       if (nextIndex >= nextQueue.length) {
         setSessionDone(true);
@@ -165,7 +253,7 @@ export function MyDeckScreen() {
       setIsFlipped(false);
       scrollRef.current?.scrollTo({ x: nextIndex * SCREEN_WIDTH, animated: true });
     },
-    [currentIndex, queue, reviewCard],
+    [currentIndex, queue, reviewCard, easyCountsPerCard],
   );
 
   const handleRestart = useCallback(() => {
@@ -176,6 +264,7 @@ export function MyDeckScreen() {
     setHardCount(0);
     setEasyCount(0);
     setNailedCount(0);
+    setEasyCountsPerCard({});
     scrollRef.current?.scrollTo({ x: 0, animated: false });
   }, [filteredCards]);
 
@@ -371,6 +460,9 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
@@ -381,6 +473,9 @@ const styles = StyleSheet.create({
   filterChipActive: {
     backgroundColor: '#7c3aed',
     borderColor: '#7c3aed',
+  },
+  filterChipEmoji: {
+    fontSize: 13,
   },
   filterChipText: {
     color: '#71717a',

@@ -14,7 +14,7 @@ interface RatingConfig {
   key: Rating;
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
-  quality: 1 | 3 | 5;
+  quality: 2 | 4 | 5;
   idleBg: string;
   idleBorder: string;
   idleText: string;
@@ -27,7 +27,7 @@ const RATINGS: RatingConfig[] = [
     key: 'hard',
     label: 'Hard',
     icon: 'close-circle-outline',
-    quality: 1,
+    quality: 2,
     idleBg: 'rgba(244,63,94,0.1)',
     idleBorder: 'rgba(244,63,94,0.3)',
     idleText: '#fb7185',
@@ -38,7 +38,7 @@ const RATINGS: RatingConfig[] = [
     key: 'easy',
     label: 'Easy',
     icon: 'arrow-forward-circle-outline',
-    quality: 3,
+    quality: 4,
     idleBg: 'rgba(251,191,36,0.1)',
     idleBorder: 'rgba(251,191,36,0.3)',
     idleText: '#fbbf24',
@@ -59,7 +59,7 @@ const RATINGS: RatingConfig[] = [
 ];
 
 interface RatingButtonsProps {
-  onRate: (quality: 1 | 3 | 5) => void;
+  onRate: (quality: 2 | 4 | 5) => void;
   disabled?: boolean;
 }
 
