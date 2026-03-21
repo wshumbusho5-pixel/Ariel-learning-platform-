@@ -34,4 +34,12 @@ export const authApi = {
     const { data } = await apiClient.put<User>(AUTH.PROFILE, payload);
     return data;
   },
+
+  oauthLogin: async (provider: string, accessToken: string): Promise<LoginResponse> => {
+    const { data } = await apiClient.post<LoginResponse>('/api/auth/oauth/login', {
+      provider,
+      access_token: accessToken,
+    });
+    return data;
+  },
 };
