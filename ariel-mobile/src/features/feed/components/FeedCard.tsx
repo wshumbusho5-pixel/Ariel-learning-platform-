@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,6 @@ import type { SubjectKey } from '@/shared/constants/subjects';
 import { timeAgo } from '@/shared/utils/time';
 import { useCardActions } from '@/features/feed/hooks/useCardActions';
 import { useCardComments } from '@/features/feed/hooks/useCardComments';
-import { SubjectAccent } from '@/features/feed/components/SubjectAccent';
 import { AuthorAvatar } from '@/features/feed/components/AuthorAvatar';
 import { useAuthStore } from '@/shared/auth/authStore';
 import type { FeedCard as FeedCardType } from '@/features/feed/hooks/useFeed';
@@ -63,6 +62,23 @@ function parseMentions(text: string): Array<{ type: 'text' | 'mention'; value: s
     parts.push({ type: 'text', value: text.slice(lastIndex) });
   }
   return parts;
+}
+
+// ─── Pulse dot (matches web "w-1 h-1 rounded-full bg-zinc-300 animate-pulse") ──
+
+function PulseDot() {
+  const opacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.2, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+      ]),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [opacity]);
+  return <Animated.View style={[styles.pulseDot, { opacity }]} />;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -232,40 +248,32 @@ export function FeedCard({ card }: FeedCardProps) {
         accessibilityLabel={flipped ? 'Tap to show question' : 'Tap to reveal answer'}
       >
         <View style={[styles.cardFace, flipped && styles.cardFaceFlipped]}>
-          {/* Left accent strip */}
-          <View style={styles.accentStrip}>
-            <SubjectAccent subjectKey={subjectKey} />
-          </View>
-
-          {/* Card content */}
-          <View style={styles.cardContent}>
-            <View style={styles.cardTopRow}>
-              <Text style={styles.questionLabel}>QUESTION</Text>
-              <View style={styles.subjectTag}>
-                <Text style={styles.subjectTagIcon}>{subjectMeta.icon}</Text>
-                <Text style={styles.subjectTagText}>{subjectMeta.short}</Text>
+          {!flipped ? (
+            /* ── Question side ── */
+            <View style={styles.cardCenter}>
+              <Text style={styles.questionLabel}>Question</Text>
+              <Text style={styles.questionText}>{card.question}</Text>
+              <View style={styles.tapRow}>
+                <PulseDot />
+                <Text style={styles.tapHint}>tap to reveal</Text>
               </View>
             </View>
-
-            {!flipped ? (
-              <View style={styles.cardBody}>
-                <Text style={styles.questionText}>{card.question}</Text>
-                <Text style={styles.tapHint}>tap to reveal →</Text>
-              </View>
-            ) : (
-              <View style={styles.cardBody}>
-                <Text style={styles.questionFaded} numberOfLines={2}>{card.question}</Text>
-                <View style={styles.dividerLine} />
-                <Text style={styles.answerLabel}>ANSWER</Text>
-                <Text style={styles.answerText}>{card.answer}</Text>
-                {!!card.explanation && (
-                  <View style={styles.explanationBox}>
-                    <Text style={styles.explanationText}>{card.explanation}</Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
+          ) : (
+            /* ── Answer side ── */
+            <View style={styles.cardCenter}>
+              <Text style={styles.questionFaded}>{card.question}</Text>
+              <View style={styles.dividerLine} />
+              <Text style={styles.answerLabel}>Answer</Text>
+              <Text style={styles.answerText}>{card.answer}</Text>
+              {!!card.explanation && (
+                <View style={styles.explanationBox}>
+                  <Text style={styles.whyLabel}>Why</Text>
+                  <Text style={styles.explanationText}>{card.explanation}</Text>
+                </View>
+              )}
+              <Text style={styles.tapAgain}>Tap again to see question</Text>
+            </View>
+          )}
         </View>
       </TouchableWithoutFeedback>
 
@@ -404,73 +412,126 @@ const styles = StyleSheet.create({
   caption: { color: '#d4d4d8', fontSize: 15, lineHeight: 22 },
   mention: { color: '#8b5cf6', fontWeight: '500' },
 
-  // Card face
+  // Card face — matches web: rounded-2xl shadow-xl shadow-black/60 bg-white / bg-amber-50
   cardFace: {
-    backgroundColor: 'rgba(255,255,255,0.97)',
+    backgroundColor: '#ffffff',
     borderRadius: 16,
     overflow: 'hidden',
-    flexDirection: 'row',
-    minHeight: 120,
+    minHeight: 200,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.55,
+    shadowRadius: 16,
+    elevation: 10,
     marginBottom: 10,
   },
-  cardFaceFlipped: { backgroundColor: '#fffbeb' },
-  accentStrip: { alignSelf: 'stretch' },
-  cardContent: { flex: 1, paddingHorizontal: 14, paddingVertical: 12 },
-  cardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  cardFaceFlipped: { backgroundColor: '#fffbeb' }, // bg-amber-50
+
+  // Centered content — matches web: flex items-center justify-center px-5 py-6
+  cardCenter: {
+    flex: 1,
     alignItems: 'center',
-    marginBottom: 10,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    gap: 16,
   },
+
+  // "Question" label — text-[10px] font-bold text-zinc-400 uppercase tracking-widest
   questionLabel: {
-    color: '#9ca3af',
+    color: '#a1a1aa',
     fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 1,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    textAlign: 'center',
   },
-  subjectTag: {
+
+  // Question text — text-zinc-900 text-2xl leading-snug (Kalam = Caveat equivalent)
+  questionText: {
+    fontFamily: 'Kalam_700Bold',
+    color: '#18181b',
+    fontSize: 24,
+    lineHeight: 34,
+    textAlign: 'center',
+  },
+
+  // "tap to reveal" row — flex items-center gap-1.5 pt-1
+  tapRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    gap: 6,
+    paddingTop: 4,
   },
-  subjectTagIcon: { fontSize: 11 },
-  subjectTagText: { color: '#6b7280', fontSize: 11, fontWeight: '500' },
-  cardBody: { flex: 1 },
-  questionText: {
-    color: '#111',
-    fontSize: 18,
-    lineHeight: 27,
-    fontWeight: '700',
+  pulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#d4d4d8',
   },
   tapHint: {
-    color: '#b0b8c8',
+    color: '#a1a1aa',
     fontSize: 12,
-    marginTop: 10,
-    textAlign: 'right',
-    fontStyle: 'italic',
   },
-  questionFaded: { color: '#9ca3af', fontSize: 13, lineHeight: 19, marginBottom: 8 },
-  dividerLine: { height: 1, backgroundColor: '#e5e7eb', marginBottom: 8 },
-  answerLabel: { color: '#92400e', fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 5 },
-  answerText: { color: '#111', fontSize: 18, lineHeight: 27, fontWeight: '500' },
+
+  // Answer back side
+  // Faded question — text-zinc-400 text-lg leading-relaxed text-center
+  questionFaded: {
+    fontFamily: 'Kalam_400Regular',
+    color: '#a1a1aa',
+    fontSize: 18,
+    lineHeight: 27,
+    textAlign: 'center',
+  },
+  dividerLine: { height: 1, backgroundColor: '#e5e7eb', alignSelf: 'stretch' },
+
+  // "Answer" label — text-[10px] font-bold text-zinc-400 uppercase tracking-widest
+  answerLabel: {
+    color: '#a1a1aa',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+
+  // Answer text — text-zinc-900 text-2xl leading-snug
+  answerText: {
+    fontFamily: 'Kalam_700Bold',
+    color: '#18181b',
+    fontSize: 24,
+    lineHeight: 34,
+    textAlign: 'center',
+  },
+
+  // Explanation box — pt-3 border-t border-zinc-200
   explanationBox: {
-    backgroundColor: 'rgba(251,191,36,0.15)',
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: '#f59e0b',
+    alignSelf: 'stretch',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    gap: 6,
   },
-  explanationText: { color: '#78350f', fontSize: 13, lineHeight: 20 },
+  whyLabel: {
+    color: '#a1a1aa',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  explanationText: {
+    fontFamily: 'Kalam_400Regular',
+    color: '#52525b',
+    fontSize: 15,
+    lineHeight: 23,
+  },
+
+  // "Tap again" footer
+  tapAgain: {
+    color: '#d4d4d8',
+    fontSize: 12,
+    textAlign: 'center',
+  },
 
   // Action bar
   actionBar: {
