@@ -18,27 +18,11 @@ import { useCardActions } from '@/features/feed/hooks/useCardActions';
 import { useCardComments } from '@/features/feed/hooks/useCardComments';
 import { SubjectAccent } from '@/features/feed/components/SubjectAccent';
 import { AuthorAvatar } from '@/features/feed/components/AuthorAvatar';
+import { useAuthStore } from '@/shared/auth/authStore';
 import type { FeedCard as FeedCardType } from '@/features/feed/hooks/useFeed';
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-type CardStatus = 'due' | 'new' | 'learning' | 'mastered';
-
-const STATUS_META: Record<CardStatus, { label: string; bg: string; text: string; border: string }> = {
-  due:      { label: 'Review',   bg: 'rgba(249,115,22,0.15)', text: '#fb923c', border: 'rgba(249,115,22,0.25)' },
-  new:      { label: 'New',      bg: 'rgba(14,165,233,0.15)', text: '#38bdf8', border: 'rgba(14,165,233,0.25)' },
-  learning: { label: 'Learning', bg: 'rgba(139,92,246,0.15)', text: '#a78bfa', border: 'rgba(139,92,246,0.25)' },
-  mastered: { label: 'Mastered', bg: 'rgba(34,197,94,0.15)',  text: '#4ade80', border: 'rgba(34,197,94,0.25)' },
-};
+import type { CommentWithAuthor } from '@/shared/types/comment';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function getCardStatus(card: FeedCardType): CardStatus {
-  if (card.review_count === 0) return 'new';
-  if (card.interval >= 21) return 'mastered';
-  if (card.next_review && new Date(card.next_review) <= new Date()) return 'due';
-  return 'learning';
-}
 
 function seedViews(cardId: string, createdAt?: string, likes: number = 0): string {
   let h = 0;
@@ -63,7 +47,6 @@ function seedViews(cardId: string, createdAt?: string, likes: number = 0): strin
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
 }
 
-// Parse @mentions and return text segments
 function parseMentions(text: string): Array<{ type: 'text' | 'mention'; value: string }> {
   const parts: Array<{ type: 'text' | 'mention'; value: string }> = [];
   const regex = /@[\w]+/g;
@@ -90,9 +73,7 @@ function CaptionText({ caption }: { caption: string }) {
     <Text style={styles.caption}>
       {parts.map((part, i) =>
         part.type === 'mention' ? (
-          <Text key={i} style={styles.mention}>
-            {part.value}
-          </Text>
+          <Text key={i} style={styles.mention}>{part.value}</Text>
         ) : (
           <Text key={i}>{part.value}</Text>
         ),
@@ -101,55 +82,65 @@ function CaptionText({ caption }: { caption: string }) {
   );
 }
 
-function StatusPill({ status }: { status: CardStatus }) {
-  const meta = STATUS_META[status];
+// ─── Comment row (Twitter style) ──────────────────────────────────────────────
+
+function CommentRow({ comment }: { comment: CommentWithAuthor }) {
+  const [imgErr, setImgErr] = useState(false);
+  const uri = comment.author_profile_picture;
+  const username = comment.author_username ?? '?';
+
   return (
-    <View
-      style={{
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 6,
-        borderWidth: 1,
-        backgroundColor: meta.bg,
-        borderColor: meta.border,
-      }}
-    >
-      <Text style={{ color: meta.text, fontSize: 11, fontWeight: '600', letterSpacing: 0.3 }}>
-        {meta.label}
-      </Text>
+    <View style={styles.commentRow}>
+      {/* Left: avatar + username + text */}
+      <View style={styles.commentLeft}>
+        {uri && !imgErr ? (
+          <Image
+            source={{ uri }}
+            style={styles.commentAvatar}
+            onError={() => setImgErr(true)}
+          />
+        ) : (
+          <View style={[styles.commentAvatar, styles.commentAvatarFallback]}>
+            <Text style={styles.commentAvatarText}>{username.charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
+        <Text style={styles.commentText} numberOfLines={3}>
+          <Text style={styles.commentUsername}>{username} </Text>
+          {comment.content}
+        </Text>
+      </View>
+
+      {/* Right: thumbs up + likes */}
+      <View style={styles.commentLikes}>
+        <Ionicons name="thumbs-up-outline" size={13} color="#52525b" />
+        {comment.likes > 0 && (
+          <Text style={styles.commentLikeCount}>{comment.likes}</Text>
+        )}
+      </View>
     </View>
   );
 }
 
-interface CommentRowProps {
-  profilePicture?: string | null;
-  username?: string | null;
-  content: string;
-}
+// ─── Current user mini avatar ─────────────────────────────────────────────────
 
-function CommentRow({ profilePicture, username, content }: CommentRowProps) {
+function MeAvatar() {
+  const user = useAuthStore((s) => s.user);
   const [imgErr, setImgErr] = useState(false);
-  const showFallback = !profilePicture || imgErr;
+  const uri = user?.profile_picture;
+  const letter = (user?.username ?? user?.full_name ?? '?').charAt(0).toUpperCase();
 
+  if (uri && !imgErr) {
+    return (
+      <Image
+        source={{ uri }}
+        style={styles.meAvatar}
+        onError={() => setImgErr(true)}
+      />
+    );
+  }
   return (
-    <View style={styles.commentRow}>
-      {showFallback ? (
-        <View style={styles.commentAvatar}>
-          <Text style={styles.commentAvatarText}>
-            {(username ?? '?').charAt(0).toUpperCase()}
-          </Text>
-        </View>
-      ) : (
-        <Image
-          source={{ uri: profilePicture! }}
-          style={styles.commentAvatar}
-          onError={() => setImgErr(true)}
-        />
-      )}
-      <Text style={styles.commentText} numberOfLines={2}>
-        <Text style={styles.commentUsername}>{username ?? 'unknown'} </Text>
-        {content}
-      </Text>
+    <View style={[styles.meAvatar, styles.meAvatarFallback]}>
+      <Text style={styles.meAvatarText}>{letter}</Text>
     </View>
   );
 }
@@ -164,11 +155,9 @@ export function FeedCard({ card }: FeedCardProps) {
   const cardId = card.id ?? '';
   const subjectKey = normalizeSubjectKey(card.subject ?? card.topic) as SubjectKey;
   const subjectMeta = SUBJECT_META[subjectKey] ?? SUBJECT_META.other;
-  const status = getCardStatus(card);
   const views = seedViews(cardId, card.created_at, card.likes);
 
   const [flipped, setFlipped] = useState(false);
-  const [showCommentInput, setShowCommentInput] = useState(false);
   const [commentText, setCommentText] = useState('');
   const commentInputRef = useRef<TextInput>(null);
 
@@ -183,39 +172,29 @@ export function FeedCard({ card }: FeedCardProps) {
 
   const { comments, postComment, postingComment } = useCardComments(cardId);
 
-  const handleFlip = useCallback(() => {
-    setFlipped((prev) => !prev);
-  }, []);
-
-  const handleCommentIcon = useCallback(() => {
-    setShowCommentInput((prev) => !prev);
-    if (!showCommentInput) {
-      setTimeout(() => commentInputRef.current?.focus(), 100);
-    }
-  }, [showCommentInput]);
+  const handleFlip = useCallback(() => setFlipped((p) => !p), []);
 
   const handleShare = useCallback(async () => {
     try {
       await Share.share({
         message: `Check out this flashcard on Ariel!\n\n${card.question}`,
-        title: `${subjectMeta.label} flashcard`,
       });
-    } catch {
-      // User cancelled share — no-op
-    }
-  }, [card.question, subjectMeta.label]);
+    } catch {}
+  }, [card.question]);
 
   const handleSendComment = useCallback(async () => {
     if (!commentText.trim()) return;
-    await postComment(commentText);
+    const text = commentText;
     setCommentText('');
+    await postComment(text);
   }, [commentText, postComment]);
 
   const visibleComments = comments.slice(0, 3);
-  const extraComments = comments.length - 3;
+  const extraCount = comments.length - 3;
 
   return (
     <View style={styles.container}>
+
       {/* ── Author Row ── */}
       <View style={styles.authorRow}>
         <AuthorAvatar
@@ -226,12 +205,10 @@ export function FeedCard({ card }: FeedCardProps) {
         />
         <View style={styles.authorInfo}>
           <Text style={styles.authorMeta} numberOfLines={1}>
-            <Text style={styles.authorUsername}>
-              {card.author_username ?? 'unknown'}
-            </Text>
-            <Text style={styles.authorDot}> · </Text>
+            <Text style={styles.authorUsername}>{card.author_username ?? 'unknown'}</Text>
+            <Text style={styles.dot}> · </Text>
             <Text style={styles.authorSubject}>{subjectMeta.short}</Text>
-            <Text style={styles.authorDot}> · </Text>
+            <Text style={styles.dot}> · </Text>
             <Text style={styles.authorTime}>{timeAgo(card.created_at)}</Text>
           </Text>
         </View>
@@ -248,13 +225,13 @@ export function FeedCard({ card }: FeedCardProps) {
       )}
 
       {/* ── Card Face ── */}
-      <TouchableWithoutFeedback onPress={handleFlip} accessible accessibilityRole="button" accessibilityLabel={flipped ? 'Tap to show question' : 'Tap to reveal answer'}>
-        <View
-          style={[
-            styles.cardFace,
-            flipped && styles.cardFaceFlipped,
-          ]}
-        >
+      <TouchableWithoutFeedback
+        onPress={handleFlip}
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={flipped ? 'Tap to show question' : 'Tap to reveal answer'}
+      >
+        <View style={[styles.cardFace, flipped && styles.cardFaceFlipped]}>
           {/* Left accent strip */}
           <View style={styles.accentStrip}>
             <SubjectAccent subjectKey={subjectKey} />
@@ -262,7 +239,6 @@ export function FeedCard({ card }: FeedCardProps) {
 
           {/* Card content */}
           <View style={styles.cardContent}>
-            {/* Top row: QUESTION label + subject tag */}
             <View style={styles.cardTopRow}>
               <Text style={styles.questionLabel}>QUESTION</Text>
               <View style={styles.subjectTag}>
@@ -272,18 +248,14 @@ export function FeedCard({ card }: FeedCardProps) {
             </View>
 
             {!flipped ? (
-              /* Question side */
               <View style={styles.cardBody}>
                 <Text style={styles.questionText}>{card.question}</Text>
                 <Text style={styles.tapHint}>tap to reveal →</Text>
               </View>
             ) : (
-              /* Answer side */
               <View style={styles.cardBody}>
-                <Text style={styles.questionFaded} numberOfLines={2}>
-                  {card.question}
-                </Text>
-                <View style={styles.divider} />
+                <Text style={styles.questionFaded} numberOfLines={2}>{card.question}</Text>
+                <View style={styles.dividerLine} />
                 <Text style={styles.answerLabel}>ANSWER</Text>
                 <Text style={styles.answerText}>{card.answer}</Text>
                 {!!card.explanation && (
@@ -300,21 +272,16 @@ export function FeedCard({ card }: FeedCardProps) {
       {/* ── Action Bar ── */}
       <View style={styles.actionBar}>
         {/* Like */}
-        <TouchableOpacity
-          onPress={handleLike}
-          style={styles.actionBtn}
-          accessibilityRole="button"
-          accessibilityLabel={liked ? 'Unlike' : 'Like'}
-        >
+        <TouchableOpacity onPress={handleLike} style={styles.actionBtn} activeOpacity={0.7}>
           <Animated.View style={{ transform: [{ scale: likeAnim }] }}>
             <Ionicons
               name={liked ? 'heart' : 'heart-outline'}
-              size={22}
-              color={liked ? '#a78bfa' : '#71717a'}
+              size={20}
+              color={liked ? '#ef4444' : '#71717a'}
             />
           </Animated.View>
           {likeCount > 0 && (
-            <Text style={[styles.actionCount, liked && styles.actionCountActive]}>
+            <Text style={[styles.actionCount, liked && { color: '#ef4444' }]}>
               {likeCount}
             </Text>
           )}
@@ -322,105 +289,87 @@ export function FeedCard({ card }: FeedCardProps) {
 
         {/* Comment */}
         <TouchableOpacity
-          onPress={handleCommentIcon}
+          onPress={() => commentInputRef.current?.focus()}
           style={styles.actionBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Comment"
+          activeOpacity={0.7}
         >
-          <Ionicons name="chatbubble-outline" size={21} color="#71717a" />
+          <Ionicons name="chatbubble-outline" size={19} color="#71717a" />
           {comments.length > 0 && (
             <Text style={styles.actionCount}>{comments.length}</Text>
           )}
         </TouchableOpacity>
 
-        {/* Save */}
-        <TouchableOpacity
-          onPress={handleSave}
-          style={styles.actionBtn}
-          accessibilityRole="button"
-          accessibilityLabel={saved ? 'Unsave' : 'Save'}
-        >
-          <Ionicons
-            name={saved ? 'bookmark' : 'bookmark-outline'}
-            size={21}
-            color={saved ? '#a78bfa' : '#71717a'}
-          />
+        {/* Share / repost */}
+        <TouchableOpacity onPress={handleShare} style={styles.actionBtn} activeOpacity={0.7}>
+          <Ionicons name="arrow-redo-outline" size={20} color="#71717a" />
+        </TouchableOpacity>
+
+        {/* Views */}
+        <View style={styles.actionBtn}>
+          <Ionicons name="eye-outline" size={18} color="#52525b" />
+          <Text style={styles.actionCountDim}>{views}</Text>
+        </View>
+
+        {/* Save count + bookmark — right side */}
+        <View style={styles.rightActions}>
           {saveCount > 0 && (
-            <Text style={[styles.actionCount, saved && styles.actionCountActive]}>
+            <Text style={[styles.actionCountDim, saved && { color: '#a78bfa' }]}>
               {saveCount}
             </Text>
           )}
-        </TouchableOpacity>
-
-        {/* Share */}
-        <TouchableOpacity
-          onPress={handleShare}
-          style={styles.actionBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Share"
-        >
-          <Ionicons name="arrow-up-circle-outline" size={22} color="#71717a" />
-        </TouchableOpacity>
-
-        {/* Views (right-aligned) */}
-        <View style={styles.viewsContainer}>
-          <Ionicons name="eye-outline" size={16} color="#52525b" />
-          <Text style={styles.viewsText}>{views}</Text>
+          <TouchableOpacity onPress={handleSave} activeOpacity={0.7}>
+            <Ionicons
+              name={saved ? 'bookmark' : 'bookmark-outline'}
+              size={20}
+              color={saved ? '#a78bfa' : '#71717a'}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* ── Inline Comments ── */}
       {visibleComments.length > 0 && (
-        <View style={styles.commentsSection}>
+        <View style={styles.commentsBlock}>
           {visibleComments.map((comment) => (
-            <CommentRow
-              key={comment.id}
-              profilePicture={comment.author_profile_picture}
-              username={comment.author_username}
-              content={comment.content}
-            />
+            <CommentRow key={comment.id} comment={comment} />
           ))}
-          {extraComments > 0 && (
-            <TouchableOpacity onPress={handleCommentIcon}>
-              <Text style={styles.viewAllComments}>
-                View all {comments.length} comments
-              </Text>
+          {extraCount > 0 && (
+            <TouchableOpacity onPress={() => commentInputRef.current?.focus()}>
+              <Text style={styles.viewAll}>View all {comments.length} comments</Text>
             </TouchableOpacity>
           )}
         </View>
       )}
 
-      {/* ── Comment Input ── */}
-      {showCommentInput && (
-        <View style={styles.commentInputRow}>
-          <TextInput
-            ref={commentInputRef}
-            style={styles.commentInput}
-            placeholder="Add a comment..."
-            placeholderTextColor="#52525b"
-            value={commentText}
-            onChangeText={setCommentText}
-            multiline
-            maxLength={500}
-            returnKeyType="send"
-            onSubmitEditing={handleSendComment}
-          />
+      {/* ── "What's your take" input (always visible, Twitter style) ── */}
+      <View style={styles.inputRow}>
+        <MeAvatar />
+        <TextInput
+          ref={commentInputRef}
+          style={styles.twitterInput}
+          placeholder="What's your take..."
+          placeholderTextColor="#3f3f46"
+          value={commentText}
+          onChangeText={setCommentText}
+          multiline
+          maxLength={500}
+          returnKeyType="send"
+          onSubmitEditing={handleSendComment}
+        />
+        {commentText.trim().length > 0 && (
           <TouchableOpacity
             onPress={handleSendComment}
-            disabled={postingComment || !commentText.trim()}
-            style={[
-              styles.sendBtn,
-              (!commentText.trim() || postingComment) && styles.sendBtnDisabled,
-            ]}
+            disabled={postingComment}
+            activeOpacity={0.7}
           >
             <Ionicons
               name="send"
-              size={18}
-              color={commentText.trim() && !postingComment ? '#a78bfa' : '#3f3f46'}
+              size={17}
+              color={postingComment ? '#3f3f46' : '#8b5cf6'}
             />
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+      </View>
     </View>
   );
 }
@@ -430,83 +379,48 @@ export function FeedCard({ card }: FeedCardProps) {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 14,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
+    borderBottomColor: '#18181b',
   },
 
   // Author
   authorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
     gap: 10,
   },
-  authorInfo: {
-    flex: 1,
-  },
-  authorMeta: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  authorUsername: {
-    color: '#fafafa',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  authorDot: {
-    color: '#52525b',
-    fontSize: 14,
-  },
-  authorSubject: {
-    color: '#a1a1aa',
-    fontSize: 13,
-  },
-  authorTime: {
-    color: '#71717a',
-    fontSize: 13,
-  },
+  authorInfo: { flex: 1 },
+  authorMeta: { fontSize: 14 },
+  authorUsername: { color: '#fafafa', fontWeight: '700', fontSize: 14 },
+  dot: { color: '#52525b', fontSize: 14 },
+  authorSubject: { color: '#a1a1aa', fontSize: 13 },
+  authorTime: { color: '#71717a', fontSize: 13 },
 
   // Caption
-  captionContainer: {
-    marginBottom: 10,
-  },
-  caption: {
-    color: '#d4d4d8',
-    fontSize: 14,
-    lineHeight: 21,
-  },
-  mention: {
-    color: '#8b5cf6',
-    fontWeight: '500',
-  },
+  captionContainer: { marginBottom: 10 },
+  caption: { color: '#d4d4d8', fontSize: 15, lineHeight: 22 },
+  mention: { color: '#8b5cf6', fontWeight: '500' },
 
   // Card face
   cardFace: {
-    backgroundColor: 'rgba(255,255,255,0.96)',
+    backgroundColor: 'rgba(255,255,255,0.97)',
     borderRadius: 16,
     overflow: 'hidden',
     flexDirection: 'row',
-    minHeight: 130,
+    minHeight: 120,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.2,
     shadowRadius: 6,
-    elevation: 5,
+    elevation: 4,
     marginBottom: 10,
   },
-  cardFaceFlipped: {
-    backgroundColor: '#fffbeb',
-  },
-  accentStrip: {
-    // width handled by SubjectAccent (3px)
-    alignSelf: 'stretch',
-  },
-  cardContent: {
-    flex: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
+  cardFaceFlipped: { backgroundColor: '#fffbeb' },
+  accentStrip: { alignSelf: 'stretch' },
+  cardContent: { flex: 1, paddingHorizontal: 14, paddingVertical: 12 },
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -518,62 +432,36 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
     letterSpacing: 1,
-    textTransform: 'uppercase',
   },
   subjectTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
     backgroundColor: 'rgba(0,0,0,0.06)',
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  subjectTagIcon: { fontSize: 12 },
-  subjectTagText: {
-    color: '#6b7280',
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  cardBody: {
-    flex: 1,
-  },
+  subjectTagIcon: { fontSize: 11 },
+  subjectTagText: { color: '#6b7280', fontSize: 11, fontWeight: '500' },
+  cardBody: { flex: 1 },
   questionText: {
-    color: '#1a1a1a',
-    fontSize: 17,
-    lineHeight: 26,
-    fontWeight: '400',
-  },
-  tapHint: {
-    color: '#a1a1aa',
-    fontSize: 12,
-    marginTop: 8,
-    fontStyle: 'italic',
-  },
-  questionFaded: {
-    color: '#9ca3af',
-    fontSize: 13,
-    lineHeight: 19,
-    marginBottom: 10,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#e5e7eb',
-    marginBottom: 8,
-  },
-  answerLabel: {
-    color: '#92400e',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  answerText: {
-    color: '#1a1a1a',
+    color: '#111',
     fontSize: 18,
     lineHeight: 27,
-    fontWeight: '500',
+    fontWeight: '700',
   },
+  tapHint: {
+    color: '#b0b8c8',
+    fontSize: 12,
+    marginTop: 10,
+    textAlign: 'right',
+    fontStyle: 'italic',
+  },
+  questionFaded: { color: '#9ca3af', fontSize: 13, lineHeight: 19, marginBottom: 8 },
+  dividerLine: { height: 1, backgroundColor: '#e5e7eb', marginBottom: 8 },
+  answerLabel: { color: '#92400e', fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 5 },
+  answerText: { color: '#111', fontSize: 18, lineHeight: 27, fontWeight: '500' },
   explanationBox: {
     backgroundColor: 'rgba(251,191,36,0.15)',
     borderRadius: 8,
@@ -582,112 +470,108 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#f59e0b',
   },
-  explanationText: {
-    color: '#78350f',
-    fontSize: 13,
-    lineHeight: 20,
-  },
+  explanationText: { color: '#78350f', fontSize: 13, lineHeight: 20 },
 
   // Action bar
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 4,
+    paddingVertical: 6,
+    gap: 16,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
   },
-  actionCount: {
-    color: '#71717a',
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  actionCountActive: {
-    color: '#a78bfa',
-  },
-  viewsContainer: {
+  actionCount: { color: '#71717a', fontSize: 13, fontWeight: '500' },
+  actionCountDim: { color: '#52525b', fontSize: 13 },
+  rightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 5,
     marginLeft: 'auto',
   },
-  viewsText: {
-    color: '#52525b',
-    fontSize: 12,
-  },
 
-  // Comments
-  commentsSection: {
-    paddingTop: 8,
-    gap: 6,
+  // Comments block
+  commentsBlock: {
+    paddingTop: 4,
+    paddingBottom: 4,
+    gap: 8,
   },
   commentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  commentLeft: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
   },
   commentAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    overflow: 'hidden',
+    flexShrink: 0,
+  },
+  commentAvatarFallback: {
     backgroundColor: '#3f3f46',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
-  commentAvatarText: {
-    color: '#fafafa',
-    fontSize: 10,
-    fontWeight: '700',
+  commentAvatarText: { color: '#fafafa', fontSize: 10, fontWeight: '700' },
+  commentText: { flex: 1, color: '#a1a1aa', fontSize: 13, lineHeight: 19 },
+  commentUsername: { color: '#d4d4d8', fontWeight: '700' },
+  commentLikes: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 2,
+    paddingTop: 2,
+    flexShrink: 0,
   },
-  commentText: {
-    flex: 1,
-    color: '#a1a1aa',
+  commentLikeCount: { color: '#52525b', fontSize: 11 },
+  viewAll: {
+    color: '#71717a',
     fontSize: 13,
-    lineHeight: 19,
-  },
-  commentUsername: {
-    color: '#d4d4d8',
-    fontWeight: '600',
-  },
-  viewAllComments: {
-    color: '#8b5cf6',
-    fontSize: 13,
-    fontWeight: '500',
+    marginLeft: 36,
     marginTop: 2,
-    marginLeft: 32,
   },
 
-  // Comment input
-  commentInputRow: {
+  // Twitter-style input
+  inputRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginTop: 10,
-    gap: 8,
-    backgroundColor: '#18181b',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3f3f46',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    alignItems: 'center',
+    gap: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#18181b',
+    marginTop: 4,
   },
-  commentInput: {
+  meAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    overflow: 'hidden',
+    flexShrink: 0,
+  },
+  meAvatarFallback: {
+    backgroundColor: '#7c3aed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  meAvatarText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  twitterInput: {
     flex: 1,
     color: '#fafafa',
     fontSize: 14,
-    lineHeight: 20,
-    maxHeight: 100,
-    paddingVertical: 0,
-  },
-  sendBtn: {
-    padding: 4,
-  },
-  sendBtnDisabled: {
-    opacity: 0.4,
+    paddingVertical: 4,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#27272a',
+    maxHeight: 80,
   },
 });
