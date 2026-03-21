@@ -24,8 +24,8 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
     onFlipped?.(true);
   }, [flipped, onFlipped]);
 
-  // Explicit card height: container height minus paddingVertical (24 * 2)
-  const cardH = height - 48;
+  // Give the card clear space on all sides so rounded corners are never clipped
+  const cardH = height - 72; // 36px top + 36px bottom
 
   return (
     <View style={[styles.screenContainer, { width, height }]}>
@@ -73,7 +73,8 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
 const styles = StyleSheet.create({
   screenContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingTop: 36,
+    paddingBottom: 36,
     justifyContent: 'center',
     alignItems: 'stretch',
   },
@@ -117,7 +118,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.55,
     shadowRadius: 36,
     elevation: 20,
-    overflow: 'hidden',
   },
   scroll: {
     flex: 1,
