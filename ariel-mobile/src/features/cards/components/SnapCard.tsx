@@ -4,19 +4,18 @@ import {
   Text,
   TouchableWithoutFeedback,
   StyleSheet,
-  Dimensions,
   ScrollView,
 } from 'react-native';
 import type { Card } from '@/shared/types/card';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 interface SnapCardProps {
   card: Card;
+  width: number;
+  headerHeight: number;
   onFlipped?: (flipped: boolean) => void;
 }
 
-export function SnapCard({ card, onFlipped }: SnapCardProps) {
+export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps) {
   const [flipped, setFlipped] = useState(false);
 
   const handleTap = useCallback(() => {
@@ -26,14 +25,21 @@ export function SnapCard({ card, onFlipped }: SnapCardProps) {
   }, [flipped, onFlipped]);
 
   return (
-    <View style={styles.screenContainer}>
+    <View style={[styles.screenContainer, { width }]}>
+      {/* The tappable card — inset from floating header and rating buttons */}
       <TouchableWithoutFeedback
         onPress={handleTap}
         accessible
         accessibilityRole="button"
         accessibilityLabel={flipped ? 'Tap to show question' : 'Tap to reveal answer'}
       >
-        <View style={[styles.card, flipped && styles.cardFlipped]}>
+        <View
+          style={[
+            styles.card,
+            flipped && styles.cardFlipped,
+            { marginTop: headerHeight + 12 },
+          ]}
+        >
           {!flipped ? (
             /* ── Question side ── */
             <View style={styles.questionSide}>
@@ -41,20 +47,21 @@ export function SnapCard({ card, onFlipped }: SnapCardProps) {
               <Text style={styles.tapHint}>tap to reveal</Text>
             </View>
           ) : (
-            /* ── Answer side ── */
+            /* ── Answer side — scrollable ── */
             <ScrollView
               style={{ flex: 1 }}
-              contentContainerStyle={styles.answerSide}
+              contentContainerStyle={styles.answerContent}
               showsVerticalScrollIndicator={false}
+              nestedScrollEnabled
             >
-              {/* Faded question at top */}
+              {/* Faded question */}
               <Text style={styles.questionFaded}>{card.question}</Text>
               <View style={styles.divider} />
-              <Text style={styles.answerLabel}>ANSWER</Text>
+              <Text style={styles.answerLabel}>Answer</Text>
               <Text style={styles.answerText}>{card.answer}</Text>
               {!!card.explanation && (
                 <View style={styles.explanationBox}>
-                  <Text style={styles.explanationLabel}>EXPLANATION</Text>
+                  <Text style={styles.explanationLabel}>Why</Text>
                   <Text style={styles.explanationText}>{card.explanation}</Text>
                 </View>
               )}
@@ -68,14 +75,12 @@ export function SnapCard({ card, onFlipped }: SnapCardProps) {
 
 const styles = StyleSheet.create({
   screenContainer: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    flex: 1,
     backgroundColor: '#000',
     alignItems: 'center',
-    justifyContent: 'center',
+    // paddingBottom handled by parent (rating buttons floating)
     paddingHorizontal: 20,
-    paddingBottom: 130, // space for rating buttons
-    paddingTop: 16,
+    paddingBottom: 148, // space for floating rating buttons + tab bar
   },
 
   card: {
@@ -83,15 +88,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
     borderRadius: 24,
-    padding: 28,
+    paddingHorizontal: 28,
+    paddingVertical: 40,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 14,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.7,
+    shadowRadius: 40,
+    elevation: 20,
   },
   cardFlipped: {
-    backgroundColor: '#f5f0e8',
+    backgroundColor: '#fffbeb', // amber-50
   },
 
   // Question side
@@ -103,72 +109,72 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontFamily: 'Kalam_700Bold',
-    fontSize: 26,
-    lineHeight: 38,
-    color: '#1a1a1a',
+    fontSize: 30,
+    lineHeight: 40,
+    color: '#18181b',
     textAlign: 'center',
   },
   tapHint: {
-    fontFamily: 'Kalam_400Regular',
-    fontSize: 14,
-    color: '#b0a898',
+    fontSize: 12,
+    color: '#a1a1aa',
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
 
   // Answer side
-  answerSide: {
+  answerContent: {
     flexGrow: 1,
-    paddingBottom: 16,
+    paddingBottom: 8,
   },
   questionFaded: {
     fontFamily: 'Kalam_400Regular',
-    fontSize: 15,
-    color: '#c4b8a8',
+    fontSize: 18,
+    color: '#a1a1aa',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 26,
     marginBottom: 16,
-    fontStyle: 'italic',
   },
   divider: {
     height: 1,
-    backgroundColor: '#e8ddd0',
+    backgroundColor: '#e4e4e7',
     marginBottom: 16,
   },
   answerLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     letterSpacing: 2,
-    color: '#a09080',
+    color: '#a1a1aa',
     textAlign: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
+    textTransform: 'uppercase',
   },
   answerText: {
     fontFamily: 'Kalam_700Bold',
-    fontSize: 22,
-    lineHeight: 34,
-    color: '#1a1a1a',
+    fontSize: 30,
+    lineHeight: 40,
+    color: '#18181b',
     textAlign: 'center',
   },
-
   explanationBox: {
     marginTop: 20,
-    backgroundColor: 'rgba(200,180,150,0.2)',
-    borderRadius: 12,
-    padding: 14,
-    borderLeftWidth: 3,
-    borderLeftColor: '#c4a882',
+    backgroundColor: '#f4f4f5',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e4e4e7',
   },
   explanationLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '700',
     letterSpacing: 1.5,
-    color: '#9a7a5a',
+    color: '#a1a1aa',
+    textTransform: 'uppercase',
     marginBottom: 6,
   },
   explanationText: {
     fontFamily: 'Kalam_400Regular',
-    fontSize: 14,
-    color: '#6b5040',
-    lineHeight: 21,
+    fontSize: 16,
+    color: '#52525b',
+    lineHeight: 22,
   },
 });
