@@ -44,6 +44,7 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
           /* ── Answer side — fills available height, scrolls inside ── */
           <View style={styles.cardFlipped}>
             <ScrollView
+              style={{ flex: 1 }}
               contentContainerStyle={styles.answerContent}
               showsVerticalScrollIndicator={false}
               bounces
