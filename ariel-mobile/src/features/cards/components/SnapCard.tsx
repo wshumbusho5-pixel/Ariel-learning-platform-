@@ -5,6 +5,7 @@ import {
   TouchableWithoutFeedback,
   StyleSheet,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
 import type { Card } from '@/shared/types/card';
 
@@ -15,7 +16,11 @@ interface SnapCardProps {
   onFlipped?: (flipped: boolean) => void;
 }
 
+// Space below card for floating rating buttons + tab bar
+const RATING_AREA = 148;
+
 export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps) {
+  const { height: screenHeight } = useWindowDimensions();
   const [flipped, setFlipped] = useState(false);
 
   const handleTap = useCallback(() => {
@@ -25,8 +30,8 @@ export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps
   }, [flipped, onFlipped]);
 
   return (
-    <View style={[styles.screenContainer, { width }]}>
-      {/* The tappable card — inset from floating header and rating buttons */}
+    // Explicit height = full screen so the card fills the space properly
+    <View style={[styles.screenContainer, { width, height: screenHeight }]}>
       <TouchableWithoutFeedback
         onPress={handleTap}
         accessible
@@ -37,7 +42,11 @@ export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps
           style={[
             styles.card,
             flipped && styles.cardFlipped,
-            { marginTop: headerHeight + 12 },
+            {
+              // Card sits below the floating header, above the rating buttons
+              marginTop: headerHeight + 8,
+              marginBottom: RATING_AREA,
+            },
           ]}
         >
           {!flipped ? (
@@ -47,14 +56,14 @@ export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps
               <Text style={styles.tapHint}>tap to reveal</Text>
             </View>
           ) : (
-            /* ── Answer side — scrollable ── */
+            /* ── Answer side — scrollable when long ── */
             <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={styles.answerContent}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled
             >
-              {/* Faded question */}
+              {/* Faded question at top */}
               <Text style={styles.questionFaded}>{card.question}</Text>
               <View style={styles.divider} />
               <Text style={styles.answerLabel}>Answer</Text>
@@ -75,12 +84,9 @@ export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps
 
 const styles = StyleSheet.create({
   screenContainer: {
-    flex: 1,
     backgroundColor: '#000',
     alignItems: 'center',
-    // paddingBottom handled by parent (rating buttons floating)
     paddingHorizontal: 20,
-    paddingBottom: 148, // space for floating rating buttons + tab bar
   },
 
   card: {
@@ -92,7 +98,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.7,
+    shadowOpacity: 0.70,
     shadowRadius: 40,
     elevation: 20,
   },
@@ -110,7 +116,7 @@ const styles = StyleSheet.create({
   questionText: {
     fontFamily: 'Kalam_700Bold',
     fontSize: 30,
-    lineHeight: 40,
+    lineHeight: 42,
     color: '#18181b',
     textAlign: 'center',
   },
@@ -118,7 +124,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#a1a1aa',
     textAlign: 'center',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
 
   // Answer side
@@ -151,7 +157,7 @@ const styles = StyleSheet.create({
   answerText: {
     fontFamily: 'Kalam_700Bold',
     fontSize: 30,
-    lineHeight: 40,
+    lineHeight: 42,
     color: '#18181b',
     textAlign: 'center',
   },
