@@ -279,10 +279,11 @@ export function MyDeckScreen() {
     scrollRef.current?.scrollTo({ x: 0, animated: false });
   }, [filteredCards]);
 
-  // Header height: safeTop + title row + toggle row + (subject row if exists)
-  const headerHeight = insets.top + 12 + 44 + 12 + 36 + 8 + (subjects.length > 0 ? 44 : 0);
-  // Rating panel height: buttons + label + bottom safe area
-  const ratingPanelBottom = Math.max(insets.bottom, 0) + 64 + 8; // above tab bar
+  // Header height measured via onLayout (accurate across devices)
+  const [headerHeight, setHeaderHeight] = useState(0);
+  // Card area height measured via onLayout — passed explicitly to SnapCard
+  // so flex:1 works inside horizontal ScrollView
+  const [cardAreaHeight, setCardAreaHeight] = useState(0);
 
   if (isLoading) {
     return (
@@ -298,57 +299,10 @@ export function MyDeckScreen() {
   return (
     <View style={styles.screen}>
 
-      {/* ── Content area ─────────────────────────────── */}
-      {!sessionDone && queue.length > 0 ? (
-        <>
-          {/* Full-screen snap scroll — sits behind the floating header */}
-          <ScrollView
-            ref={scrollRef}
-            horizontal
-            pagingEnabled
-            scrollEnabled={false}
-            showsHorizontalScrollIndicator={false}
-            style={StyleSheet.absoluteFill}
-            contentContainerStyle={{ height: '100%' }}
-          >
-            {queue.map((card, idx) => (
-              <SnapCard
-                key={`${card.id}_${idx}`}
-                card={card}
-                width={SCREEN_WIDTH}
-                headerHeight={headerHeight}
-                onFlipped={idx === currentIndex ? setIsFlipped : undefined}
-              />
-            ))}
-          </ScrollView>
-
-          {/* Floating rating buttons */}
-          <View style={[ss.ratingPanel, { bottom: ratingPanelBottom }]}>
-            <RatingButtons onRate={handleRate} disabled={!isFlipped} />
-            {!isFlipped && (
-              <Text style={ss.flipHint}>Flip the card to rate it</Text>
-            )}
-          </View>
-        </>
-      ) : sessionDone ? (
-        <View style={[styles.emptyContainer, { paddingTop: headerHeight }]}>
-          <SessionComplete
-            totalReviewed={hardCount + easyCount + nailedCount}
-            hardCount={hardCount}
-            easyCount={easyCount}
-            nailedCount={nailedCount}
-            onRestart={handleRestart}
-          />
-        </View>
-      ) : (
-        <View style={[styles.emptyContainer, { paddingTop: headerHeight }]}>
-          <EmptyDeck label={activeSubject} />
-        </View>
-      )}
-
-      {/* ── Floating header — always on top ─────────── */}
+      {/* ── Floating header — measured so card area knows where to start ── */}
       <View
         style={[ss.floatingHeader, { paddingTop: insets.top }]}
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
         pointerEvents="box-none"
       >
         {/* Title row */}
@@ -393,6 +347,64 @@ export function MyDeckScreen() {
         )}
       </View>
 
+      {/* ── Content below header ──────────────────────── */}
+      {/* paddingTop pushes content below the floating header */}
+      <View style={[styles.content, { paddingTop: headerHeight }]}>
+        {!sessionDone && queue.length > 0 ? (
+          <>
+            {/* Card snap area — flex:1 fills between header and rating buttons */}
+            <View
+              style={{ flex: 1 }}
+              onLayout={(e) => setCardAreaHeight(e.nativeEvent.layout.height)}
+            >
+              {/* Only render scroll once we know the height */}
+              {cardAreaHeight > 0 && (
+                <ScrollView
+                  ref={scrollRef}
+                  horizontal
+                  pagingEnabled
+                  scrollEnabled={false}
+                  showsHorizontalScrollIndicator={false}
+                  style={{ flex: 1 }}
+                >
+                  {queue.map((card, idx) => (
+                    <SnapCard
+                      key={`${card.id}_${idx}`}
+                      card={card}
+                      width={SCREEN_WIDTH}
+                      height={cardAreaHeight}
+                      onFlipped={idx === currentIndex ? setIsFlipped : undefined}
+                    />
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+
+            {/* Rating buttons — normal flow, never overlaps card */}
+            <View style={[ss.ratingPanel, { paddingBottom: Math.max(insets.bottom, 8) + 8 }]}>
+              <RatingButtons onRate={handleRate} disabled={!isFlipped} />
+              {!isFlipped && (
+                <Text style={ss.flipHint}>Flip the card to rate it</Text>
+              )}
+            </View>
+          </>
+        ) : sessionDone ? (
+          <View style={styles.emptyContainer}>
+            <SessionComplete
+              totalReviewed={hardCount + easyCount + nailedCount}
+              hardCount={hardCount}
+              easyCount={easyCount}
+              nailedCount={nailedCount}
+              onRestart={handleRestart}
+            />
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <EmptyDeck label={activeSubject} />
+          </View>
+        )}
+      </View>
+
     </View>
   );
 }
@@ -403,6 +415,10 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  // Takes up full remaining space below the floating header
+  content: {
+    flex: 1,
   },
   emptyContainer: {
     flex: 1,
@@ -562,13 +578,10 @@ const ss = StyleSheet.create({
     color: '#fff',
   },
 
-  // Floating rating panel
+  // Rating panel — normal flow, sits below the card area
   ratingPanel: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
     paddingHorizontal: 32,
-    zIndex: 50,
+    paddingTop: 12,
   },
   flipHint: {
     color: 'rgba(255,255,255,0.25)',

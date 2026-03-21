@@ -5,22 +5,17 @@ import {
   TouchableWithoutFeedback,
   StyleSheet,
   ScrollView,
-  useWindowDimensions,
 } from 'react-native';
 import type { Card } from '@/shared/types/card';
 
 interface SnapCardProps {
   card: Card;
   width: number;
-  headerHeight: number;
+  height: number;
   onFlipped?: (flipped: boolean) => void;
 }
 
-// Space below card for floating rating buttons + tab bar
-const RATING_AREA = 148;
-
-export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps) {
-  const { height: screenHeight } = useWindowDimensions();
+export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
   const [flipped, setFlipped] = useState(false);
 
   const handleTap = useCallback(() => {
@@ -30,25 +25,14 @@ export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps
   }, [flipped, onFlipped]);
 
   return (
-    // Explicit height = full screen so the card fills the space properly
-    <View style={[styles.screenContainer, { width, height: screenHeight }]}>
+    <View style={[styles.screenContainer, { width, height }]}>
       <TouchableWithoutFeedback
         onPress={handleTap}
         accessible
         accessibilityRole="button"
         accessibilityLabel={flipped ? 'Tap to show question' : 'Tap to reveal answer'}
       >
-        <View
-          style={[
-            styles.card,
-            flipped && styles.cardFlipped,
-            {
-              // Card sits below the floating header, above the rating buttons
-              marginTop: headerHeight + 8,
-              marginBottom: RATING_AREA,
-            },
-          ]}
-        >
+        <View style={[styles.card, flipped && styles.cardFlipped]}>
           {!flipped ? (
             /* ── Question side ── */
             <View style={styles.questionSide}>
@@ -56,14 +40,13 @@ export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps
               <Text style={styles.tapHint}>tap to reveal</Text>
             </View>
           ) : (
-            /* ── Answer side — scrollable when long ── */
+            /* ── Answer side — scrollable when content is long ── */
             <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={styles.answerContent}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled
             >
-              {/* Faded question at top */}
               <Text style={styles.questionFaded}>{card.question}</Text>
               <View style={styles.divider} />
               <Text style={styles.answerLabel}>Answer</Text>
@@ -84,13 +67,10 @@ export function SnapCard({ card, width, headerHeight, onFlipped }: SnapCardProps
 
 const styles = StyleSheet.create({
   screenContainer: {
-    backgroundColor: '#000',
-    alignItems: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 12,
   },
-
   card: {
-    width: '100%',
     flex: 1,
     backgroundColor: '#ffffff',
     borderRadius: 24,
@@ -103,7 +83,7 @@ const styles = StyleSheet.create({
     elevation: 20,
   },
   cardFlipped: {
-    backgroundColor: '#fffbeb', // amber-50
+    backgroundColor: '#fffbeb',
   },
 
   // Question side
