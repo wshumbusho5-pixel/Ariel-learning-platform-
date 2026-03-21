@@ -72,6 +72,7 @@ function SubjectFilter({
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.filterRow}
+      style={styles.filterScroll}
     >
       {['All', ...subjects].map((s) => {
         const isActive = active === s;
@@ -454,10 +455,17 @@ const styles = StyleSheet.create({
   },
 
   // Subject filter
+  filterScroll: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
     gap: 8,
     paddingBottom: 10,
+    paddingTop: 2,
   },
   filterChip: {
     flexDirection: 'row',
@@ -469,6 +477,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#18181b',
     borderWidth: 1,
     borderColor: '#27272a',
+    height: 34,
   },
   filterChipActive: {
     backgroundColor: '#7c3aed',
