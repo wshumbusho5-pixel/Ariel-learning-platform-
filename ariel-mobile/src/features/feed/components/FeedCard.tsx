@@ -10,8 +10,18 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { SUBJECT_META, normalizeSubjectKey } from '@/shared/constants/subjects';
 import type { SubjectKey } from '@/shared/constants/subjects';
+
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
+
+// Resolve relative profile picture URLs to full URLs
+function resolveUri(uri?: string | null): string | null {
+  if (!uri) return null;
+  if (uri.startsWith('http://') || uri.startsWith('https://')) return uri;
+  return `${API_BASE}${uri}`;
+}
 import { timeAgo } from '@/shared/utils/time';
 import { useCardActions } from '@/features/feed/hooks/useCardActions';
 import { useCardComments } from '@/features/feed/hooks/useCardComments';
@@ -72,18 +82,21 @@ function parseMentions(text: string): Array<{ type: 'text' | 'mention'; value: s
 function AuthorAvatarLeft({
   uri,
   username,
+  fullName,
   subjectColor,
 }: {
   uri?: string | null;
   username?: string | null;
+  fullName?: string | null;
   subjectColor: string;
 }) {
   const [err, setErr] = useState(false);
-  const letter = (username ?? '?').charAt(0).toUpperCase();
-  if (uri && !err) {
+  const resolved = resolveUri(uri);
+  const letter = (username ?? fullName ?? 'U').charAt(0).toUpperCase();
+  if (resolved && !err) {
     return (
       <Image
-        source={{ uri }}
+        source={{ uri: resolved }}
         style={s.authorAvatar}
         onError={() => setErr(true)}
       />
@@ -101,10 +114,10 @@ function AuthorAvatarLeft({
 function MeAvatar() {
   const user = useAuthStore((s) => s.user);
   const [err, setErr] = useState(false);
-  const uri = user?.profile_picture;
+  const resolved = resolveUri(user?.profile_picture);
   const letter = (user?.username ?? user?.full_name ?? 'Y').charAt(0).toUpperCase();
-  if (uri && !err) {
-    return <Image source={{ uri }} style={s.meAvatar} onError={() => setErr(true)} />;
+  if (resolved && !err) {
+    return <Image source={{ uri: resolved }} style={s.meAvatar} onError={() => setErr(true)} />;
   }
   return (
     <View style={[s.meAvatar, s.meAvatarFallback]}>
@@ -121,7 +134,7 @@ function CommentRow({ comment, likedComments, onLike }: {
   onLike: (id: string) => void;
 }) {
   const [imgErr, setImgErr] = useState(false);
-  const uri = comment.author_profile_picture;
+  const resolvedUri = resolveUri(comment.author_profile_picture);
   const username = comment.author_username ?? 'user';
   const isLiked = likedComments[comment.id] ?? comment.is_liked_by_current_user;
 
@@ -129,8 +142,8 @@ function CommentRow({ comment, likedComments, onLike }: {
     <View style={s.commentRow}>
       {/* Avatar */}
       <View style={s.commentAvatar}>
-        {uri && !imgErr ? (
-          <Image source={{ uri }} style={StyleSheet.absoluteFill} onError={() => setImgErr(true)} />
+        {resolvedUri && !imgErr ? (
+          <Image source={{ uri: resolvedUri }} style={StyleSheet.absoluteFill} onError={() => setImgErr(true)} />
         ) : (
           <Text style={s.commentAvatarLetter}>{username.charAt(0).toUpperCase()}</Text>
         )}
@@ -230,6 +243,7 @@ export function FeedCard({ card }: FeedCardProps) {
           <AuthorAvatarLeft
             uri={card.author_profile_picture}
             username={card.author_username}
+            fullName={card.author_full_name}
             subjectColor={subjectColor}
           />
         </View>

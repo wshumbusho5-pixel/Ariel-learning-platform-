@@ -40,16 +40,18 @@ export function MainTabNavigator(): React.ReactElement {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: TAB_BG,
-          borderTopColor: '#27272a',
+          borderTopColor: '#1c1c1e',
           borderTopWidth: 1,
-          paddingBottom: 4,
-          height: 60,
+          paddingBottom: 6,
+          paddingTop: 6,
+          height: 64,
         },
         tabBarActiveTintColor: ACTIVE_TINT,
         tabBarInactiveTintColor: INACTIVE_TINT,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '500',
+          fontWeight: '700',
+          letterSpacing: 0.2,
         },
       }}
     >
@@ -59,8 +61,8 @@ export function MainTabNavigator(): React.ReactElement {
         component={FeedScreen}
         options={{
           tabBarLabel: 'Feed',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={26} color={color} />
           ),
         }}
       />
@@ -71,8 +73,8 @@ export function MainTabNavigator(): React.ReactElement {
         component={MyDeckScreen}
         options={{
           tabBarLabel: 'Deck',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="layers-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'layers' : 'layers-outline'} size={26} color={color} />
           ),
         }}
       />
@@ -107,8 +109,8 @@ export function MainTabNavigator(): React.ReactElement {
         component={DuelsNavigator}
         options={{
           tabBarLabel: 'Duels',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="flash-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'flash' : 'flash-outline'} size={26} color={color} />
           ),
         }}
       />
@@ -119,8 +121,8 @@ export function MainTabNavigator(): React.ReactElement {
         component={ProfileNavigator}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={26} color={color} />
           ),
         }}
       />

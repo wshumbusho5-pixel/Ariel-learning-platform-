@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/shared/api/client';
 import { CARDS } from '@/shared/api/endpoints';
+import { QUERY_KEYS } from '@/shared/constants/queryKeys';
 
 const LIKED_KEY = 'ariel_liked';
 const SAVED_KEY = 'ariel_saved';
@@ -50,6 +52,7 @@ export function useCardActions({
   initialLiked = false,
   initialSaved = false,
 }: UseCardActionsParams): UseCardActionsReturn {
+  const queryClient = useQueryClient();
   const [liked, setLiked] = useState(initialLiked);
   const [saved, setSaved] = useState(initialSaved);
   const [likeCount, setLikeCount] = useState(initialLikes);
@@ -151,6 +154,8 @@ export function useCardActions({
     // API call
     try {
       await apiClient.post(CARDS.save(cardId));
+      // Invalidate deck so the saved card appears immediately
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CARDS.myDeck({}) });
     } catch {
       // Revert optimistic update on failure
       setSaved(prevSaved);

@@ -17,6 +17,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useFeed } from '@/features/feed/hooks/useFeed';
+import { ArielWordmark } from '@/shared/components/ArielWordmark';
 import { FeedCard } from '@/features/feed/components/FeedCard';
 import type { FeedCard as FeedCardType } from '@/features/feed/hooks/useFeed';
 import { useAuthStore } from '@/shared/auth/authStore';
@@ -134,19 +135,19 @@ function FeedTopBar() {
 
       {/* Right: ariel wordmark + icons */}
       <View style={ss.topBarRight}>
-        <Text style={ss.brandLogo}>ariel</Text>
+        <ArielWordmark size={22} />
         <View style={ss.topBarIcons}>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Discover')}>
-            <Ionicons name="search-outline" size={22} color="#a1a1aa" />
+            <Ionicons name="search" size={23} color="#e7e9ea" />
           </TouchableOpacity>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Messages')}>
-            <Ionicons name="chatbubble-outline" size={22} color="#a1a1aa" />
+            <Ionicons name="chatbubble" size={22} color="#e7e9ea" />
           </TouchableOpacity>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Notifications')}>
-            <Ionicons name="notifications-outline" size={22} color="#a1a1aa" />
+            <Ionicons name="notifications" size={23} color="#e7e9ea" />
           </TouchableOpacity>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="ellipsis-vertical" size={20} color="#a1a1aa" />
+            <Ionicons name="ellipsis-horizontal" size={22} color="#e7e9ea" />
           </TouchableOpacity>
         </View>
       </View>
