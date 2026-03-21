@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
-  TouchableWithoutFeedback,
+  TouchableOpacity,
   StyleSheet,
   ScrollView,
 } from 'react-native';
@@ -19,50 +19,53 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
   const [flipped, setFlipped] = useState(false);
 
   const handleTap = useCallback(() => {
-    const next = !flipped;
-    setFlipped(next);
-    onFlipped?.(next);
+    if (flipped) return; // can only flip question → answer; rating buttons advance
+    setFlipped(true);
+    onFlipped?.(true);
   }, [flipped, onFlipped]);
+
+  // Explicit card height: container height minus paddingVertical (24 * 2)
+  const cardH = height - 48;
 
   return (
     <View style={[styles.screenContainer, { width, height }]}>
-      <TouchableWithoutFeedback
-        onPress={handleTap}
-        accessible
-        accessibilityRole="button"
-        accessibilityLabel={flipped ? 'Tap to show question' : 'Tap to reveal answer'}
-      >
-        {/* ── Question side — auto-sized, centered ── */}
-        {!flipped ? (
-          <View style={styles.card}>
-            <View style={styles.questionSide}>
-              <Text style={styles.questionText}>{card.question}</Text>
-              <Text style={styles.tapHint}>tap to reveal</Text>
-            </View>
+      {!flipped ? (
+        /* ── Question side: tappable card, auto-sized, centered ── */
+        <TouchableOpacity
+          style={styles.card}
+          onPress={handleTap}
+          activeOpacity={0.95}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel="Tap to reveal answer"
+        >
+          <View style={styles.questionSide}>
+            <Text style={styles.questionText}>{card.question}</Text>
+            <Text style={styles.tapHint}>tap to reveal</Text>
           </View>
-        ) : (
-          /* ── Answer side — fills available height, scrolls inside ── */
-          <View style={styles.cardFlipped}>
-            <ScrollView
-              style={{ flex: 1 }}
-              contentContainerStyle={styles.answerContent}
-              showsVerticalScrollIndicator={false}
-              bounces
-            >
-              <Text style={styles.questionFaded}>{card.question}</Text>
-              <View style={styles.divider} />
-              <Text style={styles.answerLabel}>Answer</Text>
-              <Text style={styles.answerText}>{card.answer}</Text>
-              {!!card.explanation && (
-                <View style={styles.explanationBox}>
-                  <Text style={styles.explanationLabel}>Why</Text>
-                  <Text style={styles.explanationText}>{card.explanation}</Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        )}
-      </TouchableWithoutFeedback>
+        </TouchableOpacity>
+      ) : (
+        /* ── Answer side: explicit height, ScrollView scrolls freely ── */
+        <View style={[styles.cardFlipped, { height: cardH }]}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.answerContent}
+            showsVerticalScrollIndicator={false}
+            bounces
+          >
+            <Text style={styles.questionFaded}>{card.question}</Text>
+            <View style={styles.divider} />
+            <Text style={styles.answerLabel}>Answer</Text>
+            <Text style={styles.answerText}>{card.answer}</Text>
+            {!!card.explanation && (
+              <View style={styles.explanationBox}>
+                <Text style={styles.explanationLabel}>Why</Text>
+                <Text style={styles.explanationText}>{card.explanation}</Text>
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 }
@@ -105,9 +108,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // ── Answer side: fills height, scrolls inside ──
+  // ── Answer side: explicit height, scroll inside ──
   cardFlipped: {
-    flex: 1,
     backgroundColor: '#fef9f0',
     borderRadius: 28,
     shadowColor: '#000',
@@ -116,6 +118,9 @@ const styles = StyleSheet.create({
     shadowRadius: 36,
     elevation: 20,
     overflow: 'hidden',
+  },
+  scroll: {
+    flex: 1,
   },
   answerContent: {
     paddingHorizontal: 28,
