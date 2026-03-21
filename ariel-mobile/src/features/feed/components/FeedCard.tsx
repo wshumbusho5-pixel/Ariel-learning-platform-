@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   StyleSheet,
   Animated,
   Share,
@@ -16,7 +15,6 @@ import type { SubjectKey } from '@/shared/constants/subjects';
 import { timeAgo } from '@/shared/utils/time';
 import { useCardActions } from '@/features/feed/hooks/useCardActions';
 import { useCardComments } from '@/features/feed/hooks/useCardComments';
-import { AuthorAvatar } from '@/features/feed/components/AuthorAvatar';
 import { useAuthStore } from '@/shared/auth/authStore';
 import type { FeedCard as FeedCardType } from '@/features/feed/hooks/useFeed';
 import type { CommentWithAuthor } from '@/shared/types/comment';
@@ -46,117 +44,123 @@ function seedViews(cardId: string, createdAt?: string, likes: number = 0): strin
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : `${n}`;
 }
 
+// Responsive font size — matches web: >130 → 14px, >75 → 17px, else → 22px
+function cardFontSize(text: string): number {
+  if (text.length > 130) return 14;
+  if (text.length > 75)  return 17;
+  return 22;
+}
+
 function parseMentions(text: string): Array<{ type: 'text' | 'mention'; value: string }> {
   const parts: Array<{ type: 'text' | 'mention'; value: string }> = [];
   const regex = /@[\w]+/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
+    if (match.index > lastIndex)
       parts.push({ type: 'text', value: text.slice(lastIndex, match.index) });
-    }
     parts.push({ type: 'mention', value: match[0] });
     lastIndex = match.index + match[0].length;
   }
-  if (lastIndex < text.length) {
+  if (lastIndex < text.length)
     parts.push({ type: 'text', value: text.slice(lastIndex) });
-  }
   return parts;
 }
 
-// ─── Pulse dot (matches web "w-1 h-1 rounded-full bg-zinc-300 animate-pulse") ──
+// ─── Author avatar (left column, 40×40) ───────────────────────────────────────
 
-function PulseDot() {
-  const opacity = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.2, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
-      ]),
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [opacity]);
-  return <Animated.View style={[styles.pulseDot, { opacity }]} />;
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function CaptionText({ caption }: { caption: string }) {
-  const parts = parseMentions(caption);
-  return (
-    <Text style={styles.caption}>
-      {parts.map((part, i) =>
-        part.type === 'mention' ? (
-          <Text key={i} style={styles.mention}>{part.value}</Text>
-        ) : (
-          <Text key={i}>{part.value}</Text>
-        ),
-      )}
-    </Text>
-  );
-}
-
-// ─── Comment row (Twitter style) ──────────────────────────────────────────────
-
-function CommentRow({ comment }: { comment: CommentWithAuthor }) {
-  const [imgErr, setImgErr] = useState(false);
-  const uri = comment.author_profile_picture;
-  const username = comment.author_username ?? '?';
-
-  return (
-    <View style={styles.commentRow}>
-      {/* Left: avatar + username + text */}
-      <View style={styles.commentLeft}>
-        {uri && !imgErr ? (
-          <Image
-            source={{ uri }}
-            style={styles.commentAvatar}
-            onError={() => setImgErr(true)}
-          />
-        ) : (
-          <View style={[styles.commentAvatar, styles.commentAvatarFallback]}>
-            <Text style={styles.commentAvatarText}>{username.charAt(0).toUpperCase()}</Text>
-          </View>
-        )}
-        <Text style={styles.commentText} numberOfLines={3}>
-          <Text style={styles.commentUsername}>{username} </Text>
-          {comment.content}
-        </Text>
-      </View>
-
-      {/* Right: thumbs up + likes */}
-      <View style={styles.commentLikes}>
-        <Ionicons name="thumbs-up-outline" size={13} color="#52525b" />
-        {comment.likes > 0 && (
-          <Text style={styles.commentLikeCount}>{comment.likes}</Text>
-        )}
-      </View>
-    </View>
-  );
-}
-
-// ─── Current user mini avatar ─────────────────────────────────────────────────
-
-function MeAvatar() {
-  const user = useAuthStore((s) => s.user);
-  const [imgErr, setImgErr] = useState(false);
-  const uri = user?.profile_picture;
-  const letter = (user?.username ?? user?.full_name ?? '?').charAt(0).toUpperCase();
-
-  if (uri && !imgErr) {
+function AuthorAvatarLeft({
+  uri,
+  username,
+  subjectColor,
+}: {
+  uri?: string | null;
+  username?: string | null;
+  subjectColor: string;
+}) {
+  const [err, setErr] = useState(false);
+  const letter = (username ?? '?').charAt(0).toUpperCase();
+  if (uri && !err) {
     return (
       <Image
         source={{ uri }}
-        style={styles.meAvatar}
-        onError={() => setImgErr(true)}
+        style={s.authorAvatar}
+        onError={() => setErr(true)}
       />
     );
   }
   return (
-    <View style={[styles.meAvatar, styles.meAvatarFallback]}>
-      <Text style={styles.meAvatarText}>{letter}</Text>
+    <View style={[s.authorAvatar, { backgroundColor: subjectColor + '33' }]}>
+      <Text style={[s.authorAvatarLetter, { color: subjectColor }]}>{letter}</Text>
+    </View>
+  );
+}
+
+// ─── Current user avatar (for comment input) ──────────────────────────────────
+
+function MeAvatar() {
+  const user = useAuthStore((s) => s.user);
+  const [err, setErr] = useState(false);
+  const uri = user?.profile_picture;
+  const letter = (user?.username ?? user?.full_name ?? 'Y').charAt(0).toUpperCase();
+  if (uri && !err) {
+    return <Image source={{ uri }} style={s.meAvatar} onError={() => setErr(true)} />;
+  }
+  return (
+    <View style={[s.meAvatar, s.meAvatarFallback]}>
+      <Text style={s.meAvatarText}>{letter}</Text>
+    </View>
+  );
+}
+
+// ─── Comment row ──────────────────────────────────────────────────────────────
+
+function CommentRow({ comment, likedComments, onLike }: {
+  comment: CommentWithAuthor;
+  likedComments: Record<string, boolean>;
+  onLike: (id: string) => void;
+}) {
+  const [imgErr, setImgErr] = useState(false);
+  const uri = comment.author_profile_picture;
+  const username = comment.author_username ?? 'user';
+  const isLiked = likedComments[comment.id] ?? comment.is_liked_by_current_user;
+
+  return (
+    <View style={s.commentRow}>
+      {/* Avatar */}
+      <View style={s.commentAvatar}>
+        {uri && !imgErr ? (
+          <Image source={{ uri }} style={StyleSheet.absoluteFill} onError={() => setImgErr(true)} />
+        ) : (
+          <Text style={s.commentAvatarLetter}>{username.charAt(0).toUpperCase()}</Text>
+        )}
+      </View>
+
+      {/* Username + text */}
+      <View style={s.commentContent}>
+        <Text style={s.commentUsername}>{username}</Text>
+        <Text style={s.commentText}>
+          {parseMentions(comment.content).map((p, i) =>
+            p.type === 'mention'
+              ? <Text key={i} style={s.mention}>{p.value}</Text>
+              : <Text key={i}>{p.value}</Text>
+          )}
+        </Text>
+      </View>
+
+      {/* Thumbs up + count */}
+      <TouchableOpacity style={s.commentLike} onPress={() => onLike(comment.id)} activeOpacity={0.7}>
+        <Ionicons
+          name={isLiked ? 'thumbs-up' : 'thumbs-up-outline'}
+          size={15}
+          color={isLiked ? '#a78bfa' : '#52525b'}
+        />
+        {comment.likes > 0 && (
+          <Text style={[s.commentLikeCount, isLiked && { color: '#a78bfa' }]}>
+            {comment.likes}
+          </Text>
+        )}
+      </TouchableOpacity>
     </View>
   );
 }
@@ -170,12 +174,15 @@ interface FeedCardProps {
 export function FeedCard({ card }: FeedCardProps) {
   const cardId = card.id ?? '';
   const subjectKey = normalizeSubjectKey(card.subject ?? card.topic) as SubjectKey;
-  const subjectMeta = SUBJECT_META[subjectKey] ?? SUBJECT_META.other;
+  const meta = SUBJECT_META[subjectKey] ?? SUBJECT_META.other;
+  const subjectColor = meta.color;
   const views = seedViews(cardId, card.created_at, card.likes);
 
   const [flipped, setFlipped] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const commentInputRef = useRef<TextInput>(null);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
+  const inputRef = useRef<TextInput>(null);
 
   const { liked, saved, likeCount, saveCount, handleLike, handleSave, likeAnim } =
     useCardActions({
@@ -188,13 +195,9 @@ export function FeedCard({ card }: FeedCardProps) {
 
   const { comments, postComment, postingComment } = useCardComments(cardId);
 
-  const handleFlip = useCallback(() => setFlipped((p) => !p), []);
-
   const handleShare = useCallback(async () => {
     try {
-      await Share.share({
-        message: `Check out this flashcard on Ariel!\n\n${card.question}`,
-      });
+      await Share.share({ message: card.question });
     } catch {}
   }, [card.question]);
 
@@ -205,412 +208,445 @@ export function FeedCard({ card }: FeedCardProps) {
     await postComment(text);
   }, [commentText, postComment]);
 
-  const visibleComments = comments.slice(0, 3);
-  const extraCount = comments.length - 3;
+  const handleCommentLike = useCallback((commentId: string) => {
+    setLikedComments((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+  }, []);
+
+  const displayedComments = showAllComments ? comments : comments.slice(0, 3);
+  const activeText = flipped ? (card.answer ?? '') : card.question;
+  const fontSize = cardFontSize(activeText);
+
+  // Footer border color: transparent when flipped (violet tint), else nearly invisible
+  const footerBorderColor = flipped ? 'rgba(139,92,246,0.12)' : 'rgba(0,0,0,0.06)';
+  const tapHintColor = flipped ? 'rgba(139,92,246,0.45)' : 'rgba(0,0,0,0.22)';
 
   return (
-    <View style={styles.container}>
+    <View style={s.post}>
+      {/* ── Twitter layout: avatar LEFT, content RIGHT ── */}
+      <View style={s.row}>
 
-      {/* ── Author Row ── */}
-      <View style={styles.authorRow}>
-        <AuthorAvatar
-          size={40}
-          username={card.author_username}
-          fullName={card.author_full_name}
-          profilePicture={card.author_profile_picture}
-        />
-        <View style={styles.authorInfo}>
-          <Text style={styles.authorMeta} numberOfLines={1}>
-            <Text style={styles.authorUsername}>{card.author_username ?? 'unknown'}</Text>
-            <Text style={styles.dot}> · </Text>
-            <Text style={styles.authorSubject}>{subjectMeta.short}</Text>
-            <Text style={styles.dot}> · </Text>
-            <Text style={styles.authorTime}>{timeAgo(card.created_at)}</Text>
-          </Text>
+        {/* Left column — author avatar */}
+        <View style={s.leftCol}>
+          <AuthorAvatarLeft
+            uri={card.author_profile_picture}
+            username={card.author_username}
+            subjectColor={subjectColor}
+          />
         </View>
-        {card.author_is_verified && (
-          <Ionicons name="checkmark-circle" size={16} color="#a78bfa" />
-        )}
-      </View>
 
-      {/* ── Caption ── */}
-      {!!card.caption && (
-        <View style={styles.captionContainer}>
-          <CaptionText caption={card.caption} />
-        </View>
-      )}
+        {/* Right column — everything */}
+        <View style={s.rightCol}>
 
-      {/* ── Card Face ── */}
-      <TouchableWithoutFeedback
-        onPress={handleFlip}
-        accessible
-        accessibilityRole="button"
-        accessibilityLabel={flipped ? 'Tap to show question' : 'Tap to reveal answer'}
-      >
-        <View style={[styles.cardFace, flipped && styles.cardFaceFlipped]}>
-          {!flipped ? (
-            /* ── Question side ── */
-            <View style={styles.cardCenter}>
-              <Text style={styles.questionLabel}>Question</Text>
-              <Text style={styles.questionText}>{card.question}</Text>
-              <View style={styles.tapRow}>
-                <PulseDot />
-                <Text style={styles.tapHint}>tap to reveal</Text>
+          {/* Author meta row */}
+          <View style={s.authorRow}>
+            <Text style={s.authorMeta} numberOfLines={1}>
+              <Text style={s.authorUsername}>
+                {card.author_username ?? card.author_full_name ?? 'Ariel User'}
+              </Text>
+              <Text style={s.dot}> · </Text>
+              <Text style={s.authorSubject}>{card.subject ?? meta.short}</Text>
+              {!!card.created_at && (
+                <>
+                  <Text style={s.dot}> · </Text>
+                  <Text style={s.authorTime}>{timeAgo(card.created_at)}</Text>
+                </>
+              )}
+            </Text>
+          </View>
+
+          {/* Caption */}
+          {!!card.caption && (
+            <Text style={s.caption}>
+              {parseMentions(card.caption).map((p, i) =>
+                p.type === 'mention'
+                  ? <Text key={i} style={s.mention}>{p.value}</Text>
+                  : <Text key={i}>{p.value}</Text>
+              )}
+            </Text>
+          )}
+
+          {/* ── Card face ── */}
+          <TouchableOpacity
+            activeOpacity={0.97}
+            onPress={() => setFlipped((f) => !f)}
+            style={s.cardFace}
+          >
+            {/* Left subject accent strip — 3px, subject color */}
+            <View style={[s.accentStrip, { backgroundColor: flipped ? '#8b5cf6' : subjectColor }]} />
+
+            {/* Card content */}
+            <View style={s.cardContent}>
+              {/* Top row: label + subject chip */}
+              <View style={s.cardTopRow}>
+                <Text style={[s.cardLabel, { color: flipped ? '#8b5cf6' : subjectColor }]}>
+                  {flipped ? 'Answer' : 'Question'}
+                </Text>
+                <Text style={s.subjectChip}>
+                  {meta.icon} {meta.short}
+                </Text>
+              </View>
+
+              {/* Main text — responsive size */}
+              <View style={s.cardBody}>
+                <Text
+                  style={[
+                    s.cardText,
+                    { fontSize, lineHeight: fontSize * 1.45 },
+                    flipped && s.cardTextFlipped,
+                  ]}
+                >
+                  {flipped ? (card.answer || 'No answer provided.') : card.question}
+                </Text>
+              </View>
+
+              {/* Footer row */}
+              <View style={[s.cardFooter, { borderTopColor: footerBorderColor }]}>
+                {card.community_reviews != null && card.community_reviews > 0 ? (
+                  <Text style={s.cardFooterStats}>
+                    {card.community_reviews} studied · {card.community_pct_correct}% correct
+                  </Text>
+                ) : <View />}
+                <Text style={[s.tapHint, { color: tapHintColor }]}>
+                  {flipped ? 'tap to close ↺' : 'tap to reveal →'}
+                </Text>
               </View>
             </View>
-          ) : (
-            /* ── Answer side ── */
-            <View style={styles.cardCenter}>
-              <Text style={styles.questionFaded}>{card.question}</Text>
-              <View style={styles.dividerLine} />
-              <Text style={styles.answerLabel}>Answer</Text>
-              <Text style={styles.answerText}>{card.answer}</Text>
-              {!!card.explanation && (
-                <View style={styles.explanationBox}>
-                  <Text style={styles.whyLabel}>Why</Text>
-                  <Text style={styles.explanationText}>{card.explanation}</Text>
-                </View>
+          </TouchableOpacity>
+
+          {/* ── Action bar ── */}
+          <View style={s.actionBar}>
+            {/* Like */}
+            <TouchableOpacity style={s.actionBtn} onPress={handleLike} activeOpacity={0.7}>
+              <Animated.View style={{ transform: [{ scale: likeAnim }] }}>
+                <Ionicons
+                  name={liked ? 'heart' : 'heart-outline'}
+                  size={19}
+                  color={liked ? '#f87171' : '#71717a'}
+                />
+              </Animated.View>
+              {likeCount > 0 && (
+                <Text style={[s.actionCount, liked && { color: '#f87171' }]}>{likeCount}</Text>
               )}
-              <Text style={styles.tapAgain}>Tap again to see question</Text>
+            </TouchableOpacity>
+
+            {/* Comment */}
+            <TouchableOpacity
+              style={s.actionBtn}
+              onPress={() => inputRef.current?.focus()}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chatbubble-outline" size={18} color="#71717a" />
+              {comments.length > 0 && (
+                <Text style={s.actionCount}>{comments.length}</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Share */}
+            <TouchableOpacity style={s.actionBtn} onPress={handleShare} activeOpacity={0.7}>
+              <Ionicons name="paper-plane-outline" size={18} color="#71717a" />
+            </TouchableOpacity>
+
+            {/* Views */}
+            <View style={s.actionBtn}>
+              <Ionicons name="eye-outline" size={17} color="#71717a" />
+              <Text style={s.actionCountDim}>{views}</Text>
+            </View>
+
+            {/* Save: count then bookmark */}
+            <TouchableOpacity style={s.actionBtn} onPress={handleSave} activeOpacity={0.7}>
+              {saveCount > 0 && (
+                <Text style={[s.actionCountDim, saved && { color: '#a78bfa' }]}>{saveCount}</Text>
+              )}
+              <Ionicons
+                name={saved ? 'bookmark' : 'bookmark-outline'}
+                size={19}
+                color={saved ? '#a78bfa' : '#71717a'}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* ── Comments ── */}
+          {comments.length > 0 && (
+            <View style={s.commentsBlock}>
+              {displayedComments.map((c, i) => (
+                <View key={c.id} style={[s.commentWrap, i > 0 && { marginTop: 16 }]}>
+                  <CommentRow
+                    comment={c}
+                    likedComments={likedComments}
+                    onLike={handleCommentLike}
+                  />
+                </View>
+              ))}
+              {comments.length > 3 && (
+                <TouchableOpacity onPress={() => setShowAllComments((v) => !v)} style={{ marginTop: 10 }}>
+                  <Text style={s.viewAll}>
+                    {showAllComments ? 'Show less' : `View all ${comments.length} replies ↓`}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
-        </View>
-      </TouchableWithoutFeedback>
 
-      {/* ── Action Bar ── */}
-      <View style={styles.actionBar}>
-        {/* Like */}
-        <TouchableOpacity onPress={handleLike} style={styles.actionBtn} activeOpacity={0.7}>
-          <Animated.View style={{ transform: [{ scale: likeAnim }] }}>
-            <Ionicons
-              name={liked ? 'heart' : 'heart-outline'}
-              size={20}
-              color={liked ? '#ef4444' : '#71717a'}
-            />
-          </Animated.View>
-          {likeCount > 0 && (
-            <Text style={[styles.actionCount, liked && { color: '#ef4444' }]}>
-              {likeCount}
-            </Text>
-          )}
-        </TouchableOpacity>
+          {/* ── Comment input ── */}
+          <View style={s.inputRow}>
+            <MeAvatar />
+            <View style={s.inputBorder}>
+              <TextInput
+                ref={inputRef}
+                style={s.input}
+                placeholder="What's your take…"
+                placeholderTextColor="#3f4447"
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+                maxLength={500}
+                returnKeyType="send"
+                onSubmitEditing={handleSendComment}
+              />
+            </View>
+            {commentText.trim().length > 0 && (
+              <TouchableOpacity onPress={handleSendComment} disabled={postingComment} activeOpacity={0.7}>
+                <Text style={s.postBtn}>{postingComment ? '…' : 'Post'}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
-        {/* Comment */}
-        <TouchableOpacity
-          onPress={() => commentInputRef.current?.focus()}
-          style={styles.actionBtn}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chatbubble-outline" size={19} color="#71717a" />
-          {comments.length > 0 && (
-            <Text style={styles.actionCount}>{comments.length}</Text>
-          )}
-        </TouchableOpacity>
-
-        {/* Share / repost */}
-        <TouchableOpacity onPress={handleShare} style={styles.actionBtn} activeOpacity={0.7}>
-          <Ionicons name="arrow-redo-outline" size={20} color="#71717a" />
-        </TouchableOpacity>
-
-        {/* Views */}
-        <View style={styles.actionBtn}>
-          <Ionicons name="eye-outline" size={18} color="#52525b" />
-          <Text style={styles.actionCountDim}>{views}</Text>
-        </View>
-
-        {/* Save count + bookmark — right side */}
-        <View style={styles.rightActions}>
-          {saveCount > 0 && (
-            <Text style={[styles.actionCountDim, saved && { color: '#a78bfa' }]}>
-              {saveCount}
-            </Text>
-          )}
-          <TouchableOpacity onPress={handleSave} activeOpacity={0.7}>
-            <Ionicons
-              name={saved ? 'bookmark' : 'bookmark-outline'}
-              size={20}
-              color={saved ? '#a78bfa' : '#71717a'}
-            />
-          </TouchableOpacity>
         </View>
       </View>
 
-      {/* ── Inline Comments ── */}
-      {visibleComments.length > 0 && (
-        <View style={styles.commentsBlock}>
-          {visibleComments.map((comment) => (
-            <CommentRow key={comment.id} comment={comment} />
-          ))}
-          {extraCount > 0 && (
-            <TouchableOpacity onPress={() => commentInputRef.current?.focus()}>
-              <Text style={styles.viewAll}>View all {comments.length} comments</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-
-      {/* ── "What's your take" input (always visible, Twitter style) ── */}
-      <View style={styles.inputRow}>
-        <MeAvatar />
-        <TextInput
-          ref={commentInputRef}
-          style={styles.twitterInput}
-          placeholder="What's your take..."
-          placeholderTextColor="#3f3f46"
-          value={commentText}
-          onChangeText={setCommentText}
-          multiline
-          maxLength={500}
-          returnKeyType="send"
-          onSubmitEditing={handleSendComment}
-        />
-        {commentText.trim().length > 0 && (
-          <TouchableOpacity
-            onPress={handleSendComment}
-            disabled={postingComment}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="send"
-              size={17}
-              color={postingComment ? '#3f3f46' : '#8b5cf6'}
-            />
-          </TouchableOpacity>
-        )}
-      </View>
+      {/* Full-width separator — matches web: -mx-4 h-px background: #2f3336 */}
+      <View style={s.separator} />
     </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
+const s = StyleSheet.create({
+  post: {
     paddingTop: 14,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#18181b',
+    paddingHorizontal: 16,
   },
 
-  // Author
-  authorRow: {
+  // Twitter layout
+  row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 10,
+    gap: 12,
   },
-  authorInfo: { flex: 1 },
-  authorMeta: { fontSize: 14 },
-  authorUsername: { color: '#fafafa', fontWeight: '700', fontSize: 14 },
-  dot: { color: '#52525b', fontSize: 14 },
-  authorSubject: { color: '#a1a1aa', fontSize: 13 },
-  authorTime: { color: '#71717a', fontSize: 13 },
-
-  // Caption
-  captionContainer: { marginBottom: 10 },
-  caption: { color: '#d4d4d8', fontSize: 15, lineHeight: 22 },
-  mention: { color: '#8b5cf6', fontWeight: '500' },
-
-  // Card face — matches web: rounded-2xl shadow-xl shadow-black/60 bg-white / bg-amber-50
-  cardFace: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    overflow: 'hidden',
-    minHeight: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.55,
-    shadowRadius: 16,
-    elevation: 10,
-    marginBottom: 10,
+  leftCol: {
+    flexShrink: 0,
+    paddingTop: 2,
   },
-  cardFaceFlipped: { backgroundColor: '#fffbeb' }, // bg-amber-50
-
-  // Centered content — matches web: flex items-center justify-center px-5 py-6
-  cardCenter: {
+  rightCol: {
     flex: 1,
+    minWidth: 0,
+  },
+
+  // Author avatar (40×40 circle)
+  authorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    gap: 16,
+  },
+  authorAvatarLetter: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 
-  // "Question" label — text-[10px] font-bold text-zinc-400 uppercase tracking-widest
-  questionLabel: {
-    color: '#a1a1aa',
+  // Author meta
+  authorRow: {
+    marginBottom: 6,
+  },
+  authorMeta: { fontSize: 15 },
+  authorUsername: { color: '#e7e9ea', fontWeight: '700', fontSize: 15 },
+  dot: { color: '#4a5058', fontSize: 13 },
+  authorSubject: { color: '#8b9099', fontSize: 13 },
+  authorTime: { color: '#8b9099', fontSize: 13 },
+
+  // Caption
+  caption: {
+    color: '#e7e9ea',
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  mention: { color: '#8b5cf6', fontWeight: '500' },
+
+  // ── Card face ──────────────────────────────────────────────────────────────
+  // Matches web: background rgba(255,255,255,0.96), backdropFilter blur(20px),
+  // border 1px solid rgba(0,0,0,0.1), boxShadow with inset glows
+  cardFace: {
+    marginTop: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    minHeight: 120,
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 6,
+  },
+
+  // Left accent strip — 3px, rounded left, subject color (changes when flipped)
+  accentStrip: {
+    width: 3,
+    alignSelf: 'stretch',
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
+  },
+
+  // Card content area
+  cardContent: {
+    flex: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'column',
+  },
+
+  // Top row: "Question"/"Answer" label + subject chip
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  cardLabel: {
     fontSize: 10,
     fontWeight: '700',
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
-    textAlign: 'center',
+  },
+  subjectChip: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#a1a1aa',
   },
 
-  // Question text — text-zinc-900 text-2xl leading-snug (Kalam = Caveat equivalent)
-  questionText: {
-    fontFamily: 'Kalam_700Bold',
-    color: '#18181b',
-    fontSize: 24,
-    lineHeight: 34,
-    textAlign: 'center',
+  // Main text — size injected dynamically
+  cardBody: {
+    paddingVertical: 8,
+  },
+  cardText: {
+    fontWeight: '700',
+    color: '#18181b',   // text-zinc-900
+    leadingTrim: 'both' as any,
+  },
+  cardTextFlipped: {
+    color: '#2e1065',   // text-violet-900
   },
 
-  // "tap to reveal" row — flex items-center gap-1.5 pt-1
-  tapRow: {
+  // Footer row: community stats + tap hint
+  cardFooter: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 6,
-    paddingTop: 4,
+    paddingTop: 8,
+    marginTop: 4,
+    borderTopWidth: 1,
   },
-  pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#d4d4d8',
+  cardFooterStats: {
+    color: '#a1a1aa',
+    fontSize: 10,
   },
   tapHint: {
-    color: '#a1a1aa',
-    fontSize: 12,
-  },
-
-  // Answer back side
-  // Faded question — text-zinc-400 text-lg leading-relaxed text-center
-  questionFaded: {
-    fontFamily: 'Kalam_400Regular',
-    color: '#a1a1aa',
-    fontSize: 18,
-    lineHeight: 27,
-    textAlign: 'center',
-  },
-  dividerLine: { height: 1, backgroundColor: '#e5e7eb', alignSelf: 'stretch' },
-
-  // "Answer" label — text-[10px] font-bold text-zinc-400 uppercase tracking-widest
-  answerLabel: {
-    color: '#a1a1aa',
     fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    textAlign: 'center',
   },
 
-  // Answer text — text-zinc-900 text-2xl leading-snug
-  answerText: {
-    fontFamily: 'Kalam_700Bold',
-    color: '#18181b',
-    fontSize: 24,
-    lineHeight: 34,
-    textAlign: 'center',
-  },
-
-  // Explanation box — pt-3 border-t border-zinc-200
-  explanationBox: {
-    alignSelf: 'stretch',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    gap: 6,
-  },
-  whyLabel: {
-    color: '#a1a1aa',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-  },
-  explanationText: {
-    fontFamily: 'Kalam_400Regular',
-    color: '#52525b',
-    fontSize: 15,
-    lineHeight: 23,
-  },
-
-  // "Tap again" footer
-  tapAgain: {
-    color: '#d4d4d8',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-
-  // Action bar
+  // ── Action bar ─────────────────────────────────────────────────────────────
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    gap: 16,
+    justifyContent: 'space-between',
+    paddingTop: 10,
+    paddingBottom: 2,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-  },
-  actionCount: { color: '#71717a', fontSize: 13, fontWeight: '500' },
-  actionCountDim: { color: '#52525b', fontSize: 13 },
-  rightActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 5,
-    marginLeft: 'auto',
+  },
+  actionCount: {
+    color: '#8b9099',
+    fontSize: 13,
+  },
+  actionCountDim: {
+    color: '#8b9099',
+    fontSize: 13,
   },
 
-  // Comments block
+  // ── Comments ───────────────────────────────────────────────────────────────
   commentsBlock: {
+    marginTop: 12,
     paddingTop: 4,
-    paddingBottom: 4,
-    gap: 8,
   },
+  commentWrap: {},
   commentRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  commentLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
+    gap: 10,
   },
   commentAvatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
+    backgroundColor: '#27272a',
     overflow: 'hidden',
-    flexShrink: 0,
-  },
-  commentAvatarFallback: {
-    backgroundColor: '#3f3f46',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
-  commentAvatarText: { color: '#fafafa', fontSize: 10, fontWeight: '700' },
-  commentText: { flex: 1, color: '#a1a1aa', fontSize: 13, lineHeight: 19 },
-  commentUsername: { color: '#d4d4d8', fontWeight: '700' },
-  commentLikes: {
-    flexDirection: 'column',
+  commentAvatarLetter: {
+    color: '#a1a1aa',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  commentContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  commentUsername: {
+    color: '#e7e9ea',
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 19,
+    marginBottom: 2,
+  },
+  commentText: {
+    color: '#e7e9ea',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  commentLike: {
+    flexShrink: 0,
     alignItems: 'center',
     gap: 2,
     paddingTop: 2,
-    flexShrink: 0,
+    minWidth: 28,
   },
-  commentLikeCount: { color: '#52525b', fontSize: 11 },
+  commentLikeCount: {
+    color: '#52525b',
+    fontSize: 10,
+    fontWeight: '600',
+  },
   viewAll: {
-    color: '#71717a',
+    color: '#8b9099',
     fontSize: 13,
-    marginLeft: 36,
-    marginTop: 2,
   },
 
-  // Twitter-style input
+  // ── Comment input ──────────────────────────────────────────────────────────
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#18181b',
-    marginTop: 4,
+    gap: 8,
+    marginTop: 12,
   },
   meAvatar: {
     width: 28,
@@ -620,19 +656,39 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   meAvatarFallback: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#27272a',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  meAvatarText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  twitterInput: {
+  meAvatarText: {
+    color: '#a1a1aa',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  inputBorder: {
     flex: 1,
-    color: '#fafafa',
-    fontSize: 14,
-    paddingVertical: 4,
-    paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
+    borderBottomColor: '#2f3336',
+    paddingBottom: 4,
+  },
+  input: {
+    color: '#e7e9ea',
+    fontSize: 15,
+    paddingVertical: 0,
     maxHeight: 80,
+  },
+  postBtn: {
+    color: '#a78bfa',
+    fontSize: 12,
+    fontWeight: '700',
+    flexShrink: 0,
+  },
+
+  // Full-bleed separator — matches web: -mx-4 h-px background #2f3336
+  separator: {
+    height: 1,
+    backgroundColor: '#2f3336',
+    marginHorizontal: -16,
+    marginTop: 12,
   },
 });
