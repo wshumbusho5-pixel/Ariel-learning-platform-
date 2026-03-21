@@ -42,7 +42,7 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
           ) : (
             /* ── Answer side — scrollable when content is long ── */
             <ScrollView
-              style={{ flex: 1 }}
+              style={{ maxHeight: height - 80 }}
               contentContainerStyle={styles.answerContent}
               showsVerticalScrollIndicator={false}
               nestedScrollEnabled
@@ -68,18 +68,19 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
 const styles = StyleSheet.create({
   screenContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingVertical: 24,
+    justifyContent: 'center',
+    alignItems: 'stretch',
   },
   card: {
-    flex: 1,
     backgroundColor: '#ffffff',
-    borderRadius: 24,
+    borderRadius: 28,
     paddingHorizontal: 28,
     paddingVertical: 40,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.70,
-    shadowRadius: 40,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.55,
+    shadowRadius: 36,
     elevation: 20,
   },
   cardFlipped: {
@@ -88,9 +89,7 @@ const styles = StyleSheet.create({
 
   // Question side
   questionSide: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 24,
   },
   questionText: {
@@ -109,7 +108,6 @@ const styles = StyleSheet.create({
 
   // Answer side
   answerContent: {
-    flexGrow: 1,
     paddingBottom: 8,
   },
   questionFaded: {

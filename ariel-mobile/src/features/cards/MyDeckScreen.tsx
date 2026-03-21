@@ -282,9 +282,9 @@ export function MyDeckScreen() {
 
   // Header height measured via onLayout (accurate across devices)
   const [headerHeight, setHeaderHeight] = useState(0);
-  // Rating panel is approximately 100px (paddingTop 12 + buttons ~55 + hint ~33)
+  // Rating panel: paddingTop 12 + icon 56 + gap 8 + label 14 + hint ~26 + paddingBottom
   // Card area = full screen - header - rating panel - bottom inset
-  const RATING_PANEL_H = 100 + Math.max(insets.bottom, 8);
+  const RATING_PANEL_H = 130 + Math.max(insets.bottom, 8);
   const cardAreaHeight = SCREEN_HEIGHT - headerHeight - RATING_PANEL_H;
 
   if (isLoading) {
@@ -574,8 +574,8 @@ const ss = StyleSheet.create({
 
   // Rating panel — normal flow, sits below the card area
   ratingPanel: {
-    paddingHorizontal: 32,
-    paddingTop: 12,
+    paddingHorizontal: 24,
+    paddingTop: 16,
   },
   flipHint: {
     color: 'rgba(255,255,255,0.25)',
