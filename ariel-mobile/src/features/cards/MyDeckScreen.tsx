@@ -3,9 +3,9 @@ import {
   View,
   Text,
   ScrollView,
-  Dimensions,
   StyleSheet,
   TouchableOpacity,
+  useWindowDimensions,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,7 +16,7 @@ import { RatingButtons } from '@/features/cards/components/RatingButtons';
 import { SessionComplete } from '@/features/cards/components/SessionComplete';
 import type { Card } from '@/shared/types/card';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Screen dimensions via hook so they update on rotation
 
 // ─── Subject key normalizer (mirrors web lib/subjects.ts) ─────────────────────
 
@@ -155,6 +155,7 @@ function EmptyDeck({ label }: { label: string }) {
 
 export function MyDeckScreen() {
   const insets = useSafeAreaInsets();
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
   const { cards, allCards, isLoading } = useMyDeck({ filter: 'all' });
   const { reviewCard } = useReviewCard();
   const scrollRef = useRef<ScrollView>(null);
@@ -281,9 +282,10 @@ export function MyDeckScreen() {
 
   // Header height measured via onLayout (accurate across devices)
   const [headerHeight, setHeaderHeight] = useState(0);
-  // Card area height measured via onLayout — passed explicitly to SnapCard
-  // so flex:1 works inside horizontal ScrollView
-  const [cardAreaHeight, setCardAreaHeight] = useState(0);
+  // Rating panel is approximately 100px (paddingTop 12 + buttons ~55 + hint ~33)
+  // Card area = full screen - header - rating panel - bottom inset
+  const RATING_PANEL_H = 100 + Math.max(insets.bottom, 8);
+  const cardAreaHeight = SCREEN_HEIGHT - headerHeight - RATING_PANEL_H;
 
   if (isLoading) {
     return (
@@ -352,33 +354,25 @@ export function MyDeckScreen() {
       <View style={[styles.content, { paddingTop: headerHeight }]}>
         {!sessionDone && queue.length > 0 ? (
           <>
-            {/* Card snap area — flex:1 fills between header and rating buttons */}
-            <View
-              style={{ flex: 1 }}
-              onLayout={(e) => setCardAreaHeight(e.nativeEvent.layout.height)}
+            {/* Card snap area — height calculated from screen dimensions */}
+            <ScrollView
+              ref={scrollRef}
+              horizontal
+              pagingEnabled
+              scrollEnabled={false}
+              showsHorizontalScrollIndicator={false}
+              style={{ height: cardAreaHeight }}
             >
-              {/* Only render scroll once we know the height */}
-              {cardAreaHeight > 0 && (
-                <ScrollView
-                  ref={scrollRef}
-                  horizontal
-                  pagingEnabled
-                  scrollEnabled={false}
-                  showsHorizontalScrollIndicator={false}
-                  style={{ flex: 1 }}
-                >
-                  {queue.map((card, idx) => (
-                    <SnapCard
-                      key={`${card.id}_${idx}`}
-                      card={card}
-                      width={SCREEN_WIDTH}
-                      height={cardAreaHeight}
-                      onFlipped={idx === currentIndex ? setIsFlipped : undefined}
-                    />
-                  ))}
-                </ScrollView>
-              )}
-            </View>
+              {queue.map((card, idx) => (
+                <SnapCard
+                  key={`${card.id}_${idx}`}
+                  card={card}
+                  width={SCREEN_WIDTH}
+                  height={cardAreaHeight}
+                  onFlipped={idx === currentIndex ? setIsFlipped : undefined}
+                />
+              ))}
+            </ScrollView>
 
             {/* Rating buttons — normal flow, never overlaps card */}
             <View style={[ss.ratingPanel, { paddingBottom: Math.max(insets.bottom, 8) + 8 }]}>
