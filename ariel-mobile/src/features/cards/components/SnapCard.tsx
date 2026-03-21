@@ -32,20 +32,21 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
         accessibilityRole="button"
         accessibilityLabel={flipped ? 'Tap to show question' : 'Tap to reveal answer'}
       >
-        <View style={[styles.card, flipped && styles.cardFlipped]}>
-          {!flipped ? (
-            /* ── Question side ── */
+        {/* ── Question side — auto-sized, centered ── */}
+        {!flipped ? (
+          <View style={styles.card}>
             <View style={styles.questionSide}>
               <Text style={styles.questionText}>{card.question}</Text>
               <Text style={styles.tapHint}>tap to reveal</Text>
             </View>
-          ) : (
-            /* ── Answer side — scrollable when content is long ── */
+          </View>
+        ) : (
+          /* ── Answer side — fills available height, scrolls inside ── */
+          <View style={styles.cardFlipped}>
             <ScrollView
-              style={{ maxHeight: height - 80 }}
               contentContainerStyle={styles.answerContent}
               showsVerticalScrollIndicator={false}
-              nestedScrollEnabled
+              bounces
             >
               <Text style={styles.questionFaded}>{card.question}</Text>
               <View style={styles.divider} />
@@ -58,8 +59,8 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
                 </View>
               )}
             </ScrollView>
-          )}
-        </View>
+          </View>
+        )}
       </TouchableWithoutFeedback>
     </View>
   );
@@ -72,6 +73,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'stretch',
   },
+
+  // ── Question side: auto-height, centered ──
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 28,
@@ -83,17 +86,12 @@ const styles = StyleSheet.create({
     shadowRadius: 36,
     elevation: 20,
   },
-  cardFlipped: {
-    backgroundColor: '#fffbeb',
-  },
-
-  // Question side
   questionSide: {
     alignItems: 'center',
     gap: 24,
   },
   questionText: {
-    fontFamily: 'Kalam_700Bold',
+    fontFamily: 'Kalam_400Regular',
     fontSize: 30,
     lineHeight: 42,
     color: '#18181b',
@@ -106,21 +104,35 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // Answer side
+  // ── Answer side: fills height, scrolls inside ──
+  cardFlipped: {
+    flex: 1,
+    backgroundColor: '#fef9f0',
+    borderRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.55,
+    shadowRadius: 36,
+    elevation: 20,
+    overflow: 'hidden',
+  },
   answerContent: {
-    paddingBottom: 8,
+    paddingHorizontal: 28,
+    paddingVertical: 32,
+    alignItems: 'center',
   },
   questionFaded: {
     fontFamily: 'Kalam_400Regular',
-    fontSize: 18,
-    color: '#a1a1aa',
+    fontSize: 16,
+    color: '#c4b5c8',
     textAlign: 'center',
-    lineHeight: 26,
+    lineHeight: 24,
     marginBottom: 16,
   },
   divider: {
+    width: '100%',
     height: 1,
-    backgroundColor: '#e4e4e7',
+    backgroundColor: '#e8dfd0',
     marginBottom: 16,
   },
   answerLabel: {
@@ -129,23 +141,24 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     color: '#a1a1aa',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
     textTransform: 'uppercase',
   },
   answerText: {
-    fontFamily: 'Kalam_700Bold',
+    fontFamily: 'Kalam_400Regular',
     fontSize: 30,
-    lineHeight: 42,
+    lineHeight: 44,
     color: '#18181b',
     textAlign: 'center',
   },
   explanationBox: {
-    marginTop: 20,
-    backgroundColor: '#f4f4f5',
+    marginTop: 24,
+    width: '100%',
+    backgroundColor: '#f0e8d8',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e4e4e7',
+    borderColor: '#e0d0b8',
   },
   explanationLabel: {
     fontSize: 10,
