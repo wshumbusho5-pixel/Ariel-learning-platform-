@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.55,
     shadowRadius: 36,
     elevation: 20,
+    overflow: 'hidden', // clips ScrollView content to the rounded corners
   },
   scroll: {
     flex: 1,

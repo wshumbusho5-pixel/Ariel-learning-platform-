@@ -280,11 +280,12 @@ export function MyDeckScreen() {
     scrollRef.current?.scrollTo({ x: 0, animated: false });
   }, [filteredCards]);
 
-  // Header height measured via onLayout (accurate across devices)
-  const [headerHeight, setHeaderHeight] = useState(0);
-  // Rating panel: paddingTop 12 + icon 56 + gap 8 + label 14 + hint ~26 + paddingBottom
-  // Card area = full screen - header - rating panel - bottom inset
-  const RATING_PANEL_H = 130 + Math.max(insets.bottom, 8);
+  // Start with a reasonable header estimate so cardAreaHeight is never too large
+  // on the first render (which would push the card outside the ScrollView bounds
+  // and clip the bottom rounded corners). onLayout refines this quickly.
+  const [headerHeight, setHeaderHeight] = useState(160);
+  // Rating panel: paddingTop 16 + icon 56 + gap 8 + label 14 + hint 26 + paddingBottom
+  const RATING_PANEL_H = 140 + Math.max(insets.bottom, 8);
   const cardAreaHeight = SCREEN_HEIGHT - headerHeight - RATING_PANEL_H;
 
   if (isLoading) {
