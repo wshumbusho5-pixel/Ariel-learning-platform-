@@ -263,7 +263,7 @@ export function MyDeckScreen() {
       }
       setCurrentIndex(nextIndex);
       setIsFlipped(false);
-      scrollRef.current?.scrollTo({ x: nextIndex * SCREEN_WIDTH, animated: true });
+      scrollRef.current?.scrollTo({ y: nextIndex * cardAreaHeight, animated: true });
     },
     [currentIndex, queue, reviewCard, easyCountsPerCard],
   );
@@ -277,7 +277,7 @@ export function MyDeckScreen() {
     setEasyCount(0);
     setNailedCount(0);
     setEasyCountsPerCard({});
-    scrollRef.current?.scrollTo({ x: 0, animated: false });
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [filteredCards]);
 
   // Start with a reasonable header estimate so cardAreaHeight is never too large
@@ -355,14 +355,13 @@ export function MyDeckScreen() {
       <View style={[styles.content, { paddingTop: headerHeight }]}>
         {!sessionDone && queue.length > 0 ? (
           <>
-            {/* Card snap area — height calculated from screen dimensions */}
+            {/* Card snap area — vertical paging */}
             <ScrollView
               ref={scrollRef}
-              horizontal
               pagingEnabled
               scrollEnabled={false}
-              showsHorizontalScrollIndicator={false}
-              style={{ height: cardAreaHeight }}
+              showsVerticalScrollIndicator={false}
+              style={{ flex: 1 }}
             >
               {queue.map((card, idx) => (
                 <SnapCard
