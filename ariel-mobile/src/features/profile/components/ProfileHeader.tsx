@@ -6,11 +6,8 @@ import {
   ScrollView,
   StyleSheet,
   Image,
-  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,7 +33,7 @@ interface ProfileHeaderProps {
   onFollowingPress?: () => void;
 }
 
-// ─── Stat Column ──────────────────────────────────────────────────────────────
+// ─── Stat column ──────────────────────────────────────────────────────────────
 
 function StatCol({
   value,
@@ -48,35 +45,37 @@ function StatCol({
   onPress?: () => void;
 }) {
   return (
-    <TouchableOpacity style={s.statCol} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
+    <TouchableOpacity
+      style={s.statCol}
+      onPress={onPress}
+      activeOpacity={onPress ? 0.6 : 1}
+      disabled={!onPress}
+    >
       <Text style={s.statValue}>{value}</Text>
       <Text style={s.statLabel}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
-// ─── Highlight Bubble ─────────────────────────────────────────────────────────
+// ─── Highlight bubble ─────────────────────────────────────────────────────────
 
-function HighlightBubble({
+function Highlight({
   icon,
   label,
-  value,
   color,
   onPress,
 }: {
-  icon: string;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
-  value?: string | number;
   color: string;
   onPress?: () => void;
 }) {
   return (
-    <TouchableOpacity style={s.highlight} onPress={onPress} activeOpacity={0.8}>
-      <View style={[s.highlightCircle, { borderColor: color }]}>
-        <Text style={s.highlightIcon}>{icon}</Text>
-        {value !== undefined && (
-          <Text style={[s.highlightValue, { color }]}>{value}</Text>
-        )}
+    <TouchableOpacity style={s.highlight} onPress={onPress} activeOpacity={0.75}>
+      <View style={[s.highlightRing, { borderColor: color }]}>
+        <View style={[s.highlightInner, { backgroundColor: `${color}18` }]}>
+          <Ionicons name={icon} size={26} color={color} />
+        </View>
       </View>
       <Text style={s.highlightLabel}>{label}</Text>
     </TouchableOpacity>
@@ -107,36 +106,33 @@ export function ProfileHeader({
   onFollowingPress,
 }: ProfileHeaderProps) {
   const displayName = fullName ?? username ?? 'Unknown';
-  const handle = username ?? `user_${userId.slice(0, 8)}`;
   const [imgErr, setImgErr] = React.useState(false);
   const hasAvatar = !!profilePicture && !imgErr;
 
   return (
     <View style={s.container}>
-      {/* ── Avatar + Stats row ── */}
-      <View style={s.avatarStatsRow}>
+      {/* ── Avatar + Stats ── */}
+      <View style={s.topRow}>
         {/* Avatar */}
-        <View style={s.avatarWrap}>
-          <View style={[s.avatarRing, isPremium && s.avatarRingPremium]}>
-            {hasAvatar ? (
-              <Image
-                source={{ uri: profilePicture! }}
-                style={s.avatar}
-                onError={() => setImgErr(true)}
-              />
-            ) : (
-              <View style={[s.avatar, s.avatarFallback]}>
-                <Text style={s.avatarFallbackText}>
-                  {(displayName).charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
-          </View>
+        <View style={[s.avatarRing, isPremium && s.avatarRingPremium]}>
+          {hasAvatar ? (
+            <Image
+              source={{ uri: profilePicture! }}
+              style={s.avatar}
+              onError={() => setImgErr(true)}
+            />
+          ) : (
+            <View style={[s.avatar, s.avatarFallback]}>
+              <Text style={s.avatarInitial}>
+                {displayName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Stats */}
         <View style={s.statsRow}>
-          <StatCol value={cardsCount} label="Cards" />
+          <StatCol value={cardsCount} label="Decks" />
           <StatCol value={followersCount} label="Followers" onPress={onFollowersPress} />
           <StatCol value={followingCount} label="Following" onPress={onFollowingPress} />
         </View>
@@ -144,14 +140,19 @@ export function ProfileHeader({
 
       {/* ── Name + bio ── */}
       <View style={s.nameBlock}>
-        <Text style={s.fullName}>{displayName}</Text>
-        {isPremium && (
-          <Text style={s.premiumBadge}>⚡ Premium</Text>
-        )}
+        <View style={s.nameRow}>
+          <Text style={s.fullName}>{displayName}</Text>
+          {isPremium && (
+            <View style={s.premiumBadge}>
+              <Ionicons name="flash" size={10} color="#a855f7" />
+              <Text style={s.premiumText}>Premium</Text>
+            </View>
+          )}
+        </View>
         {!!bio && <Text style={s.bio}>{bio}</Text>}
         {!!school && (
           <View style={s.schoolRow}>
-            <Ionicons name="school-outline" size={13} color="#a1a1aa" />
+            <Ionicons name="school-outline" size={12} color="#71717a" />
             <Text style={s.school}>{school}</Text>
           </View>
         )}
@@ -161,39 +162,39 @@ export function ProfileHeader({
       <View style={s.actionRow}>
         {isOwnProfile ? (
           <>
-            <TouchableOpacity style={s.actionBtn} onPress={onEditPress} activeOpacity={0.8}>
-              <Text style={s.actionBtnText}>Edit profile</Text>
+            <TouchableOpacity style={s.btn} onPress={onEditPress} activeOpacity={0.8}>
+              <Text style={s.btnText}>Edit profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.actionBtn} activeOpacity={0.8}>
-              <Text style={s.actionBtnText}>Share profile</Text>
+            <TouchableOpacity style={s.btn} activeOpacity={0.8}>
+              <Text style={s.btnText}>Share profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.actionBtnIcon} activeOpacity={0.8}>
-              <Ionicons name="person-add-outline" size={16} color="#fafafa" />
+            <TouchableOpacity style={s.btnIcon} activeOpacity={0.8}>
+              <Ionicons name="person-add-outline" size={15} color="#fafafa" />
             </TouchableOpacity>
           </>
         ) : (
           <>
             <TouchableOpacity
-              style={[s.actionBtn, !isFollowing && s.followBtn]}
+              style={[s.btn, !isFollowing && s.btnFollow]}
               onPress={onFollowPress}
-              activeOpacity={0.8}
               disabled={isTogglingFollow}
+              activeOpacity={0.8}
             >
-              <Text style={[s.actionBtnText, !isFollowing && s.followBtnText]}>
-                {isTogglingFollow ? '...' : isFollowing ? 'Following' : 'Follow'}
+              <Text style={[s.btnText, !isFollowing && s.btnFollowText]}>
+                {isTogglingFollow ? '···' : isFollowing ? 'Following' : 'Follow'}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.actionBtn} activeOpacity={0.8}>
-              <Text style={s.actionBtnText}>Message</Text>
+            <TouchableOpacity style={s.btn} activeOpacity={0.8}>
+              <Text style={s.btnText}>Message</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.actionBtnIcon} activeOpacity={0.8}>
-              <Ionicons name="chevron-down" size={16} color="#fafafa" />
+            <TouchableOpacity style={s.btnIcon} activeOpacity={0.8}>
+              <Ionicons name="chevron-down" size={15} color="#fafafa" />
             </TouchableOpacity>
           </>
         )}
       </View>
 
-      {/* ── Highlights / story bubbles ── */}
+      {/* ── Story-style highlights ── */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -201,67 +202,72 @@ export function ProfileHeader({
       >
         {isOwnProfile && (
           <TouchableOpacity style={s.highlight} activeOpacity={0.8}>
-            <View style={[s.highlightCircle, s.highlightNew]}>
-              <Ionicons name="add" size={28} color="#fafafa" />
+            <View style={[s.highlightRing, s.highlightRingDashed]}>
+              <View style={[s.highlightInner, { backgroundColor: '#1c1c1e' }]}>
+                <Ionicons name="add" size={26} color="#a1a1aa" />
+              </View>
             </View>
             <Text style={s.highlightLabel}>New</Text>
           </TouchableOpacity>
         )}
-        <HighlightBubble icon="🔥" label="Streak" value={streak} color="#f97316" />
-        <HighlightBubble icon="⭐" label={`Lvl ${level}`} color="#a855f7" />
-        <HighlightBubble icon="🏆" label="Trophies" color="#eab308" />
-        <HighlightBubble icon="📚" label="Decks" value={cardsCount > 0 ? cardsCount : undefined} color="#22d3ee" />
+        <Highlight icon="flame-outline"   label={`${streak}d streak`} color="#f97316" />
+        <Highlight icon="star-outline"    label={`Level ${level}`}    color="#a855f7" />
+        <Highlight icon="trophy-outline"  label="Trophies"            color="#eab308" />
+        <Highlight icon="layers-outline"  label="Decks"               color="#22d3ee" />
       </ScrollView>
+
+      {/* Divider */}
+      <View style={s.divider} />
     </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
+const AVATAR_SIZE = 86;
+
 const s = StyleSheet.create({
   container: {
     backgroundColor: '#000',
-    paddingBottom: 4,
     gap: 14,
   },
 
-  // Avatar + stats
-  avatarStatsRow: {
+  // Row 1: avatar + stats
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    gap: 16,
+    paddingTop: 14,
+    gap: 20,
   },
-  avatarWrap: {},
   avatarRing: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    padding: 3,
-    borderWidth: 2,
+    width: AVATAR_SIZE + 4,
+    height: AVATAR_SIZE + 4,
+    borderRadius: (AVATAR_SIZE + 4) / 2,
+    borderWidth: 1,
     borderColor: '#3f3f46',
-  },
-  avatarRingPremium: {
-    borderColor: '#a855f7',
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  avatarFallback: {
-    backgroundColor: '#7c3aed',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarFallbackText: {
-    color: '#fff',
-    fontSize: 28,
+  avatarRingPremium: {
+    borderColor: '#a855f7',
+    borderWidth: 2,
+  },
+  avatar: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+  },
+  avatarFallback: {
+    backgroundColor: '#27272a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    color: '#fafafa',
+    fontSize: 30,
     fontWeight: '700',
   },
-
-  // Stats
   statsRow: {
     flex: 1,
     flexDirection: 'row',
@@ -269,49 +275,63 @@ const s = StyleSheet.create({
   },
   statCol: {
     alignItems: 'center',
-    gap: 2,
+    gap: 3,
   },
   statValue: {
     color: '#fafafa',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '700',
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
   statLabel: {
     color: '#a1a1aa',
     fontSize: 12,
-    fontWeight: '400',
   },
 
   // Name / bio
   nameBlock: {
     paddingHorizontal: 16,
-    gap: 3,
+    gap: 4,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   fullName: {
     color: '#fafafa',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: 'rgba(168,85,247,0.12)',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(168,85,247,0.25)',
+  },
+  premiumText: {
     color: '#a855f7',
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
+    letterSpacing: 0.3,
   },
   bio: {
     color: '#e4e4e7',
     fontSize: 13,
-    lineHeight: 18,
-    marginTop: 2,
+    lineHeight: 19,
   },
   schoolRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
+    gap: 5,
   },
   school: {
-    color: '#a1a1aa',
+    color: '#71717a',
     fontSize: 12,
   },
 
@@ -319,80 +339,80 @@ const s = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    gap: 8,
+    gap: 6,
   },
-  actionBtn: {
+  btn: {
     flex: 1,
     height: 32,
-    backgroundColor: '#1c1c1e',
     borderRadius: 8,
+    backgroundColor: '#1c1c1e',
     borderWidth: 1,
     borderColor: '#3f3f46',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  actionBtnText: {
+  btnText: {
     color: '#fafafa',
     fontSize: 13,
     fontWeight: '600',
   },
-  actionBtnIcon: {
+  btnIcon: {
     width: 32,
     height: 32,
-    backgroundColor: '#1c1c1e',
     borderRadius: 8,
+    backgroundColor: '#1c1c1e',
     borderWidth: 1,
     borderColor: '#3f3f46',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  followBtn: {
+  btnFollow: {
     backgroundColor: '#0095f6',
     borderColor: '#0095f6',
   },
-  followBtnText: {
+  btnFollowText: {
     color: '#fff',
   },
 
   // Highlights
   highlightsRow: {
-    flexDirection: 'row',
     paddingHorizontal: 12,
-    paddingBottom: 4,
-    gap: 16,
+    gap: 18,
   },
   highlight: {
     alignItems: 'center',
     gap: 6,
-    width: 68,
+    width: 66,
   },
-  highlightCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
+  highlightRing: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 1.5,
     borderColor: '#3f3f46',
-    backgroundColor: '#1c1c1e',
+    padding: 3,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 0,
   },
-  highlightNew: {
-    borderColor: '#3f3f46',
+  highlightRingDashed: {
     borderStyle: 'dashed',
+    borderColor: '#52525b',
   },
-  highlightIcon: {
-    fontSize: 22,
-    lineHeight: 26,
-  },
-  highlightValue: {
-    fontSize: 10,
-    fontWeight: '700',
-    lineHeight: 12,
+  highlightInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   highlightLabel: {
     color: '#a1a1aa',
-    fontSize: 11,
+    fontSize: 10,
     textAlign: 'center',
+  },
+
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#262626',
   },
 });
