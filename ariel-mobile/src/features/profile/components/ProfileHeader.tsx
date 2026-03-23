@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Image,
+  Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -109,6 +110,15 @@ export function ProfileHeader({
   const [imgErr, setImgErr] = React.useState(false);
   const hasAvatar = !!profilePicture && !imgErr;
 
+  const handleShare = React.useCallback(async () => {
+    const handle = username ?? userId;
+    await Share.share({
+      message: `Check out ${displayName} on Ariel — ariel.study/@${handle}`,
+      url: `https://ariel.study/@${handle}`,
+      title: `${displayName} on Ariel`,
+    });
+  }, [username, userId, displayName]);
+
   return (
     <View style={s.container}>
       {/* ── Avatar + Stats ── */}
@@ -165,7 +175,7 @@ export function ProfileHeader({
             <TouchableOpacity style={s.btn} onPress={onEditPress} activeOpacity={0.8}>
               <Text style={s.btnText}>Edit profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.btn} activeOpacity={0.8}>
+            <TouchableOpacity style={s.btn} onPress={handleShare} activeOpacity={0.8}>
               <Text style={s.btnText}>Share profile</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.btnIcon} activeOpacity={0.8}>
