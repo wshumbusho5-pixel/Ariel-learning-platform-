@@ -196,9 +196,19 @@ export default function CommentsSection({ deckId }: CommentsSectionProps) {
         <div className="flex-1 min-w-0">
           <div className="bg-gray-100 rounded-2xl px-4 py-2">
             <div className="flex items-center gap-2 mb-1">
-              <Link href={`/profile/${comment.user_id}`} className="font-semibold text-gray-900 text-sm hover:underline">
+              <button
+                onClick={() => {
+                  if (!isReply) {
+                    const username = comment.author_username || comment.author_full_name || 'user';
+                    setReplyingTo({ id: comment.id, username });
+                    setReplyContent(`@${username} `);
+                    setTimeout(() => replyInputRef.current?.focus(), 50);
+                  }
+                }}
+                className="font-semibold text-gray-900 text-sm hover:text-violet-600 transition-colors"
+              >
                 {comment.author_username || comment.author_full_name || 'User'}
-              </Link>
+              </button>
               {comment.author_is_verified && (
                 <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />

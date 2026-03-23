@@ -221,7 +221,12 @@ export default function CommentsDrawer() {
                   {/* Body */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-sm font-semibold text-white">{comment.username}</span>
+                      <button
+                        onClick={() => startReply(comment)}
+                        className="text-sm font-semibold text-white hover:text-violet-400 transition-colors"
+                      >
+                        {comment.username}
+                      </button>
                       <span className="text-xs text-zinc-600">{timeAgo(comment.created_at)}</span>
                     </div>
                     <p className="text-sm text-zinc-300 mt-0.5 leading-relaxed">{renderTextWithMentions(comment.text)}</p>
