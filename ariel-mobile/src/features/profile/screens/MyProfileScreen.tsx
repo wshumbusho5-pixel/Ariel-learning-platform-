@@ -19,19 +19,21 @@ import { useAuth } from '@/shared/auth/useAuth';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
 import { UserDeckGrid } from '@/features/profile/components/UserDeckGrid';
+import { ProfileClipsGrid } from '@/features/profile/components/ProfileClipsGrid';
 import { getMyDecks } from '@/features/profile/api/profileApi';
 import type { ProfileStackParamList } from '@/features/profile/ProfileNavigator';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList>;
-type Tab = 'grid' | 'saved' | 'stats';
+type Tab = 'grid' | 'clips' | 'saved' | 'stats';
 
 // ─── Icon tab bar ──────────────────────────────────────────────────────────────
 
 function IconTabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
   const tabs: { key: Tab; icon: string; iconActive: string }[] = [
-    { key: 'grid',  icon: 'grid-outline',     iconActive: 'grid' },
-    { key: 'saved', icon: 'bookmark-outline', iconActive: 'bookmark' },
-    { key: 'stats', icon: 'bar-chart-outline',iconActive: 'bar-chart' },
+    { key: 'grid',  icon: 'grid-outline',       iconActive: 'grid' },
+    { key: 'clips', icon: 'videocam-outline',   iconActive: 'videocam' },
+    { key: 'saved', icon: 'bookmark-outline',   iconActive: 'bookmark' },
+    { key: 'stats', icon: 'bar-chart-outline',  iconActive: 'bar-chart' },
   ];
 
   return (
@@ -139,11 +141,17 @@ export function MyProfileScreen() {
     return (
       <View style={[s.screen, { paddingTop: insets.top }]}>
         <TopBar handle={handle} onSettings={() => navigation.navigate('Settings')} />
-        <UserDeckGrid
-          decks={decks}
-          isLoading={decksLoading}
-          ListHeaderComponent={header}
-        />
+        <UserDeckGrid decks={decks} isLoading={decksLoading} ListHeaderComponent={header} />
+      </View>
+    );
+  }
+
+  // Clips tab: FlatList with portrait clip thumbnails
+  if (activeTab === 'clips') {
+    return (
+      <View style={[s.screen, { paddingTop: insets.top }]}>
+        <TopBar handle={handle} onSettings={() => navigation.navigate('Settings')} />
+        <ProfileClipsGrid ListHeaderComponent={header} />
       </View>
     );
   }
