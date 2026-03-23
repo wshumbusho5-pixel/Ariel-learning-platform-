@@ -1,9 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { commentsAPI } from '@/lib/api';
 import { parseUTC } from '@/lib/time';
 import Link from 'next/link';
+
+// Renders text with @mentions highlighted in violet
+function renderTextWithMentions(text: string) {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) =>
+    /^@\w+$/.test(part)
+      ? <span key={i} className="text-violet-500 font-semibold">{part}</span>
+      : part
+  );
+}
 
 interface Comment {
   id: string;
@@ -33,8 +43,9 @@ export default function CommentsSection({ deckId }: CommentsSectionProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [newCommentContent, setNewCommentContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
   const [replyContent, setReplyContent] = useState('');
+  const replyInputRef = useRef<HTMLTextAreaElement>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [replies, setReplies] = useState<Record<string, Comment[]>>({});
 
@@ -85,7 +96,7 @@ export default function CommentsSection({ deckId }: CommentsSectionProps) {
 
     try {
       setIsSubmitting(true);
-      const newReply = await commentsAPI.createComment(deckId, replyContent, parentCommentId);
+      const newReply = await commentsAPI.createComment(deckId, replyContent.trim(), parentCommentId);
 
       // Add reply to replies list
       const currentReplies = replies[parentCommentId] || [];
@@ -98,8 +109,8 @@ export default function CommentsSection({ deckId }: CommentsSectionProps) {
 
       setReplyContent('');
       setReplyingTo(null);
-    } catch (error) {
-      console.error('Error creating reply:', error);
+    } catch (err) {
+      console.error('Error creating reply:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -199,7 +210,7 @@ export default function CommentsSection({ deckId }: CommentsSectionProps) {
                 </span>
               )}
             </div>
-            <p className="text-gray-900 text-sm whitespace-pre-wrap">{comment.content}</p>
+            <p className="text-gray-900 text-sm whitespace-pre-wrap">{renderTextWithMentions(comment.content)}</p>
             {comment.is_edited && (
               <p className="text-xs text-gray-500 mt-1">(edited)</p>
             )}
@@ -218,8 +229,13 @@ export default function CommentsSection({ deckId }: CommentsSectionProps) {
 
             {!isReply && (
               <button
-                onClick={() => setReplyingTo(comment.id)}
-                className="text-xs font-medium text-gray-600 hover:text-blue-600"
+                onClick={() => {
+                  const username = comment.author_username || comment.author_full_name || 'user';
+                  setReplyingTo({ id: comment.id, username });
+                  setReplyContent(`@${username} `);
+                  setTimeout(() => replyInputRef.current?.focus(), 50);
+                }}
+                className="text-xs font-medium text-gray-600 hover:text-violet-600"
               >
                 Reply
               </button>
@@ -249,38 +265,43 @@ export default function CommentsSection({ deckId }: CommentsSectionProps) {
                   loadReplies(comment.id);
                 }
               }}
-              className="text-xs font-medium text-blue-600 hover:text-blue-700 mt-2 px-2"
+              className="text-xs font-medium text-violet-600 hover:text-violet-700 mt-2 px-2"
             >
-              {expandedComments.has(comment.id) ? '▼' : '▶'} {comment.reply_count} {comment.reply_count === 1 ? 'reply' : 'replies'}
+              ── {comment.reply_count} {comment.reply_count === 1 ? 'reply' : 'replies'}
             </button>
           )}
 
           {/* Reply Input */}
-          {replyingTo === comment.id && (
+          {replyingTo?.id === comment.id && (
             <div className="mt-3">
+              {/* Replying-to banner */}
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-xs text-gray-500">
+                  Replying to{' '}
+                  <span className="text-violet-600 font-semibold">@{replyingTo.username}</span>
+                </span>
+                <button
+                  onClick={() => { setReplyingTo(null); setReplyContent(''); }}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
               <textarea
+                ref={replyInputRef}
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
-                placeholder="Write a reply..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder={`Reply to @${replyingTo.username}…`}
+                className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm resize-none focus:ring-2 focus:ring-violet-400 focus:border-transparent"
                 rows={2}
               />
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => handleSubmitReply(comment.id)}
                   disabled={isSubmitting || !replyContent.trim()}
-                  className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="px-3 py-1 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 disabled:opacity-50"
                 >
-                  Reply
-                </button>
-                <button
-                  onClick={() => {
-                    setReplyingTo(null);
-                    setReplyContent('');
-                  }}
-                  className="px-3 py-1 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300"
-                >
-                  Cancel
+                  {isSubmitting ? 'Posting…' : 'Reply'}
                 </button>
               </div>
             </div>

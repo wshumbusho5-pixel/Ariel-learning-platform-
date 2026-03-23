@@ -6,6 +6,16 @@ import { useAuth } from '@/lib/useAuth';
 import api from '@/lib/api';
 import { timeAgo } from '@/lib/time';
 
+// Renders text with @mentions highlighted in violet
+function renderTextWithMentions(text: string) {
+  const parts = text.split(/(@\w+)/g);
+  return parts.map((part, i) =>
+    /^@\w+$/.test(part)
+      ? <span key={i} className="text-violet-400 font-semibold">{part}</span>
+      : part
+  );
+}
+
 interface Comment {
   id: string;
   user_id: string;
@@ -214,7 +224,7 @@ export default function CommentsDrawer() {
                       <span className="text-sm font-semibold text-white">{comment.username}</span>
                       <span className="text-xs text-zinc-600">{timeAgo(comment.created_at)}</span>
                     </div>
-                    <p className="text-sm text-zinc-300 mt-0.5 leading-relaxed">{comment.text}</p>
+                    <p className="text-sm text-zinc-300 mt-0.5 leading-relaxed">{renderTextWithMentions(comment.text)}</p>
 
                     {/* Actions */}
                     <div className="flex items-center gap-4 mt-1.5">
@@ -239,7 +249,7 @@ export default function CommentsDrawer() {
                             <div>
                               <span className="text-xs font-semibold text-white">{reply.username}</span>
                               <span className="text-[10px] text-zinc-600 ml-1.5">{timeAgo(reply.created_at)}</span>
-                              <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">{reply.text}</p>
+                              <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">{renderTextWithMentions(reply.text)}</p>
                             </div>
                           </div>
                         ))}
@@ -276,7 +286,7 @@ export default function CommentsDrawer() {
           {replyingTo && (
             <div className="flex items-center justify-between mb-2 px-1">
               <span className="text-xs text-zinc-500">
-                Replying to <span className="text-zinc-300 font-semibold">@{replyingTo.username}</span>
+                Replying to <span className="text-violet-400 font-semibold">@{replyingTo.username}</span>
               </span>
               <button
                 onClick={() => { setReplyingTo(null); setInput(''); }}
