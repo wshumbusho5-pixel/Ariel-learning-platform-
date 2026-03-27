@@ -28,6 +28,7 @@ export interface StoryRingProps {
   size?: number;
   onPress?: () => void;
   showAddButton?: boolean;
+  showRing?: boolean; // false = no ring border (followed user without story)
 }
 
 export function StoryRing({
@@ -37,6 +38,7 @@ export function StoryRing({
   size = 56,
   onPress,
   showAddButton = false,
+  showRing = true,
 }: StoryRingProps): React.ReactElement {
   const displayName = username ?? '?';
   const initials = displayName.charAt(0).toUpperCase();
@@ -46,7 +48,7 @@ export function StoryRing({
   const innerRadius = innerSize / 2;
   const addBadgeSize = Math.round(size * 0.32);
 
-  const ringColor = seen ? COLORS.border : COLORS.violet[600];
+  const ringColor = !showRing ? 'transparent' : seen ? COLORS.border : COLORS.violet[600];
 
   const avatarInner = profilePicture ? (
     <Image
