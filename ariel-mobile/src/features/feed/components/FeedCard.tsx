@@ -247,9 +247,9 @@ export function FeedCard({ card }: FeedCardProps) {
   const activeText = flipped ? (card.answer ?? '') : card.question;
   const fontSize = cardFontSize(activeText);
 
-  // Footer border color: transparent when flipped (violet tint), else nearly invisible
-  const footerBorderColor = flipped ? 'rgba(139,92,246,0.12)' : 'rgba(0,0,0,0.06)';
-  const tapHintColor = flipped ? 'rgba(139,92,246,0.45)' : 'rgba(0,0,0,0.22)';
+  // Footer border color on dark card
+  const footerBorderColor = flipped ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.06)';
+  const tapHintColor = flipped ? 'rgba(167,139,250,0.6)' : 'rgba(255,255,255,0.25)';
 
   return (
     <View style={s.post}>
@@ -297,20 +297,24 @@ export function FeedCard({ card }: FeedCardProps) {
             </Text>
           )}
 
-          {/* ── Card face ── */}
+          {/* ── Card face — Twitter media-frame style ── */}
           <TouchableOpacity
             activeOpacity={0.97}
             onPress={() => setFlipped((f) => !f)}
-            style={s.cardFace}
+            style={s.cardFrame}
           >
-            {/* Left subject accent strip — 3px, subject color */}
+            {/* Inner inset shadow overlay — darkens edges for recessed look */}
+            <View style={s.cardInsetTop} />
+            <View style={s.cardInsetBottom} />
+
+            {/* Left subject accent strip */}
             <View style={[s.accentStrip, { backgroundColor: flipped ? '#8b5cf6' : subjectColor }]} />
 
             {/* Card content */}
             <View style={s.cardContent}>
               {/* Top row: label + subject chip */}
               <View style={s.cardTopRow}>
-                <Text style={[s.cardLabel, { color: flipped ? '#8b5cf6' : subjectColor }]}>
+                <Text style={[s.cardLabel, { color: flipped ? '#a78bfa' : subjectColor }]}>
                   {flipped ? 'Answer' : 'Question'}
                 </Text>
                 <Text style={s.subjectChip}>
@@ -522,39 +526,60 @@ const s = StyleSheet.create({
   },
   mention: { color: '#8b5cf6', fontWeight: '500' },
 
-  // ── Card face ──────────────────────────────────────────────────────────────
-  // Matches web: background rgba(255,255,255,0.96), backdropFilter blur(20px),
-  // border 1px solid rgba(0,0,0,0.1), boxShadow with inset glows
-  cardFace: {
+  // ── Card frame — Twitter media-frame: recessed, frosted, inset shadow ─────
+  cardFrame: {
     marginTop: 8,
     borderRadius: 16,
     overflow: 'hidden',
     flexDirection: 'row',
     minHeight: 120,
-    backgroundColor: 'rgba(255,255,255,0.96)',
+    // Dark frosted glass — sits INTO the post, not floating above it
+    backgroundColor: '#16181c',
+    // Thin visible border like Twitter video frames
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 20,
-    elevation: 6,
+    borderColor: '#2f3336',
   },
 
-  // Left accent strip — 3px, rounded left, subject color (changes when flipped)
+  // Inset shadow overlays — darken top/bottom edges for recessed depth
+  cardInsetTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 24,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+    zIndex: 1,
+    pointerEvents: 'none',
+  },
+  cardInsetBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 20,
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    zIndex: 1,
+    pointerEvents: 'none',
+  },
+
+  // Left accent strip
   accentStrip: {
     width: 3,
     alignSelf: 'stretch',
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+    zIndex: 2,
   },
 
   // Card content area
   cardContent: {
     flex: 1,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 14,
     flexDirection: 'column',
+    zIndex: 2,
   },
 
   // Top row: "Question"/"Answer" label + subject chip
@@ -573,19 +598,19 @@ const s = StyleSheet.create({
   subjectChip: {
     fontSize: 10,
     fontWeight: '500',
-    color: '#a1a1aa',
+    color: '#71767b',
   },
 
-  // Main text — size injected dynamically
+  // Main text — light on dark glass
   cardBody: {
     paddingVertical: 8,
   },
   cardText: {
     fontWeight: '700',
-    color: '#18181b',   // text-zinc-900
+    color: '#e7e9ea',
   },
   cardTextFlipped: {
-    color: '#2e1065',   // text-violet-900
+    color: '#c4b5fd',
   },
 
   // Footer row: community stats + tap hint
@@ -598,7 +623,7 @@ const s = StyleSheet.create({
     borderTopWidth: 1,
   },
   cardFooterStats: {
-    color: '#a1a1aa',
+    color: '#71767b',
     fontSize: 10,
   },
   tapHint: {
