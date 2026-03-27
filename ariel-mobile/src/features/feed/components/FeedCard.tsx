@@ -247,9 +247,9 @@ export function FeedCard({ card }: FeedCardProps) {
   const activeText = flipped ? (card.answer ?? '') : card.question;
   const fontSize = cardFontSize(activeText);
 
-  // Footer border color on dark card
-  const footerBorderColor = flipped ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.06)';
-  const tapHintColor = flipped ? 'rgba(167,139,250,0.6)' : 'rgba(255,255,255,0.25)';
+  // Footer border color on warm white card
+  const footerBorderColor = flipped ? 'rgba(139,92,246,0.12)' : 'rgba(0,0,0,0.06)';
+  const tapHintColor = flipped ? 'rgba(139,92,246,0.45)' : 'rgba(0,0,0,0.22)';
 
   return (
     <View style={s.post}>
@@ -533,8 +533,8 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     flexDirection: 'row',
     minHeight: 120,
-    // Dark frosted glass — sits INTO the post, not floating above it
-    backgroundColor: '#16181c',
+    // Warm white glass — sits INTO the post via border + inset shadow
+    backgroundColor: '#faf8f5',
     // Thin visible border like Twitter video frames
     borderWidth: 1,
     borderColor: '#2f3336',
@@ -549,7 +549,7 @@ const s = StyleSheet.create({
     height: 24,
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
-    backgroundColor: 'rgba(0,0,0,0.12)',
+    backgroundColor: 'rgba(0,0,0,0.04)',
     zIndex: 1,
     pointerEvents: 'none',
   },
@@ -561,7 +561,7 @@ const s = StyleSheet.create({
     height: 20,
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(0,0,0,0.03)',
     zIndex: 1,
     pointerEvents: 'none',
   },
@@ -598,19 +598,19 @@ const s = StyleSheet.create({
   subjectChip: {
     fontSize: 10,
     fontWeight: '500',
-    color: '#71767b',
+    color: '#a1a1aa',
   },
 
-  // Main text — light on dark glass
+  // Main text — dark on warm white
   cardBody: {
     paddingVertical: 8,
   },
   cardText: {
     fontWeight: '700',
-    color: '#e7e9ea',
+    color: '#18181b',
   },
   cardTextFlipped: {
-    color: '#c4b5fd',
+    color: '#2e1065',
   },
 
   // Footer row: community stats + tap hint
@@ -623,7 +623,7 @@ const s = StyleSheet.create({
     borderTopWidth: 1,
   },
   cardFooterStats: {
-    color: '#71767b',
+    color: '#a1a1aa',
     fontSize: 10,
   },
   tapHint: {
