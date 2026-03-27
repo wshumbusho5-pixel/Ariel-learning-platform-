@@ -41,7 +41,7 @@ export function MainTabNavigator(): React.ReactElement {
         tabBarStyle: {
           backgroundColor: TAB_BG,
           borderTopColor: '#2f3336',
-          borderTopWidth: 0.5,
+          borderTopWidth: 1,
           paddingBottom: 6,
           paddingTop: 6,
           height: 64,

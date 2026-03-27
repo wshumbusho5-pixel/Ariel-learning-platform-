@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#000000' },
   skeletonContainer: {
     paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 0.5, borderBottomColor: '#2f3336',
+    borderBottomWidth: 1, borderBottomColor: '#2f3336',
   },
   skeletonAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
   skeletonAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#16181c' },
@@ -342,7 +342,7 @@ const ss = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 12,
-    borderBottomWidth: 0.5,
+    borderBottomWidth: 1,
     borderBottomColor: '#2f3336',
   },
   topBarLeft: {
@@ -376,7 +376,7 @@ const ss = StyleSheet.create({
   // Tab bar
   tabBar: {
     flexDirection: 'row',
-    borderBottomWidth: 0.5,
+    borderBottomWidth: 1,
     borderBottomColor: '#2f3336',
   },
   tabItem: {
@@ -402,7 +402,7 @@ const ss = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderWidth: 0.5,
+    borderWidth: 1,
     borderColor: '#2f3336',
   },
   studyBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -421,7 +421,7 @@ const ss = StyleSheet.create({
   studyBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
   // Quick cards
-  quickCardsContainer: { borderBottomWidth: 0.5, borderBottomColor: '#2f3336' },
+  quickCardsContainer: { borderBottomWidth: 1, borderBottomColor: '#2f3336' },
   quickCardsRow: { paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
   quickCard: {
     flexDirection: 'row',
@@ -430,7 +430,7 @@ const ss = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 8,
     gap: 6,
-    borderWidth: 0.5,
+    borderWidth: 1,
     borderColor: '#2f3336',
     maxWidth: 180,
   },

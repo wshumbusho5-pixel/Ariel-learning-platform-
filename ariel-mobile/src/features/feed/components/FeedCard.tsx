@@ -748,7 +748,7 @@ const s = StyleSheet.create({
 
   // Full-bleed separator — matches web: -mx-4 h-px background #2f3336
   separator: {
-    height: 0.5,
+    height: 1,
     backgroundColor: '#2f3336',
     marginHorizontal: -16,
     marginTop: 12,
