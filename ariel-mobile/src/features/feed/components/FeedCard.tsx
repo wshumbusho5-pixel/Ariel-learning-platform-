@@ -533,11 +533,17 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     flexDirection: 'row',
     minHeight: 120,
-    // Warm white glass — sits INTO the post via border + inset shadow
-    backgroundColor: '#faf8f5',
+    // Frosted glass — semi-transparent warm white so dark feed shows at edges
+    backgroundColor: 'rgba(250,248,245,0.95)',
     // Thin visible border like Twitter video frames
     borderWidth: 1,
-    borderColor: '#2f3336',
+    borderColor: 'rgba(255,255,255,0.08)',
+    // Outer glow — glass catching light
+    shadowColor: 'rgba(255,255,255,0.15)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 1,
+    elevation: 2,
   },
 
   // Inset shadow overlays — darken top/bottom edges for recessed depth
