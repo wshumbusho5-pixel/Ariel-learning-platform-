@@ -388,7 +388,7 @@ const ss = StyleSheet.create({
   tabUnderline: {
     position: 'absolute',
     bottom: 0, left: 16, right: 16,
-    height: 3, backgroundColor: '#1d9bf0', borderRadius: 1.5,
+    height: 3, backgroundColor: '#7c3aed', borderRadius: 1.5,
   },
 
   // Study banner
