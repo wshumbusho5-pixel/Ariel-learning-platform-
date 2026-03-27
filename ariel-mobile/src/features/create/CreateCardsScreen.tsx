@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,203 +18,16 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import apiClient from '@/shared/api/client';
 import { CARDS } from '@/shared/api/endpoints';
-import { SUBJECT_META } from '@/shared/constants/subjects';
+import { SubjectPicker } from '@/features/create/components/SubjectPicker';
+import { CardEditor } from '@/features/create/components/CardEditor';
+import type { CardDraft } from '@/features/create/components/CardEditor';
 
 type Mode = 'manual' | 'ai';
 
-interface CardDraft {
-  id: string;
-  question: string;
-  answer: string;
-  explanation: string;
-}
-
-// ─── Subject picker ───────────────────────────────────────────────────────────
-
-const SUBJECT_LIST = Object.entries(SUBJECT_META).map(([key, meta]) => ({
-  key,
-  label: meta.label,
-  icon: meta.icon,
-}));
-
-function SubjectPicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const selected = SUBJECT_LIST.find((s) => s.key === value);
-
-  return (
-    <View>
-      <TouchableOpacity
-        style={sp.trigger}
-        onPress={() => setOpen((o) => !o)}
-        activeOpacity={0.7}
-      >
-        <Text style={sp.triggerText}>
-          {selected ? `${selected.icon} ${selected.label}` : 'Select subject…'}
-        </Text>
-        <Ionicons
-          name={open ? 'chevron-up' : 'chevron-down'}
-          size={16}
-          color="#71717a"
-        />
-      </TouchableOpacity>
-
-      {open && (
-        <ScrollView style={sp.dropdown} nestedScrollEnabled>
-          <TouchableOpacity
-            style={sp.option}
-            onPress={() => { onChange(''); setOpen(false); }}
-          >
-            <Text style={sp.optionText}>None</Text>
-          </TouchableOpacity>
-          {SUBJECT_LIST.filter((s) => s.key !== 'other').map((s) => (
-            <TouchableOpacity
-              key={s.key}
-              style={[sp.option, value === s.key && sp.optionActive]}
-              onPress={() => { onChange(s.key); setOpen(false); }}
-            >
-              <Text style={sp.optionText}>
-                {s.icon} {s.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
-    </View>
-  );
-}
-
-const sp = StyleSheet.create({
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#27272a',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  triggerText: { color: '#d4d4d8', fontSize: 14 },
-  dropdown: {
-    maxHeight: 200,
-    backgroundColor: '#18181b',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#3f3f46',
-    marginTop: 4,
-  },
-  option: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  optionActive: { backgroundColor: 'rgba(139,92,246,0.12)' },
-  optionText: { color: '#d4d4d8', fontSize: 14 },
-});
-
-// ─── Single card editor ───────────────────────────────────────────────────────
-
-function CardEditor({
-  card,
-  index,
-  onUpdate,
-  onRemove,
-  canRemove,
-}: {
-  card: CardDraft;
-  index: number;
-  onUpdate: (id: string, field: keyof CardDraft, value: string) => void;
-  onRemove: (id: string) => void;
-  canRemove: boolean;
-}) {
-  return (
-    <View style={ce.container}>
-      <View style={ce.header}>
-        <Text style={ce.num}>Card {index + 1}</Text>
-        {canRemove && (
-          <TouchableOpacity onPress={() => onRemove(card.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="trash-outline" size={17} color="#52525b" />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <Text style={ce.label}>Question *</Text>
-      <TextInput
-        style={ce.input}
-        value={card.question}
-        onChangeText={(v) => onUpdate(card.id, 'question', v)}
-        placeholder="e.g. What is the powerhouse of the cell?"
-        placeholderTextColor="#52525b"
-        multiline
-        maxLength={500}
-      />
-
-      <Text style={[ce.label, { marginTop: 10 }]}>Answer *</Text>
-      <TextInput
-        style={ce.input}
-        value={card.answer}
-        onChangeText={(v) => onUpdate(card.id, 'answer', v)}
-        placeholder="e.g. The mitochondria"
-        placeholderTextColor="#52525b"
-        multiline
-        maxLength={500}
-      />
-
-      <Text style={[ce.label, { marginTop: 10 }]}>
-        Explanation <Text style={ce.optional}>(optional)</Text>
-      </Text>
-      <TextInput
-        style={[ce.input, { minHeight: 60 }]}
-        value={card.explanation}
-        onChangeText={(v) => onUpdate(card.id, 'explanation', v)}
-        placeholder="Add a hint or deeper context…"
-        placeholderTextColor="#52525b"
-        multiline
-        maxLength={1000}
-      />
-    </View>
-  );
-}
-
-const ce = StyleSheet.create({
-  container: {
-    backgroundColor: '#18181b',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#3f3f46',
-    marginBottom: 12,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  num: { color: '#71717a', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 },
-  label: { color: '#a1a1aa', fontSize: 12, fontWeight: '600', marginBottom: 6 },
-  optional: { color: '#52525b', fontWeight: '400' },
-  input: {
-    backgroundColor: '#27272a',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    color: '#fafafa',
-    fontSize: 15,
-    lineHeight: 22,
-    minHeight: 44,
-    textAlignVertical: 'top',
-  },
-});
-
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-
 export function CreateCardsScreen() {
   const insets = useSafeAreaInsets();
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
   const [mode, setMode] = useState<Mode>('manual');
@@ -290,7 +104,7 @@ export function CreateCardsScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + (isShort ? 4 : 8) }, isShort && { paddingBottom: 8 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -312,9 +126,9 @@ export function CreateCardsScreen() {
       </View>
 
       {/* Mode switcher */}
-      <View style={styles.modeSwitcher}>
+      <View style={[styles.modeSwitcher, isShort && { margin: 10 }]}>
         <TouchableOpacity
-          style={[styles.modeBtn, mode === 'manual' && styles.modeBtnActive]}
+          style={[styles.modeBtn, mode === 'manual' && styles.modeBtnActive, isShort && { paddingVertical: 7 }]}
           onPress={() => setMode('manual')}
           activeOpacity={0.7}
         >
@@ -324,7 +138,7 @@ export function CreateCardsScreen() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.modeBtn, mode === 'ai' && styles.modeBtnActive]}
+          style={[styles.modeBtn, mode === 'ai' && styles.modeBtnActive, isShort && { paddingVertical: 7 }]}
           onPress={() => setMode('ai')}
           activeOpacity={0.7}
         >
@@ -457,7 +271,7 @@ export function CreateCardsScreen() {
           {/* Save button (also at bottom for convenience) */}
           {validCards.length > 0 && (
             <TouchableOpacity
-              style={[styles.saveBottomBtn, saving && styles.saveBottomBtnDisabled]}
+              style={[styles.saveBottomBtn, saving && styles.saveBottomBtnDisabled, isShort && { paddingVertical: 12 }]}
               onPress={handleSave}
               disabled={saving}
               activeOpacity={0.85}
@@ -537,7 +351,6 @@ const styles = StyleSheet.create({
   },
   proBadgeText: { color: '#fbbf24', fontSize: 9, fontWeight: '800' },
 
-  // AI placeholder
   aiPlaceholder: {
     flex: 1,
     alignItems: 'center',

@@ -10,6 +10,8 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
+    "@expo-google-fonts/cormorant-garamond": "^0.4.1",
+    "@expo-google-fonts/kalam": "^0.4.1",
     "@expo/vector-icons": "^14.0.2",
     "@gorhom/bottom-sheet": "^4.6.4",
     "@react-native-async-storage/async-storage": "1.23.1",
@@ -20,14 +22,19 @@
     "axios": "^1.7.9",
     "expo": "^52.0.0",
     "expo-asset": "~11.0.5",
+    "expo-auth-session": "~6.0.3",
     "expo-av": "^15.0.1",
     "expo-camera": "^16.0.6",
+    "expo-crypto": "~14.0.2",
+    "expo-font": "~13.0.4",
     "expo-haptics": "^14.0.0",
+    "expo-image": "~2.0.7",
     "expo-image-picker": "^16.0.3",
     "expo-linear-gradient": "~14.0.2",
     "expo-notifications": "^0.29.9",
     "expo-secure-store": "^14.0.0",
     "expo-status-bar": "~2.0.0",
+    "expo-web-browser": "~14.0.2",
     "moti": "^0.30.0",
     "nativewind": "^4.1.23",
     "react": "18.3.1",
@@ -43,8 +50,8 @@
     "@babel/core": "^7.25.2",
     "@types/react": "~18.3.12",
     "@types/react-native": "^0.73.0",
-    "typescript": "^5.3.3",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.3.3"
   },
   "private": true
 }

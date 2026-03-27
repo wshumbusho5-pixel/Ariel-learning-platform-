@@ -9,8 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
-  Alert,
+  useWindowDimensions,
 } from 'react-native';
+import { useToast } from '@/shared/components/ToastProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -35,12 +36,15 @@ type LiveViewerRouteProp = RouteProp<LiveStackParamList, 'LiveViewer'>;
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function LiveViewerScreen(): React.ReactElement {
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<LiveViewerNavProp>();
   const route = useRoute<LiveViewerRouteProp>();
   const { streamId } = route.params;
 
   const [chatInput, setChatInput] = useState('');
+  const toast = useToast();
 
   const { data: stream } = useQuery({
     queryKey: QUERY_KEYS.LIVE.detail(streamId),
@@ -48,10 +52,9 @@ export function LiveViewerScreen(): React.ReactElement {
   });
 
   const handleStreamEnded = useCallback(() => {
-    Alert.alert('Stream Ended', 'This stream has ended.', [
-      { text: 'OK', onPress: () => navigation.goBack() },
-    ]);
-  }, [navigation]);
+    toast.show('This stream has ended.', 'info');
+    navigation.goBack();
+  }, [navigation, toast]);
 
   const { messages, viewerCount, reactions, sendChat, isConnected } = useLiveSocket({
     streamId,
@@ -83,11 +86,11 @@ export function LiveViewerScreen(): React.ReactElement {
       {/* Full-screen stream placeholder */}
       <View style={[styles.streamPlaceholder, { backgroundColor: `${subjectMeta.color}18` }]}>
         {/* Centered host info */}
-        <View style={styles.streamCenter}>
-          <Text style={styles.subjectIcon}>{subjectMeta.icon}</Text>
+        <View style={[styles.streamCenter, isShort && { gap: 4 }]}>
+          <Text style={[styles.subjectIcon, isShort && { fontSize: 44, marginBottom: 4 }]}>{subjectMeta.icon}</Text>
           {stream && (
             <>
-              <Text style={styles.streamHostName}>
+              <Text style={[styles.streamHostName, isShort && { fontSize: TYPOGRAPHY.fontSize.xl }]}>
                 {stream.streamer_username}
               </Text>
               <Text style={styles.streamSubjectLabel}>
@@ -105,7 +108,7 @@ export function LiveViewerScreen(): React.ReactElement {
       </View>
 
       {/* Top bar overlay */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.topBar, { paddingTop: insets.top + (isShort ? 4 : 8) }]}>
         {/* LIVE badge */}
         <View style={styles.livePill}>
           <View style={styles.liveDot} />
@@ -136,7 +139,7 @@ export function LiveViewerScreen(): React.ReactElement {
       </View>
 
       {/* Floating action buttons (right side) */}
-      <View style={styles.floatingActions}>
+      <View style={[styles.floatingActions, isShort && { gap: SPACING.sm }]}>
         <TouchableOpacity
           style={styles.fabButton}
           onPress={() => sendChat('❤️')}
@@ -161,12 +164,12 @@ export function LiveViewerScreen(): React.ReactElement {
       <LiveReactionBar reactions={reactions} />
 
       {/* Bottom chat area (40% of screen) */}
-      <View style={[styles.chatArea, { paddingBottom: insets.bottom }]}>
+      <View style={[styles.chatArea, { paddingBottom: insets.bottom }, isShort && { height: '48%' }]}>
         {/* Messages */}
         <LiveChat messages={messages} />
 
         {/* Chat input bar */}
-        <View style={styles.inputBar}>
+        <View style={[styles.inputBar, isShort && { paddingVertical: 6 }]}>
           <TextInput
             style={styles.chatInput}
             value={chatInput}

@@ -29,9 +29,9 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const ACTIVE_TINT = '#7c3aed';
-const INACTIVE_TINT = '#71717a';
-const TAB_BG = '#09090b';
+const ACTIVE_TINT = '#e7e9ea';
+const INACTIVE_TINT = '#536471';
+const TAB_BG = '#000000';
 
 export function MainTabNavigator(): React.ReactElement {
   return (
@@ -40,8 +40,8 @@ export function MainTabNavigator(): React.ReactElement {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: TAB_BG,
-          borderTopColor: '#1c1c1e',
-          borderTopWidth: 1,
+          borderTopColor: '#2f3336',
+          borderTopWidth: 0.5,
           paddingBottom: 6,
           paddingTop: 6,
           height: 64,

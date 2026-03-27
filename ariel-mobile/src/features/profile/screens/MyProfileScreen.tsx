@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ScrollView,
   FlatList,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -20,7 +21,7 @@ import { QUERY_KEYS } from '@/shared/constants/queryKeys';
 import { ProfileHeader } from '@/features/profile/components/ProfileHeader';
 import { UserDeckGrid } from '@/features/profile/components/UserDeckGrid';
 import { ProfileClipsGrid } from '@/features/profile/components/ProfileClipsGrid';
-import { getMyDecks } from '@/features/profile/api/profileApi';
+import { getMyDecks, getUserProfile } from '@/features/profile/api/profileApi';
 import type { ProfileStackParamList } from '@/features/profile/ProfileNavigator';
 
 type Nav = NativeStackNavigationProp<ProfileStackParamList>;
@@ -28,7 +29,15 @@ type Tab = 'grid' | 'clips' | 'saved' | 'stats';
 
 // ─── Icon tab bar ──────────────────────────────────────────────────────────────
 
-function IconTabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
+function IconTabBar({
+  active,
+  onChange,
+  isShort,
+}: {
+  active: Tab;
+  onChange: (t: Tab) => void;
+  isShort: boolean;
+}) {
   const tabs: { key: Tab; icon: string; iconActive: string }[] = [
     { key: 'grid',  icon: 'grid-outline',       iconActive: 'grid' },
     { key: 'clips', icon: 'videocam-outline',   iconActive: 'videocam' },
@@ -37,17 +46,17 @@ function IconTabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => v
   ];
 
   return (
-    <View style={ts.bar}>
+    <View style={[ts.bar, isShort && ts.barShort]}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.key}
-          style={[ts.tab, active === tab.key && ts.tabActive]}
+          style={[ts.tab, isShort && ts.tabShort, active === tab.key && ts.tabActive]}
           onPress={() => onChange(tab.key)}
           activeOpacity={0.7}
         >
           <Ionicons
             name={(active === tab.key ? tab.iconActive : tab.icon) as any}
-            size={24}
+            size={isShort ? 20 : 24}
             color={active === tab.key ? '#fafafa' : '#71717a'}
           />
         </TouchableOpacity>
@@ -65,10 +74,16 @@ const ts = StyleSheet.create({
     borderBottomColor: '#262626',
     marginTop: 8,
   },
+  barShort: {
+    marginTop: 4,
+  },
   tab: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
+  },
+  tabShort: {
+    paddingVertical: 7,
   },
   tabActive: {
     borderBottomWidth: 1,
@@ -79,23 +94,33 @@ const ts = StyleSheet.create({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function MyProfileScreen() {
+  const { width: W, height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('grid');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data: decks = [], isLoading: decksLoading, refetch } = useQuery({
+  const { data: decks = [], isLoading: decksLoading, refetch: refetchDecks } = useQuery({
     queryKey: QUERY_KEYS.PROFILE.me(),
     queryFn: getMyDecks,
     enabled: Boolean(user),
   });
 
+  // Fetch live profile data so follow counts stay up-to-date (auth store is stale after login)
+  const { data: liveProfile, refetch: refetchProfile } = useQuery({
+    queryKey: QUERY_KEYS.PROFILE.user(user?.id ?? ''),
+    queryFn: () => getUserProfile(user!.id!),
+    enabled: Boolean(user?.id),
+    staleTime: 30_000,
+  });
+
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
-    await refetch();
+    await Promise.all([refetchDecks(), refetchProfile()]);
     setIsRefreshing(false);
-  }, [refetch]);
+  }, [refetchDecks, refetchProfile]);
 
   if (!user) {
     return (
@@ -118,8 +143,8 @@ export function MyProfileScreen() {
         school={(user as any).school}
         profilePicture={user.profile_picture}
         cardsCount={decks.length}
-        followersCount={user.followers_count ?? 0}
-        followingCount={user.following_count ?? 0}
+        followersCount={liveProfile?.followers_count ?? user.followers_count ?? 0}
+        followingCount={liveProfile?.following_count ?? user.following_count ?? 0}
         streak={user.current_streak ?? 0}
         level={user.level ?? 1}
         isPremium={isPremium}
@@ -132,7 +157,7 @@ export function MyProfileScreen() {
           navigation.navigate('Following', { userId: user.id ?? '' })
         }
       />
-      <IconTabBar active={activeTab} onChange={setActiveTab} />
+      <IconTabBar active={activeTab} onChange={setActiveTab} isShort={isShort} />
     </>
   );
 
@@ -140,7 +165,7 @@ export function MyProfileScreen() {
   if (activeTab === 'grid') {
     return (
       <View style={[s.screen, { paddingTop: insets.top }]}>
-        <TopBar handle={handle} onSettings={() => navigation.navigate('Settings')} />
+        <TopBar handle={handle} onSettings={() => navigation.navigate('Settings')} isShort={isShort} />
         <UserDeckGrid decks={decks} isLoading={decksLoading} ListHeaderComponent={header} />
       </View>
     );
@@ -150,7 +175,7 @@ export function MyProfileScreen() {
   if (activeTab === 'clips') {
     return (
       <View style={[s.screen, { paddingTop: insets.top }]}>
-        <TopBar handle={handle} onSettings={() => navigation.navigate('Settings')} />
+        <TopBar handle={handle} onSettings={() => navigation.navigate('Settings')} isShort={isShort} />
         <ProfileClipsGrid ListHeaderComponent={header} />
       </View>
     );
@@ -159,7 +184,7 @@ export function MyProfileScreen() {
   // Other tabs: scrollable
   return (
     <View style={[s.screen, { paddingTop: insets.top }]}>
-      <TopBar handle={handle} onSettings={() => navigation.navigate('Settings')} />
+      <TopBar handle={handle} onSettings={() => navigation.navigate('Settings')} isShort={isShort} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -172,7 +197,7 @@ export function MyProfileScreen() {
       >
         {header}
         {activeTab === 'saved' && (
-          <View style={s.placeholder}>
+          <View style={[s.placeholder, isShort && s.placeholderShort]}>
             <Text style={s.placeholderIcon}>🔖</Text>
             <Text style={s.placeholderTitle}>Saved cards</Text>
             <Text style={s.placeholderSub}>Cards you save will appear here.</Text>
@@ -180,7 +205,7 @@ export function MyProfileScreen() {
         )}
         {activeTab === 'stats' && (
           <TouchableOpacity
-            style={s.placeholder}
+            style={[s.placeholder, isShort && s.placeholderShort]}
             onPress={() => navigation.navigate('Stats')}
             activeOpacity={0.7}
           >
@@ -196,14 +221,22 @@ export function MyProfileScreen() {
 
 // ─── Top bar ──────────────────────────────────────────────────────────────────
 
-function TopBar({ handle, onSettings }: { handle: string; onSettings: () => void }) {
+function TopBar({
+  handle,
+  onSettings,
+  isShort,
+}: {
+  handle: string;
+  onSettings: () => void;
+  isShort: boolean;
+}) {
   return (
-    <View style={s.topBar}>
+    <View style={[s.topBar, isShort && s.topBarShort]}>
       <View style={{ width: 40 }} />
-      <Text style={s.topBarHandle}>@{handle}</Text>
+      <Text style={[s.topBarHandle, isShort && s.topBarHandleShort]}>@{handle}</Text>
       <View style={s.topBarRight}>
         <TouchableOpacity onPress={onSettings} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="menu-outline" size={26} color="#fafafa" />
+          <Ionicons name="menu-outline" size={isShort ? 22 : 26} color="#fafafa" />
         </TouchableOpacity>
       </View>
     </View>
@@ -232,11 +265,17 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
+  topBarShort: {
+    paddingVertical: 6,
+  },
   topBarHandle: {
     color: '#fafafa',
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: -0.3,
+  },
+  topBarHandleShort: {
+    fontSize: 15,
   },
   topBarRight: {
     flexDirection: 'row',
@@ -251,6 +290,10 @@ const s = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 60,
     gap: 10,
+  },
+  placeholderShort: {
+    paddingVertical: 32,
+    gap: 6,
   },
   placeholderIcon: { fontSize: 44 },
   placeholderTitle: { color: '#fafafa', fontSize: 16, fontWeight: '700' },

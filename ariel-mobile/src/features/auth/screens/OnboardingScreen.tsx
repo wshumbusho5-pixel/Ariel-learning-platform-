@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   StyleSheet,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -34,6 +35,8 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const insets = useSafeAreaInsets();
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
 
   const updateUser = useAuthStore((s) => s.updateUser);
 
@@ -76,7 +79,7 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
       </View>
 
       {/* Header row: wordmark + step counter */}
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, { paddingVertical: isShort ? 10 : 16 }]}>
         <ArielWordmark size={22} />
         <Text style={styles.stepCounter}>Step {step} of {TOTAL_STEPS}</Text>
       </View>
@@ -86,11 +89,13 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
         <EducationStep
           selected={educationLevel}
           onSelect={setEducationLevel}
+          isShort={isShort}
         />
       ) : (
         <SubjectStep
           selected={selectedSubjects}
           onToggle={toggleSubject}
+          isShort={isShort}
         />
       )}
 
@@ -98,7 +103,7 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
       <View
         style={[
           styles.footer,
-          { paddingBottom: Math.max(insets.bottom, 20) + 8 },
+          { paddingBottom: Math.max(insets.bottom, 20) + 8, paddingTop: isShort ? 10 : 16 },
         ]}
       >
         <View style={styles.footerInner}>
@@ -156,17 +161,19 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
 function EducationStep({
   selected,
   onSelect,
+  isShort,
 }: {
   selected: EducationLevel | null;
   onSelect: (v: EducationLevel) => void;
+  isShort: boolean;
 }) {
   return (
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>Where are you learning?</Text>
+    <View style={[styles.stepContent, { paddingTop: isShort ? 14 : 28 }]}>
+      <Text style={[styles.stepTitle, { fontSize: isShort ? 18 : 22 }]}>Where are you learning?</Text>
       <Text style={styles.stepSubtitle}>We'll tune your experience to fit.</Text>
 
       {/* 2×2 grid */}
-      <View style={styles.educationGrid}>
+      <View style={[styles.educationGrid, { marginTop: isShort ? 12 : 24 }]}>
         {EDUCATION_OPTIONS.map((opt) => {
           const active = selected === opt.value;
           return (
@@ -175,11 +182,12 @@ function EducationStep({
               style={[
                 styles.educationCard,
                 active ? styles.educationCardActive : styles.educationCardInactive,
+                { aspectRatio: isShort ? 1.5 : 1.2, padding: isShort ? 12 : 20 },
               ]}
               onPress={() => onSelect(opt.value)}
               activeOpacity={0.8}
             >
-              <Text style={styles.educationEmoji}>{opt.emoji}</Text>
+              <Text style={[styles.educationEmoji, { fontSize: isShort ? 22 : 28 }]}>{opt.emoji}</Text>
               <Text
                 style={[
                   styles.educationLabel,
@@ -201,14 +209,16 @@ function EducationStep({
 function SubjectStep({
   selected,
   onToggle,
+  isShort,
 }: {
   selected: string[];
   onToggle: (key: string) => void;
+  isShort?: boolean;
 }) {
   return (
     <>
-      <View style={styles.stepContent}>
-        <Text style={styles.stepTitle}>What do you want to learn?</Text>
+      <View style={[styles.stepContent, { paddingTop: isShort ? 14 : 28 }]}>
+        <Text style={[styles.stepTitle, { fontSize: isShort ? 18 : 22 }]}>What do you want to learn?</Text>
         <Text style={styles.stepSubtitle}>Choose at least one. You can change this later.</Text>
       </View>
 
@@ -228,6 +238,7 @@ function SubjectStep({
               style={[
                 styles.subjectCard,
                 active ? styles.subjectCardActive : styles.subjectCardInactive,
+                { padding: isShort ? 10 : 14 },
               ]}
             >
               <Text style={styles.subjectEmoji}>{meta.icon}</Text>
@@ -267,13 +278,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#7c3aed',
   },
 
-  // Header
+  // Header — paddingVertical applied inline (isShort-aware)
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#1a1a1a',
   },
@@ -283,38 +293,34 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Step content
+  // Step content — paddingTop applied inline (isShort-aware)
   stepContent: {
     paddingHorizontal: 24,
-    paddingTop: 28,
     paddingBottom: 8,
   },
+  // stepTitle fontSize applied inline (isShort-aware)
   stepTitle: {
-    fontSize: 22,
     fontWeight: '700',
     color: '#fafafa',
     letterSpacing: -0.3,
   },
   stepSubtitle: {
     color: '#71717a',
-    fontSize: 14,
+    fontSize: 13,
     marginTop: 6,
     lineHeight: 20,
   },
 
-  // Education 2×2 grid
+  // Education 2×2 grid — marginTop/aspectRatio/padding applied inline (isShort-aware)
   educationGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginTop: 24,
   },
   educationCard: {
     width: '47%',
-    aspectRatio: 1.2,
     borderRadius: 16,
     borderWidth: 2,
-    padding: 20,
     justifyContent: 'flex-end',
   },
   educationCardActive: {
@@ -325,12 +331,12 @@ const styles = StyleSheet.create({
     borderColor: '#27272a',
     backgroundColor: 'transparent',
   },
+  // educationEmoji fontSize applied inline (isShort-aware)
   educationEmoji: {
-    fontSize: 28,
     marginBottom: 10,
   },
   educationLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#a1a1aa',
   },
@@ -347,11 +353,11 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 10,
   },
+  // subjectCard padding applied inline (isShort-aware)
   subjectCard: {
     width: '30%',
     borderRadius: 16,
     borderWidth: 2,
-    padding: 14,
     alignItems: 'center',
     gap: 8,
   },
@@ -378,12 +384,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Footer
+  // Footer — paddingTop applied inline (isShort-aware)
   footer: {
     borderTopWidth: 1,
     borderTopColor: '#1a1a1a',
     paddingHorizontal: 24,
-    paddingTop: 16,
   },
   footerInner: {
     flexDirection: 'row',
@@ -392,7 +397,7 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     paddingHorizontal: 24,
-    paddingVertical: 14,
+    paddingVertical: 11,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: '#3f3f46',
@@ -409,7 +414,7 @@ const styles = StyleSheet.create({
   },
   continueBtn: {
     paddingHorizontal: 32,
-    paddingVertical: 14,
+    paddingVertical: 11,
     borderRadius: 999,
     backgroundColor: '#ffffff',
     minWidth: 140,

@@ -12,6 +12,8 @@ import type {
 
 // ─── Public interface ─────────────────────────────────────────────────────────
 
+export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
+
 export interface DuelScores {
   you: number;
   opponent: number;
@@ -51,6 +53,8 @@ export interface UseDuelSocketReturn {
   submitAnswer: (choice: string) => void;
   /** Whether the WS is connected */
   isConnected: boolean;
+  /** Fine-grained connection lifecycle status */
+  connectionStatus: ConnectionStatus;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -62,7 +66,7 @@ export function useDuelSocket({
   const token = useAuthStore((s) => s.token);
 
   const wsRef = useRef(
-    new BaseWebSocketManager<DuelWsMessage, DuelWsClientMessage>({ maxRetries: 3 }),
+    new BaseWebSocketManager<DuelWsMessage, DuelWsClientMessage>({ maxRetries: 5 }),
   );
 
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -77,6 +81,7 @@ export function useDuelSocket({
   const [opponentUsername, setOpponentUsername] = useState<string | null>(null);
   const [yourUsername, setYourUsername] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
 
   // ── Countdown helpers ──────────────────────────────────────────────────────
 
@@ -104,6 +109,31 @@ export function useDuelSocket({
     [clearCountdown],
   );
 
+  // ── Wire lifecycle callbacks before first connect ──────────────────────────
+
+  useEffect(() => {
+    const ws = wsRef.current;
+
+    ws.lifecycleCallbacks = {
+      onOpen: () => {
+        setIsConnected(true);
+        setConnectionStatus('connected');
+      },
+      onReconnecting: () => {
+        setIsConnected(false);
+        setConnectionStatus('reconnecting');
+      },
+      onGiveUp: () => {
+        setIsConnected(false);
+        setConnectionStatus('disconnected');
+      },
+      onDisconnected: () => {
+        setIsConnected(false);
+        setConnectionStatus('disconnected');
+      },
+    };
+  }, []);
+
   // ── Message handler ────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -113,6 +143,7 @@ export function useDuelSocket({
       switch (msg.type) {
         case 'connected': {
           setIsConnected(true);
+          setConnectionStatus('connected');
           setYourUsername(msg.your_username);
           if (msg.opponent_username) {
             setOpponentUsername(msg.opponent_username);
@@ -190,6 +221,7 @@ export function useDuelSocket({
 
   useEffect(() => {
     const ws = wsRef.current;
+    setConnectionStatus('connecting');
     ws.connect(DUELS.WS(roomId), token ?? undefined);
 
     return () => {
@@ -222,5 +254,6 @@ export function useDuelSocket({
     yourUsername,
     submitAnswer,
     isConnected,
+    connectionStatus,
   };
 }

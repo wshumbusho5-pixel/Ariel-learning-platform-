@@ -4,19 +4,19 @@
  */
 
 export const COLORS = {
-  // Base backgrounds
-  background: '#09090b',
-  surface: '#18181b',
-  surface2: '#27272a',
+  // Base backgrounds — pure black like Twitter/X dark mode
+  background: '#000000',
+  surface: '#16181c',
+  surface2: '#1d1f23',
 
-  // Borders
-  border: '#3f3f46',
-  borderSubtle: '#27272a',
+  // Borders — Twitter separator weight
+  border: '#2f3336',
+  borderSubtle: '#2f3336',
 
-  // Text
-  textPrimary: '#fafafa',
-  textSecondary: '#a1a1aa',
-  textMuted: '#71717a',
+  // Text — Twitter/X palette
+  textPrimary: '#e7e9ea',
+  textSecondary: '#71767b',
+  textMuted: '#536471',
 
   // Violet accent (primary brand color)
   violet: {

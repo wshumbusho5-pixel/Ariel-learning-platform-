@@ -5,9 +5,9 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Image,
   Share,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -129,6 +129,8 @@ export function ProfileHeader({
             <Image
               source={{ uri: profilePicture! }}
               style={s.avatar}
+              contentFit="cover"
+              cachePolicy="memory-disk"
               onError={() => setImgErr(true)}
             />
           ) : (

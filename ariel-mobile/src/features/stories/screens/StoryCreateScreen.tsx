@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -56,6 +57,8 @@ const SAMPLE_ACHIEVEMENTS: MockAchievement[] = [
 ];
 
 export function StoryCreateScreen(): React.ReactElement {
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const navigation = useNavigation<NavProp>();
 
   const [mode, setMode] = useState<StoryMode>('text');
@@ -100,9 +103,9 @@ export function StoryCreateScreen(): React.ReactElement {
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, isShort && { paddingVertical: SPACING.sm }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
-          <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+          <Ionicons name="close" size={isShort ? 20 : 24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>New Story</Text>
         <TouchableOpacity
@@ -119,7 +122,7 @@ export function StoryCreateScreen(): React.ReactElement {
       </View>
 
       {/* Mode selector */}
-      <View style={styles.modeRow}>
+      <View style={[styles.modeRow, isShort && { marginVertical: SPACING.sm }]}>
         <TouchableOpacity
           style={[styles.modeTab, mode === 'text' && styles.modeTabActive]}
           onPress={() => setMode('text')}
@@ -140,7 +143,7 @@ export function StoryCreateScreen(): React.ReactElement {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, isShort && { paddingBottom: SPACING['2xl'] }]}
         keyboardShouldPersistTaps="handled"
       >
         {mode === 'text' ? (
@@ -148,7 +151,7 @@ export function StoryCreateScreen(): React.ReactElement {
             {/* Preview card */}
             <LinearGradient
               colors={selectedGradient.colors}
-              style={styles.preview}
+              style={[styles.preview, isShort && { height: 160, padding: SPACING.lg, marginBottom: SPACING.md }]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
@@ -159,7 +162,7 @@ export function StoryCreateScreen(): React.ReactElement {
 
             {/* Text input */}
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, isShort && { minHeight: 72, marginBottom: SPACING.md }]}
               placeholder="What's on your mind?"
               placeholderTextColor={COLORS.textMuted}
               value={textContent}
@@ -200,7 +203,7 @@ export function StoryCreateScreen(): React.ReactElement {
                 <TouchableOpacity
                   key={ach.id}
                   onPress={() => setSelectedAchievement(isSelected ? null : ach)}
-                  style={[styles.achievementRow, isSelected && styles.achievementRowSelected]}
+                  style={[styles.achievementRow, isSelected && styles.achievementRowSelected, isShort && { padding: SPACING.md, marginBottom: SPACING.sm }]}
                 >
                   <Text style={styles.achievementEmoji}>{ach.icon}</Text>
                   <View style={styles.achievementInfo}>

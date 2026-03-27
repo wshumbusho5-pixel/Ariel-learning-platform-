@@ -10,6 +10,7 @@ import {
   Animated,
   ListRenderItemInfo,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -41,7 +42,7 @@ const TABS: { key: FeedTab; label: string }[] = [
 
 // ─── Study banner ─────────────────────────────────────────────────────────────
 
-function StudyBanner() {
+function StudyBanner({ isShort }: { isShort: boolean }) {
   const navigation = useNavigation<FeedNavProp>();
 
   const { data: dueCards } = useQuery({
@@ -57,17 +58,17 @@ function StudyBanner() {
   if (count === 0) return null;
 
   return (
-    <View style={ss.studyBanner}>
+    <View style={[ss.studyBanner, isShort && { marginVertical: 6, paddingVertical: 8 }]}>
       <View style={ss.studyBannerLeft}>
-        <View style={ss.studyIconCircle}>
-          <Ionicons name="time-outline" size={18} color="#8b5cf6" />
+        <View style={[ss.studyIconCircle, isShort && { width: 30, height: 30, borderRadius: 15 }]}>
+          <Ionicons name="time-outline" size={isShort ? 14 : 18} color="#8b5cf6" />
         </View>
         <View>
           <Text style={ss.studyBannerTitle}>{count} cards due for review</Text>
           <Text style={ss.studyBannerSub}>Keep your streak going</Text>
         </View>
       </View>
-      <TouchableOpacity style={ss.studyBtn} activeOpacity={0.85}
+      <TouchableOpacity style={[ss.studyBtn, isShort && { paddingHorizontal: 14, paddingVertical: 6 }]} activeOpacity={0.85}
         onPress={() => (navigation as any).navigate('Main', { screen: 'Deck' })}>
         <Text style={ss.studyBtnText}>Study</Text>
       </TouchableOpacity>
@@ -101,15 +102,18 @@ function QuickCardsRow({ cards }: { cards: FeedCardType[] }) {
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 
-function FeedTopBar() {
+function FeedTopBar({ isShort }: { isShort: boolean }) {
   const user = useAuthStore((s) => s.user);
   const navigation = useNavigation<FeedNavProp>();
   const [imgErr, setImgErr] = useState(false);
   const hasAvatar = !!user?.profile_picture && !imgErr;
   const displayName = user?.username ?? user?.full_name ?? 'You';
 
+  const avatarSize = isShort ? 38 : 48;
+  const avatarRadius = avatarSize / 2;
+
   return (
-    <View style={ss.topBar}>
+    <View style={[ss.topBar, isShort && { paddingTop: 6, paddingBottom: 8 }]}>
       {/* Left: avatar + username */}
       <View style={ss.topBarLeft}>
         <TouchableOpacity
@@ -119,35 +123,35 @@ function FeedTopBar() {
           {hasAvatar ? (
             <Image
               source={{ uri: user!.profile_picture! }}
-              style={ss.topBarAvatar}
+              style={[ss.topBarAvatar, { width: avatarSize, height: avatarSize, borderRadius: avatarRadius }]}
               onError={() => setImgErr(true)}
             />
           ) : (
-            <View style={[ss.topBarAvatar, ss.topBarAvatarFallback]}>
-              <Text style={ss.topBarAvatarText}>
+            <View style={[ss.topBarAvatar, ss.topBarAvatarFallback, { width: avatarSize, height: avatarSize, borderRadius: avatarRadius }]}>
+              <Text style={[ss.topBarAvatarText, isShort && { fontSize: 15 }]}>
                 {displayName.charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
         </TouchableOpacity>
-        <Text style={ss.topBarUsername}>{displayName}</Text>
+        <Text style={[ss.topBarUsername, isShort && { fontSize: 19 }]}>{displayName}</Text>
       </View>
 
       {/* Right: ariel wordmark + icons */}
       <View style={ss.topBarRight}>
-        <ArielWordmark size={22} />
+        <ArielWordmark size={isShort ? 18 : 22} />
         <View style={ss.topBarIcons}>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Discover')}>
-            <Ionicons name="search" size={23} color="#e7e9ea" />
+            <Ionicons name="search" size={isShort ? 20 : 23} color="#e7e9ea" />
           </TouchableOpacity>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Messages')}>
-            <Ionicons name="chatbubble" size={22} color="#e7e9ea" />
+            <Ionicons name="chatbubble" size={isShort ? 19 : 22} color="#e7e9ea" />
           </TouchableOpacity>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Notifications')}>
-            <Ionicons name="notifications" size={23} color="#e7e9ea" />
+            <Ionicons name="notifications" size={isShort ? 20 : 23} color="#e7e9ea" />
           </TouchableOpacity>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="ellipsis-horizontal" size={22} color="#e7e9ea" />
+            <Ionicons name="ellipsis-horizontal" size={isShort ? 19 : 22} color="#e7e9ea" />
           </TouchableOpacity>
         </View>
       </View>
@@ -160,9 +164,11 @@ function FeedTopBar() {
 function TabBar({
   active,
   onChange,
+  isShort = false,
 }: {
   active: FeedTab;
   onChange: (tab: FeedTab) => void;
+  isShort?: boolean;
 }) {
   return (
     <View style={ss.tabBar}>
@@ -171,11 +177,11 @@ function TabBar({
         return (
           <TouchableOpacity
             key={tab.key}
-            style={ss.tabItem}
+            style={[ss.tabItem, isShort && { paddingVertical: 8 }]}
             onPress={() => onChange(tab.key)}
             activeOpacity={0.7}
           >
-            <Text style={[ss.tabLabel, isActive && ss.tabLabelActive]}>
+            <Text style={[ss.tabLabel, isActive && ss.tabLabelActive, isShort && { fontSize: 13 }]}>
               {tab.label}
             </Text>
             {isActive && <View style={ss.tabUnderline} />}
@@ -223,6 +229,8 @@ function SkeletonCard() {
 
 export function FeedScreen() {
   const insets = useSafeAreaInsets();
+  const { width: W, height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const navigation = useNavigation<FeedNavProp>();
   const [activeTab, setActiveTab] = useState<FeedTab>('forYou');
 
@@ -255,21 +263,21 @@ export function FeedScreen() {
     () => (
       <>
         <StoriesRow />
-        <TabBar active={activeTab} onChange={handleTabChange} />
-        <StudyBanner />
+        <TabBar active={activeTab} onChange={handleTabChange} isShort={isShort} />
+        <StudyBanner isShort={isShort} />
         <QuickCardsRow cards={cards} />
       </>
     ),
-    [activeTab, cards, handleTabChange],
+    [activeTab, cards, handleTabChange, isShort],
   );
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      <FeedTopBar />
+      <FeedTopBar isShort={isShort} />
 
       {isLoading ? (
         <>
-          <TabBar active={activeTab} onChange={handleTabChange} />
+          <TabBar active={activeTab} onChange={handleTabChange} isShort={isShort} />
           {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
         </>
       ) : (
@@ -310,19 +318,19 @@ export function FeedScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#09090b' },
+  screen: { flex: 1, backgroundColor: '#000000' },
   skeletonContainer: {
     paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#27272a',
+    borderBottomWidth: 0.5, borderBottomColor: '#2f3336',
   },
   skeletonAuthorRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
-  skeletonAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#27272a' },
-  skeletonLine: { backgroundColor: '#27272a', borderRadius: 4 },
-  skeletonCard: { backgroundColor: '#18181b', borderRadius: 12, padding: 14, marginBottom: 10 },
+  skeletonAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#16181c' },
+  skeletonLine: { backgroundColor: '#16181c', borderRadius: 4 },
+  skeletonCard: { backgroundColor: '#16181c', borderRadius: 12, padding: 14, marginBottom: 10 },
   emptyFlatList: { flexGrow: 1 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, gap: 12 },
-  emptyTitle: { color: '#fafafa', fontSize: 20, fontWeight: '700', textAlign: 'center' },
-  emptySubtitle: { color: '#71717a', fontSize: 14, lineHeight: 22, textAlign: 'center' },
+  emptyTitle: { color: '#e7e9ea', fontSize: 20, fontWeight: '700', textAlign: 'center' },
+  emptySubtitle: { color: '#71767b', fontSize: 14, lineHeight: 22, textAlign: 'center' },
 });
 
 const ss = StyleSheet.create({
@@ -334,8 +342,8 @@ const ss = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#111',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#2f3336',
   },
   topBarLeft: {
     flexDirection: 'row',
@@ -343,10 +351,10 @@ const ss = StyleSheet.create({
     gap: 10,
   },
   topBarAvatar: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden' },
-  topBarAvatarFallback: { backgroundColor: '#7c3aed', alignItems: 'center', justifyContent: 'center' },
+  topBarAvatarFallback: { backgroundColor: '#1d9bf0', alignItems: 'center', justifyContent: 'center' },
   topBarAvatarText: { color: '#fff', fontWeight: '700', fontSize: 18 },
   topBarUsername: {
-    color: '#fafafa',
+    color: '#e7e9ea',
     fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.3,
@@ -359,7 +367,7 @@ const ss = StyleSheet.create({
   brandLogo: {
     fontFamily: 'CormorantGaramond_700Bold_Italic',
     fontStyle: 'italic',
-    color: '#fafafa',
+    color: '#e7e9ea',
     fontSize: 22,
     letterSpacing: 1,
   },
@@ -368,19 +376,19 @@ const ss = StyleSheet.create({
   // Tab bar
   tabBar: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#27272a',
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#2f3336',
   },
   tabItem: {
     flex: 1, alignItems: 'center', paddingVertical: 12,
     position: 'relative',
   },
-  tabLabel: { color: '#71717a', fontSize: 14, fontWeight: '500' },
-  tabLabelActive: { color: '#fafafa', fontWeight: '700' },
+  tabLabel: { color: '#71767b', fontSize: 14, fontWeight: '500' },
+  tabLabelActive: { color: '#e7e9ea', fontWeight: '700' },
   tabUnderline: {
     position: 'absolute',
     bottom: 0, left: 16, right: 16,
-    height: 2, backgroundColor: '#7c3aed', borderRadius: 1,
+    height: 3, backgroundColor: '#1d9bf0', borderRadius: 1.5,
   },
 
   // Study banner
@@ -390,12 +398,12 @@ const ss = StyleSheet.create({
     justifyContent: 'space-between',
     marginHorizontal: 16,
     marginVertical: 10,
-    backgroundColor: '#18181b',
+    backgroundColor: '#16181c',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#3f3f46',
+    borderWidth: 0.5,
+    borderColor: '#2f3336',
   },
   studyBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   studyIconCircle: {
@@ -403,8 +411,8 @@ const ss = StyleSheet.create({
     backgroundColor: 'rgba(124,58,237,0.15)',
     alignItems: 'center', justifyContent: 'center',
   },
-  studyBannerTitle: { color: '#fafafa', fontSize: 14, fontWeight: '600' },
-  studyBannerSub: { color: '#71717a', fontSize: 12, marginTop: 1 },
+  studyBannerTitle: { color: '#e7e9ea', fontSize: 14, fontWeight: '600' },
+  studyBannerSub: { color: '#71767b', fontSize: 12, marginTop: 1 },
   studyBtn: {
     backgroundColor: '#7c3aed',
     paddingHorizontal: 18, paddingVertical: 8,
@@ -413,19 +421,19 @@ const ss = StyleSheet.create({
   studyBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
   // Quick cards
-  quickCardsContainer: { borderBottomWidth: 1, borderBottomColor: '#18181b' },
+  quickCardsContainer: { borderBottomWidth: 0.5, borderBottomColor: '#2f3336' },
   quickCardsRow: { paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
   quickCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#18181b',
+    backgroundColor: '#16181c',
     borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 8,
     gap: 6,
-    borderWidth: 1,
-    borderColor: '#3f3f46',
+    borderWidth: 0.5,
+    borderColor: '#2f3336',
     maxWidth: 180,
   },
   quickCardDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#f59e0b', flexShrink: 0 },
-  quickCardText: { color: '#a1a1aa', fontSize: 12, flex: 1 },
+  quickCardText: { color: '#71767b', fontSize: 12, flex: 1 },
 });

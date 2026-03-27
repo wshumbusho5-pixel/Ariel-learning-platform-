@@ -5,9 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  Dimensions,
   StatusBar,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -16,11 +16,6 @@ import { ArielWordmark } from '@/shared/components/ArielWordmark';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
 
-const { width: SW, height: SH } = Dimensions.get('window');
-// 44% of screen width, exact iPhone 16e aspect ratio (390:844 = 1:2.164)
-// Screenshots fill with no crop — resizeMode contain
-const PHONE_W = SW * 0.44;
-const PHONE_H = PHONE_W * 2.164;
 
 type Tab = 'Flashcards' | 'Social Feed' | 'Clips';
 const TABS: Tab[] = ['Flashcards', 'Social Feed', 'Clips'];
@@ -35,17 +30,17 @@ const SCREEN_IMAGES: Record<Tab, ReturnType<typeof require>> = {
 
 // ─── Phone mockup with real screenshots ───────────────────────────────────────
 
-function PhoneMockup({ activeTab, fade }: { activeTab: Tab; fade: Animated.Value }) {
+function PhoneMockup({ activeTab, fade, phoneW, phoneH }: { activeTab: Tab; fade: Animated.Value; phoneW: number; phoneH: number }) {
   return (
-    <View style={s.phoneWrap}>
+    <View style={[s.phoneWrap, { width: phoneW + 12, height: phoneH + 12 }]}>
       {/* Purple glow behind */}
-      <View style={s.phoneGlow} />
+      <View style={[s.phoneGlow, { width: phoneW * 0.8, height: phoneH * 0.5 }]} />
 
       {/* Phone shell */}
-      <View style={s.phoneFrame}>
+      <View style={[s.phoneFrame, { width: phoneW, height: phoneH, borderRadius: phoneW * 0.12 }]}>
         {/* Screenshot — contain so full screen shows with no crop */}
         <Animated.Image
-          source={SCREEN_IMAGES[activeTab]}
+          source={SCREEN_IMAGES[activeTab] as any}
           style={[s.phoneScreenshot, { opacity: fade }]}
           resizeMode="contain"
         />
@@ -125,6 +120,10 @@ function AvatarStack() {
 
 export function WelcomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { width: W, height: H } = useWindowDimensions();
+  const isShort = H < 720;
+  const phoneW = W * (isShort ? 0.36 : 0.44);
+  const phoneH = phoneW * 2.164;
   const [activeTab, setActiveTab] = useState<Tab>('Flashcards');
   const fade = useRef(new Animated.Value(1)).current;
 
@@ -156,12 +155,12 @@ export function WelcomeScreen({ navigation }: Props) {
       <StatusBar barStyle="light-content" />
 
       {/* Wordmark */}
-      <View style={s.wordmarkWrap}>
-        <ArielWordmark size={42} />
+      <View style={[s.wordmarkWrap, { marginTop: isShort ? 4 : 8, marginBottom: isShort ? 4 : 8 }]}>
+        <ArielWordmark size={isShort ? 32 : 42} />
       </View>
 
       {/* Tab pills */}
-      <View style={s.tabRow}>
+      <View style={[s.tabRow, { marginBottom: isShort ? 4 : 8 }]}>
         {TABS.map(tab => (
           <TouchableOpacity
             key={tab}
@@ -175,14 +174,14 @@ export function WelcomeScreen({ navigation }: Props) {
       </View>
 
       {/* Phone mockup with real screenshots */}
-      <PhoneMockup activeTab={activeTab} fade={fade} />
+      <PhoneMockup activeTab={activeTab} fade={fade} phoneW={phoneW} phoneH={phoneH} />
 
       {/* Headline block */}
-      <View style={s.heroBlock}>
+      <View style={[s.heroBlock, { marginTop: isShort ? 4 : 10, gap: isShort ? 2 : 3 }]}>
         <Text style={s.eyebrow}>THE SOCIAL STUDY APP</Text>
         <View style={s.headlineRow}>
-          <Text style={s.headlineBold}>Go </Text>
-          <Text style={s.headlineItalic}>deeper.</Text>
+          <Text style={[s.headlineBold, { fontSize: isShort ? 20 : 24 }]}>Go </Text>
+          <Text style={[s.headlineItalic, { fontSize: isShort ? 20 : 24 }]}>deeper.</Text>
         </View>
         <Text style={s.subtitle}>
           Flashcards, a social feed, and short clips —{'\n'}the whole learning stack in one place.
@@ -193,7 +192,7 @@ export function WelcomeScreen({ navigation }: Props) {
       {/* CTAs */}
       <View style={s.ctaBlock}>
         <TouchableOpacity
-          style={s.createBtn}
+          style={[s.createBtn, { paddingVertical: isShort ? 13 : 16 }]}
           onPress={() => navigation.navigate('Register')}
           activeOpacity={0.9}
         >
@@ -223,14 +222,13 @@ const s = StyleSheet.create({
   },
 
   wordmarkWrap: {
-    marginTop: 8,
-    marginBottom: 8,
+    // marginTop/marginBottom applied inline (isShort-aware)
   },
 
   tabRow: {
     flexDirection: 'row',
     gap: 6,
-    marginBottom: 8,
+    // marginBottom applied inline (isShort-aware)
   },
   tabPill: {
     paddingHorizontal: 12,
@@ -246,25 +244,18 @@ const s = StyleSheet.create({
   tabText: { color: '#52525b', fontSize: 11, fontWeight: '500' },
   tabTextActive: { color: '#fff', fontWeight: '600' },
 
-  // Phone frame
+  // Phone frame — width/height/borderRadius applied inline (isShort-aware)
   phoneWrap: {
-    width: PHONE_W + 12,
-    height: PHONE_H + 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   phoneGlow: {
     position: 'absolute',
-    width: PHONE_W * 0.8,
-    height: PHONE_H * 0.5,
     borderRadius: 999,
     backgroundColor: 'rgba(124,92,252,0.16)',
     top: '20%',
   },
   phoneFrame: {
-    width: PHONE_W,
-    height: PHONE_H,
-    borderRadius: PHONE_W * 0.12, // scales with phone size (~47px on 390 screen)
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.18)',
     overflow: 'hidden',
@@ -280,12 +271,10 @@ const s = StyleSheet.create({
     height: '100%',
   },
 
-  // Hero block
+  // Hero block — marginTop/gap applied inline (isShort-aware)
   heroBlock: {
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginTop: 10,
-    gap: 3,
   },
   eyebrow: {
     color: '#3f3f46',
@@ -352,7 +341,7 @@ const s = StyleSheet.create({
     width: '100%',
     backgroundColor: '#fff',
     borderRadius: 999,
-    paddingVertical: 16,
+    // paddingVertical applied inline (isShort-aware)
     alignItems: 'center',
   },
   createBtnText: { color: '#000', fontSize: 14, fontWeight: '700' },

@@ -10,7 +10,9 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,12 +20,18 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/shared/auth/useAuth';
 import { COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS } from '@/shared/constants/theme';
-import { SUBJECT_META, CANONICAL_SUBJECT_KEYS } from '@/shared/constants/subjects';
+import { CANONICAL_SUBJECT_KEYS } from '@/shared/constants/subjects';
 import type { SubjectKey } from '@/shared/constants/subjects';
 import { EducationLevel } from '@/shared/types/user';
 
+import apiClient from '@/shared/api/client';
+import { AUTH } from '@/shared/api/endpoints';
 import { updateProfile } from '@/features/profile/api/profileApi';
+import { useToast } from '@/shared/components/ToastProvider';
 import type { ProfileStackParamList } from '@/features/profile/ProfileNavigator';
+
+import { SubjectPill } from '@/features/profile/components/SubjectPill';
+import { AvatarEditor } from '@/features/profile/components/AvatarEditor';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,65 +55,19 @@ const EDUCATION_OPTIONS: { label: string; value: EducationLevel }[] = [
   { label: 'Self Study', value: EducationLevel.SELF_STUDY },
 ];
 
-// ─── Subject Pill ─────────────────────────────────────────────────────────────
-
-interface SubjectPillProps {
-  subjectKey: SubjectKey;
-  selected: boolean;
-  onToggle: (key: SubjectKey) => void;
-}
-
-function SubjectPill({ subjectKey, selected, onToggle }: SubjectPillProps) {
-  const meta = SUBJECT_META[subjectKey];
-  const color = meta.color;
-
-  return (
-    <TouchableOpacity
-      style={[
-        pillStyles.pill,
-        {
-          backgroundColor: selected ? `${color}33` : COLORS.surface2,
-          borderColor: selected ? color : COLORS.border,
-        },
-      ]}
-      onPress={() => onToggle(subjectKey)}
-      activeOpacity={0.7}
-    >
-      <Text style={pillStyles.icon}>{meta.icon}</Text>
-      <Text style={[pillStyles.label, { color: selected ? color : COLORS.textSecondary }]}>
-        {meta.short}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-const pillStyles = StyleSheet.create({
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 6,
-    gap: 4,
-    margin: 3,
-  },
-  icon: {
-    fontSize: 13,
-  },
-  label: {
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold as '600',
-  },
-});
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function EditProfileScreen() {
+  const { width: W, height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const { user, updateUser } = useAuth();
   const queryClient = useQueryClient();
+
+  const toast = useToast();
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
 
   const [form, setForm] = useState<FormState>({
     full_name: user?.full_name ?? '',
@@ -136,10 +98,11 @@ export function EditProfileScreen() {
     onSuccess: (updatedUser) => {
       updateUser(updatedUser);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      toast.success('Profile saved');
       navigation.goBack();
     },
     onError: () => {
-      Alert.alert('Error', 'Failed to save profile. Please try again.');
+      toast.error('Failed to save profile. Please try again.');
     },
   });
 
@@ -157,6 +120,53 @@ export function EditProfileScreen() {
       ],
     );
   }, [isDirty, navigation]);
+
+  const pickAndUploadAvatar = useCallback(async () => {
+    if (avatarUploading) return;
+
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Please allow access to your photo library to upload a profile picture.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    // Show local image immediately for instant feedback
+    setLocalAvatarUri(asset.uri);
+
+    const formData = new FormData();
+    formData.append('file', {
+      uri: asset.uri,
+      name: asset.fileName ?? 'avatar.jpg',
+      type: asset.mimeType ?? 'image/jpeg',
+    } as any);
+
+    try {
+      setAvatarUploading(true);
+      const { data } = await apiClient.post(AUTH.PROFILE_PICTURE, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      await updateUser({ profile_picture: data.profile_picture });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      setLocalAvatarUri(null); // clear local preview, now using the real URL
+      toast.success('Profile picture updated');
+    } catch (err: any) {
+      setLocalAvatarUri(null); // revert preview on error
+      const msg = err?.response?.data?.detail ?? 'Could not upload profile picture.';
+      toast.error(msg);
+    } finally {
+      setAvatarUploading(false);
+    }
+  }, [avatarUploading, updateUser]);
 
   const toggleSubject = useCallback((key: SubjectKey) => {
     setForm((prev) => {
@@ -177,7 +187,7 @@ export function EditProfileScreen() {
     >
       <View style={[styles.screen, { paddingTop: insets.top }]}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, isShort && styles.headerShort]}>
           <TouchableOpacity
             style={styles.headerBtn}
             onPress={handleBack}
@@ -185,7 +195,7 @@ export function EditProfileScreen() {
           >
             <Text style={styles.headerBtnText}>Cancel</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
+          <Text style={[styles.headerTitle, isShort && styles.headerTitleShort]}>Edit Profile</Text>
           <TouchableOpacity
             style={[styles.headerBtn, styles.saveBtn, isPending && styles.saveBtnDisabled]}
             onPress={() => save()}
@@ -203,10 +213,19 @@ export function EditProfileScreen() {
         </View>
 
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isShort && styles.scrollContentShort]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Avatar */}
+          <AvatarEditor
+            user={user}
+            localAvatarUri={localAvatarUri}
+            avatarUploading={avatarUploading}
+            onPickAvatar={pickAndUploadAvatar}
+            isShort={isShort}
+          />
+
           {/* Full Name */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Full Name</Text>
@@ -238,7 +257,7 @@ export function EditProfileScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Bio</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, isShort ? styles.textAreaShort : styles.textArea]}
               value={form.bio}
               onChangeText={(v) => setForm((f) => ({ ...f, bio: v }))}
               placeholder="Tell others about yourself..."
@@ -340,10 +359,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
+  headerShort: {
+    paddingVertical: 4,
+  },
   headerTitle: {
     color: COLORS.textPrimary,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold as '600',
+  },
+  headerTitleShort: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
   },
   headerBtn: {
     minWidth: 60,
@@ -377,6 +402,10 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     gap: SPACING.lg,
   },
+  scrollContentShort: {
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  },
 
   // Field
   fieldGroup: {
@@ -406,6 +435,10 @@ const styles = StyleSheet.create({
   textArea: {
     height: 80,
     paddingTop: SPACING.sm,
+  },
+  textAreaShort: {
+    height: 56,
+    paddingTop: SPACING.xs,
   },
   charCount: {
     color: COLORS.textMuted,

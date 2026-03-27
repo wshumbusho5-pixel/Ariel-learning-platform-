@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   SectionListRenderItemInfo,
+  useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -125,9 +126,11 @@ function resolveNavigation(
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState(): React.ReactElement {
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   return (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyEmoji}>🎉</Text>
+    <View style={[styles.emptyContainer, isShort && { paddingTop: SPACING['3xl'] }]}>
+      <Text style={[styles.emptyEmoji, isShort && { fontSize: 36, marginBottom: SPACING.sm }]}>🎉</Text>
       <Text style={styles.emptyTitle}>You're all caught up</Text>
       <Text style={styles.emptySubtitle}>No new notifications right now.</Text>
     </View>
@@ -137,6 +140,8 @@ function EmptyState(): React.ReactElement {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function NotificationsScreen(): React.ReactElement {
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const navigation = useNavigation<NavigationProp>();
   const {
     notifications,
@@ -237,8 +242,8 @@ export function NotificationsScreen(): React.ReactElement {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notifications</Text>
+      <View style={[styles.header, isShort && { paddingTop: SPACING.xl, paddingBottom: SPACING.sm }]}>
+        <Text style={[styles.headerTitle, isShort && { fontSize: TYPOGRAPHY.fontSize.xl }]}>Notifications</Text>
         <TouchableOpacity
           onPress={markAllRead}
           disabled={isMarkingAllRead}

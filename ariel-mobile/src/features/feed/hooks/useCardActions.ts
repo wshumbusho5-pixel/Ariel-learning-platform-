@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { Animated } from 'react-native';
+import { useState, useEffect } from 'react';
+import { useSharedValue, withSpring } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
 import apiClient from '@/shared/api/client';
@@ -42,7 +43,7 @@ interface UseCardActionsReturn {
   saveCount: number;
   handleLike: () => Promise<void>;
   handleSave: () => Promise<void>;
-  likeAnim: Animated.Value;
+  likeAnim: SharedValue<number>;
 }
 
 export function useCardActions({
@@ -58,8 +59,8 @@ export function useCardActions({
   const [likeCount, setLikeCount] = useState(initialLikes);
   const [saveCount, setSaveCount] = useState(initialSaves);
 
-  // Animated value for heart bounce
-  const likeAnim = useRef(new Animated.Value(1)).current;
+  // Reanimated 3 shared value for heart bounce
+  const likeAnim = useSharedValue(1);
 
   // Load persisted state from AsyncStorage on mount
   useEffect(() => {
@@ -91,21 +92,12 @@ export function useCardActions({
     setLiked(newLiked);
     setLikeCount((c) => (newLiked ? c + 1 : Math.max(0, c - 1)));
 
-    // Bounce animation
-    Animated.sequence([
-      Animated.spring(likeAnim, {
-        toValue: 1.4,
-        useNativeDriver: true,
-        speed: 40,
-        bounciness: 20,
-      }),
-      Animated.spring(likeAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 20,
-        bounciness: 10,
-      }),
-    ]).start();
+    // Reanimated 3 spring bounce — press-in shrink → overshoot → settle
+    likeAnim.value = withSpring(0.85, { damping: 10, stiffness: 300 }, () => {
+      likeAnim.value = withSpring(1.4, { damping: 8, stiffness: 300 }, () => {
+        likeAnim.value = withSpring(1, { damping: 12, stiffness: 400 });
+      });
+    });
 
     // Persist to AsyncStorage
     const likedSet = await getSet(LIKED_KEY);

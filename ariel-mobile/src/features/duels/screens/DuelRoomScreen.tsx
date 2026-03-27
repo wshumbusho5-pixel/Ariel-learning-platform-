@@ -72,6 +72,7 @@ export function DuelRoomScreen({ route, navigation }: Props): React.ReactElement
     opponentUsername,
     yourUsername,
     submitAnswer,
+    connectionStatus,
   } = useDuelSocket({ roomId, onGameOver: handleGameOver });
 
   // Wrap submitAnswer to track what was submitted
@@ -115,6 +116,13 @@ export function DuelRoomScreen({ route, navigation }: Props): React.ReactElement
         <Text style={styles.roomLabel}>Room {roomId.slice(0, 6).toUpperCase()}</Text>
         <View style={styles.backButton} />
       </View>
+
+      {/* ── Reconnecting indicator ─────────────────────────────────────────── */}
+      {connectionStatus === 'reconnecting' && (
+        <View style={styles.reconnectingBanner}>
+          <Text style={styles.reconnectingText}>Reconnecting...</Text>
+        </View>
+      )}
 
       {/* ── Matchmaking spinner ────────────────────────────────────────────── */}
       {waitingForOpponent && !gameOver ? (
@@ -322,5 +330,19 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: TYPOGRAPHY.fontSize.base,
     fontWeight: TYPOGRAPHY.fontWeight.semibold as '600',
+  },
+
+  // Reconnecting banner
+  reconnectingBanner: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(245, 158, 11, 0.3)',
+    paddingVertical: SPACING.xs,
+    alignItems: 'center',
+  },
+  reconnectingText: {
+    color: COLORS.warning,
+    fontSize: TYPOGRAPHY.fontSize.xs,
+    fontWeight: TYPOGRAPHY.fontWeight.medium as '500',
   },
 });

@@ -9,8 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
+  useWindowDimensions,
 } from 'react-native';
+import { useToast } from '@/shared/components/ToastProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -52,13 +53,15 @@ function SetupView({
   onBack,
 }: SetupViewProps): React.ReactElement {
   const insets = useSafeAreaInsets();
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
 
   return (
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={[styles.setupHeader, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.setupHeader, { paddingTop: insets.top + (isShort ? 4 : 8) }]}>
         <TouchableOpacity onPress={onBack} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Text style={styles.backText}>← Cancel</Text>
         </TouchableOpacity>
@@ -67,7 +70,11 @@ function SetupView({
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.setupContent, { paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[
+          styles.setupContent,
+          { paddingBottom: insets.bottom + 24 },
+          isShort && { paddingTop: SPACING.lg, gap: SPACING.lg },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -120,7 +127,11 @@ function SetupView({
 
         {/* Start button */}
         <TouchableOpacity
-          style={[styles.startButton, (!title.trim() || isStarting) && styles.startButtonDisabled]}
+          style={[
+            styles.startButton,
+            (!title.trim() || isStarting) && styles.startButtonDisabled,
+            isShort && { paddingVertical: SPACING.md },
+          ]}
           onPress={onStart}
           disabled={!title.trim() || isStarting}
           activeOpacity={0.85}
@@ -150,6 +161,8 @@ interface LiveViewProps {
 
 function LiveView({ streamId, title, subject, onEnd }: LiveViewProps): React.ReactElement {
   const insets = useSafeAreaInsets();
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const [chatInput, setChatInput] = useState('');
   const subjectMeta = SUBJECT_META[subject as keyof typeof SUBJECT_META] ?? SUBJECT_META.other;
 
@@ -176,15 +189,15 @@ function LiveView({ streamId, title, subject, onEnd }: LiveViewProps): React.Rea
     >
       {/* Background */}
       <View style={[styles.hostBg, { backgroundColor: `${subjectMeta.color}18` }]}>
-        <View style={styles.hostCenter}>
-          <Text style={styles.hostSubjectIcon}>{subjectMeta.icon}</Text>
-          <Text style={styles.hostTitleText} numberOfLines={2}>{title}</Text>
+        <View style={[styles.hostCenter, isShort && { marginBottom: 160, gap: 4 }]}>
+          <Text style={[styles.hostSubjectIcon, isShort && { fontSize: 44, marginBottom: 4 }]}>{subjectMeta.icon}</Text>
+          <Text style={[styles.hostTitleText, isShort && { fontSize: TYPOGRAPHY.fontSize.xl }]} numberOfLines={2}>{title}</Text>
           <Text style={styles.hostSubjectLabel}>{subjectMeta.label}</Text>
         </View>
       </View>
 
       {/* Top bar */}
-      <View style={[styles.hostTopBar, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.hostTopBar, { paddingTop: insets.top + (isShort ? 4 : 8) }]}>
         <View style={styles.livePill}>
           <View style={styles.liveDot} />
           <Text style={styles.liveText}>LIVE</Text>
@@ -193,11 +206,11 @@ function LiveView({ streamId, title, subject, onEnd }: LiveViewProps): React.Rea
       </View>
 
       {/* Chat area */}
-      <View style={[styles.hostChatArea, { paddingBottom: insets.bottom }]}>
+      <View style={[styles.hostChatArea, { paddingBottom: insets.bottom }, isShort && { height: '50%' }]}>
         <LiveChat messages={messages} />
 
         {/* Chat input */}
-        <View style={styles.hostInputBar}>
+        <View style={[styles.hostInputBar, isShort && { paddingVertical: 6 }]}>
           <TextInput
             style={styles.hostChatInput}
             value={chatInput}
@@ -219,7 +232,7 @@ function LiveView({ streamId, title, subject, onEnd }: LiveViewProps): React.Rea
         </View>
 
         {/* Stream controls */}
-        <View style={styles.controlsWrapper}>
+        <View style={[styles.controlsWrapper, isShort && { paddingVertical: 4 }]}>
           <StreamControls streamId={streamId} onEndStream={onEnd} />
         </View>
       </View>
@@ -231,6 +244,7 @@ function LiveView({ streamId, title, subject, onEnd }: LiveViewProps): React.Rea
 
 export function LiveHostScreen(): React.ReactElement {
   const navigation = useNavigation<LiveHostNavProp>();
+  const toast = useToast();
 
   const [phase, setPhase] = useState<HostPhase>('setup');
   const [activeStreamId, setActiveStreamId] = useState<string | null>(null);
@@ -259,7 +273,7 @@ export function LiveHostScreen(): React.ReactElement {
         setPhase('live');
       }
     } catch {
-      Alert.alert('Error', 'Could not start stream. Please try again.');
+      toast.show('Could not start stream. Please try again.', 'error');
     } finally {
       setIsStarting(false);
     }

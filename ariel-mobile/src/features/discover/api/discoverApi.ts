@@ -36,10 +36,10 @@ export async function searchCards(q: string, limit = 20): Promise<TrendingCard[]
   return res.data;
 }
 
-/** Search users by query string. GET /api/social/search-users?q={q} */
+/** Search users by query string. GET /api/social/search-users?query={q} */
 export async function searchUsers(q: string, limit = 20): Promise<SearchUserResult[]> {
   const res = await apiClient.get<SearchUserResult[]>(
-    `${SOCIAL.SEARCH_USERS}?q=${encodeURIComponent(q)}&limit=${limit}`,
+    `${SOCIAL.SEARCH_USERS}?query=${encodeURIComponent(q)}&limit=${limit}`,
   );
   return res.data;
 }
@@ -60,10 +60,10 @@ export async function getTrendingCards(limit = 20): Promise<TrendingCard[]> {
   return res.data;
 }
 
-/** Get cards for a specific subject. GET /api/social/feed/explore/{subject}?limit={limit} */
+/** Get cards for a specific subject — uses card search with subject as keyword */
 export async function getSubjectCards(subject: string, limit = 30): Promise<TrendingCard[]> {
   const res = await apiClient.get<TrendingCard[]>(
-    `${SOCIAL.EXPLORE_SUBJECT(subject)}?limit=${limit}`,
+    `${CARDS.SEARCH}?q=${encodeURIComponent(subject)}&limit=${limit}`,
   );
   return res.data;
 }

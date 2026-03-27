@@ -7,115 +7,32 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  ListRenderItemInfo,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Avatar } from '@/shared/components/Avatar';
-import { SubjectTag } from '@/shared/components/SubjectTag';
-import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '@/shared/constants/theme';
-import { SUBJECT_META, normalizeSubjectKey } from '@/shared/constants/subjects';
-import type { SubjectKey } from '@/shared/constants/subjects';
-import { SearchBar } from '@/features/discover/components/SearchBar';
-import { SubjectGrid } from '@/features/discover/components/SubjectGrid';
-import { UserSearchResult } from '@/features/discover/components/UserSearchResult';
+import { Ionicons } from '@expo/vector-icons';
 import { useDiscover } from '@/features/discover/hooks/useDiscover';
 import { useSearch } from '@/features/discover/hooks/useSearch';
-import type { TrendingCard, SearchUserResult } from '@/features/discover/api/discoverApi';
-import apiClient from '@/shared/api/client';
-import { SOCIAL } from '@/shared/api/endpoints';
+import { CANONICAL_SUBJECT_KEYS } from '@/shared/constants/subjects';
+import type { SubjectKey } from '@/shared/constants/subjects';
+import type { TrendingCard } from '@/features/discover/api/discoverApi';
 
-// ─── Navigation prop shape (React Navigation) ────────────────────────────────
-// Keep loosely typed so this file compiles without importing the nav library.
+import { SubjectTile } from '@/features/discover/components/SubjectTile';
+import { CardViewerModal } from '@/features/discover/components/CardViewerModal';
+import { TrendingRow } from '@/features/discover/components/TrendingRow';
+import { PeopleCard } from '@/features/discover/components/PeopleCard';
+import { UserRow } from '@/features/discover/components/UserRow';
+import { CardRow } from '@/features/discover/components/CardRow';
+
+// ─── Navigation prop ──────────────────────────────────────────────────────────
+
 interface NavigationProp {
   navigate: (screen: string, params?: Record<string, unknown>) => void;
+  goBack: () => void;
 }
 
 interface DiscoverScreenProps {
   navigation: NavigationProp;
-}
-
-// ─── Trending card row ────────────────────────────────────────────────────────
-
-function TrendingCardRow({ card }: { card: TrendingCard }) {
-  const subjectKey = normalizeSubjectKey(card.subject);
-  const meta = SUBJECT_META[subjectKey];
-
-  return (
-    <View style={cardRowStyles.container}>
-      <View style={[cardRowStyles.strip, { backgroundColor: meta.color }]} />
-      <View style={cardRowStyles.content}>
-        <Text style={cardRowStyles.question} numberOfLines={2}>
-          {card.question}
-        </Text>
-        <View style={cardRowStyles.footer}>
-          <SubjectTag subject={card.subject ?? 'other'} size="sm" />
-          <View style={cardRowStyles.likes}>
-            <Text style={cardRowStyles.heart}>♥</Text>
-            <Text style={cardRowStyles.likeCount}>{card.likes}</Text>
-          </View>
-          {card.author_username ? (
-            <Text style={cardRowStyles.author} numberOfLines={1}>
-              @{card.author_username}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-    </View>
-  );
-}
-
-// ─── Suggested user card (vertical, 80px wide, for horizontal scroll) ────────
-
-function UserCard({
-  user,
-  onFollowToggle,
-}: {
-  user: SearchUserResult;
-  onFollowToggle: (userId: string, isFollowing: boolean) => void;
-}) {
-  const [isFollowing, setIsFollowing] = useState(user.is_following);
-  const [isPending, setIsPending] = useState(false);
-
-  const handleFollow = async () => {
-    if (isPending) return;
-    const prev = isFollowing;
-    setIsFollowing(!prev);
-    setIsPending(true);
-    try {
-      await apiClient.post(SOCIAL.FOLLOW(user.id));
-      onFollowToggle(user.id, !prev);
-    } catch {
-      setIsFollowing(prev);
-    } finally {
-      setIsPending(false);
-    }
-  };
-
-  return (
-    <View style={userCardStyles.container}>
-      <Avatar
-        uri={user.profile_picture}
-        username={user.username}
-        size={56}
-      />
-      <Text style={userCardStyles.name} numberOfLines={1}>
-        {user.full_name ?? user.username}
-      </Text>
-      <Text style={userCardStyles.username} numberOfLines={1}>
-        @{user.username}
-      </Text>
-      <TouchableOpacity
-        onPress={handleFollow}
-        activeOpacity={0.7}
-        style={[userCardStyles.btn, isFollowing && userCardStyles.followingBtn]}
-        disabled={isPending}
-      >
-        <Text style={[userCardStyles.btnText, isFollowing && userCardStyles.followingBtnText]}>
-          {isFollowing ? 'Following' : 'Follow'}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
@@ -123,404 +40,292 @@ function UserCard({
 export function DiscoverScreen({ navigation }: DiscoverScreenProps) {
   const insets = useSafeAreaInsets();
   const { suggestedUsers, trendingCards, loading } = useDiscover();
-  const {
-    query,
-    setQuery,
-    cardResults,
-    userResults,
-    activeTab,
-    setActiveTab,
-    isSearching,
-  } = useSearch();
-
-  const [searchFocused, setSearchFocused] = useState(false);
-  const isSearchMode = searchFocused || query.length > 0;
+  const { query, setQuery, cardResults, userResults, activeTab, setActiveTab, isSearching } = useSearch();
+  const [focused, setFocused] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<TrendingCard | null>(null);
+  const inputRef = useRef<TextInput>(null);
+  const isSearchMode = focused || query.length > 0;
 
   const handleSubjectPress = useCallback(
-    (subjectKey: SubjectKey) => {
-      navigation.navigate('SubjectDetail', { subjectKey });
-    },
+    (key: SubjectKey) => navigation.navigate('SubjectDetail', { subjectKey: key }),
     [navigation],
   );
 
-  const handleSearchFocus = useCallback(() => setSearchFocused(true), []);
-  const handleSearchBlur = useCallback(() => {
-    if (query.length === 0) setSearchFocused(false);
-  }, [query]);
-
-  const handleClear = useCallback(() => {
+  const clearSearch = useCallback(() => {
     setQuery('');
-    setSearchFocused(false);
+    setFocused(false);
+    inputRef.current?.blur();
   }, [setQuery]);
 
-  const handleFollowToggle = useCallback(
-    (_userId: string, _isFollowing: boolean) => {
-      // Parent could refresh suggested users if needed
-    },
-    [],
-  );
+  // ── Discover content ────────────────────────────────────────────────────────
 
-  // ─── Render search results ───────────────────────────────────────────────
-
-  function renderSearchResults() {
+  if (!isSearchMode) {
     return (
-      <View style={styles.searchResults}>
-        {/* Tabs */}
-        <View style={styles.tabs}>
+      <View style={[s.screen, { paddingTop: insets.top }]}>
+        <CardViewerModal card={selectedCard} onClose={() => setSelectedCard(null)} />
+        {/* Header */}
+        <View style={s.header}>
+          <Text style={s.headerTitle}>Explore</Text>
           <TouchableOpacity
-            onPress={() => setActiveTab('cards')}
-            style={[styles.tab, activeTab === 'cards' && styles.tabActive]}
+            style={s.searchPill}
+            onPress={() => { setFocused(true); setTimeout(() => inputRef.current?.focus(), 50); }}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.tabText, activeTab === 'cards' && styles.tabTextActive]}>
-              Cards
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setActiveTab('people')}
-            style={[styles.tab, activeTab === 'people' && styles.tabActive]}
-          >
-            <Text style={[styles.tabText, activeTab === 'people' && styles.tabTextActive]}>
-              People
-            </Text>
+            <Ionicons name="search" size={15} color="#52525b" />
+            <Text style={s.searchPillText}>Cards, subjects, people…</Text>
           </TouchableOpacity>
         </View>
 
-        {isSearching ? (
-          <View style={styles.searchLoader}>
-            <ActivityIndicator color={COLORS.violet[400]} />
+        {loading ? (
+          <View style={s.loader}>
+            <ActivityIndicator color="#7c3aed" size="large" />
           </View>
-        ) : activeTab === 'cards' ? (
-          <FlatList
-            data={cardResults}
-            keyExtractor={(item) => item.id ?? Math.random().toString()}
-            renderItem={({ item }) => <TrendingCardRow card={item} />}
-            ListEmptyComponent={
-              query.trim().length >= 2 ? (
-                <EmptySearchState message={`No cards found for "${query}"`} />
-              ) : null
-            }
-            contentContainerStyle={styles.resultsList}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          />
         ) : (
-          <FlatList
-            data={userResults}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <UserSearchResult
-                user={item}
-                onPress={() => {}}
-              />
-            )}
-            ListEmptyComponent={
-              query.trim().length >= 2 ? (
-                <EmptySearchState message={`No people found for "${query}"`} />
-              ) : null
-            }
-            contentContainerStyle={styles.resultsList}
+          <ScrollView
             showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          />
+            contentContainerStyle={{ paddingBottom: 32 + insets.bottom }}
+          >
+            {/* Subject grid */}
+            <View style={s.section}>
+              <Text style={s.sectionLabel}>Browse Subjects</Text>
+              <View style={s.grid}>
+                {(CANONICAL_SUBJECT_KEYS as unknown as SubjectKey[]).map((key) => (
+                  <SubjectTile key={key} subjectKey={key} onPress={() => handleSubjectPress(key)} />
+                ))}
+              </View>
+            </View>
+
+            {/* People to follow */}
+            {suggestedUsers.length > 0 && (
+              <View style={s.section}>
+                <Text style={s.sectionLabel}>People to Follow</Text>
+                <FlatList
+                  data={suggestedUsers}
+                  horizontal
+                  keyExtractor={(u) => u.id}
+                  renderItem={({ item }) => <PeopleCard user={item} />}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
+                />
+              </View>
+            )}
+
+            {/* Trending cards */}
+            {trendingCards.length > 0 && (
+              <View style={s.section}>
+                <Text style={s.sectionLabel}>Trending Cards</Text>
+                {trendingCards.slice(0, 15).map((card, i) => (
+                  <TrendingRow key={card.id ?? i} card={card} rank={i} onPress={() => setSelectedCard(card)} />
+                ))}
+              </View>
+            )}
+          </ScrollView>
         )}
       </View>
     );
   }
 
-  // ─── Render discover content ─────────────────────────────────────────────
-
-  function renderDiscoverContent() {
-    if (loading) {
-      return (
-        <View style={styles.loader}>
-          <ActivityIndicator color={COLORS.violet[400]} size="large" />
-        </View>
-      );
-    }
-
-    return (
-      <ScrollView
-        style={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: 32 + insets.bottom }}
-      >
-        {/* Subjects section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Explore Subjects</Text>
-          <SubjectGrid onSubjectPress={handleSubjectPress} />
-        </View>
-
-        {/* Suggested people section */}
-        {suggestedUsers.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>People to Follow</Text>
-            <FlatList
-              data={suggestedUsers}
-              horizontal
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <UserCard user={item} onFollowToggle={handleFollowToggle} />
-              )}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.peopleList}
-            />
-          </View>
-        )}
-
-        {/* Trending cards section */}
-        {trendingCards.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Trending Cards</Text>
-            {trendingCards.slice(0, 10).map((card) => (
-              <TrendingCardRow key={card.id ?? Math.random()} card={card} />
-            ))}
-          </View>
-        )}
-      </ScrollView>
-    );
-  }
+  // ── Search mode ─────────────────────────────────────────────────────────────
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {/* Search bar header */}
-      <View style={styles.header}>
-        {isSearchMode && (
-          <TouchableOpacity onPress={handleClear} style={styles.backButton}>
-            <Text style={styles.backArrow}>←</Text>
-          </TouchableOpacity>
-        )}
-        <View style={styles.searchBarWrap}>
-          <SearchBar
+    <View style={[s.screen, { paddingTop: insets.top }]}>
+      <CardViewerModal card={selectedCard} onClose={() => setSelectedCard(null)} />
+      {/* Search header */}
+      <View style={s.searchHeader}>
+        <View style={s.searchBar}>
+          <Ionicons name="search" size={16} color="#52525b" style={{ marginRight: 8 }} />
+          <TextInput
+            ref={inputRef}
             value={query}
             onChangeText={setQuery}
-            onClear={handleClear}
-            onFocus={handleSearchFocus}
-            onBlur={handleSearchBlur}
-            autoFocus={false}
-            placeholder="Cards, subjects, topics…"
+            onFocus={() => setFocused(true)}
+            autoFocus
+            placeholder="Cards, subjects, people…"
+            placeholderTextColor="#52525b"
+            style={s.searchInput}
+            returnKeyType="search"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
+          {query.length > 0 && (
+            <TouchableOpacity onPress={() => setQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="close-circle" size={18} color="#52525b" />
+            </TouchableOpacity>
+          )}
         </View>
+        <TouchableOpacity onPress={clearSearch} style={s.cancelBtn}>
+          <Text style={s.cancelText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Content: search results vs discover sections */}
-      {isSearchMode ? renderSearchResults() : renderDiscoverContent()}
-    </View>
-  );
-}
+      {/* Tabs */}
+      <View style={s.tabs}>
+        {(['cards', 'people'] as const).map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            style={[s.tab, activeTab === tab && s.tabActive]}
+          >
+            <Text style={[s.tabText, activeTab === tab && s.tabTextActive]}>
+              {tab === 'cards' ? 'Cards' : 'People'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-// ─── Empty search state ───────────────────────────────────────────────────────
-
-function EmptySearchState({ message }: { message: string }) {
-  return (
-    <View style={emptyStyles.container}>
-      <Text style={emptyStyles.icon}>🔍</Text>
-      <Text style={emptyStyles.message}>{message}</Text>
+      {/* Results */}
+      {isSearching ? (
+        <View style={s.loader}>
+          <ActivityIndicator color="#7c3aed" />
+        </View>
+      ) : query.trim().length < 2 ? (
+        <View style={s.emptyHint}>
+          <Ionicons name="search-outline" size={40} color="#27272a" />
+          <Text style={s.emptyHintText}>Type at least 2 characters to search</Text>
+        </View>
+      ) : activeTab === 'cards' ? (
+        <FlatList
+          data={cardResults}
+          keyExtractor={(item) => item.id ?? Math.random().toString()}
+          renderItem={({ item }) => <CardRow card={item} onPress={() => setSelectedCard(item)} />}
+          contentContainerStyle={{ paddingTop: 12, paddingBottom: 32 + insets.bottom }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            <View style={s.emptyHint}>
+              <Text style={s.emptyHintText}>No cards found for "{query}"</Text>
+            </View>
+          }
+        />
+      ) : (
+        <FlatList
+          data={userResults}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <UserRow user={item} />}
+          contentContainerStyle={{ paddingBottom: 32 + insets.bottom }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          ListEmptyComponent={
+            <View style={s.emptyHint}>
+              <Text style={s.emptyHintText}>No people found for "{query}"</Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+const s = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#09090b' },
+
+  // Discover mode header
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
-    gap: SPACING.sm,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 12,
   },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.surface2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  backArrow: {
-    color: COLORS.textPrimary,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  searchBarWrap: {
-    flex: 1,
-  },
-  scroll: {
-    flex: 1,
-  },
-  section: {
-    marginTop: SPACING['2xl'],
-    gap: SPACING.md,
-  },
-  sectionTitle: {
-    color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontWeight: '700',
-    paddingHorizontal: SPACING.lg,
-  },
-  peopleList: {
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.md,
-  },
-  loader: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Search mode
-  searchResults: {
-    flex: 1,
-  },
-  tabs: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
-    gap: SPACING.xl,
-  },
-  tab: {
-    paddingBottom: SPACING.sm,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabActive: {
-    borderBottomColor: COLORS.violet[500],
-  },
-  tabText: {
-    color: COLORS.textMuted,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: '600',
-  },
-  tabTextActive: {
-    color: COLORS.violet[400],
-  },
-  resultsList: {
-    paddingTop: SPACING.sm,
-  },
-  searchLoader: {
-    paddingTop: 40,
-    alignItems: 'center',
-  },
-});
-
-// People card styles
-const userCardStyles = StyleSheet.create({
-  container: {
-    width: 88,
-    alignItems: 'center',
-    gap: 4,
-  },
-  name: {
-    color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: '600',
-    textAlign: 'center',
-    width: '100%',
-  },
-  username: {
-    color: COLORS.textMuted,
-    fontSize: 10,
-    textAlign: 'center',
-    width: '100%',
-  },
-  btn: {
-    marginTop: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.violet[500],
-  },
-  followingBtn: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  btnText: {
+  headerTitle: {
     color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
-  followingBtnText: {
-    color: COLORS.textMuted,
-  },
-});
-
-// Trending card row styles
-const cardRowStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.md,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.sm,
-  },
-  strip: {
-    width: 3,
-    flexShrink: 0,
-  },
-  content: {
-    flex: 1,
-    padding: SPACING.md,
-    gap: 6,
-  },
-  question: {
-    color: COLORS.textPrimary,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    fontWeight: '500',
-    lineHeight: 19,
-  },
-  footer: {
+  searchPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    flexWrap: 'wrap',
+    backgroundColor: '#18181b',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#27272a',
+    paddingHorizontal: 14,
+    height: 44,
   },
-  likes: {
+  searchPillText: {
+    color: '#52525b',
+    fontSize: 15,
+    flex: 1,
+  },
+
+  // Search mode header
+  searchHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 10,
   },
-  heart: {
-    color: '#f87171',
-    fontSize: 11,
-  },
-  likeCount: {
-    color: COLORS.textMuted,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-  },
-  author: {
-    color: COLORS.textMuted,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    flexShrink: 1,
-  },
-});
-
-// Empty state styles
-const emptyStyles = StyleSheet.create({
-  container: {
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#18181b',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#3f3f46',
+    paddingHorizontal: 12,
+    height: 44,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#e4e4e7',
+    fontSize: 15,
+    paddingVertical: 0,
+  },
+  cancelBtn: { paddingVertical: 8 },
+  cancelText: { color: '#a78bfa', fontSize: 15, fontWeight: '600' },
+
+  // Tabs
+  tabs: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1c1c1e',
+    marginBottom: 4,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: { borderBottomColor: '#7c3aed' },
+  tabText: { color: '#71717a', fontSize: 14, fontWeight: '600' },
+  tabTextActive: { color: '#a78bfa' },
+
+  // Sections
+  section: { marginTop: 24, gap: 12 },
+  sectionLabel: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
+    paddingHorizontal: 16,
+    letterSpacing: -0.3,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+
+  // States
+  loader: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyHint: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingTop: 60,
     gap: 12,
-  },
-  icon: {
-    fontSize: 40,
-  },
-  message: {
-    color: COLORS.textMuted,
-    fontSize: TYPOGRAPHY.fontSize.sm,
-    textAlign: 'center',
     paddingHorizontal: 32,
+  },
+  emptyHintText: {
+    color: '#52525b',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

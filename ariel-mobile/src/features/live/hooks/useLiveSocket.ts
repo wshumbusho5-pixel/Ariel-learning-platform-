@@ -10,6 +10,8 @@ import type {
 
 // ─── Public interface ─────────────────────────────────────────────────────────
 
+export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
+
 export interface ChatMessage {
   id: string;
   user_id: string;
@@ -37,6 +39,8 @@ export interface UseLiveSocketReturn {
   reactions: Reaction[];
   sendChat: (content: string) => void;
   isConnected: boolean;
+  /** Fine-grained connection lifecycle status */
+  connectionStatus: ConnectionStatus;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -64,19 +68,45 @@ export function useLiveSocket({
   const token = useAuthStore((s) => s.token);
 
   const wsRef = useRef(
-    new BaseWebSocketManager<LiveWsMessage, OutgoingChatMessage>({ maxRetries: 3 }),
+    new BaseWebSocketManager<LiveWsMessage, OutgoingChatMessage>({ maxRetries: 5 }),
   );
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [viewerCount, setViewerCount] = useState(0);
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
 
   // Stable ref so the message handler closure sees the latest callback
   const onStreamEndedRef = useRef(onStreamEnded);
   useEffect(() => {
     onStreamEndedRef.current = onStreamEnded;
   }, [onStreamEnded]);
+
+  // ── Wire lifecycle callbacks before first connect ──────────────────────────
+
+  useEffect(() => {
+    const ws = wsRef.current;
+
+    ws.lifecycleCallbacks = {
+      onOpen: () => {
+        setIsConnected(true);
+        setConnectionStatus('connected');
+      },
+      onReconnecting: () => {
+        setIsConnected(false);
+        setConnectionStatus('reconnecting');
+      },
+      onGiveUp: () => {
+        setIsConnected(false);
+        setConnectionStatus('disconnected');
+      },
+      onDisconnected: () => {
+        setIsConnected(false);
+        setConnectionStatus('disconnected');
+      },
+    };
+  }, []);
 
   // ── Message handler ────────────────────────────────────────────────────────
 
@@ -88,6 +118,7 @@ export function useLiveSocket({
         case 'viewer_joined': {
           // viewer_count may come in a separate event; bump optimistically
           setIsConnected(true);
+          setConnectionStatus('connected');
           break;
         }
 
@@ -150,8 +181,8 @@ export function useLiveSocket({
 
   useEffect(() => {
     const ws = wsRef.current;
+    setConnectionStatus('connecting');
     ws.connect(LIVESTREAM.WS(streamId), token ?? undefined);
-    setIsConnected(ws.isConnected);
 
     return () => {
       ws.disconnect();
@@ -175,5 +206,6 @@ export function useLiveSocket({
     reactions,
     sendChat,
     isConnected,
+    connectionStatus,
   };
 }

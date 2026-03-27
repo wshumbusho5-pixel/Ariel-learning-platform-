@@ -2,10 +2,10 @@ import React from 'react';
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '@/shared/constants/theme';
 import { timeAgo, parseUTC } from '@/shared/utils/time';
 import type { ConversationSummary } from '@/shared/types/message';
@@ -62,6 +62,8 @@ export function ConversationRow({
           <Image
             source={{ uri: other_user_profile_picture }}
             style={styles.avatar}
+            contentFit="cover"
+            cachePolicy="memory-disk"
           />
         ) : (
           <View style={styles.avatarFallback}>

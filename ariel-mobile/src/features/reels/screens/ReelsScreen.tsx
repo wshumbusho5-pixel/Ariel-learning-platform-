@@ -3,9 +3,10 @@ import {
   View,
   FlatList,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   ViewToken,
   StatusBar,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ReelPlayer } from '@/features/reels/components/ReelPlayer';
@@ -16,9 +17,6 @@ import { useReels } from '@/features/reels/hooks/useReels';
 import { useReelPlayer } from '@/features/reels/hooks/useReelPlayer';
 import { likeReel, saveToDeck } from '@/features/reels/api/reelsApi';
 import type { ReelResponse } from '@/shared/types/reel';
-import { Share } from 'react-native';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const viewabilityConfig = {
   itemVisiblePercentThreshold: 80,
@@ -30,9 +28,11 @@ interface ReelItemProps {
   reel: ReelResponse;
   isActive: boolean;
   onComment: (reelId: string) => void;
+  screenWidth: number;
+  screenHeight: number;
 }
 
-function ReelItem({ reel, isActive, onComment }: ReelItemProps) {
+function ReelItem({ reel, isActive, onComment, screenWidth, screenHeight }: ReelItemProps) {
   const [liked, setLiked] = useState(reel.liked_by_current_user);
   const [saved, setSaved] = useState(false);
 
@@ -69,7 +69,7 @@ function ReelItem({ reel, isActive, onComment }: ReelItemProps) {
   const isVideo = !!reel.video_url;
 
   return (
-    <View style={styles.reelItem}>
+    <View style={[styles.reelItem, { width: screenWidth, height: screenHeight }]}>
       {isVideo ? (
         <ReelPlayer
           uri={reel.video_url!}
@@ -100,6 +100,8 @@ function ReelItem({ reel, isActive, onComment }: ReelItemProps) {
 // ─── Screen ────────────────────────────────────────────────────────────────────
 
 export function ReelsScreen() {
+  const { width: W, height: H } = useWindowDimensions();
+
   const {
     reels,
     currentIndex,
@@ -129,18 +131,20 @@ export function ReelsScreen() {
         reel={item}
         isActive={isActive(index)}
         onComment={setCommentReelId}
+        screenWidth={W}
+        screenHeight={H}
       />
     ),
-    [isActive],
+    [isActive, W, H],
   );
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
-      length: SCREEN_HEIGHT,
-      offset: SCREEN_HEIGHT * index,
+      length: H,
+      offset: H * index,
       index,
     }),
-    [],
+    [H],
   );
 
   return (
@@ -154,7 +158,7 @@ export function ReelsScreen() {
         getItemLayout={getItemLayout}
         pagingEnabled
         showsVerticalScrollIndicator={false}
-        snapToInterval={SCREEN_HEIGHT}
+        snapToInterval={H}
         snapToAlignment="start"
         decelerationRate="fast"
         onViewableItemsChanged={viewableItemsChangedRef.current}
@@ -163,7 +167,7 @@ export function ReelsScreen() {
         maxToRenderPerBatch={3}
         windowSize={5}
         initialNumToRender={2}
-        style={styles.list}
+        style={[styles.list, { width: W, height: H }]}
       />
 
       {/* Comments bottom sheet */}
@@ -188,8 +192,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   reelItem: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
+    // width/height are set inline via useWindowDimensions in ReelItem
     backgroundColor: '#000',
   },
 });

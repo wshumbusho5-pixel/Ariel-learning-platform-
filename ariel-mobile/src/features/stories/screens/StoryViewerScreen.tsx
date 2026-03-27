@@ -2,9 +2,9 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
-  Dimensions,
   FlatList,
   StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -13,8 +13,6 @@ import { StoryViewer } from '@/features/stories/components/StoryViewer';
 import { useStories } from '@/features/stories/hooks/useStories';
 import { viewStory } from '@/features/stories/api/storiesApi';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 type RouteParams = {
   StoryViewer: { groupIndex: number };
 };
@@ -22,6 +20,8 @@ type RouteParams = {
 type NavProp = NativeStackNavigationProp<Record<string, object | undefined>>;
 
 export function StoryViewerScreen(): React.ReactElement {
+  const { width: SCREEN_WIDTH, height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const navigation = useNavigation<NavProp>();
   const route = useRoute<RouteProp<RouteParams, 'StoryViewer'>>();
   const { storyGroups, markSeen } = useStories();
@@ -80,7 +80,7 @@ export function StoryViewerScreen(): React.ReactElement {
           index,
         })}
         renderItem={({ item, index }) => (
-          <View style={styles.page}>
+          <View style={[styles.page, { width: SCREEN_WIDTH }]}>
             <StoryViewer
               group={item}
               initialStoryIndex={0}
@@ -102,7 +102,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   page: {
-    width: SCREEN_WIDTH,
     flex: 1,
   },
 });

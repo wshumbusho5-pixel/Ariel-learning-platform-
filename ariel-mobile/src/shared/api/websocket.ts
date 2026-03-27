@@ -5,7 +5,30 @@ interface WebSocketManagerOptions {
   maxRetries?: number;
 }
 
-const DEFAULT_RETRY_DELAYS_MS = [1000, 2000, 4000];
+/** Lifecycle callbacks exposed to callers (e.g. React hooks). */
+export interface WebSocketLifecycleCallbacks {
+  /** Fired when the socket successfully opens (or re-opens after a retry). */
+  onOpen?: () => void;
+  /**
+   * Fired when the socket closes unexpectedly and a reconnect attempt is
+   * about to be scheduled.  `attempt` is 1-based and `maxAttempts` is the
+   * configured limit.
+   */
+  onReconnecting?: (attempt: number, maxAttempts: number) => void;
+  /**
+   * Fired when all retry attempts have been exhausted and we give up.
+   */
+  onGiveUp?: () => void;
+  /** Fired when an intentional disconnect occurs. */
+  onDisconnected?: () => void;
+}
+
+// Exponential backoff: 1 s, 2 s, 4 s, 8 s, 16 s (capped at maxRetries entries)
+function backoffDelay(attempt: number): number {
+  return 1000 * Math.pow(2, attempt);
+}
+
+const DEFAULT_MAX_RETRIES = 5;
 
 export class BaseWebSocketManager<TIncoming = unknown, TOutgoing = unknown> {
   private socket: WebSocket | null = null;
@@ -17,8 +40,11 @@ export class BaseWebSocketManager<TIncoming = unknown, TOutgoing = unknown> {
   private retryTimeout: ReturnType<typeof setTimeout> | null = null;
   private intentionalClose = false;
 
+  /** Optional lifecycle callbacks set by the hook layer. */
+  lifecycleCallbacks: WebSocketLifecycleCallbacks = {};
+
   constructor(options: WebSocketManagerOptions = {}) {
-    this.maxRetries = options.maxRetries ?? DEFAULT_RETRY_DELAYS_MS.length;
+    this.maxRetries = options.maxRetries ?? DEFAULT_MAX_RETRIES;
   }
 
   connect(url: string, token?: string): void {
@@ -39,6 +65,7 @@ export class BaseWebSocketManager<TIncoming = unknown, TOutgoing = unknown> {
       this.socket.close();
       this.socket = null;
     }
+    this.lifecycleCallbacks.onDisconnected?.();
   }
 
   send(data: TOutgoing): void {
@@ -85,6 +112,7 @@ export class BaseWebSocketManager<TIncoming = unknown, TOutgoing = unknown> {
 
     this.socket.onopen = () => {
       this.retryCount = 0;
+      this.lifecycleCallbacks.onOpen?.();
     };
 
     this.socket.onclose = () => {
@@ -99,9 +127,14 @@ export class BaseWebSocketManager<TIncoming = unknown, TOutgoing = unknown> {
   }
 
   private _scheduleRetry(): void {
-    if (this.retryCount >= this.maxRetries) return;
-    const delay = DEFAULT_RETRY_DELAYS_MS[this.retryCount] ?? 4000;
+    if (this.retryCount >= this.maxRetries) {
+      this.lifecycleCallbacks.onGiveUp?.();
+      return;
+    }
+    const attempt = this.retryCount; // 0-based index used for delay calculation
     this.retryCount += 1;
+    this.lifecycleCallbacks.onReconnecting?.(this.retryCount, this.maxRetries);
+    const delay = backoffDelay(attempt); // 1 s, 2 s, 4 s, 8 s, 16 s
     this.retryTimeout = setTimeout(() => {
       if (!this.intentionalClose) {
         this._openSocket();

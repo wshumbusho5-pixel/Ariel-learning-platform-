@@ -4,11 +4,11 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Animated,
   Share,
   TextInput,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { SUBJECT_META, normalizeSubjectKey } from '@/shared/constants/subjects';
@@ -98,6 +98,8 @@ function AuthorAvatarLeft({
       <Image
         source={{ uri: resolved }}
         style={s.authorAvatar}
+        contentFit="cover"
+        cachePolicy="memory-disk"
         onError={() => setErr(true)}
       />
     );
@@ -117,7 +119,7 @@ function MeAvatar() {
   const resolved = resolveUri(user?.profile_picture);
   const letter = (user?.username ?? user?.full_name ?? 'Y').charAt(0).toUpperCase();
   if (resolved && !err) {
-    return <Image source={{ uri: resolved }} style={s.meAvatar} onError={() => setErr(true)} />;
+    return <Image source={{ uri: resolved }} style={s.meAvatar} contentFit="cover" cachePolicy="memory-disk" onError={() => setErr(true)} />;
   }
   return (
     <View style={[s.meAvatar, s.meAvatarFallback]}>
@@ -128,10 +130,11 @@ function MeAvatar() {
 
 // ─── Comment row ──────────────────────────────────────────────────────────────
 
-function CommentRow({ comment, likedComments, onLike }: {
+function CommentRow({ comment, likedComments, onLike, onReply }: {
   comment: CommentWithAuthor;
   likedComments: Record<string, boolean>;
   onLike: (id: string) => void;
+  onReply: (username: string) => void;
 }) {
   const [imgErr, setImgErr] = useState(false);
   const resolvedUri = resolveUri(comment.author_profile_picture);
@@ -143,7 +146,7 @@ function CommentRow({ comment, likedComments, onLike }: {
       {/* Avatar */}
       <View style={s.commentAvatar}>
         {resolvedUri && !imgErr ? (
-          <Image source={{ uri: resolvedUri }} style={StyleSheet.absoluteFill} onError={() => setImgErr(true)} />
+          <Image source={{ uri: resolvedUri }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" onError={() => setImgErr(true)} />
         ) : (
           <Text style={s.commentAvatarLetter}>{username.charAt(0).toUpperCase()}</Text>
         )}
@@ -151,7 +154,9 @@ function CommentRow({ comment, likedComments, onLike }: {
 
       {/* Username + text */}
       <View style={s.commentContent}>
-        <Text style={s.commentUsername}>{username}</Text>
+        <TouchableOpacity onPress={() => onReply(username)} activeOpacity={0.6}>
+          <Text style={s.commentUsername}>{username}</Text>
+        </TouchableOpacity>
         <Text style={s.commentText}>
           {parseMentions(comment.content).map((p, i) =>
             p.type === 'mention'
@@ -195,6 +200,7 @@ export function FeedCard({ card }: FeedCardProps) {
   const [commentText, setCommentText] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
   const [likedComments, setLikedComments] = useState<Record<string, boolean>>({});
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
 
   const { liked, saved, likeCount, saveCount, handleLike, handleSave, likeAnim } =
@@ -205,6 +211,11 @@ export function FeedCard({ card }: FeedCardProps) {
       initialLiked: card.is_liked_by_current_user,
       initialSaved: card.is_saved_by_current_user,
     });
+
+  // Reanimated 3 animated style for the heart icon spring bounce
+  const likeAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: likeAnim.value }],
+  }));
 
   const { comments, postComment, postingComment } = useCardComments(cardId);
 
@@ -218,11 +229,18 @@ export function FeedCard({ card }: FeedCardProps) {
     if (!commentText.trim()) return;
     const text = commentText;
     setCommentText('');
+    setReplyingTo(null);
     await postComment(text);
   }, [commentText, postComment]);
 
   const handleCommentLike = useCallback((commentId: string) => {
     setLikedComments((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+  }, []);
+
+  const handleStartReply = useCallback((username: string) => {
+    setReplyingTo(username);
+    setCommentText(`@${username} `);
+    setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
 
   const displayedComments = showAllComments ? comments : comments.slice(0, 3);
@@ -315,9 +333,9 @@ export function FeedCard({ card }: FeedCardProps) {
 
               {/* Footer row */}
               <View style={[s.cardFooter, { borderTopColor: footerBorderColor }]}>
-                {card.community_reviews != null && card.community_reviews > 0 ? (
+                {(card as any).community_reviews != null && (card as any).community_reviews > 0 ? (
                   <Text style={s.cardFooterStats}>
-                    {card.community_reviews} studied · {card.community_pct_correct}% correct
+                    {(card as any).community_reviews} studied · {(card as any).community_pct_correct}% correct
                   </Text>
                 ) : <View />}
                 <Text style={[s.tapHint, { color: tapHintColor }]}>
@@ -331,15 +349,15 @@ export function FeedCard({ card }: FeedCardProps) {
           <View style={s.actionBar}>
             {/* Like */}
             <TouchableOpacity style={s.actionBtn} onPress={handleLike} activeOpacity={0.7}>
-              <Animated.View style={{ transform: [{ scale: likeAnim }] }}>
+              <Animated.View style={likeAnimStyle}>
                 <Ionicons
                   name={liked ? 'heart' : 'heart-outline'}
                   size={19}
-                  color={liked ? '#f87171' : '#71717a'}
+                  color={liked ? '#f91880' : '#71767b'}
                 />
               </Animated.View>
               {likeCount > 0 && (
-                <Text style={[s.actionCount, liked && { color: '#f87171' }]}>{likeCount}</Text>
+                <Text style={[s.actionCount, liked && { color: '#f91880' }]}>{likeCount}</Text>
               )}
             </TouchableOpacity>
 
@@ -349,7 +367,7 @@ export function FeedCard({ card }: FeedCardProps) {
               onPress={() => inputRef.current?.focus()}
               activeOpacity={0.7}
             >
-              <Ionicons name="chatbubble-outline" size={18} color="#71717a" />
+              <Ionicons name="chatbubble-outline" size={18} color="#71767b" />
               {comments.length > 0 && (
                 <Text style={s.actionCount}>{comments.length}</Text>
               )}
@@ -357,12 +375,12 @@ export function FeedCard({ card }: FeedCardProps) {
 
             {/* Share */}
             <TouchableOpacity style={s.actionBtn} onPress={handleShare} activeOpacity={0.7}>
-              <Ionicons name="paper-plane-outline" size={18} color="#71717a" />
+              <Ionicons name="paper-plane-outline" size={18} color="#71767b" />
             </TouchableOpacity>
 
             {/* Views */}
             <View style={s.actionBtn}>
-              <Ionicons name="eye-outline" size={17} color="#71717a" />
+              <Ionicons name="eye-outline" size={17} color="#71767b" />
               <Text style={s.actionCountDim}>{views}</Text>
             </View>
 
@@ -388,6 +406,7 @@ export function FeedCard({ card }: FeedCardProps) {
                     comment={c}
                     likedComments={likedComments}
                     onLike={handleCommentLike}
+                    onReply={handleStartReply}
                   />
                 </View>
               ))}
@@ -402,6 +421,19 @@ export function FeedCard({ card }: FeedCardProps) {
           )}
 
           {/* ── Comment input ── */}
+          {replyingTo && (
+            <View style={s.replyBanner}>
+              <Text style={s.replyBannerText}>
+                Replying to <Text style={s.replyBannerName}>@{replyingTo}</Text>
+              </Text>
+              <TouchableOpacity
+                onPress={() => { setReplyingTo(null); setCommentText(''); }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close" size={14} color="#52525b" />
+              </TouchableOpacity>
+            </View>
+          )}
           <View style={s.inputRow}>
             <MeAvatar />
             <View style={s.inputBorder}>
@@ -476,9 +508,9 @@ const s = StyleSheet.create({
   },
   authorMeta: { fontSize: 15 },
   authorUsername: { color: '#e7e9ea', fontWeight: '700', fontSize: 15 },
-  dot: { color: '#4a5058', fontSize: 13 },
-  authorSubject: { color: '#8b9099', fontSize: 13 },
-  authorTime: { color: '#8b9099', fontSize: 13 },
+  dot: { color: '#536471', fontSize: 13 },
+  authorSubject: { color: '#71767b', fontSize: 13 },
+  authorTime: { color: '#71767b', fontSize: 13 },
 
   // Caption
   caption: {
@@ -551,7 +583,6 @@ const s = StyleSheet.create({
   cardText: {
     fontWeight: '700',
     color: '#18181b',   // text-zinc-900
-    leadingTrim: 'both' as any,
   },
   cardTextFlipped: {
     color: '#2e1065',   // text-violet-900
@@ -588,11 +619,11 @@ const s = StyleSheet.create({
     gap: 5,
   },
   actionCount: {
-    color: '#8b9099',
+    color: '#71767b',
     fontSize: 13,
   },
   actionCountDim: {
-    color: '#8b9099',
+    color: '#71767b',
     fontSize: 13,
   },
 
@@ -611,7 +642,7 @@ const s = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#27272a',
+    backgroundColor: '#16181c',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -646,13 +677,30 @@ const s = StyleSheet.create({
     minWidth: 28,
   },
   commentLikeCount: {
-    color: '#52525b',
+    color: '#71767b',
     fontSize: 10,
     fontWeight: '600',
   },
   viewAll: {
-    color: '#8b9099',
+    color: '#1d9bf0',
     fontSize: 13,
+  },
+
+  // ── Reply banner ───────────────────────────────────────────────────────────
+  replyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingHorizontal: 2,
+  },
+  replyBannerText: {
+    fontSize: 12,
+    color: '#71717a',
+  },
+  replyBannerName: {
+    color: '#a78bfa',
+    fontWeight: '600',
   },
 
   // ── Comment input ──────────────────────────────────────────────────────────
@@ -670,7 +718,7 @@ const s = StyleSheet.create({
     flexShrink: 0,
   },
   meAvatarFallback: {
-    backgroundColor: '#27272a',
+    backgroundColor: '#16181c',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -700,7 +748,7 @@ const s = StyleSheet.create({
 
   // Full-bleed separator — matches web: -mx-4 h-px background #2f3336
   separator: {
-    height: 1,
+    height: 0.5,
     backgroundColor: '#2f3336',
     marginHorizontal: -16,
     marginTop: 12,

@@ -41,7 +41,8 @@
           "color": "#7c3aed"
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ]
   }
 }

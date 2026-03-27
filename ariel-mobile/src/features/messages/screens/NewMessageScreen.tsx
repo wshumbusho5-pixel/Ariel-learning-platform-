@@ -5,11 +5,12 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  Image,
   StyleSheet,
   ActivityIndicator,
   SafeAreaView,
+  useWindowDimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '@/shared/constants/theme';
 import { SOCIAL } from '@/shared/api/endpoints';
@@ -31,6 +32,8 @@ type Props = NativeStackScreenProps<MessagesStackParamList, 'NewMessage'>;
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function NewMessageScreen({ navigation }: Props): React.ReactElement {
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,7 +64,7 @@ export function NewMessageScreen({ navigation }: Props): React.ReactElement {
       try {
         const { data } = await apiClient.get<UserSearchResult[]>(
           SOCIAL.SEARCH_USERS,
-          { params: { q: trimmed } },
+          { params: { query: trimmed } },
         );
         setResults(data);
       } catch {
@@ -92,12 +95,17 @@ export function NewMessageScreen({ navigation }: Props): React.ReactElement {
       const initial = (item.username ?? item.full_name ?? '?')[0]?.toUpperCase() ?? '?';
       return (
         <TouchableOpacity
-          style={styles.resultRow}
+          style={[styles.resultRow, isShort && { paddingVertical: SPACING.sm }]}
           onPress={() => handleSelectUser(item)}
           activeOpacity={0.7}
         >
           {item.profile_picture ? (
-            <Image source={{ uri: item.profile_picture }} style={styles.avatar} />
+            <Image
+              source={{ uri: item.profile_picture }}
+              style={styles.avatar}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
           ) : (
             <View style={styles.avatarFallback}>
               <Text style={styles.avatarInitial}>{initial}</Text>
@@ -125,7 +133,7 @@ export function NewMessageScreen({ navigation }: Props): React.ReactElement {
   return (
     <SafeAreaView style={styles.safe}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, isShort && { height: 44 }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -138,8 +146,8 @@ export function NewMessageScreen({ navigation }: Props): React.ReactElement {
       </View>
 
       {/* Search input */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchRow}>
+      <View style={[styles.searchContainer, isShort && { paddingVertical: SPACING.xs }]}>
+        <View style={[styles.searchRow, isShort && { height: 38 }]}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             ref={inputRef}

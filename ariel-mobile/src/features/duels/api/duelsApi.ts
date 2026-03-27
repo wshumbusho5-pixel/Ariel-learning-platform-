@@ -23,8 +23,8 @@ export interface JoinRoomResponse {
  * Find or create a quick-match duel room.
  * POST /api/duels/quick-match → { room_id }
  */
-export async function quickMatch(): Promise<QuickMatchResponse> {
-  const res = await apiClient.post<QuickMatchResponse>(DUELS.QUICK_MATCH);
+export async function quickMatch(rounds?: number): Promise<QuickMatchResponse> {
+  const res = await apiClient.post<QuickMatchResponse>(DUELS.QUICK_MATCH, rounds ? { round_count: rounds } : undefined);
   return res.data;
 }
 
@@ -32,8 +32,8 @@ export async function quickMatch(): Promise<QuickMatchResponse> {
  * Send a duel challenge to a specific user.
  * POST /api/duels/challenge/{username} → { room_id }
  */
-export async function challengeUser(username: string): Promise<ChallengeResponse> {
-  const res = await apiClient.post<ChallengeResponse>(DUELS.CHALLENGE(username));
+export async function challengeUser(username: string, rounds?: number): Promise<ChallengeResponse> {
+  const res = await apiClient.post<ChallengeResponse>(DUELS.CHALLENGE(username), rounds ? { round_count: rounds } : undefined);
   return res.data;
 }
 

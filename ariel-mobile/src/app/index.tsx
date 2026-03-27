@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RootNavigator } from '@/shared/navigation/RootNavigator';
 import { navigationRef } from '@/shared/navigation/navigationRef';
 import { linking } from '@/shared/navigation/linking';
+import { ToastProvider } from '@/shared/components/ToastProvider';
 import { usePushNotifications } from '@/shared/hooks/usePushNotifications';
 import {
   useFonts,
@@ -37,8 +38,10 @@ export default function App(): React.ReactElement {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <NavigationContainer ref={navigationRef} linking={linking} theme={DarkTheme}>
-            <PushNotificationRegistrar />
-            <RootNavigator />
+            <ToastProvider>
+              <PushNotificationRegistrar />
+              <RootNavigator />
+            </ToastProvider>
           </NavigationContainer>
         </QueryClientProvider>
       </SafeAreaProvider>

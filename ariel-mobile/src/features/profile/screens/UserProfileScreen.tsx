@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -30,6 +31,8 @@ type Route = RouteProp<ProfileStackParamList, 'UserProfile'>;
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export function UserProfileScreen() {
+  const { width: W, height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -75,13 +78,11 @@ export function UserProfileScreen() {
       fullName={profile.full_name}
       bio={profile.bio}
       profilePicture={profile.profile_picture}
-      subjects={profile.subjects}
       followersCount={profile.followers_count}
       followingCount={profile.following_count}
       streak={profile.current_streak}
       level={profile.level}
       isPremium={isPremium}
-      lastSeen={profile.last_seen}
       isOwnProfile={isOwnProfile}
       isFollowing={isFollowing}
       isTogglingFollow={isTogglingFollow}
@@ -95,18 +96,18 @@ export function UserProfileScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {/* Back button */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, isShort && styles.topBarShort]}>
         <TouchableOpacity
-          style={styles.backBtn}
+          style={[styles.backBtn, isShort && styles.backBtnShort]}
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Text style={styles.backIcon}>←</Text>
+          <Text style={[styles.backIcon, isShort && styles.backIconShort]}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>
+        <Text style={[styles.topBarTitle, isShort && styles.topBarTitleShort]}>
           {profile.username ?? 'Profile'}
         </Text>
-        <View style={styles.backBtn} />
+        <View style={[styles.backBtn, isShort && styles.backBtnShort]} />
       </View>
 
       <UserDeckGrid
@@ -140,10 +141,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderSubtle,
   },
+  topBarShort: {
+    paddingVertical: 4,
+  },
   topBarTitle: {
     color: COLORS.textPrimary,
     fontSize: TYPOGRAPHY.fontSize.md,
     fontWeight: TYPOGRAPHY.fontWeight.semibold as '600',
+  },
+  topBarTitleShort: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
   },
   backBtn: {
     width: 36,
@@ -151,9 +158,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  backBtnShort: {
+    width: 28,
+    height: 28,
+  },
   backIcon: {
     color: COLORS.textPrimary,
     fontSize: 20,
+  },
+  backIconShort: {
+    fontSize: 16,
   },
   errorText: {
     color: COLORS.textMuted,

@@ -11,6 +11,7 @@ import {
   Alert,
   StyleSheet,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -36,6 +37,8 @@ export function RegisterScreen({ navigation }: Props): React.ReactElement {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const insets = useSafeAreaInsets();
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const loginStore = useAuthStore((s) => s.login);
 
   const [, response, promptAsync] = Google.useAuthRequest({
@@ -111,20 +114,20 @@ export function RegisterScreen({ navigation }: Props): React.ReactElement {
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+        <View style={[styles.container, { paddingTop: insets.top + (isShort ? 8 : 16), paddingBottom: isShort ? 20 : 40 }]}>
+          <TouchableOpacity style={[styles.backBtn, { marginBottom: isShort ? 12 : 24 }]} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>← Back</Text>
           </TouchableOpacity>
 
-          <View style={styles.headerBlock}>
-            <ArielWordmark size={34} />
-            <Text style={styles.title}>Create account</Text>
+          <View style={[styles.headerBlock, { marginBottom: isShort ? 16 : 32 }]}>
+            <ArielWordmark size={isShort ? 28 : 34} />
+            <Text style={[styles.title, { fontSize: isShort ? 22 : 28 }]}>Create account</Text>
             <Text style={styles.subtitle}>Join thousands of learners</Text>
           </View>
 
           {/* Google Sign-Up */}
           <TouchableOpacity
-            style={styles.googleBtn}
+            style={[styles.googleBtn, { marginBottom: isShort ? 10 : 20 }]}
             onPress={() => promptAsync()}
             disabled={googleLoading}
             activeOpacity={0.85}
@@ -143,13 +146,13 @@ export function RegisterScreen({ navigation }: Props): React.ReactElement {
           </TouchableOpacity>
 
           {/* Divider */}
-          <View style={styles.divider}>
+          <View style={[styles.divider, { marginBottom: isShort ? 10 : 20 }]}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>or</Text>
             <View style={styles.dividerLine} />
           </View>
 
-          <View style={styles.form}>
+          <View style={[styles.form, { gap: isShort ? 12 : 16 }]}>
             <FieldGroup label="Full name" required>
               <TextInput
                 style={styles.input}
@@ -227,7 +230,7 @@ export function RegisterScreen({ navigation }: Props): React.ReactElement {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.footer}>
+          <View style={[styles.footer, { marginTop: isShort ? 12 : 32 }]}>
             <Text style={styles.footerText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Login')}>
               <Text style={styles.footerLink}>Sign in</Text>
@@ -270,10 +273,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    // paddingBottom applied inline (isShort-aware)
   },
   backBtn: {
-    marginBottom: 24,
+    // marginBottom applied inline (isShort-aware)
     alignSelf: 'flex-start',
   },
   backText: {
@@ -281,10 +284,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   headerBlock: {
-    marginBottom: 32,
+    // marginBottom applied inline (isShort-aware)
   },
   title: {
-    fontSize: 28,
+    // fontSize applied inline (isShort-aware)
     fontWeight: '700',
     color: '#fafafa',
   },
@@ -302,7 +305,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 15,
     gap: 10,
-    marginBottom: 20,
+    // marginBottom applied inline (isShort-aware)
   },
   googleIcon: {
     width: 20,
@@ -317,7 +320,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 20,
+    // marginBottom applied inline (isShort-aware)
   },
   dividerLine: {
     flex: 1,
@@ -330,7 +333,7 @@ const styles = StyleSheet.create({
   },
 
   form: {
-    gap: 16,
+    // gap applied inline (isShort-aware)
   },
   label: {
     color: '#a1a1aa',
@@ -343,14 +346,14 @@ const styles = StyleSheet.create({
     borderColor: '#3f3f46',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     color: '#fafafa',
     fontSize: 15,
   },
   primaryBtn: {
     backgroundColor: '#7c3aed',
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
   },
@@ -362,7 +365,7 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 32,
+    // marginTop applied inline (isShort-aware)
   },
   footerText: {
     color: '#71717a',

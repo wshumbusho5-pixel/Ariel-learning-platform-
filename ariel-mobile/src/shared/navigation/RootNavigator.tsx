@@ -18,6 +18,7 @@ import { LiveNavigator } from '@/features/live/LiveNavigator';
 import { StoryViewerScreen } from '@/features/stories/screens/StoryViewerScreen';
 import { StoryCreateScreen } from '@/features/stories/screens/StoryCreateScreen';
 import { UserProfileScreen } from '@/features/profile/screens/UserProfileScreen';
+import { CramScreen } from '@/features/cards/screens/CramScreen';
 
 // ─── Navigator types ──────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ export type RootStackParamList = {
   StoryViewer: { groupIndex: number };
   StoryCreate: undefined;
   UserProfile: { userId: string };
+  Cram: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -122,6 +124,11 @@ export function RootNavigator(): React.ReactElement {
       <Stack.Screen
         name="UserProfile"
         component={UserProfileScreen}
+        options={{ animation: 'slide_from_right' }}
+      />
+      <Stack.Screen
+        name="Cram"
+        component={CramScreen}
         options={{ animation: 'slide_from_right' }}
       />
     </Stack.Navigator>

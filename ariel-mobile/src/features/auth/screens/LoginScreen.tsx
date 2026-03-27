@@ -11,6 +11,7 @@ import {
   Alert,
   StyleSheet,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -33,6 +34,8 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const insets = useSafeAreaInsets();
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const loginStore = useAuthStore((s) => s.login);
 
   const [, response, promptAsync] = Google.useAuthRequest({
@@ -89,16 +92,16 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.container, { paddingTop: insets.top + 40 }]}>
+        <View style={[styles.container, { paddingTop: insets.top + (isShort ? 20 : 40) }]}>
           {/* Brand */}
-          <View style={styles.brandBlock}>
+          <View style={[styles.brandBlock, { marginBottom: isShort ? 20 : 36 }]}>
             <ArielWordmark size={40} />
             <Text style={styles.brandTagline}>Learn smarter. Compete harder.</Text>
           </View>
 
           {/* Google Sign-In */}
           <TouchableOpacity
-            style={styles.googleBtn}
+            style={[styles.googleBtn, { marginBottom: isShort ? 12 : 20 }]}
             onPress={() => promptAsync()}
             disabled={googleLoading}
             activeOpacity={0.85}
@@ -117,7 +120,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
           </TouchableOpacity>
 
           {/* Divider */}
-          <View style={styles.divider}>
+          <View style={[styles.divider, { marginBottom: isShort ? 12 : 20 }]}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerText}>or</Text>
             <View style={styles.dividerLine} />
@@ -170,7 +173,7 @@ export function LoginScreen({ navigation }: Props): React.ReactElement {
           </View>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { marginTop: isShort ? 16 : 32 }]}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
               <Text style={styles.footerLink}>Sign up</Text>
@@ -193,7 +196,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   brandBlock: {
-    marginBottom: 36,
+    // marginBottom applied inline (isShort-aware)
   },
   brandTagline: {
     color: '#a1a1aa',
@@ -210,7 +213,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 15,
     gap: 10,
-    marginBottom: 20,
+    // marginBottom applied inline (isShort-aware)
   },
   googleIcon: {
     width: 20,
@@ -227,7 +230,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 20,
+    // marginBottom applied inline (isShort-aware)
   },
   dividerLine: {
     flex: 1,
@@ -254,14 +257,14 @@ const styles = StyleSheet.create({
     borderColor: '#3f3f46',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     color: '#fafafa',
     fontSize: 15,
   },
   primaryBtn: {
     backgroundColor: '#7c3aed',
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
   },
@@ -273,7 +276,7 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 32,
+    // marginTop applied inline (isShort-aware)
   },
   footerText: {
     color: '#71717a',

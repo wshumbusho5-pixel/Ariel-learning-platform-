@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ListRenderItemInfo,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -26,9 +27,11 @@ type LiveListNavProp = NativeStackNavigationProp<LiveStackParamList, 'LiveList'>
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState(): React.ReactElement {
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   return (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>📡</Text>
+    <View style={[styles.emptyContainer, isShort && { paddingTop: 40 }]}>
+      <Text style={[styles.emptyIcon, isShort && { fontSize: 40, marginBottom: 4 }]}>📡</Text>
       <Text style={styles.emptyTitle}>No one is live right now.</Text>
       <Text style={styles.emptySubtitle}>Be the first!</Text>
     </View>
@@ -48,6 +51,8 @@ function SkeletonCard(): React.ReactElement {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function LiveListScreen(): React.ReactElement {
+  const { height: H } = useWindowDimensions();
+  const isShort = H < 720;
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<LiveListNavProp>();
 
@@ -90,10 +95,10 @@ export function LiveListScreen(): React.ReactElement {
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Live Now 🔴</Text>
+      <View style={[styles.header, isShort && { paddingTop: SPACING.xs, paddingBottom: 4 }]}>
+        <Text style={[styles.headerTitle, isShort && { fontSize: TYPOGRAPHY.fontSize.xl }]}>Live Now 🔴</Text>
         <TouchableOpacity
-          style={styles.goLiveButton}
+          style={[styles.goLiveButton, isShort && { paddingHorizontal: 12, paddingVertical: 6 }]}
           onPress={handleGoLive}
           activeOpacity={0.85}
         >
@@ -125,7 +130,7 @@ export function LiveListScreen(): React.ReactElement {
           contentContainerStyle={
             activeStreams.length === 0
               ? styles.emptyFlatList
-              : styles.gridContent
+              : [styles.gridContent, isShort && { paddingTop: 4, paddingBottom: 12 }]
           }
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
@@ -196,7 +201,7 @@ const styles = StyleSheet.create({
   skeletonCard: {
     flex: 1,
     margin: 6,
-    height: 180,
+    height: 150,
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
     backgroundColor: COLORS.surface,

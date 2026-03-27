@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import type { Card } from '@/shared/types/card';
 
+const CARD_VERTICAL_PADDING = 44;
+
 interface SnapCardProps {
   card: Card;
   width: number;
@@ -24,34 +26,18 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
     onFlipped?.(true);
   }, [flipped, onFlipped]);
 
-  // Give the card clear space on all sides so rounded corners are never clipped
-  const cardH = height - 72; // 36px top + 36px bottom
+  const cardH = height - CARD_VERTICAL_PADDING * 2;
 
   return (
     <View style={[styles.screenContainer, { width, height }]}>
-      {!flipped ? (
-        /* ── Question side: tappable card, auto-sized, centered ── */
-        <TouchableOpacity
-          style={styles.card}
-          onPress={handleTap}
-          activeOpacity={0.95}
-          accessible
-          accessibilityRole="button"
-          accessibilityLabel="Tap to reveal answer"
-        >
-          <View style={styles.questionSide}>
-            <Text style={styles.questionText}>{card.question}</Text>
-            <Text style={styles.tapHint}>tap to reveal</Text>
-          </View>
-        </TouchableOpacity>
-      ) : (
-        /* ── Answer side: explicit height, ScrollView scrolls freely ── */
-        <View style={[styles.cardFlipped, { height: cardH }]}>
+      {flipped ? (
+        <View style={[styles.card, styles.cardFlipped, { height: cardH }]}>
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.answerContent}
             showsVerticalScrollIndicator={false}
             bounces
+            nestedScrollEnabled
           >
             <Text style={styles.questionFaded}>{card.question}</Text>
             <View style={styles.divider} />
@@ -65,6 +51,20 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
             )}
           </ScrollView>
         </View>
+      ) : (
+        <TouchableOpacity
+          style={[styles.card, { height: cardH }]}
+          onPress={handleTap}
+          activeOpacity={0.95}
+          accessible
+          accessibilityRole="button"
+          accessibilityLabel="Tap to reveal answer"
+        >
+          <View style={styles.questionSide}>
+            <Text style={styles.questionText}>{card.question}</Text>
+            <Text style={styles.tapHint}>tap to reveal</Text>
+          </View>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -73,13 +73,12 @@ export function SnapCard({ card, width, height, onFlipped }: SnapCardProps) {
 const styles = StyleSheet.create({
   screenContainer: {
     paddingHorizontal: 20,
-    paddingTop: 36,
-    paddingBottom: 36,
+    paddingTop: CARD_VERTICAL_PADDING,
+    paddingBottom: CARD_VERTICAL_PADDING,
     justifyContent: 'center',
     alignItems: 'stretch',
   },
 
-  // ── Question side: auto-height, centered ──
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 28,
@@ -90,7 +89,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.55,
     shadowRadius: 36,
     elevation: 20,
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
+  cardFlipped: {
+    backgroundColor: '#fef9f0',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+
   questionSide: {
     alignItems: 'center',
     gap: 24,
@@ -109,17 +116,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  // ── Answer side: explicit height, scroll inside ──
-  cardFlipped: {
-    backgroundColor: '#fef9f0',
-    borderRadius: 28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.55,
-    shadowRadius: 36,
-    elevation: 20,
-    overflow: 'hidden', // clips ScrollView content to the rounded corners
-  },
   scroll: {
     flex: 1,
   },
