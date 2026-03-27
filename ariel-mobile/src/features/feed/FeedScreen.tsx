@@ -25,6 +25,8 @@ import { useAuthStore } from '@/shared/auth/authStore';
 import apiClient from '@/shared/api/client';
 import { CARDS } from '@/shared/api/endpoints';
 import { StoriesRow } from '@/features/stories/components/StoriesRow';
+import { SUBJECT_META, normalizeSubjectKey } from '@/shared/constants/subjects';
+import type { SubjectKey } from '@/shared/constants/subjects';
 import type { RootStackParamList } from '@/shared/navigation/RootNavigator';
 
 type FeedNavProp = NativeStackNavigationProp<RootStackParamList>;
@@ -78,8 +80,16 @@ function StudyBanner({ isShort }: { isShort: boolean }) {
 
 // ─── Quick cards row ──────────────────────────────────────────────────────────
 
-function QuickCardsRow({ cards }: { cards: FeedCardType[] }) {
-  if (cards.length === 0) return null;
+function SubjectFilterRow({
+  subjects,
+  active,
+  onSelect,
+}: {
+  subjects: string[];
+  active: string;
+  onSelect: (s: string) => void;
+}) {
+  if (subjects.length === 0) return null;
 
   return (
     <ScrollView
@@ -88,14 +98,33 @@ function QuickCardsRow({ cards }: { cards: FeedCardType[] }) {
       contentContainerStyle={ss.quickCardsRow}
       style={ss.quickCardsContainer}
     >
-      {cards.slice(0, 6).map((card) => (
-        <TouchableOpacity key={card.id} style={ss.quickCard} activeOpacity={0.8}>
-          <View style={ss.quickCardDot} />
-          <Text style={ss.quickCardText} numberOfLines={1}>
-            {card.question}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      <TouchableOpacity
+        style={[ss.subjectChip, active === 'All' && ss.subjectChipActive]}
+        onPress={() => onSelect('All')}
+        activeOpacity={0.7}
+      >
+        <Text style={[ss.subjectChipText, active === 'All' && ss.subjectChipTextActive]}>All</Text>
+      </TouchableOpacity>
+      {subjects.map((subKey) => {
+        const meta = SUBJECT_META[normalizeSubjectKey(subKey) as SubjectKey] ?? SUBJECT_META.other;
+        const isActive = active === subKey;
+        return (
+          <TouchableOpacity
+            key={subKey}
+            style={[
+              ss.subjectChip,
+              isActive && { backgroundColor: meta.color + '22', borderColor: meta.color + '55' },
+            ]}
+            onPress={() => onSelect(subKey)}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontSize: 12 }}>{meta.icon}</Text>
+            <Text style={[ss.subjectChipText, isActive && { color: meta.color }]}>
+              {meta.short}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </ScrollView>
   );
 }
@@ -233,9 +262,24 @@ export function FeedScreen() {
   const isShort = H < 720;
   const navigation = useNavigation<FeedNavProp>();
   const [activeTab, setActiveTab] = useState<FeedTab>('forYou');
+  const [activeSubject, setActiveSubject] = useState('All');
+  const user = useAuthStore((s) => s.user);
 
   const feedTab = activeTab === 'following' ? 'following' : 'forYou';
-  const { cards, isLoading, refetch, isRefetching } = useFeed(feedTab);
+  const { cards: allCards, isLoading, refetch, isRefetching } = useFeed(feedTab);
+
+  // Derive unique subjects from user's subjects + cards in feed
+  const feedSubjects = React.useMemo(() => {
+    const set = new Set<string>(user?.subjects ?? []);
+    allCards.forEach((c) => { if (c.subject) set.add(c.subject); });
+    return [...set];
+  }, [allCards, user?.subjects]);
+
+  // Filter cards by selected subject
+  const cards = React.useMemo(() => {
+    if (activeSubject === 'All') return allCards;
+    return allCards.filter((c) => c.subject === activeSubject);
+  }, [allCards, activeSubject]);
 
   const handleTabChange = useCallback((tab: FeedTab) => {
     if (tab === 'clips') {
@@ -265,10 +309,10 @@ export function FeedScreen() {
         <StoriesRow />
         <TabBar active={activeTab} onChange={handleTabChange} isShort={isShort} />
         <StudyBanner isShort={isShort} />
-        <QuickCardsRow cards={cards} />
+        <SubjectFilterRow subjects={feedSubjects} active={activeSubject} onSelect={setActiveSubject} />
       </>
     ),
-    [activeTab, cards, handleTabChange, isShort],
+    [activeTab, feedSubjects, activeSubject, handleTabChange, isShort],
   );
 
   return (
@@ -423,17 +467,20 @@ const ss = StyleSheet.create({
   // Quick cards
   quickCardsContainer: { borderBottomWidth: 1, borderBottomColor: '#2f3336' },
   quickCardsRow: { paddingHorizontal: 12, paddingVertical: 8, gap: 8 },
-  quickCard: {
+  subjectChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#16181c',
     borderRadius: 20,
-    paddingHorizontal: 12, paddingVertical: 8,
+    paddingHorizontal: 14, paddingVertical: 8,
     gap: 6,
     borderWidth: 1,
     borderColor: '#2f3336',
-    maxWidth: 180,
   },
-  quickCardDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#f59e0b', flexShrink: 0 },
-  quickCardText: { color: '#71767b', fontSize: 12, flex: 1 },
+  subjectChipActive: {
+    backgroundColor: 'rgba(124,58,237,0.15)',
+    borderColor: 'rgba(124,58,237,0.4)',
+  },
+  subjectChipText: { color: '#71767b', fontSize: 13, fontWeight: '600' },
+  subjectChipTextActive: { color: '#a78bfa' },
 });
