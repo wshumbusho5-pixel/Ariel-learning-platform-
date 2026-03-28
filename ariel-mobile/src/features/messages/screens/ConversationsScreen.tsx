@@ -102,6 +102,7 @@ export function ConversationsScreen({ navigation }: Props): React.ReactElement {
             otherUserId: item.other_user_id,
             otherUsername: item.other_user_username ?? item.other_user_full_name ?? 'User',
             otherProfilePicture: item.other_user_profile_picture ?? undefined,
+            otherLastSeen: item.other_user_last_seen ?? null,
           })
         }
         onBuddyToggle={() => toggleBuddy(item.id)}

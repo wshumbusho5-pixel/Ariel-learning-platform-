@@ -35,6 +35,29 @@ function isOnline(lastSeen?: string | null): boolean {
   return Date.now() - parseUTC(lastSeen).getTime() < 2 * 60 * 1000;
 }
 
+function formatLastSeen(lastSeen?: string | null): string {
+  if (!lastSeen) return 'Offline';
+  const ts = parseUTC(lastSeen).getTime();
+  const now = Date.now();
+  const diffMs = now - ts;
+
+  if (diffMs < 2 * 60 * 1000) return 'Online';
+  if (diffMs < 60 * 60 * 1000) {
+    const mins = Math.floor(diffMs / 60_000);
+    return `last seen ${mins}m ago`;
+  }
+  if (diffMs < 24 * 60 * 60 * 1000) {
+    const hours = Math.floor(diffMs / 3_600_000);
+    return `last seen ${hours}h ago`;
+  }
+  if (diffMs < 7 * 24 * 60 * 60 * 1000) {
+    const days = Math.floor(diffMs / 86_400_000);
+    return `last seen ${days}d ago`;
+  }
+  const d = new Date(ts);
+  return `last seen ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+}
+
 /**
  * Determine whether a timestamp separator should appear above this message.
  * Since FlatList is inverted, `index 0` is the newest message.
@@ -60,6 +83,7 @@ export function ChatScreen({ route, navigation }: Props): React.ReactElement {
     otherUserId,
     otherUsername,
     otherProfilePicture,
+    otherLastSeen,
   } = route.params;
 
   // If no conversationId was passed, create/fetch one from the backend
@@ -153,8 +177,8 @@ export function ChatScreen({ route, navigation }: Props): React.ReactElement {
             <Text style={styles.headerName} numberOfLines={1}>
               {otherUsername}
             </Text>
-            <Text style={[styles.headerStatus, isConnected && styles.headerStatusOnline]}>
-              {isConnected ? '● Online' : 'Tap to chat'}
+            <Text style={[styles.headerStatus, isOnline(otherLastSeen) && styles.headerStatusOnline]}>
+              {formatLastSeen(otherLastSeen)}
             </Text>
           </View>
         </View>

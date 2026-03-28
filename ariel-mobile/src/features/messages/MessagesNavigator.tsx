@@ -13,6 +13,7 @@ export type MessagesStackParamList = {
     otherUserId: string;
     otherUsername: string;
     otherProfilePicture?: string;
+    otherLastSeen?: string | null;
   };
   NewMessage: undefined;
 };
