@@ -71,17 +71,17 @@ function ReadReceipt({ isRead, delivered = true }: { isRead: boolean; delivered?
     );
   }
   if (delivered) {
-    // Double grey ticks — delivered
+    // Double dirty-white ticks — delivered
     return (
       <View style={rs.container}>
-        <Ionicons name="checkmark-done" size={14} color="#71767b" />
+        <Ionicons name="checkmark-done" size={14} color="rgba(255,255,255,0.55)" />
       </View>
     );
   }
-  // Single grey tick — sent but not delivered
+  // Single dirty-white tick — sent but not delivered
   return (
     <View style={rs.container}>
-      <Ionicons name="checkmark" size={14} color="#52525b" />
+      <Ionicons name="checkmark" size={14} color="rgba(255,255,255,0.4)" />
     </View>
   );
 }
@@ -92,7 +92,7 @@ const rs = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#7c3aed',
+    backgroundColor: '#3b82f6',
     marginBottom: 1,
   },
 });
