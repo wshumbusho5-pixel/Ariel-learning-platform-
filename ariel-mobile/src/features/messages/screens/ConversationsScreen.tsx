@@ -175,34 +175,53 @@ export function ConversationsScreen({ navigation }: Props): React.ReactElement {
 
   const keyExtractor = useCallback((item: ConversationSummary) => item.id, []);
 
-  // Footer with suggestions — shown below conversations or as empty state content
+  const navigateToChat = useCallback((user: FollowerUser) => {
+    navigation.navigate('Chat', {
+      otherUserId: user.id,
+      otherUsername: user.username ?? user.full_name ?? 'User',
+      otherProfilePicture: user.profile_picture ?? undefined,
+    });
+  }, [navigation]);
+
+  // Filter suggested to exclude people already in unmessaged
+  const filteredSuggested = useMemo(() => {
+    const unmessagedIds = new Set(unmessaged.map((u) => u.id));
+    return suggested.filter((u) => !unmessagedIds.has(u.id));
+  }, [suggested, unmessaged]);
+
   const SuggestionsSection = useCallback(() => {
-    const people = unmessaged.length > 0 ? unmessaged : suggested;
-    if (people.length === 0) return null;
+    if (unmessaged.length === 0 && filteredSuggested.length === 0) return null;
 
     return (
       <View style={s.suggestionsSection}>
-        <Text style={s.suggestionsTitle}>
-          {unmessaged.length > 0 ? 'People you follow' : 'Suggested study buddies'}
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.suggestionsScroll}>
-          {people.slice(0, 12).map((user) => (
-            <SuggestedUserPill
-              key={user.id}
-              user={user}
-              onPress={() =>
-                navigation.navigate('Chat', {
-                  otherUserId: user.id,
-                  otherUsername: user.username ?? user.full_name ?? 'User',
-                  otherProfilePicture: user.profile_picture ?? undefined,
-                })
-              }
-            />
-          ))}
-        </ScrollView>
+        {/* People you follow but haven't messaged */}
+        {unmessaged.length > 0 && (
+          <>
+            <Text style={s.suggestionsTitle}>People you follow</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.suggestionsScroll}>
+              {unmessaged.slice(0, 15).map((user) => (
+                <SuggestedUserPill key={user.id} user={user} onPress={() => navigateToChat(user)} />
+              ))}
+            </ScrollView>
+          </>
+        )}
+
+        {/* Popular / suggested users — always shown to fill the void */}
+        {filteredSuggested.length > 0 && (
+          <>
+            <Text style={[s.suggestionsTitle, unmessaged.length > 0 && { marginTop: 16 }]}>
+              Popular on Ariel
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.suggestionsScroll}>
+              {filteredSuggested.slice(0, 15).map((user) => (
+                <SuggestedUserPill key={user.id} user={user} onPress={() => navigateToChat(user)} />
+              ))}
+            </ScrollView>
+          </>
+        )}
       </View>
     );
-  }, [unmessaged, suggested, navigation]);
+  }, [unmessaged, filteredSuggested, navigateToChat]);
 
   return (
     <SafeAreaView style={s.safe}>
