@@ -55,6 +55,38 @@ function seedViews(cardId: string, createdAt?: string, likes: number = 0): strin
 }
 
 // Responsive font size — matches web: >130 → 14px, >75 → 17px, else → 22px
+// Display name for bot/seeded cards with no author — subject-based pen names
+const BOT_NAMES: Record<string, string> = {
+  mathematics: 'Prof. Euler',
+  sciences: 'Dr. Curie',
+  technology: 'Ada Lovelace',
+  history: 'Prof. Herodotus',
+  literature: 'Jane Austen',
+  economics: 'Prof. Keynes',
+  languages: 'Dr. Chomsky',
+  health: 'Dr. Nightingale',
+  psychology: 'Dr. Jung',
+  geography: 'Dr. Mercator',
+  gospel: 'Rev. Lewis',
+  business: 'Prof. Drucker',
+  law: 'Justice Holmes',
+  arts: 'Prof. Da Vinci',
+  engineering: 'Dr. Tesla',
+  other: 'Ariel AI',
+};
+
+function getBotName(subject?: string | null): string {
+  if (!subject) return 'Ariel AI';
+  const key = subject.toLowerCase().trim();
+  // Direct match
+  if (BOT_NAMES[key]) return BOT_NAMES[key];
+  // Partial match
+  for (const [k, v] of Object.entries(BOT_NAMES)) {
+    if (key.includes(k) || k.includes(key)) return v;
+  }
+  return 'Ariel AI';
+}
+
 function cardFontSize(text: string): number {
   if (text.length > 130) return 14;
   if (text.length > 75)  return 17;
@@ -273,7 +305,7 @@ export function FeedCard({ card }: FeedCardProps) {
           <View style={s.authorRow}>
             <Text style={s.authorMeta} numberOfLines={1}>
               <Text style={s.authorUsername}>
-                {card.author_username ?? card.author_full_name ?? 'Ariel User'}
+                {card.author_username ?? card.author_full_name ?? getBotName(card.subject)}
               </Text>
               <Text style={s.dot}> · </Text>
               <Text style={s.authorSubject}>{card.subject ?? meta.short}</Text>
