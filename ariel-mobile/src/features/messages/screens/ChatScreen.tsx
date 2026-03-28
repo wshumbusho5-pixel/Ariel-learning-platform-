@@ -195,8 +195,7 @@ export function ChatScreen({ route, navigation }: Props): React.ReactElement {
 
         <MessageInput
           onSend={async (content, replyToId) => {
-            // TODO: pass replyToId to backend when API supports it
-            await sendMessage(content);
+            await sendMessage(content, replyToId);
           }}
           disabled={loading || !resolvedConvId}
           replyTo={replyTo}

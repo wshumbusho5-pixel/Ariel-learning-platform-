@@ -27,7 +27,7 @@ export interface UseChatSocketOptions {
 export interface UseChatSocketReturn {
   messages: MessageWithSender[];
   loading: boolean;
-  sendMessage: (content: string) => Promise<void>;
+  sendMessage: (content: string, replyToMessageId?: string) => Promise<void>;
   isConnected: boolean;
 }
 
@@ -167,11 +167,15 @@ export function useChatSocket({
 
   // ── sendMessage ───────────────────────────────────────────────────────────
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, replyToMessageId?: string) => {
     const trimmed = content.trim();
     if (!trimmed) return;
 
-    const sent = await apiSendMessage(conversationIdRef.current, trimmed);
+    const sent = await apiSendMessage(
+      conversationIdRef.current,
+      trimmed,
+      replyToMessageId ? { reply_to_message_id: replyToMessageId } : undefined,
+    );
     appendMessage(sent);
   }, [appendMessage]);
 
