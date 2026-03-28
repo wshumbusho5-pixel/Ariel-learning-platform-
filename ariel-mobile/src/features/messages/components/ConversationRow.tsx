@@ -6,6 +6,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '@/shared/constants/theme';
 import { timeAgo, parseUTC } from '@/shared/utils/time';
 import type { ConversationSummary } from '@/shared/types/message';
@@ -109,9 +110,11 @@ export function ConversationRow({
         onPress={onBuddyToggle}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Text style={[styles.starIcon, isBuddy && styles.starActive]}>
-          {isBuddy ? '★' : '☆'}
-        </Text>
+        <Ionicons
+          name={isBuddy ? 'star' : 'star-outline'}
+          size={18}
+          color={isBuddy ? '#fbbf24' : '#2f3336'}
+        />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -210,12 +213,5 @@ const styles = StyleSheet.create({
     padding: SPACING.xs,
     borderRadius: BORDER_RADIUS.full,
     flexShrink: 0,
-  },
-  starIcon: {
-    fontSize: 18,
-    color: COLORS.border,
-  },
-  starActive: {
-    color: '#fbbf24', // amber-400
   },
 });
