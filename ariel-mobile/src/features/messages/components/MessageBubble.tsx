@@ -50,26 +50,51 @@ function formatDateHeader(dateStr: string): string {
 }
 
 // ─── Read receipt indicator ──────────────────────────────────────────────────
+// 3 states:
+//   • read       → small violet dot (seen)
+//   • delivered  → double grey ticks (received but not opened)
+//   • sent       → single grey tick (on server, not yet received)
+//
+// Backend only tracks is_read. We treat "delivered" as: message exists
+// on server (it was POSTed successfully) so we show double grey by default.
+// Single tick only shows briefly while sending (optimistic), but since we
+// append after the API resolves, all messages here are at least "delivered".
+// We use the `delivered` prop so the parent can pass false for optimistic msgs.
 
-function ReadReceipt({ isRead }: { isRead: boolean }) {
+function ReadReceipt({ isRead, delivered = true }: { isRead: boolean; delivered?: boolean }) {
   if (isRead) {
-    // Double blue checkmark — read
+    // Violet dot — seen
     return (
       <View style={rs.container}>
-        <Ionicons name="checkmark-done" size={14} color="#60a5fa" />
+        <View style={rs.readDot} />
       </View>
     );
   }
-  // Single grey checkmark — sent
+  if (delivered) {
+    // Double grey ticks — delivered
+    return (
+      <View style={rs.container}>
+        <Ionicons name="checkmark-done" size={14} color="#71767b" />
+      </View>
+    );
+  }
+  // Single grey tick — sent but not delivered
   return (
     <View style={rs.container}>
-      <Ionicons name="checkmark" size={14} color="#71767b" />
+      <Ionicons name="checkmark" size={14} color="#52525b" />
     </View>
   );
 }
 
 const rs = StyleSheet.create({
   container: { marginLeft: 4, alignSelf: 'flex-end' },
+  readDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#7c3aed',
+    marginBottom: 1,
+  },
 });
 
 // ─── Sender avatar ──────────────────────────────────────────────────────────
