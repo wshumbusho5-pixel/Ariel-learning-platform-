@@ -1,119 +1,292 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY } from '@/shared/constants/theme';
-import { timeAgo } from '@/shared/utils/time';
 import type { MessageWithSender } from '@/shared/types/message';
+
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
+
+function resolveUri(uri?: string | null): string | null {
+  if (!uri) return null;
+  if (uri.startsWith('http')) return uri;
+  return `${API_BASE}${uri}`;
+}
 
 interface MessageBubbleProps {
   message: MessageWithSender;
   showTimestamp: boolean;
+  showAvatar?: boolean; // show sender face for received messages
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const MAX_BUBBLE_WIDTH = SCREEN_WIDTH * 0.75;
+const AVATAR_SIZE = 28;
+
+function formatTime(dateStr: string): string {
+  try {
+    const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+    const h = d.getHours();
+    const m = d.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+  } catch {
+    return '';
+  }
+}
+
+function formatDateHeader(dateStr: string): string {
+  try {
+    const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - d.getTime()) / 86_400_000);
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: diffDays > 365 ? 'numeric' : undefined });
+  } catch {
+    return '';
+  }
+}
+
+// ─── Read receipt indicator ──────────────────────────────────────────────────
+
+function ReadReceipt({ isRead }: { isRead: boolean }) {
+  if (isRead) {
+    // Double blue checkmark — read
+    return (
+      <View style={rs.container}>
+        <Ionicons name="checkmark-done" size={14} color="#60a5fa" />
+      </View>
+    );
+  }
+  // Single grey checkmark — sent
+  return (
+    <View style={rs.container}>
+      <Ionicons name="checkmark" size={14} color="#71767b" />
+    </View>
+  );
+}
+
+const rs = StyleSheet.create({
+  container: { marginLeft: 4, alignSelf: 'flex-end' },
+});
+
+// ─── Sender avatar ──────────────────────────────────────────────────────────
+
+function SenderAvatar({ uri, username }: { uri?: string | null; username?: string | null }) {
+  const resolved = resolveUri(uri);
+  const letter = (username ?? '?').charAt(0).toUpperCase();
+
+  if (resolved) {
+    return (
+      <Image
+        source={{ uri: resolved }}
+        style={avatarStyles.img}
+        contentFit="cover"
+        cachePolicy="memory-disk"
+      />
+    );
+  }
+  return (
+    <View style={[avatarStyles.img, avatarStyles.fallback]}>
+      <Text style={avatarStyles.letter}>{letter}</Text>
+    </View>
+  );
+}
+
+const avatarStyles = StyleSheet.create({
+  img: {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+  },
+  fallback: {
+    backgroundColor: '#1d1f23',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  letter: {
+    color: '#71767b',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+});
+
+// ─── Main component ─────────────────────────────────────────────────────────
 
 export function MessageBubble({
   message,
   showTimestamp,
+  showAvatar = true,
 }: MessageBubbleProps): React.ReactElement {
   const isSent = message.is_sent_by_current_user;
+  const time = formatTime(message.created_at);
 
   return (
-    <View style={[styles.wrapper, isSent ? styles.wrapperSent : styles.wrapperReceived]}>
-      {/* Timestamp (shown every 30 min) */}
+    <View style={styles.outer}>
+      {/* Date header (shown every 30 min) */}
       {showTimestamp && (
-        <Text style={styles.timestamp}>{timeAgo(message.created_at)}</Text>
-      )}
-
-      {/* Reply-to preview */}
-      {message.reply_to_content != null && (
-        <View style={[styles.replyPreview, isSent ? styles.replyPreviewSent : styles.replyPreviewReceived]}>
-          <Text style={styles.replyAuthor} numberOfLines={1}>
-            {message.reply_to_sender_username ?? 'Unknown'}
-          </Text>
-          <Text style={styles.replyText} numberOfLines={2}>
-            {message.reply_to_content}
-          </Text>
+        <View style={styles.dateHeaderRow}>
+          <View style={styles.dateHeaderLine} />
+          <Text style={styles.dateHeaderText}>{formatDateHeader(message.created_at)}</Text>
+          <View style={styles.dateHeaderLine} />
         </View>
       )}
 
-      {/* Bubble */}
-      <View style={[
-        styles.bubble,
-        isSent ? styles.bubbleSent : styles.bubbleReceived,
-        { maxWidth: MAX_BUBBLE_WIDTH },
-      ]}>
-        <Text style={styles.messageText}>{message.content}</Text>
+      {/* Message row */}
+      <View style={[styles.row, isSent ? styles.rowSent : styles.rowReceived]}>
+        {/* Sender avatar — only for received messages */}
+        {!isSent && showAvatar ? (
+          <View style={styles.avatarCol}>
+            <SenderAvatar uri={message.sender_profile_picture} username={message.sender_username} />
+          </View>
+        ) : !isSent ? (
+          <View style={styles.avatarSpacer} />
+        ) : null}
+
+        {/* Bubble */}
+        <View style={[
+          styles.bubble,
+          isSent ? styles.bubbleSent : styles.bubbleReceived,
+          { maxWidth: MAX_BUBBLE_WIDTH },
+        ]}>
+          {/* Reply preview */}
+          {message.reply_to_content != null && (
+            <View style={[styles.replyPreview, isSent ? styles.replyPreviewSent : styles.replyPreviewReceived]}>
+              <Text style={styles.replyAuthor} numberOfLines={1}>
+                {message.reply_to_sender_username ?? 'Unknown'}
+              </Text>
+              <Text style={styles.replyText} numberOfLines={2}>
+                {message.reply_to_content}
+              </Text>
+            </View>
+          )}
+
+          {/* Message text */}
+          <Text style={styles.messageText}>{message.content}</Text>
+
+          {/* Time + read receipt row */}
+          <View style={styles.metaRow}>
+            <Text style={[styles.timeText, isSent && styles.timeTextSent]}>{time}</Text>
+            {isSent && <ReadReceipt isRead={message.is_read} />}
+          </View>
+        </View>
       </View>
     </View>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  wrapper: {
-    marginVertical: 2,
+  outer: {
+    marginVertical: 1,
+  },
+
+  // Date header
+  dateHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
     marginHorizontal: SPACING.lg,
+    gap: 10,
   },
-  wrapperSent: {
+  dateHeaderLine: {
+    flex: 1,
+    height: 0.5,
+    backgroundColor: '#2f3336',
+  },
+  dateHeaderText: {
+    color: '#71767b',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
+  // Message row
+  row: {
+    flexDirection: 'row',
     alignItems: 'flex-end',
+    marginHorizontal: SPACING.md,
+    marginVertical: 1,
   },
-  wrapperReceived: {
-    alignItems: 'flex-start',
+  rowSent: {
+    justifyContent: 'flex-end',
   },
-  timestamp: {
-    color: COLORS.textMuted,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    marginBottom: SPACING.xs,
-    alignSelf: 'center',
-    marginVertical: SPACING.sm,
+  rowReceived: {
+    justifyContent: 'flex-start',
   },
-  // Sent bubble: violet, round except bottom-right
+
+  // Avatar
+  avatarCol: {
+    marginRight: 6,
+    marginBottom: 2,
+  },
+  avatarSpacer: {
+    width: AVATAR_SIZE + 6,
+  },
+
+  // Bubble
   bubble: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 6,
   },
   bubbleSent: {
-    backgroundColor: COLORS.violet[600], // #7c3aed
-    alignSelf: 'flex-end',
+    backgroundColor: COLORS.violet[600],
     borderRadius: 18,
     borderBottomRightRadius: 4,
   },
-  // Received bubble: dark zinc, round except bottom-left
   bubbleReceived: {
-    backgroundColor: COLORS.surface2, // #27272a
-    alignSelf: 'flex-start',
+    backgroundColor: '#1d1f23',
     borderRadius: 18,
     borderBottomLeftRadius: 4,
   },
+
   messageText: {
     color: '#ffffff',
-    fontSize: TYPOGRAPHY.fontSize.base,
-    lineHeight: TYPOGRAPHY.fontSize.base * 1.5,
+    fontSize: 15,
+    lineHeight: 21,
   },
+
+  // Time + read receipt
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 3,
+  },
+  timeText: {
+    color: 'rgba(255,255,255,0.45)',
+    fontSize: 10,
+  },
+  timeTextSent: {
+    color: 'rgba(255,255,255,0.55)',
+  },
+
   // Reply preview
   replyPreview: {
     borderLeftWidth: 3,
-    paddingLeft: SPACING.sm,
-    marginBottom: 4,
-    maxWidth: MAX_BUBBLE_WIDTH,
-    opacity: 0.75,
+    paddingLeft: 8,
+    marginBottom: 6,
+    paddingVertical: 4,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   replyPreviewSent: {
-    borderLeftColor: COLORS.violet[300],
+    borderLeftColor: 'rgba(255,255,255,0.4)',
   },
   replyPreviewReceived: {
-    borderLeftColor: COLORS.border,
+    borderLeftColor: '#7c3aed',
   },
   replyAuthor: {
-    color: COLORS.textSecondary,
-    fontSize: TYPOGRAPHY.fontSize.xs,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold as '600',
-    marginBottom: 2,
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 1,
   },
   replyText: {
-    color: COLORS.textMuted,
-    fontSize: TYPOGRAPHY.fontSize.xs,
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 11,
   },
 });

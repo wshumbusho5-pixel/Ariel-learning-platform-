@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { useChatSocket } from '@/features/messages/hooks/useChatSocket';
 import { markRead } from '@/features/messages/api/messagesApi';
 import { MessageBubble } from '@/features/messages/components/MessageBubble';
 import { MessageInput } from '@/features/messages/components/MessageInput';
+import { SwipeableMessage } from '@/features/messages/components/SwipeableMessage';
 import type { MessageWithSender } from '@/shared/types/message';
 import type { MessagesStackParamList } from '@/features/messages/MessagesNavigator';
 
@@ -87,6 +88,9 @@ export function ChatScreen({ route, navigation }: Props): React.ReactElement {
     otherUserId,
   });
 
+  // Reply state
+  const [replyTo, setReplyTo] = useState<MessageWithSender | null>(null);
+
   const flatListRef = useRef<FlatList<MessageWithSender>>(null);
 
   // Mark conversation as read on mount
@@ -97,12 +101,20 @@ export function ChatScreen({ route, navigation }: Props): React.ReactElement {
   }, [resolvedConvId]);
 
   const renderItem = useCallback(
-    ({ item, index }: { item: MessageWithSender; index: number }) => (
-      <MessageBubble
-        message={item}
-        showTimestamp={shouldShowTimestamp(messages, index)}
-      />
-    ),
+    ({ item, index }: { item: MessageWithSender; index: number }) => {
+      const prevMsg = messages[index + 1];
+      const showAvatar = !item.is_sent_by_current_user &&
+        (!prevMsg || prevMsg.is_sent_by_current_user || prevMsg.sender_id !== item.sender_id);
+      return (
+        <SwipeableMessage onReply={() => setReplyTo(item)}>
+          <MessageBubble
+            message={item}
+            showTimestamp={shouldShowTimestamp(messages, index)}
+            showAvatar={showAvatar}
+          />
+        </SwipeableMessage>
+      );
+    },
     [messages],
   );
 
@@ -181,7 +193,15 @@ export function ChatScreen({ route, navigation }: Props): React.ReactElement {
           />
         )}
 
-        <MessageInput onSend={sendMessage} disabled={loading} />
+        <MessageInput
+          onSend={async (content, replyToId) => {
+            // TODO: pass replyToId to backend when API supports it
+            await sendMessage(content);
+          }}
+          disabled={loading || !resolvedConvId}
+          replyTo={replyTo}
+          onCancelReply={() => setReplyTo(null)}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

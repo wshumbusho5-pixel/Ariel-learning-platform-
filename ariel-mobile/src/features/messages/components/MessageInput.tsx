@@ -1,22 +1,29 @@
 import React, { useState, useRef } from 'react';
 import {
   View,
+  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '@/shared/constants/theme';
-
-// ─── Paper-plane SVG via Text (emoji fallback) or inline ─────────────────────
-// Using a Unicode send icon since react-native-vector-icons may not be available
+import type { MessageWithSender } from '@/shared/types/message';
 
 interface MessageInputProps {
-  onSend: (text: string) => Promise<void>;
+  onSend: (text: string, replyToId?: string) => Promise<void>;
   disabled?: boolean;
+  replyTo?: MessageWithSender | null;
+  onCancelReply?: () => void;
 }
 
-export function MessageInput({ onSend, disabled = false }: MessageInputProps): React.ReactElement {
+export function MessageInput({
+  onSend,
+  disabled = false,
+  replyTo,
+  onCancelReply,
+}: MessageInputProps): React.ReactElement {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -26,12 +33,13 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps): R
   const handleSend = async () => {
     if (!canSend) return;
     const content = text.trim();
+    const replyId = replyTo?.id;
     setText('');
+    onCancelReply?.();
     setSending(true);
     try {
-      await onSend(content);
+      await onSend(content, replyId);
     } catch {
-      // Restore text on failure
       setText(content);
     } finally {
       setSending(false);
@@ -40,13 +48,36 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps): R
 
   return (
     <View style={styles.container}>
+      {/* Reply preview banner */}
+      {replyTo && (
+        <View style={styles.replyBanner}>
+          <View style={styles.replyBannerLeft}>
+            <View style={styles.replyBannerAccent} />
+            <View style={styles.replyBannerContent}>
+              <Text style={styles.replyBannerAuthor} numberOfLines={1}>
+                {replyTo.sender_username ?? 'Unknown'}
+              </Text>
+              <Text style={styles.replyBannerText} numberOfLines={1}>
+                {replyTo.content}
+              </Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            onPress={onCancelReply}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="close" size={18} color="#71767b" />
+          </TouchableOpacity>
+        </View>
+      )}
+
       <View style={styles.inputRow}>
         <TextInput
           ref={inputRef}
           style={styles.input}
           value={text}
           onChangeText={setText}
-          placeholder="Message..."
+          placeholder={replyTo ? 'Reply...' : 'Message...'}
           placeholderTextColor={COLORS.textMuted}
           multiline
           maxLength={2000}
@@ -64,11 +95,7 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps): R
           {sending ? (
             <ActivityIndicator size="small" color="#ffffff" />
           ) : (
-            // Paper-plane icon via unicode
-            <View style={styles.sendIconContainer}>
-              {/* Inline SVG path is not directly renderable; use Text with Unicode */}
-              <SendIcon active={canSend} />
-            </View>
+            <Ionicons name="send" size={18} color={canSend ? '#fff' : COLORS.textMuted} />
           )}
         </TouchableOpacity>
       </View>
@@ -76,69 +103,51 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps): R
   );
 }
 
-// ─── Minimal paper-plane icon using View geometry ────────────────────────────
-
-function SendIcon({ active }: { active: boolean }): React.ReactElement {
-  // Unicode paper plane: ✈  (U+2708) or use ➤
-  // Using a simple rotated text as fallback
-  return (
-    <View style={iconStyles.wrapper}>
-      <View style={[iconStyles.body, active ? iconStyles.bodyActive : iconStyles.bodyInactive]} />
-      <View style={[iconStyles.wing, active ? iconStyles.wingActive : iconStyles.wingInactive]} />
-    </View>
-  );
-}
-
-const iconStyles = StyleSheet.create({
-  wrapper: {
-    width: 20,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    width: 0,
-    height: 0,
-    borderStyle: 'solid',
-    borderLeftWidth: 0,
-    borderRightWidth: 14,
-    borderTopWidth: 7,
-    borderBottomWidth: 7,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-  },
-  bodyActive: {
-    borderRightColor: '#ffffff',
-  },
-  bodyInactive: {
-    borderRightColor: COLORS.textMuted,
-  },
-  wing: {
-    position: 'absolute',
-    bottom: 3,
-    left: 2,
-    width: 8,
-    height: 2,
-    borderRadius: 1,
-  },
-  wingActive: {
-    backgroundColor: '#ffffff',
-  },
-  wingInactive: {
-    backgroundColor: COLORS.textMuted,
-  },
-});
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: '#000',
     borderTopWidth: 1,
-    borderTopColor: COLORS.borderSubtle,
+    borderTopColor: '#2f3336',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
+
+  // Reply banner
+  replyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 8,
+    marginBottom: 4,
+  },
+  replyBannerLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    minWidth: 0,
+  },
+  replyBannerAccent: {
+    width: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#7c3aed',
+    marginRight: 8,
+  },
+  replyBannerContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  replyBannerAuthor: {
+    color: '#7c3aed',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 1,
+  },
+  replyBannerText: {
+    color: '#71767b',
+    fontSize: 12,
+  },
+
+  // Input row
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -146,14 +155,14 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: COLORS.surface2,
+    backgroundColor: '#16181c',
     borderWidth: 1,
-    borderColor: COLORS.borderSubtle,
+    borderColor: '#2f3336',
     borderRadius: BORDER_RADIUS.xl,
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.sm,
-    color: COLORS.textPrimary,
+    color: '#e7e9ea',
     fontSize: TYPOGRAPHY.fontSize.base,
     maxHeight: 100,
     minHeight: 40,
@@ -170,10 +179,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.violet[600],
   },
   sendButtonInactive: {
-    backgroundColor: COLORS.surface2,
-  },
-  sendIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#16181c',
   },
 });

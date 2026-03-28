@@ -135,6 +135,17 @@ function FeedTopBar({ isShort }: { isShort: boolean }) {
   const user = useAuthStore((s) => s.user);
   const navigation = useNavigation<FeedNavProp>();
   const [imgErr, setImgErr] = useState(false);
+
+  // Poll unread message count
+  const { data: unreadCount } = useQuery({
+    queryKey: ['messages', 'unread-count'],
+    queryFn: async () => {
+      const res = await apiClient.get<{ unread_count: number }>('/api/messages/unread-count');
+      return res.data.unread_count;
+    },
+    refetchInterval: 15_000,
+    staleTime: 10_000,
+  });
   const hasAvatar = !!user?.profile_picture && !imgErr;
   const displayName = user?.username ?? user?.full_name ?? 'You';
 
@@ -174,7 +185,16 @@ function FeedTopBar({ isShort }: { isShort: boolean }) {
             <Ionicons name="search" size={isShort ? 20 : 23} color="#e7e9ea" />
           </TouchableOpacity>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Messages')}>
-            <Ionicons name="chatbubble" size={isShort ? 19 : 22} color="#e7e9ea" />
+            <View>
+              <Ionicons name="chatbubble" size={isShort ? 19 : 22} color="#e7e9ea" />
+              {(unreadCount ?? 0) > 0 && (
+                <View style={ss.unreadBadge}>
+                  <Text style={ss.unreadBadgeText}>
+                    {(unreadCount ?? 0) > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => navigation.navigate('Notifications')}>
             <Ionicons name="notifications" size={isShort ? 20 : 23} color="#e7e9ea" />
@@ -483,4 +503,25 @@ const ss = StyleSheet.create({
   },
   subjectChipText: { color: '#71767b', fontSize: 13, fontWeight: '600' },
   subjectChipTextActive: { color: '#a78bfa' },
+
+  // Unread message badge
+  unreadBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -7,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#7c3aed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#000',
+  },
+  unreadBadgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '800',
+  },
 });
