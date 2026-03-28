@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { SUBJECT_META } from '@/shared/constants/subjects';
 import type { SubjectKey } from '@/shared/constants/subjects';
@@ -31,7 +32,7 @@ export function SubjectPill({ subjectKey, selected, onToggle }: SubjectPillProps
       onPress={() => onToggle(subjectKey)}
       activeOpacity={0.7}
     >
-      <Text style={styles.icon}>{meta.icon}</Text>
+      <Ionicons name={meta.icon as any} size={13} color={selected ? color : COLORS.textSecondary} />
       <Text style={[styles.label, { color: selected ? color : COLORS.textSecondary }]}>
         {meta.short}
       </Text>
@@ -51,9 +52,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     gap: 4,
     margin: 3,
-  },
-  icon: {
-    fontSize: 13,
   },
   label: {
     fontSize: TYPOGRAPHY.fontSize.xs,

@@ -31,9 +31,12 @@ export function SubjectPicker({ value, onChange }: SubjectPickerProps) {
         onPress={() => setOpen((o) => !o)}
         activeOpacity={0.7}
       >
-        <Text style={styles.triggerText}>
-          {selected ? `${selected.icon} ${selected.label}` : 'Select subject\u2026'}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {selected && <Ionicons name={selected.icon as any} size={14} color="#d4d4d8" />}
+          <Text style={styles.triggerText}>
+            {selected ? selected.label : 'Select subject\u2026'}
+          </Text>
+        </View>
         <Ionicons
           name={open ? 'chevron-up' : 'chevron-down'}
           size={16}
@@ -55,9 +58,10 @@ export function SubjectPicker({ value, onChange }: SubjectPickerProps) {
               style={[styles.option, value === s.key && styles.optionActive]}
               onPress={() => { onChange(s.key); setOpen(false); }}
             >
-              <Text style={styles.optionText}>
-                {s.icon} {s.label}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name={s.icon as any} size={14} color="#d4d4d8" />
+                <Text style={styles.optionText}>{s.label}</Text>
+              </View>
             </TouchableOpacity>
           ))}
         </ScrollView>

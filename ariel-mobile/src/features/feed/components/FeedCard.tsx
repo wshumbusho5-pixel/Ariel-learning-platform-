@@ -317,9 +317,10 @@ export function FeedCard({ card }: FeedCardProps) {
                 <Text style={[s.cardLabel, { color: flipped ? '#a78bfa' : subjectColor }]}>
                   {flipped ? 'Answer' : 'Question'}
                 </Text>
-                <Text style={s.subjectChip}>
-                  {meta.icon} {meta.short}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                  <Ionicons name={meta.icon as any} size={10} color="#a1a1aa" />
+                  <Text style={s.subjectChip}>{meta.short}</Text>
+                </View>
               </View>
 
               {/* Main text — responsive size */}

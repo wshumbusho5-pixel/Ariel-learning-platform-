@@ -15,7 +15,10 @@ export function CardRow({ card, onPress }: { card: TrendingCard; onPress: () => 
         <Text style={styles.q} numberOfLines={2}>{card.question}</Text>
         <View style={styles.meta}>
           <View style={[styles.pill, { backgroundColor: meta.color + '22', borderColor: meta.color + '55' }]}>
-            <Text style={[styles.pillText, { color: meta.color }]}>{meta.icon} {meta.short}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              <Ionicons name={meta.icon as any} size={10} color={meta.color} />
+              <Text style={[styles.pillText, { color: meta.color }]}>{meta.short}</Text>
+            </View>
           </View>
           {card.author_username && <Text style={styles.author}>@{card.author_username}</Text>}
         </View>

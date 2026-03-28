@@ -16,7 +16,10 @@ export function TrendingRow({ card, rank, onPress }: { card: TrendingCard; rank?
         <Text style={styles.q} numberOfLines={2}>{card.question}</Text>
         <View style={styles.meta}>
           <View style={[styles.subjectPill, { backgroundColor: meta.color + '22', borderColor: meta.color + '55' }]}>
-            <Text style={[styles.subjectText, { color: meta.color }]}>{meta.icon} {meta.short}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              <Ionicons name={meta.icon as any} size={10} color={meta.color} />
+              <Text style={[styles.subjectText, { color: meta.color }]}>{meta.short}</Text>
+            </View>
           </View>
           {card.author_username && (
             <Text style={styles.author} numberOfLines={1}>@{card.author_username}</Text>

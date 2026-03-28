@@ -118,7 +118,7 @@ function SubjectFilterRow({
             onPress={() => onSelect(subKey)}
             activeOpacity={0.7}
           >
-            <Text style={{ fontSize: 12 }}>{meta.icon}</Text>
+            <Ionicons name={meta.icon as any} size={12} color={meta.color} />
             <Text style={[ss.subjectChipText, isActive && { color: meta.color }]}>
               {meta.short}
             </Text>

@@ -27,7 +27,10 @@ export function CardViewerModal({ card, onClose }: { card: TrendingCard | null; 
         {/* Subject + author */}
         <View style={styles.sheetHeader}>
           <View style={[styles.subjectPill, { backgroundColor: meta.color + '22', borderColor: meta.color + '55' }]}>
-            <Text style={[styles.subjectText, { color: meta.color }]}>{meta.icon} {meta.short}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ionicons name={meta.icon as any} size={12} color={meta.color} />
+              <Text style={[styles.subjectText, { color: meta.color }]}>{meta.short}</Text>
+            </View>
           </View>
           {card.author_username && (
             <Text style={styles.author}>@{card.author_username}</Text>

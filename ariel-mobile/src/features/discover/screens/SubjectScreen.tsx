@@ -68,9 +68,12 @@ export function SubjectScreen({ navigation, route }: SubjectScreenProps) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={a.backBtn} activeOpacity={0.8}>
           <Ionicons name="arrow-back" size={20} color="#ffffff" />
         </TouchableOpacity>
-        <Text style={[a.headerTitle, { color: meta.color }]} numberOfLines={1}>
-          {meta.icon}  {meta.label}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+          <Ionicons name={meta.icon as any} size={16} color={meta.color} />
+          <Text style={[a.headerTitle, { color: meta.color }]} numberOfLines={1}>
+            {meta.label}
+          </Text>
+        </View>
       </View>
 
       {loading ? (
@@ -80,7 +83,7 @@ export function SubjectScreen({ navigation, route }: SubjectScreenProps) {
         </View>
       ) : error ? (
         <View style={a.center}>
-          <Text style={{ fontSize: 40 }}>{meta.icon}</Text>
+          <Ionicons name={meta.icon as any} size={40} color={meta.color} />
           <Text style={a.stateTitle}>Couldn't load cards</Text>
           <TouchableOpacity onPress={load} style={a.retryBtn}>
             <Text style={a.retryText}>Try again</Text>
@@ -88,7 +91,7 @@ export function SubjectScreen({ navigation, route }: SubjectScreenProps) {
         </View>
       ) : cards.length === 0 ? (
         <View style={a.center}>
-          <Text style={{ fontSize: 48 }}>{meta.icon}</Text>
+          <Ionicons name={meta.icon as any} size={48} color={meta.color} />
           <Text style={a.stateTitle}>No {meta.label} cards yet</Text>
           <Text style={a.stateSub}>Be the first to create one.</Text>
         </View>

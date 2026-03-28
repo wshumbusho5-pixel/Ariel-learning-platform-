@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SUBJECT_META } from '@/shared/constants/subjects';
 import type { SubjectKey } from '@/shared/constants/subjects';
 
@@ -15,7 +16,7 @@ export function SubjectTile({ subjectKey, onPress }: { subjectKey: SubjectKey; o
       activeOpacity={0.75}
       style={[styles.tile, { backgroundColor: meta.color + '22', borderColor: meta.color + '55' }]}
     >
-      <Text style={styles.emoji}>{meta.icon}</Text>
+      <Ionicons name={meta.icon as any} size={22} color={meta.color} />
       <Text style={styles.label} numberOfLines={1}>{meta.short}</Text>
     </TouchableOpacity>
   );

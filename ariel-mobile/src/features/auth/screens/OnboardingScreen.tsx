@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/shared/navigation/RootNavigator';
+import { Ionicons } from '@expo/vector-icons';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '@/shared/auth/authStore';
 import { CANONICAL_SUBJECT_KEYS, SUBJECT_META } from '@/shared/constants/subjects';
@@ -241,7 +242,7 @@ function SubjectStep({
                 { padding: isShort ? 10 : 14 },
               ]}
             >
-              <Text style={styles.subjectEmoji}>{meta.icon}</Text>
+              <Ionicons name={meta.icon as any} size={22} color={meta.color} />
               <Text
                 style={[
                   styles.subjectLabel,

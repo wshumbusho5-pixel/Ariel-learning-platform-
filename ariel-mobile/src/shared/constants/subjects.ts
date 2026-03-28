@@ -1,6 +1,6 @@
 /**
  * Subjects constants for React Native — ported from ariel-web/lib/subjects.ts.
- * No HTML/DOM dependencies. Icon map uses emoji strings.
+ * No HTML/DOM dependencies. Icon map uses Ionicons name strings.
  */
 
 export const CANONICAL_SUBJECT_KEYS = [
@@ -123,26 +123,26 @@ export interface SubjectMeta {
   short: string;
   color: string;   // Hex color for React Native (no Tailwind gradient)
   keywords: string[];
-  icon: string;    // Emoji icon
+  icon: string;    // Ionicons name string
 }
 
 export const SUBJECT_META: Record<SubjectKey, SubjectMeta> = {
-  gospel:      { label: 'Gospel & Faith',   short: 'Gospel',    color: '#fbbf24', keywords: ['bible','gospel','faith','theology','scripture','church','religion'],    icon: '✝️' },
-  business:    { label: 'Business',          short: 'Business',  color: '#38bdf8', keywords: ['business','marketing','finance','management','accounting','sales'],     icon: '💼' },
-  economics:   { label: 'Economics',         short: 'Economics', color: '#a78bfa', keywords: ['economics','gdp','inflation','trade','monetary','fiscal','economy'],    icon: '📈' },
-  technology:  { label: 'Technology',        short: 'Tech',      color: '#a1a1aa', keywords: ['programming','software','coding','javascript','python','ai','data'],    icon: '💻' },
-  health:      { label: 'Health & Medicine', short: 'Health',    color: '#f87171', keywords: ['health','medicine','anatomy','nutrition','fitness','psychology'],       icon: '🏥' },
-  mathematics: { label: 'Mathematics',       short: 'Maths',     color: '#818cf8', keywords: ['mathematics','calculus','algebra','geometry','statistics','math'],      icon: '∑' },
-  sciences:    { label: 'Sciences',          short: 'Sciences',  color: '#34d399', keywords: ['biology','chemistry','physics','science','lab'],                        icon: '🔬' },
-  history:     { label: 'History',           short: 'History',   color: '#fbbf24', keywords: ['history','historical','civilization','war','ancient'],                  icon: '🏛️' },
-  literature:  { label: 'Literature',        short: 'Lit',       color: '#fb923c', keywords: ['literature','english','writing','poetry','novel'],                      icon: '📚' },
-  languages:   { label: 'Languages',         short: 'Languages', color: '#2dd4bf', keywords: ['language','french','spanish','swahili','grammar','vocabulary'],         icon: '🌐' },
-  law:         { label: 'Law',               short: 'Law',       color: '#94a3b8', keywords: ['law','legal','constitution','rights','court'],                          icon: '⚖️' },
-  arts:        { label: 'Arts & Music',      short: 'Arts',      color: '#e879f9', keywords: ['art','music','design','creative','paint'],                              icon: '🎨' },
-  psychology:  { label: 'Psychology',        short: 'Psych',     color: '#22d3ee', keywords: ['psychology','mental','behavior','cognitive','therapy'],                 icon: '🧠' },
-  engineering: { label: 'Engineering',       short: 'Eng.',      color: '#facc15', keywords: ['engineering','mechanical','electrical','civil','structure'],             icon: '⚙️' },
-  geography:   { label: 'Geography',         short: 'Geography', color: '#a3e635', keywords: ['geography','map','climate','continent','country'],                      icon: '🗺️' },
-  other:       { label: 'General',           short: 'General',   color: '#71717a', keywords: [],                                                                       icon: '📖' },
+  gospel:      { label: 'Gospel & Faith',   short: 'Gospel',    color: '#fbbf24', keywords: ['bible','gospel','faith','theology','scripture','church','religion'],    icon: 'book' },
+  business:    { label: 'Business',          short: 'Business',  color: '#38bdf8', keywords: ['business','marketing','finance','management','accounting','sales'],     icon: 'briefcase' },
+  economics:   { label: 'Economics',         short: 'Economics', color: '#a78bfa', keywords: ['economics','gdp','inflation','trade','monetary','fiscal','economy'],    icon: 'trending-up' },
+  technology:  { label: 'Technology',        short: 'Tech',      color: '#a1a1aa', keywords: ['programming','software','coding','javascript','python','ai','data'],    icon: 'code-slash' },
+  health:      { label: 'Health & Medicine', short: 'Health',    color: '#f87171', keywords: ['health','medicine','anatomy','nutrition','fitness','psychology'],       icon: 'fitness' },
+  mathematics: { label: 'Mathematics',       short: 'Maths',     color: '#818cf8', keywords: ['mathematics','calculus','algebra','geometry','statistics','math'],      icon: 'calculator' },
+  sciences:    { label: 'Sciences',          short: 'Sciences',  color: '#34d399', keywords: ['biology','chemistry','physics','science','lab'],                        icon: 'flask' },
+  history:     { label: 'History',           short: 'History',   color: '#fbbf24', keywords: ['history','historical','civilization','war','ancient'],                  icon: 'time' },
+  literature:  { label: 'Literature',        short: 'Lit',       color: '#fb923c', keywords: ['literature','english','writing','poetry','novel'],                      icon: 'document-text' },
+  languages:   { label: 'Languages',         short: 'Languages', color: '#2dd4bf', keywords: ['language','french','spanish','swahili','grammar','vocabulary'],         icon: 'language' },
+  law:         { label: 'Law',               short: 'Law',       color: '#94a3b8', keywords: ['law','legal','constitution','rights','court'],                          icon: 'shield-checkmark' },
+  arts:        { label: 'Arts & Music',      short: 'Arts',      color: '#e879f9', keywords: ['art','music','design','creative','paint'],                              icon: 'color-palette' },
+  psychology:  { label: 'Psychology',        short: 'Psych',     color: '#22d3ee', keywords: ['psychology','mental','behavior','cognitive','therapy'],                 icon: 'bulb' },
+  engineering: { label: 'Engineering',       short: 'Eng.',      color: '#facc15', keywords: ['engineering','mechanical','electrical','civil','structure'],             icon: 'construct' },
+  geography:   { label: 'Geography',         short: 'Geography', color: '#a3e635', keywords: ['geography','map','climate','continent','country'],                      icon: 'globe' },
+  other:       { label: 'General',           short: 'General',   color: '#71717a', keywords: [],                                                                       icon: 'library' },
 };
 
 export const TOPICS_BY_SUBJECT: Record<string, Record<string, string[]>> = {

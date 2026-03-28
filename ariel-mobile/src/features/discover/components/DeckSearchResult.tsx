@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SUBJECT_META, normalizeSubjectKey } from '@/shared/constants/subjects';
 import { COLORS, SPACING, BORDER_RADIUS, TYPOGRAPHY } from '@/shared/constants/theme';
 import type { DeckPost } from '@/shared/types/deck';
@@ -52,9 +53,10 @@ export function DeckSearchResult({ deck, onPress }: DeckSearchResultProps): Reac
             { backgroundColor: `${color}22`, borderColor: `${color}55` },
           ]}
         >
-          <Text style={[styles.subjectTagText, { color }]}>
-            {meta.icon}  {meta.short}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Ionicons name={meta.icon as any} size={11} color={color} />
+            <Text style={[styles.subjectTagText, { color }]}>{meta.short}</Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>

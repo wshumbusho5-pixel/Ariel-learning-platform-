@@ -92,12 +92,15 @@ export function RegisterScreen({ navigation }: Props): React.ReactElement {
       });
       await loginStore(res.access_token, res.user);
     } catch (err: any) {
+      console.error('Registration error:', JSON.stringify(err?.response?.data ?? err?.message ?? err, null, 2));
       const detail = err?.response?.data?.detail;
       const msg =
         typeof detail === 'string'
           ? detail
           : Array.isArray(detail)
           ? detail.map((d: any) => d.msg).join('\n')
+          : err?.message === 'Network Error'
+          ? `Cannot reach server at ${process.env.EXPO_PUBLIC_API_BASE_URL}. Check that the backend is running.`
           : 'Registration failed. Please try again.';
       Alert.alert('Sign up failed', msg);
     } finally {

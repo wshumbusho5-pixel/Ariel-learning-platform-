@@ -101,14 +101,15 @@ export function CardSlide({
 
         {/* Subject + progress row */}
         <View style={[styles.metaRow, { marginBottom: sp }]}>
-          <Text style={styles.subjectLabel} numberOfLines={1}>
-            <Text style={[styles.subjectName, { color: meta.color }]}>
-              {meta.icon}  {meta.label.toUpperCase()}
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 5 }}>
+            <Ionicons name={meta.icon as any} size={11} color={meta.color} />
+            <Text style={[styles.subjectName, { color: meta.color }]} numberOfLines={1}>
+              {meta.label.toUpperCase()}
             </Text>
             {card.topic ? (
-              <Text style={styles.topicName}>{'  ·  '}{card.topic.toUpperCase()}</Text>
+              <Text style={styles.topicName} numberOfLines={1}>{'  ·  '}{card.topic.toUpperCase()}</Text>
             ) : null}
-          </Text>
+          </View>
           <Text style={styles.progress}>{index + 1}/{totalCount}</Text>
         </View>
 

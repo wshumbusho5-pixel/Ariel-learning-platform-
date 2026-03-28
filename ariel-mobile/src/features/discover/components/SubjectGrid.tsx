@@ -8,6 +8,7 @@ import {
   Dimensions,
   ListRenderItemInfo,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import {
   CANONICAL_SUBJECT_KEYS,
   SUBJECT_META,
@@ -46,7 +47,7 @@ function SubjectTile({ subjectKey, onPress }: SubjectTileProps) {
         },
       ]}
     >
-      <Text style={tileStyles.emoji}>{meta.icon}</Text>
+      <Ionicons name={meta.icon as any} size={20} color={color} />
       <Text style={tileStyles.label} numberOfLines={1}>
         {meta.short}
       </Text>
