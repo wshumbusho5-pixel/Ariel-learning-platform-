@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
+import { useAuthStore } from '@/shared/auth/authStore';
 import {
   getUserProfile,
   followUser,
@@ -11,6 +12,7 @@ import {
 
 export function useProfile(userId: string) {
   const queryClient = useQueryClient();
+  const currentUserId = useAuthStore((s) => s.user?.id);
   const queryKey = QUERY_KEYS.PROFILE.user(userId);
 
   const {
@@ -58,7 +60,13 @@ export function useProfile(userId: string) {
     },
 
     onSettled: () => {
+      // Refresh the target user's profile (their follower count changed)
       queryClient.invalidateQueries({ queryKey });
+      // Also refresh current user's own profile (their following count changed)
+      if (currentUserId) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PROFILE.user(currentUserId) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PROFILE.me() });
+      }
     },
   });
 

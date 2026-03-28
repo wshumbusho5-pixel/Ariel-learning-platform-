@@ -113,7 +113,7 @@ export function MyProfileScreen() {
     queryKey: QUERY_KEYS.PROFILE.user(user?.id ?? ''),
     queryFn: () => getUserProfile(user!.id!),
     enabled: Boolean(user?.id),
-    staleTime: 30_000,
+    staleTime: 5_000,
   });
 
   const handleRefresh = useCallback(async () => {

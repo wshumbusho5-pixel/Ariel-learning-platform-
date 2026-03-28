@@ -55,17 +55,35 @@ function shouldShowTimestamp(
 
 export function ChatScreen({ route, navigation }: Props): React.ReactElement {
   const {
-    conversationId,
+    conversationId: initialConvId,
     otherUserId,
     otherUsername,
     otherProfilePicture,
   } = route.params;
 
-  // conversationId may be undefined on first open (create on send)
-  const resolvedConvId = conversationId ?? otherUserId;
+  // If no conversationId was passed, create/fetch one from the backend
+  const [resolvedConvId, setResolvedConvId] = React.useState<string | null>(initialConvId ?? null);
+  const [convLoading, setConvLoading] = React.useState(!initialConvId);
+
+  React.useEffect(() => {
+    if (initialConvId) return; // already have one
+    let cancelled = false;
+    (async () => {
+      try {
+        const conv = await require('@/features/messages/api/messagesApi').getConversation(otherUserId);
+        if (!cancelled) {
+          setResolvedConvId(conv.id);
+          setConvLoading(false);
+        }
+      } catch {
+        if (!cancelled) setConvLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [initialConvId, otherUserId]);
 
   const { messages, loading, sendMessage, isConnected } = useChatSocket({
-    conversationId: resolvedConvId,
+    conversationId: resolvedConvId ?? '__pending__',
     otherUserId,
   });
 
@@ -73,10 +91,10 @@ export function ChatScreen({ route, navigation }: Props): React.ReactElement {
 
   // Mark conversation as read on mount
   useEffect(() => {
-    if (conversationId) {
-      markRead(conversationId).catch(() => {});
+    if (resolvedConvId) {
+      markRead(resolvedConvId).catch(() => {});
     }
-  }, [conversationId]);
+  }, [resolvedConvId]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: MessageWithSender; index: number }) => (
