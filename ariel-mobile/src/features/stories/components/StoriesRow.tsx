@@ -21,7 +21,7 @@ interface StatusItem {
 }
 
 export function StoriesRow(): React.ReactElement {
-  const { storyGroups, isGroupSeen } = useStories();
+  const { storyGroups, myStoryGroup, isGroupSeen } = useStories();
   const navigation = useNavigation<NavProp>();
   const user = useAuthStore((s) => s.user);
 
@@ -32,37 +32,40 @@ export function StoriesRow(): React.ReactElement {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Merge story groups + followed users into a single list
+  // Merge story groups + followed users into a single list (exclude self)
   const statusItems = useMemo<StatusItem[]>(() => {
+    const selfId = user?.id;
     const storyUserIds = new Set(storyGroups.map((g) => g.user_id));
 
-    // Users with stories — sorted unseen first
-    const withStories: StatusItem[] = storyGroups.map((group, index) => ({
-      userId: group.user_id,
-      username: group.username ?? group.full_name,
-      profilePicture: group.profile_picture,
-      hasStory: true,
-      storyGroupIndex: index,
-      seen: isGroupSeen(group),
-    }));
+    // Users with stories — exclude self (shown separately)
+    const withStories: StatusItem[] = storyGroups
+      .filter((g) => g.user_id !== selfId)
+      .map((group, index) => ({
+        userId: group.user_id,
+        username: group.username ?? group.full_name,
+        profilePicture: group.profile_picture,
+        hasStory: true,
+        // Find the real index in the full storyGroups array for StoryViewer
+        storyGroupIndex: storyGroups.findIndex((g) => g.user_id === group.user_id),
+        seen: isGroupSeen(group),
+      }));
 
-    // Followed users without stories
+    // Followed users without stories (exclude self)
     const withoutStories: StatusItem[] = (following ?? [])
-      .filter((f) => f.id && !storyUserIds.has(f.id))
+      .filter((f) => f.id && f.id !== selfId && !storyUserIds.has(f.id))
       .map((f) => ({
         userId: f.id,
         username: f.username ?? f.full_name,
         profilePicture: f.profile_picture,
         hasStory: false,
         storyGroupIndex: null,
-        seen: true, // no story = always "seen" (no ring)
+        seen: true,
       }));
 
-    // Unseen stories first, then seen stories, then followed without stories
     const unseenStories = withStories.filter((s) => !s.seen);
     const seenStories = withStories.filter((s) => s.seen);
     return [...unseenStories, ...seenStories, ...withoutStories];
-  }, [storyGroups, following, isGroupSeen]);
+  }, [storyGroups, following, isGroupSeen, user?.id]);
 
   function handlePress(item: StatusItem) {
     if (item.hasStory && item.storyGroupIndex !== null) {
@@ -83,15 +86,19 @@ export function StoriesRow(): React.ReactElement {
       contentContainerStyle={styles.scrollContent}
       style={styles.container}
     >
-      {/* "Your story" add button */}
+      {/* Your story — shows ring if you have active stories */}
       <View style={styles.item}>
         <StoryRing
           profilePicture={user?.profile_picture ?? null}
-          username={null}
+          username={myStoryGroup ? 'Your story' : null}
           seen={true}
+          showRing={!!myStoryGroup}
           size={56}
           showAddButton
-          onPress={handleAddStoryPress}
+          onPress={myStoryGroup
+            ? () => navigation.navigate('StoryViewer', { groupIndex: 0 })
+            : handleAddStoryPress
+          }
         />
       </View>
 
