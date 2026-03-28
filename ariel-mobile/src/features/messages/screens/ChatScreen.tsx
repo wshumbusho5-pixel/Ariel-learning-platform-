@@ -291,7 +291,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingVertical: SPACING.sm,
-    paddingBottom: SPACING.lg,
   },
   center: {
     flex: 1,
