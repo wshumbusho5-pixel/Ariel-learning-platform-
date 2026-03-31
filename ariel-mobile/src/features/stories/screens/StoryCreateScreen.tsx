@@ -15,7 +15,6 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useQueryClient } from '@tanstack/react-query';
 import { createStory } from '@/features/stories/api/storiesApi';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '@/shared/constants/theme';
 import { StoryType, StoryVisibility } from '@/shared/types/story';
@@ -62,7 +61,6 @@ export function StoryCreateScreen(): React.ReactElement {
   const isShort = H < 720;
   const navigation = useNavigation<NavProp>();
 
-  const queryClient = useQueryClient();
   const [mode, setMode] = useState<StoryMode>('text');
   const [textContent, setTextContent] = useState('');
   const [selectedGradient, setSelectedGradient] = useState<GradientPreset>(GRADIENT_PRESETS[0]);
@@ -94,14 +92,9 @@ export function StoryCreateScreen(): React.ReactElement {
           visibility: StoryVisibility.FOLLOWERS,
         });
       }
-      // Invalidate AND refetch stories cache so the ring updates immediately
-      await queryClient.invalidateQueries({ queryKey: ['stories'] });
-      await queryClient.refetchQueries({ queryKey: ['stories', 'mine'] });
       navigation.goBack();
-    } catch (err: any) {
-      console.error('Story create error:', err?.response?.data ?? err?.message ?? err);
-      const msg = err?.response?.data?.detail?.[0]?.msg ?? err?.message ?? 'Failed to share story.';
-      Alert.alert('Error', typeof msg === 'string' ? msg : 'Failed to share story. Please try again.');
+    } catch {
+      Alert.alert('Error', 'Failed to share story. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

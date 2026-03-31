@@ -86,16 +86,19 @@ export function StoriesRow(): React.ReactElement {
       contentContainerStyle={styles.scrollContent}
       style={styles.container}
     >
-      {/* Your story — always shows + badge, ring active when you have stories */}
+      {/* Your story — shows ring if you have active stories */}
       <View style={styles.item}>
         <StoryRing
           profilePicture={user?.profile_picture ?? null}
-          username={myStoryGroup ? 'Your story' : 'Add story'}
-          seen={!myStoryGroup} // unseen ring color when you have active stories
+          username={myStoryGroup ? 'Your story' : null}
+          seen={true}
           showRing={!!myStoryGroup}
           size={56}
           showAddButton
-          onPress={handleAddStoryPress}
+          onPress={myStoryGroup
+            ? () => navigation.navigate('StoryViewer', { groupIndex: 0 })
+            : handleAddStoryPress
+          }
         />
       </View>
 

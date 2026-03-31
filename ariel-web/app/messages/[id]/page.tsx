@@ -423,7 +423,7 @@ export default function ConversationPage() {
         {/* Messages */}
         <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto px-3 py-4"
+          className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4"
           style={{ WebkitOverflowScrolling: 'touch', background: '#000000' }}
           onScroll={e => {
             const el = e.currentTarget;
@@ -481,7 +481,7 @@ export default function ConversationPage() {
 
                     {/* Message row — swipe right to reply */}
                     <div
-                      className="relative"
+                      className="relative overflow-hidden"
                       onTouchStart={(e) => {
                         touchStartXRef.current = e.touches[0].clientX;
                         touchStartYRef.current = e.touches[0].clientY;

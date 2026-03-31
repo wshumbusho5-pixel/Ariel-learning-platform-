@@ -39,28 +39,19 @@ export function useStories() {
   const feedQuery = useQuery<StoryGroup[], Error>({
     queryKey: STORIES_QUERY_KEY,
     queryFn: getStoriesFeed,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: 'always',
+    staleTime: 1000 * 60 * 2,
   });
 
-  // Your own stories — refetch frequently so ring updates
+  // Your own stories
   const myQuery = useQuery<StoryResponse[], Error>({
     queryKey: MY_STORIES_QUERY_KEY,
-    queryFn: async () => {
-      const data = await getMyStories();
-      return data;
-    },
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: 'always',
-    refetchInterval: 1000 * 60,
+    queryFn: getMyStories,
+    staleTime: 1000 * 60 * 2,
   });
 
   // Build your own story group from your stories
   const myStoryGroup = useMemo<StoryGroup | null>(() => {
     const myStories = myQuery.data;
-    console.log('[useStories] myQuery.data:', myStories?.length ?? 'undefined', 'myQuery.status:', myQuery.status, 'myQuery.error:', myQuery.error?.message ?? 'none');
     if (!myStories || myStories.length === 0 || !user) return null;
 
     return {
@@ -79,7 +70,6 @@ export function useStories() {
   // Merge: your story group first, then feed groups
   const storyGroups = useMemo<StoryGroup[]>(() => {
     const feed = feedQuery.data ?? [];
-    console.log('[useStories] feedQuery:', feed.length, 'groups, myStoryGroup:', myStoryGroup ? `${myStoryGroup.stories.length} stories` : 'null');
     if (!myStoryGroup) return feed;
     // Remove self from feed if backend somehow includes it
     const filtered = feed.filter((g) => g.user_id !== myStoryGroup.user_id);
