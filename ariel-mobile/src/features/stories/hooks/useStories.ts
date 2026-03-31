@@ -39,16 +39,22 @@ export function useStories() {
   const feedQuery = useQuery<StoryGroup[], Error>({
     queryKey: STORIES_QUERY_KEY,
     queryFn: getStoriesFeed,
-    staleTime: 1000 * 30,
+    staleTime: 0,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
   });
 
-  // Your own stories
+  // Your own stories — refetch frequently so ring updates
   const myQuery = useQuery<StoryResponse[], Error>({
     queryKey: MY_STORIES_QUERY_KEY,
-    queryFn: getMyStories,
-    staleTime: 1000 * 30,
+    queryFn: async () => {
+      const data = await getMyStories();
+      return data;
+    },
+    staleTime: 0,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always',
+    refetchInterval: 1000 * 60,
   });
 
   // Build your own story group from your stories

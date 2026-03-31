@@ -94,8 +94,9 @@ export function StoryCreateScreen(): React.ReactElement {
           visibility: StoryVisibility.FOLLOWERS,
         });
       }
-      // Invalidate stories cache so the ring updates immediately
+      // Invalidate AND refetch stories cache so the ring updates immediately
       await queryClient.invalidateQueries({ queryKey: ['stories'] });
+      await queryClient.refetchQueries({ queryKey: ['stories', 'mine'] });
       navigation.goBack();
     } catch (err: any) {
       console.error('Story create error:', err?.response?.data ?? err?.message ?? err);
