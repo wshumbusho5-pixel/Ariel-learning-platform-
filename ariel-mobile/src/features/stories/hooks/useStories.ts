@@ -60,6 +60,7 @@ export function useStories() {
   // Build your own story group from your stories
   const myStoryGroup = useMemo<StoryGroup | null>(() => {
     const myStories = myQuery.data;
+    console.log('[useStories] myQuery.data:', myStories?.length ?? 'undefined', 'myQuery.status:', myQuery.status, 'myQuery.error:', myQuery.error?.message ?? 'none');
     if (!myStories || myStories.length === 0 || !user) return null;
 
     return {
@@ -78,6 +79,7 @@ export function useStories() {
   // Merge: your story group first, then feed groups
   const storyGroups = useMemo<StoryGroup[]>(() => {
     const feed = feedQuery.data ?? [];
+    console.log('[useStories] feedQuery:', feed.length, 'groups, myStoryGroup:', myStoryGroup ? `${myStoryGroup.stories.length} stories` : 'null');
     if (!myStoryGroup) return feed;
     // Remove self from feed if backend somehow includes it
     const filtered = feed.filter((g) => g.user_id !== myStoryGroup.user_id);
