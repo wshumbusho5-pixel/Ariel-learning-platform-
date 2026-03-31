@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,21 +6,21 @@ import {
   StyleSheet,
   Share,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { DuelResultCard } from '@/features/duels/components/DuelResultCard';
+import { createStory } from '@/features/stories/api/storiesApi';
+import { StoryType, StoryVisibility } from '@/shared/types/story';
 import type { DuelsStackParamList } from '@/features/duels/DuelsNavigator';
 import type { DuelGameOverResult } from '@/features/duels/hooks/useDuelSocket';
 import { COLORS, TYPOGRAPHY, BORDER_RADIUS, SPACING } from '@/shared/constants/theme';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type Props = NativeStackScreenProps<DuelsStackParamList, 'DuelResult'>;
-
-// ─── XP helper ───────────────────────────────────────────────────────────────
 
 function xpFromResult(result: DuelGameOverResult): number {
   if (result.result === 'win') return 50;
@@ -28,35 +28,62 @@ function xpFromResult(result: DuelGameOverResult): number {
   return 15;
 }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
-
 export function DuelResultScreen({ route, navigation }: Props): React.ReactElement {
   const insets = useSafeAreaInsets();
   const result = route.params.result as DuelGameOverResult;
+  const opponentUsername = route.params.opponentUsername ?? 'opponent';
   const xp = xpFromResult(result);
+  const queryClient = useQueryClient();
+  const [sharingStory, setSharingStory] = useState(false);
+  const [storyShared, setStoryShared] = useState(false);
 
-  // ── Share result ───────────────────────────────────────────────────────────
+  const isWin = result.result === 'win';
+  const isTie = result.result === 'tie';
 
+  // Build a descriptive result string
+  const resultLabel = isWin ? 'Victory' : isTie ? 'Draw' : 'Defeat';
+  const scoreText = `${result.you_score} – ${result.opponent_score}`;
+
+  // ── Share to native share sheet ─────────────────────────────────────────────
   const handleShare = async () => {
-    const outcomeEmoji =
-      result.result === 'win' ? '🏆' : result.result === 'tie' ? '🤝' : '💪';
-    const outcomeText =
-      result.result === 'win'
-        ? 'just won'
-        : result.result === 'tie'
-        ? 'tied'
-        : 'fought hard';
-
+    const outcomeText = isWin ? 'just won' : isTie ? 'tied' : 'fought hard in';
     try {
       await Share.share({
-        message: `${outcomeEmoji} I ${outcomeText} a duel on Ariel and earned +${xp} XP! (${result.you_score} – ${result.opponent_score})\n\nChallenge me: https://ariel.app/duel`,
+        message: `I ${outcomeText} a duel on Ariel! ${scoreText} vs @${opponentUsername} (+${xp} XP)\n\nChallenge me: https://ariel.app/duel`,
       });
-    } catch (err) {
+    } catch {
       Alert.alert('Share', 'Could not open share sheet.');
     }
   };
 
-  // ── Navigation ─────────────────────────────────────────────────────────────
+  // ── Share to Story ──────────────────────────────────────────────────────────
+  const handleShareToStory = async () => {
+    if (sharingStory || storyShared) return;
+    setSharingStory(true);
+    try {
+      const content = isWin
+        ? `Defeated @${opponentUsername} in a duel! ${scoreText} — earned +${xp} XP`
+        : isTie
+        ? `Tied @${opponentUsername} in a duel ${scoreText} — what a match!`
+        : `Battled @${opponentUsername} in a duel ${scoreText} — next time!`;
+
+      await createStory({
+        story_type: StoryType.ACHIEVEMENT,
+        content,
+        background_color: isWin ? '#7c3aed' : isTie ? '#1d4ed8' : '#b45309',
+        achievement_id: isWin ? 'duel_win' : 'duel_played',
+        visibility: StoryVisibility.FOLLOWERS,
+      });
+
+      setStoryShared(true);
+      // Refresh stories feed
+      queryClient.invalidateQueries({ queryKey: ['stories'] });
+    } catch {
+      Alert.alert('Error', 'Could not share to story. Try again.');
+    } finally {
+      setSharingStory(false);
+    }
+  };
 
   const handlePlayAgain = () => {
     navigation.navigate('DuelsLobby');
@@ -69,7 +96,7 @@ export function DuelResultScreen({ route, navigation }: Props): React.ReactEleme
         { paddingTop: insets.top, paddingBottom: insets.bottom + SPACING.lg },
       ]}
     >
-      {/* Close button */}
+      {/* Top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.closeButton}
@@ -82,13 +109,38 @@ export function DuelResultScreen({ route, navigation }: Props): React.ReactEleme
         <View style={styles.closeButton} />
       </View>
 
-      {/* Result card — centered vertically */}
+      {/* Result card */}
       <View style={styles.cardContainer}>
-        <DuelResultCard result={result} xpEarned={xp} opponentUsername={null} />
+        <DuelResultCard result={result} xpEarned={xp} opponentUsername={opponentUsername} />
       </View>
 
-      {/* Action buttons */}
+      {/* Actions */}
       <View style={styles.actions}>
+        {/* Share to Story — prominent for wins */}
+        {isWin && (
+          <TouchableOpacity
+            style={[styles.storyButton, storyShared && styles.storyButtonDone]}
+            onPress={handleShareToStory}
+            disabled={sharingStory || storyShared}
+            activeOpacity={0.8}
+          >
+            {sharingStory ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : storyShared ? (
+              <>
+                <Ionicons name="checkmark-circle" size={18} color="#fff" />
+                <Text style={styles.storyButtonText}>Shared to story!</Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="add-circle" size={18} color="#fff" />
+                <Text style={styles.storyButtonText}>Share to Story</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {/* Share externally */}
         <TouchableOpacity
           style={styles.shareButton}
           onPress={handleShare}
@@ -98,6 +150,7 @@ export function DuelResultScreen({ route, navigation }: Props): React.ReactEleme
           <Text style={styles.shareText}>Share result</Text>
         </TouchableOpacity>
 
+        {/* Play again */}
         <TouchableOpacity
           style={styles.playAgainButton}
           onPress={handlePlayAgain}
@@ -111,14 +164,11 @@ export function DuelResultScreen({ route, navigation }: Props): React.ReactEleme
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -126,7 +176,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSubtle,
+    borderBottomColor: '#2f3336',
   },
   closeButton: {
     width: 36,
@@ -138,9 +188,8 @@ const styles = StyleSheet.create({
   topTitle: {
     color: COLORS.textPrimary,
     fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.semibold as '600',
+    fontWeight: '600',
   },
-
   cardContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -151,6 +200,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     gap: SPACING.sm,
   },
+  storyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: '#7c3aed',
+    borderWidth: 1,
+    borderColor: '#7c3aed',
+  },
+  storyButtonDone: {
+    backgroundColor: '#22c55e',
+    borderColor: '#22c55e',
+  },
+  storyButtonText: {
+    color: '#fff',
+    fontSize: TYPOGRAPHY.fontSize.base,
+    fontWeight: '600',
+  },
   shareButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -158,14 +227,14 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     paddingVertical: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
-    backgroundColor: COLORS.surface,
+    backgroundColor: '#16181c',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#2f3336',
   },
   shareText: {
     color: COLORS.textSecondary,
     fontSize: TYPOGRAPHY.fontSize.base,
-    fontWeight: TYPOGRAPHY.fontWeight.medium as '500',
+    fontWeight: '500',
   },
   playAgainButton: {
     flexDirection: 'row',
@@ -179,6 +248,6 @@ const styles = StyleSheet.create({
   playAgainText: {
     color: '#ffffff',
     fontSize: TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.bold as '700',
+    fontWeight: '700',
   },
 });

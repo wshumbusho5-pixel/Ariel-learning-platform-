@@ -10,7 +10,12 @@ import { BotDuelScreen } from '@/features/duels/screens/BotDuelScreen';
 export type DuelsStackParamList = {
   DuelsLobby: undefined;
   DuelRoom: { roomId: string };
-  DuelResult: { result: any };
+  DuelResult: {
+    result: any;
+    opponentUsername?: string;
+    subject?: string;
+    totalRounds?: number;
+  };
   BotDuel: { rounds: number };
 };
 
