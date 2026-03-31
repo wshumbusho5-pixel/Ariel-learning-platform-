@@ -62,15 +62,15 @@ export function DuelResultScreen({ route, navigation }: Props): React.ReactEleme
     setSharingStory(true);
     try {
       const content = isWin
-        ? `Defeated @${opponentUsername} in a duel! ${scoreText} — earned +${xp} XP`
+        ? `Defeated @${opponentUsername} ${scoreText}\n+${xp} XP`
         : isTie
-        ? `Tied @${opponentUsername} in a duel ${scoreText} — what a match!`
-        : `Battled @${opponentUsername} in a duel ${scoreText} — next time!`;
+        ? `Tied @${opponentUsername} ${scoreText}\nWhat a match!`
+        : `Battled @${opponentUsername} ${scoreText}`;
 
       await createStory({
         story_type: StoryType.ACHIEVEMENT,
         content,
-        background_color: isWin ? '#7c3aed' : isTie ? '#1d4ed8' : '#b45309',
+        background_color: isWin ? '#b45309' : isTie ? '#1d4ed8' : '#52525b',
         achievement_id: isWin ? 'duel_win' : 'duel_played',
         visibility: StoryVisibility.FOLLOWERS,
       });

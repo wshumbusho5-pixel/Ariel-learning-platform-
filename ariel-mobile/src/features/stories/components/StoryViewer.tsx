@@ -186,20 +186,26 @@ export function StoryViewer({
         );
       }
 
-      case StoryType.ACHIEVEMENT:
+      case StoryType.ACHIEVEMENT: {
+        const [achColorA, achColorB] = getGradient(story!.background_color, story!.id);
         return (
-          <View style={styles.achievementContainer}>
-            <Text style={styles.achievementEmoji}>
-              {story!.achievement_icon ?? '🏆'}
-            </Text>
-            <Text style={styles.achievementTitle}>
-              {story!.achievement_title ?? 'Achievement Unlocked'}
-            </Text>
+          <LinearGradient
+            colors={[achColorA, achColorB]}
+            style={styles.achievementContainer}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons name="trophy" size={64} color="rgba(255,255,255,0.9)" style={{ marginBottom: 16 }} />
+            <Text style={styles.achievementLabel}>Achievement Unlocked</Text>
             {story!.content ? (
-              <Text style={styles.achievementDescription}>{story!.content}</Text>
+              <Text style={styles.achievementContent}>{story!.content}</Text>
+            ) : story!.achievement_title ? (
+              <Text style={styles.achievementContent}>{story!.achievement_title}</Text>
             ) : null}
-          </View>
+            <Text style={styles.watermark}>ariel.study</Text>
+          </LinearGradient>
         );
+      }
 
       case StoryType.DECK_POST:
         return (
@@ -432,25 +438,37 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#09090b',
     paddingHorizontal: SPACING['3xl'],
   },
-  achievementEmoji: {
-    fontSize: 72,
-    marginBottom: SPACING.xl,
-  },
-  achievementTitle: {
-    color: '#fff',
-    fontSize: TYPOGRAPHY.fontSize['2xl'],
+  achievementLabel: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 13,
     fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     textAlign: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: 12,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  achievementDescription: {
-    color: COLORS.textSecondary,
-    fontSize: TYPOGRAPHY.fontSize.base,
+  achievementContent: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '800',
     textAlign: 'center',
-    lineHeight: TYPOGRAPHY.fontSize.base * 1.5,
+    lineHeight: 38,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  watermark: {
+    position: 'absolute',
+    bottom: 40,
+    color: 'rgba(255,255,255,0.35)',
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 1,
   },
 
   // ── Card / Deck Post story ────────────────────────────────────────────────
