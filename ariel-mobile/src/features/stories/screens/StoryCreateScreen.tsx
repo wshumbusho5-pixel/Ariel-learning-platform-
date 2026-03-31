@@ -97,8 +97,10 @@ export function StoryCreateScreen(): React.ReactElement {
       // Invalidate stories cache so the ring updates immediately
       await queryClient.invalidateQueries({ queryKey: ['stories'] });
       navigation.goBack();
-    } catch {
-      Alert.alert('Error', 'Failed to share story. Please try again.');
+    } catch (err: any) {
+      console.error('Story create error:', err?.response?.data ?? err?.message ?? err);
+      const msg = err?.response?.data?.detail?.[0]?.msg ?? err?.message ?? 'Failed to share story.';
+      Alert.alert('Error', typeof msg === 'string' ? msg : 'Failed to share story. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

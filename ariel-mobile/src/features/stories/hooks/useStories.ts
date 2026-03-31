@@ -39,14 +39,16 @@ export function useStories() {
   const feedQuery = useQuery<StoryGroup[], Error>({
     queryKey: STORIES_QUERY_KEY,
     queryFn: getStoriesFeed,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 30,
+    refetchOnMount: 'always',
   });
 
   // Your own stories
   const myQuery = useQuery<StoryResponse[], Error>({
     queryKey: MY_STORIES_QUERY_KEY,
     queryFn: getMyStories,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 30,
+    refetchOnMount: 'always',
   });
 
   // Build your own story group from your stories
