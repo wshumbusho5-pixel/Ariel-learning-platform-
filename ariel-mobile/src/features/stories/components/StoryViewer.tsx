@@ -99,15 +99,25 @@ export function StoryViewer({
   }, [group.user_id, initialStoryIndex]);
 
   // ─── Touch handling ────────────────────────────────────────────────────────
+  // Use refs for callbacks so PanResponder always calls the latest version
+  const goNextRef = useRef(goNext);
+  const goPrevRef = useRef(goPrev);
+  const onNextGroupRef = useRef(onNextGroup);
+  const onPrevGroupRef = useRef(onPrevGroup);
+  useEffect(() => {
+    goNextRef.current = goNext;
+    goPrevRef.current = goPrev;
+    onNextGroupRef.current = onNextGroup;
+    onPrevGroupRef.current = onPrevGroup;
+  }, [goNext, goPrev, onNextGroup, onPrevGroup]);
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_e, gs: PanResponderGestureState) => {
-        // Capture horizontal swipes
         return Math.abs(gs.dx) > 10;
       },
-      onPanResponderGrant: (e: GestureResponderEvent) => {
-        // Start hold timer — 200ms to count as a hold/pause
+      onPanResponderGrant: () => {
         holdTimerRef.current = setTimeout(() => {
           setIsPaused(true);
         }, 200);
@@ -121,26 +131,20 @@ export function StoryViewer({
 
         const { dx, dy } = gs;
 
-        // Horizontal swipe
+        // Horizontal swipe → change group
         if (Math.abs(dx) > 50) {
-          if (dx < 0) {
-            // Swipe left → next group
-            onNextGroup?.();
-          } else {
-            // Swipe right → prev group
-            onPrevGroup?.();
-          }
+          if (dx < 0) onNextGroupRef.current?.();
+          else onPrevGroupRef.current?.();
           return;
         }
 
-        // It was a tap (no significant movement)
+        // Tap — left 30% = previous, right 70% = next
         if (Math.abs(dx) < 15 && Math.abs(dy) < 15) {
           const tapX = e.nativeEvent.locationX;
-          const leftZone = SCREEN_WIDTH * 0.3;
-          if (tapX < leftZone) {
-            goPrev();
+          if (tapX < SCREEN_WIDTH * 0.3) {
+            goPrevRef.current();
           } else {
-            goNext();
+            goNextRef.current();
           }
         }
       },
