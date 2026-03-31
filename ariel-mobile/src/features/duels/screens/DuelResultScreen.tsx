@@ -32,7 +32,7 @@ export function DuelResultScreen({ route, navigation }: Props): React.ReactEleme
   const insets = useSafeAreaInsets();
   const result = route.params.result as DuelGameOverResult;
   const opponentUsername = route.params.opponentUsername || null;
-  const opponentDisplay = opponentUsername ? `${opponentDisplay}` : 'their opponent';
+  const opponentDisplay = opponentUsername ? `@${opponentUsername}` : 'their opponent';
   const xp = xpFromResult(result);
   const queryClient = useQueryClient();
   const [sharingStory, setSharingStory] = useState(false);
