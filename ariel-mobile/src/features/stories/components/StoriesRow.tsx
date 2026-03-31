@@ -86,7 +86,7 @@ export function StoriesRow(): React.ReactElement {
       contentContainerStyle={styles.scrollContent}
       style={styles.container}
     >
-      {/* Your story — shows ring if you have active stories */}
+      {/* Your story — ring opens viewer, + badge opens creator */}
       <View style={styles.item}>
         <StoryRing
           profilePicture={user?.profile_picture ?? null}
@@ -99,6 +99,7 @@ export function StoriesRow(): React.ReactElement {
             ? () => navigation.navigate('StoryViewer', { groupIndex: 0 })
             : handleAddStoryPress
           }
+          onAddPress={handleAddStoryPress}
         />
       </View>
 
