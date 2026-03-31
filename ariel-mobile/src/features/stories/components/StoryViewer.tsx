@@ -195,14 +195,25 @@ export function StoryViewer({
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Ionicons name="trophy" size={64} color="rgba(255,255,255,0.9)" style={{ marginBottom: 16 }} />
-            <Text style={styles.achievementLabel}>Achievement Unlocked</Text>
-            {story!.content ? (
-              <Text style={styles.achievementContent}>{story!.content}</Text>
-            ) : story!.achievement_title ? (
-              <Text style={styles.achievementContent}>{story!.achievement_title}</Text>
-            ) : null}
-            <Text style={styles.watermark}>ariel.study</Text>
+            {/* Top spacer — pushes content to ~60% down the screen */}
+            <View style={{ flex: 0.55 }} />
+
+            {/* Main content */}
+            <View style={styles.achievementMain}>
+              <Ionicons name="trophy" size={56} color="rgba(255,255,255,0.9)" style={{ marginBottom: 14 }} />
+              <Text style={styles.achievementLabel}>Achievement Unlocked</Text>
+              {story!.content ? (
+                <Text style={styles.achievementContent}>{story!.content}</Text>
+              ) : story!.achievement_title ? (
+                <Text style={styles.achievementContent}>{story!.achievement_title}</Text>
+              ) : null}
+            </View>
+
+            {/* Bottom section — fills remaining space */}
+            <View style={styles.achievementBottom}>
+              <Text style={styles.challengeText}>Challenge me on Ariel</Text>
+              <Text style={styles.watermark}>ariel.study</Text>
+            </View>
           </LinearGradient>
         );
       }
@@ -436,18 +447,19 @@ const styles = StyleSheet.create({
   // ── Achievement / Streak / Study story ───────────────────────────────────
   achievementContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: SPACING['3xl'],
+  },
+  achievementMain: {
+    alignItems: 'center',
   },
   achievementLabel: {
     color: 'rgba(255,255,255,0.7)',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 2,
+    letterSpacing: 2.5,
     textTransform: 'uppercase',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
@@ -462,10 +474,21 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
+  achievementBottom: {
+    flex: 0.45,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 40,
+    gap: 6,
+  },
+  challengeText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
   watermark: {
-    position: 'absolute',
-    bottom: 40,
-    color: 'rgba(255,255,255,0.35)',
+    color: 'rgba(255,255,255,0.3)',
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 1,

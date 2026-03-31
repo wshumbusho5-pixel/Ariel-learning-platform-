@@ -63,10 +63,10 @@ export function DuelResultScreen({ route, navigation }: Props): React.ReactEleme
     setSharingStory(true);
     try {
       const content = isWin
-        ? `Defeated ${opponentDisplay} ${scoreText}\n+${xp} XP`
+        ? `Defeated ${opponentDisplay}\n${scoreText} · +${xp} XP`
         : isTie
-        ? `Tied ${opponentDisplay} ${scoreText}\nWhat a match!`
-        : `Battled ${opponentDisplay} ${scoreText}`;
+        ? `Tied ${opponentDisplay}\n${scoreText} · What a match!`
+        : `Battled ${opponentDisplay}\n${scoreText}`;
 
       await createStory({
         story_type: StoryType.ACHIEVEMENT,
