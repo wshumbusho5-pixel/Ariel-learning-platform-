@@ -61,8 +61,8 @@ export function StoryCreateScreen(): React.ReactElement {
   const { height: H } = useWindowDimensions();
   const isShort = H < 720;
   const navigation = useNavigation<NavProp>();
-  const queryClient = useQueryClient();
 
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<StoryMode>('text');
   const [textContent, setTextContent] = useState('');
   const [selectedGradient, setSelectedGradient] = useState<GradientPreset>(GRADIENT_PRESETS[0]);
@@ -94,9 +94,8 @@ export function StoryCreateScreen(): React.ReactElement {
           visibility: StoryVisibility.FOLLOWERS,
         });
       }
-      // Invalidate stories cache so StoriesRow shows the new story immediately
-      queryClient.invalidateQueries({ queryKey: ['stories', 'mine'] });
-      queryClient.invalidateQueries({ queryKey: ['stories', 'feed'] });
+      // Invalidate stories cache so the ring updates immediately
+      await queryClient.invalidateQueries({ queryKey: ['stories'] });
       navigation.goBack();
     } catch {
       Alert.alert('Error', 'Failed to share story. Please try again.');
