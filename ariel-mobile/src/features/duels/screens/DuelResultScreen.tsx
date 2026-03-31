@@ -31,7 +31,8 @@ function xpFromResult(result: DuelGameOverResult): number {
 export function DuelResultScreen({ route, navigation }: Props): React.ReactElement {
   const insets = useSafeAreaInsets();
   const result = route.params.result as DuelGameOverResult;
-  const opponentUsername = route.params.opponentUsername ?? 'opponent';
+  const opponentUsername = route.params.opponentUsername || null;
+  const opponentDisplay = opponentUsername ? `${opponentDisplay}` : 'their opponent';
   const xp = xpFromResult(result);
   const queryClient = useQueryClient();
   const [sharingStory, setSharingStory] = useState(false);
@@ -49,7 +50,7 @@ export function DuelResultScreen({ route, navigation }: Props): React.ReactEleme
     const outcomeText = isWin ? 'just won' : isTie ? 'tied' : 'fought hard in';
     try {
       await Share.share({
-        message: `I ${outcomeText} a duel on Ariel! ${scoreText} vs @${opponentUsername} (+${xp} XP)\n\nChallenge me: https://ariel.app/duel`,
+        message: `I ${outcomeText} a duel on Ariel! ${scoreText} vs ${opponentDisplay} (+${xp} XP)\n\nChallenge me: https://ariel.app/duel`,
       });
     } catch {
       Alert.alert('Share', 'Could not open share sheet.');
@@ -62,10 +63,10 @@ export function DuelResultScreen({ route, navigation }: Props): React.ReactEleme
     setSharingStory(true);
     try {
       const content = isWin
-        ? `Defeated @${opponentUsername} ${scoreText}\n+${xp} XP`
+        ? `Defeated ${opponentDisplay} ${scoreText}\n+${xp} XP`
         : isTie
-        ? `Tied @${opponentUsername} ${scoreText}\nWhat a match!`
-        : `Battled @${opponentUsername} ${scoreText}`;
+        ? `Tied ${opponentDisplay} ${scoreText}\nWhat a match!`
+        : `Battled ${opponentDisplay} ${scoreText}`;
 
       await createStory({
         story_type: StoryType.ACHIEVEMENT,

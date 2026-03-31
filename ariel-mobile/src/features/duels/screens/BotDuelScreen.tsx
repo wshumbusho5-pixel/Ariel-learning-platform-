@@ -108,7 +108,7 @@ export function BotDuelScreen({ route, navigation }: Props): React.ReactElement 
     setTimeout(() => {
       if (nextIdx >= roundsRef.current) {
         const u = userScoreRef.current; const b = botScoreRef.current;
-        navigation.replace('DuelResult', { result: { you_score: u, opponent_score: b, result: u > b ? 'win' : b > u ? 'lose' : 'tie' } });
+        navigation.replace('DuelResult', { result: { you_score: u, opponent_score: b, result: u > b ? 'win' : b > u ? 'lose' : 'tie' }, opponentUsername: 'Ariel Bot' });
       } else {
         setCurrentIdx(nextIdx);
         beginQuestion(allCards, nextIdx);
