@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { createStory } from '@/features/stories/api/storiesApi';
 import { COLORS, SPACING, TYPOGRAPHY, BORDER_RADIUS } from '@/shared/constants/theme';
 import { StoryType, StoryVisibility } from '@/shared/types/story';
@@ -60,6 +61,7 @@ export function StoryCreateScreen(): React.ReactElement {
   const { height: H } = useWindowDimensions();
   const isShort = H < 720;
   const navigation = useNavigation<NavProp>();
+  const queryClient = useQueryClient();
 
   const [mode, setMode] = useState<StoryMode>('text');
   const [textContent, setTextContent] = useState('');
@@ -92,6 +94,9 @@ export function StoryCreateScreen(): React.ReactElement {
           visibility: StoryVisibility.FOLLOWERS,
         });
       }
+      // Invalidate stories cache so StoriesRow shows the new story immediately
+      queryClient.invalidateQueries({ queryKey: ['stories', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['stories', 'feed'] });
       navigation.goBack();
     } catch {
       Alert.alert('Error', 'Failed to share story. Please try again.');
