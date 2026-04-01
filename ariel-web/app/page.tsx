@@ -506,7 +506,7 @@ export default function Home() {
       />
 
       {/* ── Mobile ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center px-6 lg:hidden" style={{ height: '100dvh', paddingTop: 14, overflow: 'hidden', position: 'relative' }}>
+      <div className="flex flex-col items-center px-6 lg:hidden" style={{ minHeight: '100dvh', paddingTop: 14, overflowY: 'auto', position: 'relative' }}>
 
         {/* Background glow */}
         <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%,-50%)', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,92,252,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
