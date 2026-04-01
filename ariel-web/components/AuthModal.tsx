@@ -80,6 +80,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         const script = document.createElement('script');
         script.src = 'https://accounts.google.com/gsi/client';
         script.async = true;
+        script.defer = true;
         document.head.appendChild(script);
       }
     }
@@ -136,33 +137,71 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
   const handleGoogleLogin = () => {
     const google = (window as any).google;
-    if (!google) {
-      setError('Google sign-in is not available. Please try again.');
+    if (!google?.accounts?.id) {
+      // Script might still be loading — retry once after a short delay
+      setTimeout(() => {
+        const g = (window as any).google;
+        if (g?.accounts?.id) {
+          triggerGoogleSignIn(g);
+        } else {
+          setError('Google sign-in is not available. Please refresh the page and try again.');
+        }
+      }, 1500);
       return;
     }
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      scope: 'email profile',
-      callback: async (resp: any) => {
-        if (!resp.access_token) {
-          setError('Google sign-in was cancelled.');
+    triggerGoogleSignIn(google);
+  };
+
+  const triggerGoogleSignIn = (google: any) => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      setError('Google sign-in is not configured.');
+      return;
+    }
+
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (resp: { credential?: string; error?: string }) => {
+        if (!resp.credential) {
+          setError('Google sign-in was cancelled or failed. Please try again.');
           return;
         }
         setOauthLoading(true);
         setError('');
         try {
-          const response = await authAPI.oauthLogin('google', resp.access_token);
+          // Send the ID token (credential) to backend — backend verifies via tokeninfo endpoint
+          const response = await authAPI.oauthLogin('google', resp.credential);
           localStorage.setItem('auth_token', response.access_token);
           onSuccess(response.user, response.access_token);
           onClose();
         } catch (err: any) {
-          setError(err.response?.data?.detail || 'Google sign-in failed. Please try again.');
+          const detail = err.response?.data?.detail;
+          setError(detail || 'Google sign-in failed. Please try again.');
         } finally {
           setOauthLoading(false);
         }
       },
+      auto_select: false,
+      cancel_on_tap_outside: true,
     });
-    client.requestAccessToken();
+
+    // Trigger the One Tap / pop-up prompt
+    google.accounts.id.prompt((notification: any) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        // One Tap was suppressed (user dismissed before, or browser blocked) —
+        // fall back to the full popup via renderButton approach
+        const container = document.getElementById('g_id_signin_container');
+        if (container) {
+          google.accounts.id.renderButton(container, {
+            type: 'standard',
+            theme: 'filled_black',
+            size: 'large',
+            width: container.offsetWidth || 320,
+          });
+          container.style.display = 'block';
+        }
+      }
+    });
   };
 
   const inputClass =
@@ -332,7 +371,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             {oauthLoading ? 'Signing in…' : 'Google'}
           </button>
           <button
-            onClick={() => alert('GitHub login coming soon.')}
+            onClick={() => setError('GitHub login coming soon.')}
             className="flex items-center justify-center px-4 py-2.5 border border-[#2f3336] rounded-xl hover:bg-zinc-900 transition-colors text-[14px] font-medium"
             style={{ color: '#e7e9ea' }}
           >
@@ -342,6 +381,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             GitHub
           </button>
         </div>
+
+        {/* Hidden fallback Google button container (used when One Tap is suppressed) */}
+        <div id="g_id_signin_container" style={{ display: 'none' }} className="mt-2" />
 
         {/* Toggle */}
         <div className="mt-5 text-center text-[14px]">
