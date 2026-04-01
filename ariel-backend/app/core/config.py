@@ -34,6 +34,9 @@ class Settings(BaseSettings):
         "http://10.0.0.97:3002",
         "http://10.0.0.97:19006",
         "https://ariel-learning-platform-production.up.railway.app",
+        "https://ariel-learning-platform-git-main-wshumbusho5-pixels-projects.vercel.app",
+        "https://ariel-learning-platform-oh5cj2ud9-wshumbusho5-pixels-projects.vercel.app",
+        "https://ariel-learning-platform.vercel.app",
     ]
     EXTRA_ALLOWED_ORIGINS: str = ""  # comma-separated, set via env var for Vercel URL
 
