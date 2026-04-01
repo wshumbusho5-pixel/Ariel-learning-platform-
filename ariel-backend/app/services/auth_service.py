@@ -55,50 +55,63 @@ class AuthService:
 
     @staticmethod
     async def verify_google_token(access_token: str) -> Optional[dict]:
-        """Verify Google OAuth token or ID token and get user info.
-
-        Supports two flows:
-        - ID token (JWT credential from @react-oauth/google GoogleLogin component)
-          Verified via tokeninfo endpoint.
-        - Access token (implicit flow)
-          Verified via userinfo endpoint.
-        """
+        """Verify Google OAuth access token or ID token and return user info."""
         try:
-            async with httpx.AsyncClient() as client:
-                # Try ID token first (preferred — from GoogleLogin credential)
-                id_token_response = await client.get(
-                    "https://oauth2.googleapis.com/tokeninfo",
-                    params={"id_token": access_token}
-                )
-                if id_token_response.status_code == 200:
-                    info = id_token_response.json()
-                    return {
-                        "email": info.get("email"),
-                        "full_name": info.get("name"),
-                        "profile_picture": info.get("picture"),
-                        "provider_id": info.get("sub"),
-                        "is_verified": info.get("email_verified") == "true"
-                    }
-
-                # Fall back to access token (userinfo endpoint)
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                # 1. Try treating it as an access token → userinfo endpoint (primary path
+                #    for tokens from google.accounts.oauth2.initTokenClient)
                 userinfo_response = await client.get(
                     "https://www.googleapis.com/oauth2/v2/userinfo",
                     headers={"Authorization": f"Bearer {access_token}"}
                 )
                 if userinfo_response.status_code == 200:
                     user_info = userinfo_response.json()
+                    email = user_info.get("email")
+                    if not email:
+                        logger.error("Google userinfo returned no email — check scope includes 'email'")
+                        return None
                     return {
-                        "email": user_info.get("email"),
+                        "email": email,
                         "full_name": user_info.get("name"),
                         "profile_picture": user_info.get("picture"),
                         "provider_id": user_info.get("id"),
                         "is_verified": user_info.get("verified_email", False)
                     }
 
-                logger.error(f"Google token verification failed: {id_token_response.status_code}")
+                logger.warning(
+                    f"Google userinfo failed ({userinfo_response.status_code}): {userinfo_response.text[:200]}"
+                )
+
+                # 2. Fall back: maybe it's an ID token (credential from Sign In With Google)
+                id_token_response = await client.get(
+                    "https://oauth2.googleapis.com/tokeninfo",
+                    params={"id_token": access_token}
+                )
+                if id_token_response.status_code == 200:
+                    info = id_token_response.json()
+                    email = info.get("email")
+                    if not email:
+                        logger.error("Google tokeninfo returned no email")
+                        return None
+                    return {
+                        "email": email,
+                        "full_name": info.get("name"),
+                        "profile_picture": info.get("picture"),
+                        "provider_id": info.get("sub"),
+                        "is_verified": info.get("email_verified") == "true"
+                    }
+
+                logger.error(
+                    f"Google ID token verification also failed ({id_token_response.status_code}): "
+                    f"{id_token_response.text[:200]}"
+                )
                 return None
+
+        except httpx.TimeoutException:
+            logger.error("Google OAuth timed out — could not reach Google servers within 10s")
+            return None
         except Exception as e:
-            logger.error(f"Google OAuth error: {e}")
+            logger.error(f"Google OAuth unexpected error: {e}")
             return None
 
     @staticmethod

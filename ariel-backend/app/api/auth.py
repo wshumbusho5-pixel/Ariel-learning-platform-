@@ -114,7 +114,10 @@ async def oauth_login(oauth_request: OAuthLoginRequest):
             raise HTTPException(status_code=400, detail="Invalid OAuth provider")
 
         if not user_info:
-            raise HTTPException(status_code=401, detail="Invalid OAuth token")
+            raise HTTPException(
+                status_code=401,
+                detail="Could not verify your Google account. Make sure you granted email access and try again."
+            )
 
         # Create or get user
         user = await UserRepository.create_oauth_user(user_info, oauth_request.provider)
