@@ -84,6 +84,7 @@ async def follow_user(
     - Adds current user to target user's followers list
     - Updates follower/following counts
     """
+    db = db_service.get_db()
     target_user_id = request.user_id
     current_user_id = str(current_user.id)
 
@@ -94,8 +95,17 @@ async def follow_user(
             detail="You cannot follow yourself"
         )
 
+    try:
+        target_oid = ObjectId(target_user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    try:
+        current_oid = ObjectId(current_user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
     # Check if target user exists
-    target_user = await db.users.find_one({"_id": target_user_id})
+    target_user = await db.users.find_one({"_id": target_oid})
     if not target_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -103,7 +113,7 @@ async def follow_user(
         )
 
     # Check if already following
-    current_user_data = await db.users.find_one({"_id": current_user_id})
+    current_user_data = await db.users.find_one({"_id": current_oid})
     if target_user_id in current_user_data.get("following", []):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -112,7 +122,7 @@ async def follow_user(
 
     # Add to following list (current user follows target)
     await db.users.update_one(
-        {"_id": current_user_id},
+        {"_id": current_oid},
         {
             "$addToSet": {"following": target_user_id},
             "$inc": {"following_count": 1}
@@ -121,7 +131,7 @@ async def follow_user(
 
     # Add to followers list (target gets new follower)
     await db.users.update_one(
-        {"_id": target_user_id},
+        {"_id": target_oid},
         {
             "$addToSet": {"followers": current_user_id},
             "$inc": {"followers_count": 1}
@@ -129,7 +139,7 @@ async def follow_user(
     )
 
     # Get updated follower count
-    updated_target = await db.users.find_one({"_id": target_user_id})
+    updated_target = await db.users.find_one({"_id": target_oid})
 
     return FollowResponse(
         success=True,
@@ -151,11 +161,21 @@ async def unfollow_user(
     - Removes current user from target user's followers list
     - Updates follower/following counts
     """
+    db = db_service.get_db()
     target_user_id = request.user_id
     current_user_id = str(current_user.id)
 
+    try:
+        target_oid = ObjectId(target_user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    try:
+        current_oid = ObjectId(current_user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
     # Check if target user exists
-    target_user = await db.users.find_one({"_id": target_user_id})
+    target_user = await db.users.find_one({"_id": target_oid})
     if not target_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -163,7 +183,7 @@ async def unfollow_user(
         )
 
     # Check if actually following
-    current_user_data = await db.users.find_one({"_id": current_user_id})
+    current_user_data = await db.users.find_one({"_id": current_oid})
     if target_user_id not in current_user_data.get("following", []):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -172,7 +192,7 @@ async def unfollow_user(
 
     # Remove from following list
     await db.users.update_one(
-        {"_id": current_user_id},
+        {"_id": current_oid},
         {
             "$pull": {"following": target_user_id},
             "$inc": {"following_count": -1}
@@ -181,7 +201,7 @@ async def unfollow_user(
 
     # Remove from followers list
     await db.users.update_one(
-        {"_id": target_user_id},
+        {"_id": target_oid},
         {
             "$pull": {"followers": current_user_id},
             "$inc": {"followers_count": -1}
@@ -189,7 +209,7 @@ async def unfollow_user(
     )
 
     # Get updated follower count
-    updated_target = await db.users.find_one({"_id": target_user_id})
+    updated_target = await db.users.find_one({"_id": target_oid})
 
     return FollowResponse(
         success=True,
@@ -217,8 +237,17 @@ async def toggle_follow_user(
             detail="You cannot follow yourself"
         )
 
+    try:
+        user_oid = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+    try:
+        current_oid = ObjectId(current_user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
     # Check if target user exists
-    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    target_user = await db.users.find_one({"_id": user_oid})
     if not target_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -226,20 +255,20 @@ async def toggle_follow_user(
         )
 
     # Check if already following
-    current_user_data = await db.users.find_one({"_id": ObjectId(current_user_id)})
+    current_user_data = await db.users.find_one({"_id": current_oid})
     is_following = user_id in current_user_data.get("following", [])
 
     if is_following:
         # Unfollow
         await db.users.update_one(
-            {"_id": ObjectId(current_user_id)},
+            {"_id": current_oid},
             {
                 "$pull": {"following": user_id},
                 "$inc": {"following_count": -1}
             }
         )
         await db.users.update_one(
-            {"_id": ObjectId(user_id)},
+            {"_id": user_oid},
             {
                 "$pull": {"followers": current_user_id},
                 "$inc": {"followers_count": -1}
@@ -250,14 +279,14 @@ async def toggle_follow_user(
     else:
         # Follow
         await db.users.update_one(
-            {"_id": ObjectId(current_user_id)},
+            {"_id": current_oid},
             {
                 "$addToSet": {"following": user_id},
                 "$inc": {"following_count": 1}
             }
         )
         await db.users.update_one(
-            {"_id": ObjectId(user_id)},
+            {"_id": user_oid},
             {
                 "$addToSet": {"followers": current_user_id},
                 "$inc": {"followers_count": 1}
@@ -306,7 +335,7 @@ async def toggle_follow_user(
                     "execute_at": execute_at,
                 })
 
-    updated_target = await db.users.find_one({"_id": ObjectId(user_id)})
+    updated_target = await db.users.find_one({"_id": user_oid})
 
     return {
         "success": True,
@@ -329,8 +358,13 @@ async def get_user_profile(
     """
     db = db_service.get_db()
 
+    try:
+        user_oid = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
     # Get target user
-    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    target_user = await db.users.find_one({"_id": user_oid})
     if not target_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -381,7 +415,13 @@ async def get_followers(
     current_user: User = Depends(get_current_user_dependency)
 ):
     db = db_service.get_db()
-    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+
+    try:
+        user_oid = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
+    target_user = await db.users.find_one({"_id": user_oid})
     if not target_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -389,8 +429,15 @@ async def get_followers(
     if not follower_ids:
         return []
 
+    follower_oids = []
+    for fid in follower_ids:
+        try:
+            follower_oids.append(ObjectId(fid))
+        except Exception:
+            continue
+
     followers = []
-    async for u in db.users.find({"_id": {"$in": [ObjectId(fid) for fid in follower_ids]}}):
+    async for u in db.users.find({"_id": {"$in": follower_oids}}):
         uid = str(u["_id"])
         followers.append(FollowListItem(
             id=uid,
@@ -413,7 +460,13 @@ async def get_following(
     current_user: User = Depends(get_current_user_dependency)
 ):
     db = db_service.get_db()
-    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+
+    try:
+        user_oid = ObjectId(user_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
+    target_user = await db.users.find_one({"_id": user_oid})
     if not target_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -421,8 +474,15 @@ async def get_following(
     if not following_ids:
         return []
 
+    following_oids = []
+    for fid in following_ids:
+        try:
+            following_oids.append(ObjectId(fid))
+        except Exception:
+            continue
+
     following = []
-    async for u in db.users.find({"_id": {"$in": [ObjectId(fid) for fid in following_ids]}}):
+    async for u in db.users.find({"_id": {"$in": following_oids}}):
         uid = str(u["_id"])
         following.append(FollowListItem(
             id=uid,
@@ -551,7 +611,7 @@ async def search_users(
                 {"school": search_regex}
             ]},
             {"is_active": {"$ne": False}},
-            {"_id": {"$ne": current_user.id}},  # exclude self
+            {"_id": {"$ne": ObjectId(current_user_id)}},  # exclude self
         ]
     }).limit(limit * 2):  # fetch extra to allow re-sorting
         raw_results.append(user)
@@ -590,6 +650,8 @@ async def create_deck(
     - Start as private by default
     - Can publish later by changing visibility
     """
+    db = db_service.get_db()
+
     # Create deck document
     deck = Deck(
         user_id=str(current_user.id),
@@ -653,8 +715,15 @@ async def update_deck(
     - Only owner can update
     - Changing visibility to public sets published_at
     """
+    db = db_service.get_db()
+
+    try:
+        deck_oid = ObjectId(deck_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid deck ID")
+
     # Check ownership
-    existing_deck = await db.decks.find_one({"_id": deck_id})
+    existing_deck = await db.decks.find_one({"_id": deck_oid})
     if not existing_deck:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -683,12 +752,12 @@ async def update_deck(
 
     # Update database
     await db.decks.update_one(
-        {"_id": deck_id},
+        {"_id": deck_oid},
         {"$set": update_data}
     )
 
     # Get updated deck
-    updated_deck = await db.decks.find_one({"_id": deck_id})
+    updated_deck = await db.decks.find_one({"_id": deck_oid})
 
     # Build response
     return DeckPost(
@@ -732,7 +801,14 @@ async def get_deck(
     - Increments view count
     - Checks visibility permissions
     """
-    deck = await db.decks.find_one({"_id": deck_id})
+    db = db_service.get_db()
+
+    try:
+        deck_oid = ObjectId(deck_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid deck ID")
+
+    deck = await db.decks.find_one({"_id": deck_oid})
     if not deck:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -753,7 +829,7 @@ async def get_deck(
 
     # Friends only: Must be following
     if visibility == DeckVisibility.FRIENDS_ONLY and not is_owner:
-        author = await db.users.find_one({"_id": deck["user_id"]})
+        author = await db.users.find_one({"_id": ObjectId(deck["user_id"])})
         if current_user_id not in author.get("followers", []):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -762,7 +838,7 @@ async def get_deck(
 
     # Classmates only: Same school/course
     if visibility == DeckVisibility.CLASSMATES_ONLY and not is_owner:
-        author = await db.users.find_one({"_id": deck["user_id"]})
+        author = await db.users.find_one({"_id": ObjectId(deck["user_id"])})
         deck_course = deck.get("course_code")
         if deck_course and deck_course not in current_user.courses:
             raise HTTPException(
@@ -781,13 +857,13 @@ async def get_deck(
     # Increment view count (only if not owner)
     if not is_owner:
         await db.decks.update_one(
-            {"_id": deck_id},
+            {"_id": deck_oid},
             {"$inc": {"views": 1}}
         )
         deck["views"] = deck.get("views", 0) + 1
 
     # Get author info
-    author = await db.users.find_one({"_id": deck["user_id"]})
+    author = await db.users.find_one({"_id": ObjectId(deck["user_id"])})
 
     # Build response
     return DeckPost(
@@ -830,7 +906,14 @@ async def delete_deck(
 
     - Only owner can delete
     """
-    deck = await db.decks.find_one({"_id": deck_id})
+    db = db_service.get_db()
+
+    try:
+        deck_oid = ObjectId(deck_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid deck ID")
+
+    deck = await db.decks.find_one({"_id": deck_oid})
     if not deck:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -843,7 +926,7 @@ async def delete_deck(
             detail="You can only delete your own decks"
         )
 
-    await db.decks.delete_one({"_id": deck_id})
+    await db.decks.delete_one({"_id": deck_oid})
 
     return {"success": True, "message": "Deck deleted"}
 
@@ -855,7 +938,13 @@ async def like_deck(
 ):
     """Like/unlike a deck"""
     db = db_service.get_db()
-    deck = await db.decks.find_one({"_id": deck_id})
+
+    try:
+        deck_oid = ObjectId(deck_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid deck ID")
+
+    deck = await db.decks.find_one({"_id": deck_oid})
     if not deck:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Deck not found")
 
@@ -865,14 +954,14 @@ async def like_deck(
     if current_user_id in liked_by:
         # Unlike
         await db.decks.update_one(
-            {"_id": deck_id},
+            {"_id": deck_oid},
             {"$pull": {"liked_by": current_user_id}, "$inc": {"likes": -1}}
         )
         return {"success": True, "liked": False}
     else:
         # Like
         await db.decks.update_one(
-            {"_id": deck_id},
+            {"_id": deck_oid},
             {"$addToSet": {"liked_by": current_user_id}, "$inc": {"likes": 1}}
         )
         return {"success": True, "liked": True}
@@ -889,7 +978,14 @@ async def save_deck(
     - Creates a copy of the deck for current user
     - Increments save count on original
     """
-    original_deck = await db.decks.find_one({"_id": deck_id})
+    db = db_service.get_db()
+
+    try:
+        deck_oid = ObjectId(deck_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid deck ID")
+
+    original_deck = await db.decks.find_one({"_id": deck_oid})
     if not original_deck:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -925,7 +1021,7 @@ async def save_deck(
 
     # Increment save count on original
     await db.decks.update_one(
-        {"_id": deck_id},
+        {"_id": deck_oid},
         {"$inc": {"saves": 1}, "$addToSet": {"saved_by": str(current_user.id)}}
     )
 
@@ -954,6 +1050,8 @@ async def get_personalized_feed(
 
     Returns mixed, ranked feed based on engagement and recency
     """
+    db = db_service.get_db()
+
     # Initialize feed algorithm
     feed_algo = FeedAlgorithm(db)
 
@@ -988,6 +1086,8 @@ async def get_feed_insights(
     - Shows how feed is personalized
     - Helps users understand algorithm
     """
+    db = db_service.get_db()
+
     # Count decks from different sources
     following_count = 0
     if current_user.following:
@@ -1047,6 +1147,8 @@ async def explore_subject_feed(
     - Filtered by education level
     - Ranked by engagement
     """
+    db = db_service.get_db()
+
     query = {
         "subject": subject,
         "visibility": {"$in": ["public", "subject_community"]}

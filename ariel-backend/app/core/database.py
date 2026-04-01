@@ -31,3 +31,29 @@ async def close_mongo_connection():
 def get_database():
     """Get database instance"""
     return database
+
+
+async def create_indexes(db):
+    """Create indexes for critical queries.
+
+    Safe to call repeatedly -- create_index is a no-op if the index already exists.
+    """
+    # ---------- users ----------
+    await db.users.create_index("email", unique=True)
+    await db.users.create_index("username", unique=True, sparse=True)
+
+    # ---------- cards ----------
+    await db.cards.create_index("user_id")
+    await db.cards.create_index("subject")
+
+    # ---------- comments ----------
+    await db.comments.create_index([("deck_id", 1), ("is_deleted", 1)])
+    await db.comments.create_index([("card_id", 1), ("is_deleted", 1)])
+
+    # ---------- stories ----------
+    await db.stories.create_index([("user_id", 1), ("expires_at", -1), ("is_expired", 1)])
+
+    # ---------- messages / conversations ----------
+    await db.conversations.create_index("participant_ids")
+
+    logger.info("Database indexes created/verified")

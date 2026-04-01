@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # App Settings
     ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    DEBUG: bool = False
     BASE_URL: str = "http://localhost:8000"
     SECRET_KEY: str = "your-secret-key-change-in-production"
 

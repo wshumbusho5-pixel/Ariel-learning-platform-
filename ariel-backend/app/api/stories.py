@@ -13,6 +13,7 @@ from app.models.story import (
     Story, StoryCreate, StoryResponse, StoryView,
     StoryGroup, StoryTemplate, StoryType, StoryVisibility
 )
+from app.models.user import UserRole
 
 router = APIRouter(prefix="/api/stories", tags=["stories"])
 
@@ -447,13 +448,21 @@ async def get_story_templates():
 
 @router.post("/admin/cleanup-expired")
 async def cleanup_expired_stories(
+    current_user: User = Depends(get_current_user),
     db = Depends(get_database)
 ):
     """
     Mark expired stories as expired
 
-    This should be run as a background job (cron) every hour
+    This should be run as a background job (cron) every hour.
+    Requires admin role.
     """
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+
     cutoff_time = datetime.utcnow()
 
     result = await db.stories.update_many(

@@ -9,7 +9,7 @@ from bson import ObjectId
 from app.core.config import settings
 from app.api import questions, scraper, ai, auth, progress, gamification, admin, cards, ai_generator, social, stories, achievements, notifications, comments, messages, activity_feed, study_rooms, challenges, reels, livestream, duels
 from app.services.database_service import db_service
-from app.core.database import connect_to_mongo, close_mongo_connection
+from app.core.database import connect_to_mongo, close_mongo_connection, create_indexes, get_database
 
 
 async def _process_pending_bot_follows():
@@ -69,6 +69,7 @@ async def lifespan(app: FastAPI):
     # Startup
     await db_service.connect_db()
     await connect_to_mongo()
+    await create_indexes(get_database())
     asyncio.create_task(_process_pending_bot_follows())
     yield
     # Shutdown
