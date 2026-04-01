@@ -119,10 +119,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       let errorMessage = err.response?.data?.detail || 'Authentication failed';
 
       if (err.code === 'ECONNABORTED' || err.message?.toLowerCase().includes('timeout')) {
-        errorMessage = 'Cannot reach the server. Is the backend running on port 8003?';
+        errorMessage = 'Cannot reach the server. Please try again in a moment.';
       }
       if (err.message?.includes('Network Error')) {
-        errorMessage = 'Network error while contacting the server. Check API URL and backend.';
+        errorMessage = 'Network error. Please check your connection and try again.';
       }
       if (errorMessage.includes('72 bytes') || errorMessage.includes('truncate')) {
         errorMessage = 'Password is too long. Please use a shorter password (maximum 72 characters).';
