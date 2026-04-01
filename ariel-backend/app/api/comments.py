@@ -43,22 +43,46 @@ async def get_deck_comments(
     if parent_only:
         query["parent_comment_id"] = None
 
-    # Get comments
-    comments = []
+    # Fetch all comments first
+    raw_comments = []
     async for comment in db.comments.find(query).sort("created_at", -1).skip(offset).limit(limit):
-        # Get author info
-        author = await db.users.find_one({"_id": comment["user_id"]})
+        raw_comments.append(comment)
 
+    if not raw_comments:
+        return []
+
+    # Batch-fetch all authors in ONE query
+    user_ids = list({c["user_id"] for c in raw_comments})
+    # Try both string and ObjectId lookups for compatibility
+    user_object_ids = []
+    for uid in user_ids:
+        try:
+            user_object_ids.append(ObjectId(uid))
+        except Exception:
+            pass
+    authors_cursor = db.users.find({"_id": {"$in": user_ids + user_object_ids}})
+    authors_map = {}
+    async for author in authors_cursor:
+        authors_map[str(author["_id"])] = author
+
+    # Batch-fetch reply counts using aggregation pipeline
+    comment_ids = [str(c["_id"]) for c in raw_comments]
+    reply_counts_map = {}
+    pipeline = [
+        {"$match": {"parent_comment_id": {"$in": comment_ids}, "is_deleted": False}},
+        {"$group": {"_id": "$parent_comment_id", "count": {"$sum": 1}}}
+    ]
+    async for doc in db.comments.aggregate(pipeline):
+        reply_counts_map[doc["_id"]] = doc["count"]
+
+    # Build response
+    comments = []
+    for comment in raw_comments:
+        author = authors_map.get(str(comment["user_id"]))
         if not author:
             continue
 
-        # Count replies
-        reply_count = await db.comments.count_documents({
-            "parent_comment_id": str(comment["_id"]),
-            "is_deleted": False
-        })
-
-        # Check if current user liked this comment
+        reply_count = reply_counts_map.get(str(comment["_id"]), 0)
         is_liked = current_user_id in comment.get("liked_by", [])
 
         comments.append(CommentWithAuthor(
@@ -95,19 +119,37 @@ async def get_comment_replies(
     db = db_service.get_db()
     current_user_id = str(current_user.id)
 
-    # Get replies
-    replies = []
+    # Fetch all replies first
+    raw_replies = []
     async for comment in db.comments.find({
         "parent_comment_id": comment_id,
         "is_deleted": False
     }).sort("created_at", 1).limit(limit):  # Ascending for replies
-        # Get author info
-        author = await db.users.find_one({"_id": comment["user_id"]})
+        raw_replies.append(comment)
 
+    if not raw_replies:
+        return []
+
+    # Batch-fetch all authors in ONE query
+    user_ids = list({c["user_id"] for c in raw_replies})
+    user_object_ids = []
+    for uid in user_ids:
+        try:
+            user_object_ids.append(ObjectId(uid))
+        except Exception:
+            pass
+    authors_cursor = db.users.find({"_id": {"$in": user_ids + user_object_ids}})
+    authors_map = {}
+    async for author in authors_cursor:
+        authors_map[str(author["_id"])] = author
+
+    # Build response
+    replies = []
+    for comment in raw_replies:
+        author = authors_map.get(str(comment["user_id"]))
         if not author:
             continue
 
-        # Check if current user liked this comment
         is_liked = current_user_id in comment.get("liked_by", [])
 
         replies.append(CommentWithAuthor(
@@ -401,19 +443,49 @@ async def get_card_comments(
     """Get comments for a card (reuses deck comment system)."""
     db = db_service.get_db()
     current_user_id = str(current_user.id)
-    comments = []
+
+    # Fetch all comments first
+    raw_comments = []
     async for comment in db.comments.find(
         {"deck_id": card_id, "is_deleted": False, "parent_comment_id": None}
     ).sort("created_at", -1).skip(offset).limit(limit):
+        raw_comments.append(comment)
+
+    if not raw_comments:
+        return []
+
+    # Batch-fetch all authors in ONE query
+    user_ids = list({str(c["user_id"]) for c in raw_comments})
+    user_object_ids = []
+    for uid in user_ids:
         try:
-            author = await db.users.find_one({"_id": ObjectId(comment["user_id"])})
+            user_object_ids.append(ObjectId(uid))
         except Exception:
-            author = await db.users.find_one({"_id": comment["user_id"]})
+            pass
+    authors_cursor = db.users.find({"_id": {"$in": user_ids + user_object_ids}})
+    authors_map = {}
+    async for author in authors_cursor:
+        authors_map[str(author["_id"])] = author
+
+    # Batch-fetch reply counts using aggregation pipeline
+    comment_ids = [str(c["_id"]) for c in raw_comments]
+    reply_counts_map = {}
+    pipeline = [
+        {"$match": {"parent_comment_id": {"$in": comment_ids}, "is_deleted": False}},
+        {"$group": {"_id": "$parent_comment_id", "count": {"$sum": 1}}}
+    ]
+    async for doc in db.comments.aggregate(pipeline):
+        reply_counts_map[doc["_id"]] = doc["count"]
+
+    # Build response
+    comments = []
+    for comment in raw_comments:
+        uid_str = str(comment["user_id"])
+        author = authors_map.get(uid_str)
         if not author:
             continue
-        reply_count = await db.comments.count_documents({"parent_comment_id": str(comment["_id"]), "is_deleted": False})
+        reply_count = reply_counts_map.get(str(comment["_id"]), 0)
         is_liked = current_user_id in comment.get("liked_by", [])
-        uid_str = str(comment["user_id"])
         comments.append(CommentWithAuthor(
             id=str(comment["_id"]),
             deck_id=comment["deck_id"],

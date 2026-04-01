@@ -40,11 +40,14 @@ class ConnectionManager:
 
     async def broadcast(self, stream_id: str, message: dict):
         if stream_id in self.active_connections:
+            dead = []
             for connection in self.active_connections[stream_id]:
                 try:
                     await connection.send_json(message)
-                except:
-                    pass
+                except Exception:
+                    dead.append(connection)
+            for conn in dead:
+                self.active_connections[stream_id].remove(conn)
 
     def get_viewer_count(self, stream_id: str) -> int:
         return len(self.active_connections.get(stream_id, []))

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile
+from fastapi import APIRouter, HTTPException, Depends, status, File, UploadFile, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 import uuid
@@ -10,6 +10,7 @@ from app.models.user import (
 from app.services.user_repository import UserRepository
 from app.services.auth_service import AuthService
 from app.core.config import settings
+from app.core.rate_limit import limiter
 
 cloudinary.config(
     cloud_name=settings.CLOUDINARY_CLOUD_NAME,
@@ -32,7 +33,8 @@ def _validate_password(password: str):
         raise HTTPException(status_code=400, detail="Password must be at most 72 bytes")
 
 @router.post("/register", response_model=Token)
-async def register(user_data: UserCreate):
+@limiter.limit("5/minute")
+async def register(request: Request, user_data: UserCreate):
     """Register a new user with email and password"""
     # Validate password first (raises HTTPException on failure)
     _validate_password(user_data.password)
@@ -64,7 +66,8 @@ async def register(user_data: UserCreate):
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
 
 @router.post("/login", response_model=Token)
-async def login(credentials: UserLogin):
+@limiter.limit("10/minute")
+async def login(request: Request, credentials: UserLogin):
     """Login with email and password"""
     try:
         user = await UserRepository.authenticate_user(credentials.email, credentials.password)

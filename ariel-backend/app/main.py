@@ -1,11 +1,17 @@
 import asyncio
+import logging
 from fastapi import FastAPI
+
+logger = logging.getLogger(__name__)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime
 from bson import ObjectId
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.core.rate_limit import limiter
 from app.core.config import settings
 from app.api import questions, scraper, ai, auth, progress, gamification, admin, cards, ai_generator, social, stories, achievements, notifications, comments, messages, activity_feed, study_rooms, challenges, reels, livestream, duels
 from app.services.database_service import db_service
@@ -57,10 +63,10 @@ async def _process_pending_bot_follows():
                         })
 
                     await db.pending_bot_follows.delete_one({"_id": pending["_id"]})
-                except Exception:
-                    pass  # leave it for next cycle if something fails
-        except Exception:
-            pass
+                except Exception as e:
+                    logger.error(f"Bot follow-back worker error: {e}")
+        except Exception as e:
+            logger.error(f"Bot follow-back worker error: {e}")
         await asyncio.sleep(60)
 
 
@@ -83,6 +89,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # CORS middleware
 _origins = list(settings.ALLOWED_ORIGINS)
 if settings.EXTRA_ALLOWED_ORIGINS:
@@ -92,8 +102,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-AI-Provider", "X-AI-Key", "X-AI-Model"],
 )
 
 # Include routers

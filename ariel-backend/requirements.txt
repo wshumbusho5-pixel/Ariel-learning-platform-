@@ -21,3 +21,4 @@ pydantic[email]==2.5.0
 cloudinary==1.36.0
 aiofiles==23.2.1
 ollama==0.3.3
+slowapi==0.1.9

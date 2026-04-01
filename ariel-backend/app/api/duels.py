@@ -1,6 +1,7 @@
 """
 Duels API - Real-time multiplayer flashcard battles
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from typing import List, Optional, Dict
@@ -8,6 +9,8 @@ from datetime import datetime
 import asyncio
 import secrets
 import random
+
+logger = logging.getLogger(__name__)
 
 from app.services.database_service import db_service
 from app.services.auth_service import AuthService
@@ -149,16 +152,14 @@ async def _create_challenge_notification(db, challenger: User, challenged_id: st
 async def _run_game(room: DuelRoom):
     """Runs after both players connect."""
     if room.status != "waiting" or len(room.connections) < 2:
-        print(f"[DUEL] _run_game skipped: status={room.status} connections={len(room.connections)}")
+        logger.info(f"[DUEL] _run_game skipped: status={room.status} connections={len(room.connections)}")
         return
     try:
-        print(f"[DUEL] Starting game for room {room.room_id}")
+        logger.info(f"[DUEL] Starting game for room {room.room_id}")
         await _run_game_inner(room)
-        print(f"[DUEL] Game finished for room {room.room_id}")
+        logger.info(f"[DUEL] Game finished for room {room.room_id}")
     except Exception as e:
-        import traceback
-        print(f"[DUEL] CRASH in room {room.room_id}: {e}")
-        traceback.print_exc()
+        logger.exception(f"[DUEL] CRASH in room {room.room_id}: {e}")
         room.status = "finished"
         await _broadcast(room, {"type": "error", "message": "Game failed to start. Please try again."})
 
