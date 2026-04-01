@@ -9,6 +9,25 @@ interface AuthModalProps {
   onSuccess: (user: any, token: string) => void;
 }
 
+function validateEmail(v: string) {
+  if (!v) return 'Email is required';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return 'Enter a valid email address';
+  return '';
+}
+function validatePassword(v: string) {
+  if (!v) return 'Password is required';
+  if (v.length < 8) return 'Password must be at least 8 characters';
+  if (v.length > 72) return 'Password must be under 72 characters';
+  return '';
+}
+function validateUsername(v: string) {
+  if (!v) return 'Username is required';
+  if (v.length < 3) return 'Username must be at least 3 characters';
+  if (v.length > 20) return 'Username must be under 20 characters';
+  if (!/^[a-zA-Z0-9_]+$/.test(v)) return 'Only letters, numbers, and underscores';
+  return '';
+}
+
 export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
@@ -19,10 +38,23 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const fieldErrors = {
+    email: touched.email ? validateEmail(email) : '',
+    password: touched.password ? validatePassword(password) : '',
+    username: mode === 'register' && touched.username ? validateUsername(username) : '',
+  };
+
+  const isFormValid = !validateEmail(email) && !validatePassword(password) &&
+    (mode === 'login' || !validateUsername(username));
+
+  const touch = (field: string) => setTouched(prev => ({ ...prev, [field]: true }));
 
   const switchMode = (newMode: 'login' | 'register') => {
     setMode(newMode);
     setError('');
+    setTouched({});
   };
 
   const handleClose = () => {
@@ -193,9 +225,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className={inputClass}
+                  onBlur={() => touch('username')}
+                  className={`${inputClass} ${fieldErrors.username ? 'border-red-500/50' : ''}`}
                   placeholder="johndoe"
                 />
+                {fieldErrors.username && (
+                  <p className="text-red-400 text-xs mt-1">{fieldErrors.username}</p>
+                )}
               </div>
             </>
           )}
@@ -208,10 +244,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               type="email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); setError(''); }}
-              required
-              className={inputClass}
+              onBlur={() => touch('email')}
+              className={`${inputClass} ${fieldErrors.email ? 'border-red-500/50' : ''}`}
               placeholder="you@example.com"
             />
+            {fieldErrors.email && (
+              <p className="text-red-400 text-xs mt-1">{fieldErrors.email}</p>
+            )}
           </div>
 
           <div>
@@ -223,9 +262,9 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                required
+                onBlur={() => touch('password')}
                 autoComplete="new-password"
-                className={`${inputClass} pr-10`}
+                className={`${inputClass} pr-10 ${fieldErrors.password ? 'border-red-500/50' : ''}`}
                 placeholder="••••••••"
               />
               <button
@@ -245,12 +284,15 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 )}
               </button>
             </div>
+            {fieldErrors.password && (
+              <p className="text-red-400 text-xs mt-1">{fieldErrors.password}</p>
+            )}
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 bg-white hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-500 text-black font-bold rounded-full transition-colors text-[15px] mt-2"
+            disabled={loading || !isFormValid}
+            className="w-full py-3 px-4 bg-white hover:bg-zinc-200 disabled:bg-zinc-700 disabled:text-zinc-500 disabled:cursor-not-allowed text-black font-bold rounded-full transition-colors text-[15px] mt-2"
           >
             {loading ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
           </button>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import BottomNav from '@/components/BottomNav';
 import SideNav from '@/components/SideNav';
+import ErrorView from '@/components/ErrorView';
 
 interface Activity {
   id: string;
@@ -26,7 +27,7 @@ interface Activity {
     deck_title?: string;
     duration?: number;
     new_level?: number;
-    [key: string]: any;
+    [key: string]: string | number | boolean | null | undefined;
   };
   created_at: string;
   likes: number;
@@ -37,6 +38,7 @@ interface Activity {
 export default function ActivityFeedPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     loadActivities();
@@ -44,11 +46,12 @@ export default function ActivityFeedPage() {
 
   const loadActivities = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const response = await api.get('/api/activity/feed', { params: { limit: 50 } });
       setActivities(response.data);
-    } catch (error) {
-      console.error('Failed to load activities:', error);
+    } catch {
+      setFetchError('Failed to load feed. Check your connection.');
     } finally {
       setLoading(false);
     }
@@ -150,6 +153,23 @@ export default function ActivityFeedPage() {
               </div>
             ))}
           </div>
+          <BottomNav />
+        </div>
+      </>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <>
+        <SideNav />
+        <div className="min-h-screen bg-[#09090b] lg:pl-[72px] pb-20">
+          <header className="sticky top-0 z-40 bg-[#09090b] border-b border-zinc-800">
+            <div className="max-w-2xl mx-auto px-4 py-4">
+              <h1 className="text-2xl font-black text-white tracking-tight">Feed</h1>
+            </div>
+          </header>
+          <ErrorView message={fetchError} onRetry={loadActivities} fullPage />
           <BottomNav />
         </div>
       </>

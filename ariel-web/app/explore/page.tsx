@@ -4,6 +4,9 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { cardsAPI, socialAPI } from '@/lib/api';
 import { useAuth } from '@/lib/useAuth';
+import ErrorView from '@/components/ErrorView';
+import SideNav from '@/components/SideNav';
+import BottomNav from '@/components/BottomNav';
 
 interface Creator {
   id?: string;
@@ -69,6 +72,7 @@ function ExploreContent() {
 
   const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [feedMode, setFeedMode] = useState<'personalized' | 'trending'>('personalized');
   const [flipped, setFlipped] = useState<Set<string>>(new Set());
   const [liked, setLiked] = useState<Set<string>>(new Set());
@@ -95,6 +99,7 @@ function ExploreContent() {
 
   const loadCards = async () => {
     setLoading(true);
+    setFetchError(null);
     setFlipped(new Set());
     try {
       const data = feedMode === 'personalized'
@@ -124,7 +129,9 @@ function ExploreContent() {
       try {
         const fallback = await cardsAPI.getTrendingCards(50) as Card[];
         setCards(fallback);
-      } catch {}
+      } catch {
+        setFetchError('Failed to load cards. Check your connection.');
+      }
     } finally {
       setLoading(false);
     }
@@ -220,11 +227,35 @@ function ExploreContent() {
 
   if (loading) {
     return (
-      <div className="h-screen bg-black flex items-center justify-center lg:pl-[72px]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-zinc-700 border-t-violet-400 rounded-full animate-spin" />
-          <p className="text-zinc-500 text-sm">Loading cards…</p>
+      <div className="h-screen bg-black lg:pl-[72px] overflow-hidden">
+        <SideNav />
+        <div className="pt-24 px-4 grid grid-cols-1 gap-4 max-w-lg mx-auto">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-3 animate-pulse">
+              <div className="h-4 bg-zinc-800 rounded-full w-1/3" />
+              <div className="space-y-2">
+                <div className="h-6 bg-zinc-800 rounded-lg w-full" />
+                <div className="h-6 bg-zinc-800 rounded-lg w-4/5" />
+                <div className="h-6 bg-zinc-800 rounded-lg w-3/5" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <div className="h-5 w-10 bg-zinc-800 rounded-lg" />
+                <div className="h-5 w-10 bg-zinc-800 rounded-lg" />
+              </div>
+            </div>
+          ))}
         </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="h-screen bg-black lg:pl-[72px]">
+        <SideNav />
+        <ErrorView message={fetchError} onRetry={loadCards} fullPage />
+        <BottomNav />
       </div>
     );
   }

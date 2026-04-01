@@ -11,6 +11,20 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-jakarta)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
+      keyframes: {
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+      },
+      animation: {
+        slideUp: 'slideUp 0.25s ease-out',
+        fadeIn: 'fadeIn 0.2s ease-out',
+      },
       colors: {
         primary: {
           50: '#f0f9ff',

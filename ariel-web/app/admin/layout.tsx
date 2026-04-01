@@ -22,7 +22,6 @@ export default function AdminLayout({
 
     // Check if user is admin
     if (!isLoading && isAuthenticated && user?.role !== 'admin') {
-      alert('Access denied: Admin privileges required');
       router.push('/');
     }
   }, [isAuthenticated, isLoading, user, router]);

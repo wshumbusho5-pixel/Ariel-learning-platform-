@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import BottomNav from '@/components/BottomNav';
 import api from '@/lib/api';
 import SideNav from '@/components/SideNav';
+import ErrorView from '@/components/ErrorView';
 
 interface Challenge {
   id: string;
@@ -32,6 +33,7 @@ export default function ChallengesPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     loadChallenges();
@@ -39,11 +41,12 @@ export default function ChallengesPage() {
 
   const loadChallenges = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const response = await api.get('/api/challenges/active');
       setChallenges(response.data);
-    } catch (error) {
-      console.error('Failed to load challenges:', error);
+    } catch {
+      setFetchError('Failed to load challenges. Check your connection.');
     } finally {
       setLoading(false);
     }
@@ -112,12 +115,34 @@ export default function ChallengesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen lg:pl-[72px] bg-black flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-          <p className="text-sm font-medium text-gray-500">Loading...</p>
+      <div className="min-h-screen lg:pl-[72px] bg-[#09090b]">
+        <SideNav />
+        <div className="max-w-2xl mx-auto px-4 pt-24 space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 space-y-3 animate-pulse">
+              <div className="h-5 bg-zinc-800 rounded-full w-1/2" />
+              <div className="h-3 bg-zinc-800 rounded-full w-3/4" />
+              <div className="flex gap-2 pt-1">
+                <div className="h-6 w-16 bg-zinc-800 rounded-full" />
+                <div className="h-6 w-20 bg-zinc-800 rounded-full" />
+              </div>
+            </div>
+          ))}
         </div>
+        <BottomNav />
       </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <>
+        <SideNav />
+        <div className="min-h-screen bg-[#09090b] lg:pl-[72px]">
+          <ErrorView message={fetchError} onRetry={loadChallenges} fullPage />
+          <BottomNav />
+        </div>
+      </>
     );
   }
 

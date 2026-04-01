@@ -6,6 +6,7 @@ import { cardsAPI } from '@/lib/api';
 import { useComments } from '@/lib/commentsContext';
 import ShareSheet from '@/components/ShareSheet';
 import ArielLoader from '@/components/ArielLoader';
+import { useToast } from '@/components/Toast';
 
 interface PreviewComment {
   username: string;
@@ -120,7 +121,7 @@ export default function CardFeed({
   const [reviewCounts, setReviewCounts] = useState<Record<string, { hard: number; easy: number; nailed: number }>>({});
   // Track which queue entry key was last rated per card — so re-appearing cards start fresh
   const [ratedEntryKey, setRatedEntryKey] = useState<Record<string, string>>({});
-  const [toast, setToast] = useState<string | null>(null);
+  const { addToast } = useToast();
   const [shareTarget, setShareTarget] = useState<{ id: string; title: string; subtitle?: string } | null>(null);
   const [deletingCardId, setDeletingCardId] = useState<string | null>(null);
   const snapContainerRef = useRef<HTMLDivElement>(null);
@@ -135,10 +136,7 @@ export default function CardFeed({
   const [nailedInSession, setNailedInSession] = useState<Set<string>>(new Set());
   const [sessionRestarted, setSessionRestarted] = useState(false);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2000);
-  };
+  const showToast = (msg: string) => addToast(msg, 'info');
 
   useEffect(() => {
     loadCards();
@@ -688,11 +686,6 @@ export default function CardFeed({
 
     return (
       <>
-        {toast && (
-          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] px-4 py-2 bg-zinc-800/90 backdrop-blur-sm text-white text-sm font-semibold rounded-full shadow-lg pointer-events-none">
-            {toast}
-          </div>
-        )}
         <div
           ref={snapContainerRef}
           className="fixed inset-0 lg:left-[72px] overflow-y-scroll"
@@ -858,11 +851,6 @@ export default function CardFeed({
   if (grouped) {
     return (
       <>
-        {toast && (
-          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] px-4 py-2 bg-zinc-800/90 backdrop-blur-sm text-white text-sm font-semibold rounded-full shadow-lg pointer-events-none">
-            {toast}
-          </div>
-        )}
         <div className="space-y-8 pb-24">
           {Object.entries(grouped).map(([subject, subjectCards]) => (
             <div key={subject} className="space-y-3">
@@ -887,11 +875,6 @@ export default function CardFeed({
 
   return (
     <>
-      {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] px-4 py-2 bg-zinc-800/90 backdrop-blur-sm text-white text-sm font-semibold rounded-full shadow-lg pointer-events-none">
-          {toast}
-        </div>
-      )}
       <div className="space-y-4 pb-24">
         {filteredCards.map((card, index) => renderCard(card, index))}
       </div>

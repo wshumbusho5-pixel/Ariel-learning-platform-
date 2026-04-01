@@ -142,7 +142,7 @@ export default function BottomNav() {
   useEffect(() => {
     import('@/lib/api').then(({ messagesAPI }) => {
       messagesAPI.getUnreadCount()
-        .then((d: any) => setUnreadMessages(d?.unread_count ?? 0))
+        .then((d: { unread_count?: number }) => setUnreadMessages(d?.unread_count ?? 0))
         .catch(() => {});
     });
   }, []);
