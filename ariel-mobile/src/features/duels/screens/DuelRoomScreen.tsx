@@ -101,10 +101,7 @@ export function DuelRoomScreen({ route, navigation }: Props): React.ReactElement
 
   const handleViewResult = () => {
     if (!gameResult) return;
-    navigation.navigate('DuelResult', {
-      result: gameResult,
-      opponentUsername: opponentUsername ?? undefined,
-    });
+    navigation.navigate('DuelResult', { result: gameResult });
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────

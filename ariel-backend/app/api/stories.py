@@ -4,7 +4,6 @@ Stories API - 24-hour expiring status updates
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 from datetime import datetime, timedelta
-from bson import ObjectId
 
 from app.core.database import get_database
 from app.core.security import get_current_user
@@ -13,7 +12,6 @@ from app.models.story import (
     Story, StoryCreate, StoryResponse, StoryView,
     StoryGroup, StoryTemplate, StoryType, StoryVisibility
 )
-from app.models.user import UserRole
 
 router = APIRouter(prefix="/api/stories", tags=["stories"])
 
@@ -257,12 +255,7 @@ async def get_story(
     """
     Get a single story by ID
     """
-    try:
-        oid = ObjectId(story_id)
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid story ID")
-
-    story = await db.stories.find_one({"_id": oid})
+    story = await db.stories.find_one({"_id": story_id})
     if not story:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -325,12 +318,7 @@ async def mark_story_viewed(
     - Adds user to viewers list
     - Increments view count
     """
-    try:
-        oid = ObjectId(story_id)
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid story ID")
-
-    story = await db.stories.find_one({"_id": oid})
+    story = await db.stories.find_one({"_id": story_id})
     if not story:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -345,7 +333,7 @@ async def mark_story_viewed(
 
     # Add to viewers and increment count
     await db.stories.update_one(
-        {"_id": oid},
+        {"_id": story_id},
         {
             "$addToSet": {"viewers": current_user_id},
             "$inc": {"views": 1}
@@ -368,12 +356,7 @@ async def delete_story(
 
     - Only owner can delete
     """
-    try:
-        oid = ObjectId(story_id)
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid story ID")
-
-    story = await db.stories.find_one({"_id": oid})
+    story = await db.stories.find_one({"_id": story_id})
     if not story:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -386,7 +369,7 @@ async def delete_story(
             detail="You can only delete your own stories"
         )
 
-    await db.stories.delete_one({"_id": oid})
+    await db.stories.delete_one({"_id": story_id})
 
     return {"success": True, "message": "Story deleted"}
 
@@ -448,21 +431,13 @@ async def get_story_templates():
 
 @router.post("/admin/cleanup-expired")
 async def cleanup_expired_stories(
-    current_user: User = Depends(get_current_user),
     db = Depends(get_database)
 ):
     """
     Mark expired stories as expired
 
-    This should be run as a background job (cron) every hour.
-    Requires admin role.
+    This should be run as a background job (cron) every hour
     """
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
-
     cutoff_time = datetime.utcnow()
 
     result = await db.stories.update_many(

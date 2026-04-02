@@ -9,35 +9,23 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#09090b"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ariel.learning",
-      "newArchEnabled": true,
-      "infoPlist": {
-        "NSCameraUsageDescription": "Ariel needs camera access to take profile pictures and create study content.",
-        "NSPhotoLibraryUsageDescription": "Ariel needs photo library access to upload profile pictures and study materials.",
-        "NSMicrophoneUsageDescription": "Ariel needs microphone access for live study sessions."
-      }
+      "bundleIdentifier": "com.ariel.app",
+      "newArchEnabled": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#09090b"
       },
-      "package": "com.ariel.learning",
-      "newArchEnabled": true,
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "RECORD_AUDIO",
-        "VIBRATE"
-      ]
+      "package": "com.ariel.app",
+      "newArchEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"

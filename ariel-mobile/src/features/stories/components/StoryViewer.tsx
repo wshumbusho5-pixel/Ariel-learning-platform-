@@ -99,25 +99,15 @@ export function StoryViewer({
   }, [group.user_id, initialStoryIndex]);
 
   // ─── Touch handling ────────────────────────────────────────────────────────
-  // Use refs for callbacks so PanResponder always calls the latest version
-  const goNextRef = useRef(goNext);
-  const goPrevRef = useRef(goPrev);
-  const onNextGroupRef = useRef(onNextGroup);
-  const onPrevGroupRef = useRef(onPrevGroup);
-  useEffect(() => {
-    goNextRef.current = goNext;
-    goPrevRef.current = goPrev;
-    onNextGroupRef.current = onNextGroup;
-    onPrevGroupRef.current = onPrevGroup;
-  }, [goNext, goPrev, onNextGroup, onPrevGroup]);
-
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_e, gs: PanResponderGestureState) => {
+        // Capture horizontal swipes
         return Math.abs(gs.dx) > 10;
       },
-      onPanResponderGrant: () => {
+      onPanResponderGrant: (e: GestureResponderEvent) => {
+        // Start hold timer — 200ms to count as a hold/pause
         holdTimerRef.current = setTimeout(() => {
           setIsPaused(true);
         }, 200);
@@ -131,20 +121,26 @@ export function StoryViewer({
 
         const { dx, dy } = gs;
 
-        // Horizontal swipe → change group
+        // Horizontal swipe
         if (Math.abs(dx) > 50) {
-          if (dx < 0) onNextGroupRef.current?.();
-          else onPrevGroupRef.current?.();
+          if (dx < 0) {
+            // Swipe left → next group
+            onNextGroup?.();
+          } else {
+            // Swipe right → prev group
+            onPrevGroup?.();
+          }
           return;
         }
 
-        // Tap — left 30% = previous, right 70% = next
+        // It was a tap (no significant movement)
         if (Math.abs(dx) < 15 && Math.abs(dy) < 15) {
           const tapX = e.nativeEvent.locationX;
-          if (tapX < SCREEN_WIDTH * 0.3) {
-            goPrevRef.current();
+          const leftZone = SCREEN_WIDTH * 0.3;
+          if (tapX < leftZone) {
+            goPrev();
           } else {
-            goNextRef.current();
+            goNext();
           }
         }
       },
@@ -186,37 +182,20 @@ export function StoryViewer({
         );
       }
 
-      case StoryType.ACHIEVEMENT: {
-        const [achColorA, achColorB] = getGradient(story!.background_color, story!.id);
+      case StoryType.ACHIEVEMENT:
         return (
-          <LinearGradient
-            colors={[achColorA, achColorB]}
-            style={styles.achievementContainer}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            {/* Top spacer — pushes content to ~60% down the screen */}
-            <View style={{ flex: 0.55 }} />
-
-            {/* Main content */}
-            <View style={styles.achievementMain}>
-              <Ionicons name="trophy" size={56} color="rgba(255,255,255,0.9)" style={{ marginBottom: 14 }} />
-              <Text style={styles.achievementLabel}>Achievement Unlocked</Text>
-              {story!.content ? (
-                <Text style={styles.achievementContent}>{story!.content}</Text>
-              ) : story!.achievement_title ? (
-                <Text style={styles.achievementContent}>{story!.achievement_title}</Text>
-              ) : null}
-            </View>
-
-            {/* Bottom section — fills remaining space */}
-            <View style={styles.achievementBottom}>
-              <Text style={styles.challengeText}>Challenge me on Ariel</Text>
-              <Text style={styles.watermark}>ariel.study</Text>
-            </View>
-          </LinearGradient>
+          <View style={styles.achievementContainer}>
+            <Text style={styles.achievementEmoji}>
+              {story!.achievement_icon ?? '🏆'}
+            </Text>
+            <Text style={styles.achievementTitle}>
+              {story!.achievement_title ?? 'Achievement Unlocked'}
+            </Text>
+            {story!.content ? (
+              <Text style={styles.achievementDescription}>{story!.content}</Text>
+            ) : null}
+          </View>
         );
-      }
 
       case StoryType.DECK_POST:
         return (
@@ -447,51 +426,27 @@ const styles = StyleSheet.create({
   // ── Achievement / Streak / Study story ───────────────────────────────────
   achievementContainer: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#09090b',
     paddingHorizontal: SPACING['3xl'],
   },
-  achievementMain: {
-    alignItems: 'center',
+  achievementEmoji: {
+    fontSize: 72,
+    marginBottom: SPACING.xl,
   },
-  achievementLabel: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2.5,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginBottom: 14,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  achievementContent: {
+  achievementTitle: {
     color: '#fff',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: TYPOGRAPHY.fontSize['2xl'],
+    fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 38,
-    textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    marginBottom: SPACING.md,
   },
-  achievementBottom: {
-    flex: 0.45,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingBottom: 40,
-    gap: 6,
-  },
-  challengeText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  watermark: {
-    color: 'rgba(255,255,255,0.3)',
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: 1,
+  achievementDescription: {
+    color: COLORS.textSecondary,
+    fontSize: TYPOGRAPHY.fontSize.base,
+    textAlign: 'center',
+    lineHeight: TYPOGRAPHY.fontSize.base * 1.5,
   },
 
   // ── Card / Deck Post story ────────────────────────────────────────────────

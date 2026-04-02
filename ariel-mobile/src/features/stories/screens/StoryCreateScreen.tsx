@@ -48,14 +48,12 @@ interface MockAchievement {
 }
 
 const SAMPLE_ACHIEVEMENTS: MockAchievement[] = [
-  { id: 'duel_win',   title: 'Duel Champion',      icon: 'trophy', description: 'Won a flashcard duel!' },
-  { id: 'streak_7',   title: '7-Day Streak',       icon: 'flame',  description: 'Studied 7 days in a row' },
-  { id: 'streak_30',  title: '30-Day Streak',      icon: 'medal',  description: 'Studied 30 days in a row' },
-  { id: 'cards_100',  title: '100 Cards Reviewed',  icon: 'library', description: 'Reviewed 100 flashcards' },
-  { id: 'cards_1000', title: '1000 Cards Reviewed', icon: 'school', description: 'Reviewed 1000 flashcards' },
-  { id: 'first_deck', title: 'Deck Creator',        icon: 'sparkles', description: 'Created your first deck' },
-  { id: 'social',     title: 'Social Learner',      icon: 'people', description: 'Followed 5 users' },
-  { id: 'duel_3wins', title: 'Triple Victory',      icon: 'flash',  description: 'Won 3 duels in a row' },
+  { id: 'streak_7',   title: '7-Day Streak',       icon: '🔥', description: 'Studied 7 days in a row' },
+  { id: 'streak_30',  title: '30-Day Streak',      icon: '🏆', description: 'Studied 30 days in a row' },
+  { id: 'cards_100',  title: '100 Cards Reviewed', icon: '📚', description: 'Reviewed 100 flashcards' },
+  { id: 'cards_1000', title: '1000 Cards Reviewed',icon: '🎓', description: 'Reviewed 1000 flashcards' },
+  { id: 'first_deck', title: 'Deck Creator',       icon: '✨', description: 'Created your first deck' },
+  { id: 'social',     title: 'Social Learner',     icon: '👥', description: 'Followed 5 users' },
 ];
 
 export function StoryCreateScreen(): React.ReactElement {
@@ -207,9 +205,7 @@ export function StoryCreateScreen(): React.ReactElement {
                   onPress={() => setSelectedAchievement(isSelected ? null : ach)}
                   style={[styles.achievementRow, isSelected && styles.achievementRowSelected, isShort && { padding: SPACING.md, marginBottom: SPACING.sm }]}
                 >
-                  <View style={styles.achievementIconCircle}>
-                    <Ionicons name={ach.icon as any} size={22} color="#7c3aed" />
-                  </View>
+                  <Text style={styles.achievementEmoji}>{ach.icon}</Text>
                   <View style={styles.achievementInfo}>
                     <Text style={styles.achievementTitle}>{ach.title}</Text>
                     <Text style={styles.achievementDescription}>{ach.description}</Text>
@@ -380,13 +376,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.violet[500],
     backgroundColor: `${COLORS.violet[950]}44`,
   },
-  achievementIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(124,58,237,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  achievementEmoji: {
+    fontSize: 32,
     marginRight: SPACING.md,
   },
   achievementInfo: {

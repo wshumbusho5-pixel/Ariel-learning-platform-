@@ -39,8 +39,6 @@ class Settings(BaseSettings):
         "https://ariel-learning-platform.vercel.app",
         "https://ariel.study",
         "https://www.ariel.study",
-        "exp://",
-        "ariel://",
     ]
     EXTRA_ALLOWED_ORIGINS: str = ""  # comma-separated, set via env var for Vercel URL
 

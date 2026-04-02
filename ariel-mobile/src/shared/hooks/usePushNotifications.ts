@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import apiClient from '@/shared/api/client';
+import { navigate } from '@/shared/navigation/navigationRef';
 import { AUTH } from '@/shared/api/endpoints';
+import { useNotificationStore } from '@/features/notifications/notificationStore';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -20,6 +22,9 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notificationPermission, setNotificationPermission] =
     useState<Notifications.PermissionStatus | null>(null);
+
+  const notificationListener = useRef<Notifications.Subscription>();
+  const responseListener = useRef<Notifications.Subscription>();
 
   useEffect(() => {
     let isMounted = true;
@@ -50,14 +55,61 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         // Send token to backend
         await apiClient.put(AUTH.PROFILE, { expo_push_token: token });
       } catch {
-        // Non-critical: push token registration failed, app still works
+        // Non-critical: push token registration failed
       }
     }
 
     register();
 
+    // ── Listener: notification received while app is foregrounded ────────
+    notificationListener.current = Notifications.addNotificationReceivedListener(
+      (_notification) => {
+        // Increment badge count in store
+        try {
+          const store = useNotificationStore.getState();
+          store.setUnreadCount(store.unreadCount + 1);
+        } catch {}
+      },
+    );
+
+    // ── Listener: user tapped a notification ─────────────────────────────
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data as Record<string, unknown> | undefined;
+        if (!data) return;
+
+        const type = data.type as string | undefined;
+        const targetId = data.target_id as string | undefined;
+
+        try {
+          switch (type) {
+            case 'new_follower':
+            case 'follow_request':
+              if (targetId) navigate('UserProfile', { userId: targetId });
+              break;
+            case 'duel_challenge':
+            case 'duel_result':
+              navigate('Main');
+              break;
+            case 'new_message':
+              navigate('Messages');
+              break;
+            default:
+              navigate('Notifications');
+              break;
+          }
+        } catch {}
+      },
+    );
+
     return () => {
       isMounted = false;
+      if (notificationListener.current) {
+        Notifications.removeNotificationSubscription(notificationListener.current);
+      }
+      if (responseListener.current) {
+        Notifications.removeNotificationSubscription(responseListener.current);
+      }
     };
   }, []);
 

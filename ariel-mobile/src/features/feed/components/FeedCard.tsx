@@ -292,7 +292,7 @@ export function FeedCard({ card }: FeedCardProps) {
         <View style={s.leftCol}>
           <AuthorAvatarLeft
             uri={card.author_profile_picture}
-            username={card.author_username ?? card.author_full_name ?? getBotName(card.subject)}
+            username={card.author_username}
             fullName={card.author_full_name}
             subjectColor={subjectColor}
           />

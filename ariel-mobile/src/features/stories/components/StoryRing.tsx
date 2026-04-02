@@ -27,9 +27,8 @@ export interface StoryRingProps {
   seen: boolean;
   size?: number;
   onPress?: () => void;
-  onAddPress?: () => void; // separate handler for the + badge
   showAddButton?: boolean;
-  showRing?: boolean;
+  showRing?: boolean; // false = no ring border (followed user without story)
 }
 
 export function StoryRing({
@@ -38,7 +37,6 @@ export function StoryRing({
   seen,
   size = 56,
   onPress,
-  onAddPress,
   showAddButton = false,
   showRing = true,
 }: StoryRingProps): React.ReactElement {
@@ -96,25 +94,22 @@ export function StoryRing({
         {avatarInner}
       </View>
 
-      {/* Add (+) badge for "Your story" — tappable if onAddPress provided */}
+      {/* Add (+) badge for "Your story" */}
       {showAddButton && (
-        <TouchableOpacity
+        <View
           style={[
             styles.addBadge,
             {
               width: addBadgeSize,
               height: addBadgeSize,
               borderRadius: addBadgeSize / 2,
-              bottom: 16,
+              bottom: 16, // above username label
               right: -2,
             },
           ]}
-          onPress={onAddPress}
-          activeOpacity={0.7}
-          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
           <Ionicons name="add" size={addBadgeSize * 0.7} color="#fff" />
-        </TouchableOpacity>
+        </View>
       )}
 
       {/* Username label */}
