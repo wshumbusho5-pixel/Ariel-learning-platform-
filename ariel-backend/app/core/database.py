@@ -40,16 +40,20 @@ async def create_indexes(db):
     """
     # ---------- users ----------
     await db.users.create_index("email", unique=True)
-    # Drop old non-sparse username index if it exists, then recreate as sparse
-    # (non-sparse unique index breaks when multiple OAuth users have null username)
+    # Drop any existing username_1 index (old sparse or non-sparse) and recreate
+    # using partialFilterExpression so null usernames (OAuth users) are ignored entirely.
     try:
         existing = await db.users.index_information()
-        if "username_1" in existing and not existing["username_1"].get("sparse", False):
+        if "username_1" in existing:
             await db.users.drop_index("username_1")
-            logger.info("Dropped non-sparse username_1 index")
+            logger.info("Dropped old username_1 index")
     except Exception as e:
-        logger.warning(f"Could not check/drop username_1 index: {e}")
-    await db.users.create_index("username", unique=True, sparse=True)
+        logger.warning(f"Could not drop username_1 index: {e}")
+    await db.users.create_index(
+        "username",
+        unique=True,
+        partialFilterExpression={"username": {"$type": "string"}},
+    )
 
     # ---------- cards ----------
     await db.cards.create_index("user_id")
