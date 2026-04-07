@@ -4,7 +4,7 @@ from typing import List, Optional
 from bson import ObjectId
 
 logger = logging.getLogger(__name__)
-from app.models.card import Card, CardCreate, CardUpdate, DeckStats, BulkCardCreate, CardReview
+from app.models.card import Card, CardCreate, CardUpdate, DeckStats, BulkCardCreate, CardReview, CardReviewRequest
 from app.core.subjects import normalize_subject
 from app.models.user import User
 from app.models.activity import ActivityType
@@ -452,13 +452,14 @@ async def delete_card(
 @router.post("/{card_id}/review", response_model=CardReview)
 async def review_card(
     card_id: str,
-    quality: int = Query(..., ge=0, le=5, description="Quality rating 0-5"),
+    review: CardReviewRequest,
     current_user: User = Depends(get_current_user_dependency)
 ):
     """
     Review a card and update spaced repetition
     quality: 0=total blackout, 1=wrong, 2=hard, 3=good, 4=easy, 5=perfect
     """
+    quality = review.quality
     try:
         card = await CardRepository.review_card(card_id, current_user.id, quality)
         if not card:

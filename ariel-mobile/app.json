@@ -16,21 +16,47 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.ariel.app",
-      "newArchEnabled": true
+      "bundleIdentifier": "com.ariel.learning",
+      "buildNumber": "1",
+      "newArchEnabled": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Ariel needs camera access to take profile photos and scan documents.",
+        "NSPhotoLibraryUsageDescription": "Ariel needs photo library access to upload profile pictures and study materials.",
+        "NSMicrophoneUsageDescription": "Ariel needs microphone access for voice recording in study sessions."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.ariel.app",
-      "newArchEnabled": true
+      "package": "com.ariel.learning",
+      "versionCode": 1,
+      "newArchEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "VIBRATE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "scheme": "ariel",
+    "owner": "ariel-learning",
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": ""
+    },
     "plugins": [
       "expo-camera",
       "expo-image-picker",
@@ -38,11 +64,13 @@
       [
         "expo-notifications",
         {
-          "color": "#7c3aed"
+          "color": "#7c3aed",
+          "icon": "./assets/icon.png"
         }
       ],
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ]
   }
 }

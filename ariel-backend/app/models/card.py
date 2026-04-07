@@ -64,6 +64,10 @@ class CardUpdate(BaseModel):
     tags: Optional[List[str]] = None
     visibility: Optional[CardVisibility] = None
 
+class CardReviewRequest(BaseModel):
+    """Request body for reviewing a card"""
+    quality: int = Field(..., ge=0, le=5, description="Quality rating 0-5")
+
 class CardReview(BaseModel):
     """Response after reviewing a card"""
     card_id: str
