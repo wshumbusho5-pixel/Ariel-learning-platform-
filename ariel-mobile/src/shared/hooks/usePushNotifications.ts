@@ -55,50 +55,47 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         // Send token to backend
         await apiClient.put(AUTH.PROFILE, { expo_push_token: token });
       } catch {
-        // Non-critical: push token registration failed
+        // Non-critical: push token registration failed, app still works
       }
     }
 
     register();
 
-    // ── Listener: notification received while app is foregrounded ────────
+    // Foreground: increment badge count when a notification arrives
     notificationListener.current = Notifications.addNotificationReceivedListener(
-      (_notification) => {
-        // Increment badge count in store
-        try {
-          const store = useNotificationStore.getState();
-          store.setUnreadCount(store.unreadCount + 1);
-        } catch {}
+      () => {
+        const store = useNotificationStore.getState();
+        store.setUnreadCount(store.unreadCount + 1);
       },
     );
 
-    // ── Listener: user tapped a notification ─────────────────────────────
+    // Tap: deep-link when user taps a notification
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        const data = response.notification.request.content.data as Record<string, unknown> | undefined;
+        const data = response.notification.request.content.data as
+          | Record<string, unknown>
+          | undefined;
         if (!data) return;
 
         const type = data.type as string | undefined;
         const targetId = data.target_id as string | undefined;
 
-        try {
-          switch (type) {
-            case 'new_follower':
-            case 'follow_request':
-              if (targetId) navigate('UserProfile', { userId: targetId });
-              break;
-            case 'duel_challenge':
-            case 'duel_result':
-              navigate('Main');
-              break;
-            case 'new_message':
-              navigate('Messages');
-              break;
-            default:
-              navigate('Notifications');
-              break;
-          }
-        } catch {}
+        switch (type) {
+          case 'new_follower':
+          case 'follow_request':
+            if (targetId) navigate('UserProfile', { userId: targetId });
+            break;
+          case 'duel_challenge':
+          case 'duel_result':
+            navigate('Main');
+            break;
+          case 'new_message':
+            navigate('Messages');
+            break;
+          default:
+            navigate('Notifications');
+            break;
+        }
       },
     );
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,13 +9,27 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  SlideInRight,
+  SlideInLeft,
+  SlideOutLeft,
+  SlideOutRight,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  Easing,
+  Layout,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/shared/navigation/RootNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '@/shared/auth/authStore';
-import { CANONICAL_SUBJECT_KEYS, SUBJECT_META } from '@/shared/constants/subjects';
+import { CANONICAL_SUBJECT_KEYS, SUBJECT_META, SubjectKey } from '@/shared/constants/subjects';
 import { EducationLevel } from '@/shared/types/user';
 import { ArielWordmark } from '@/shared/components/ArielWordmark';
 
@@ -30,6 +44,8 @@ const EDUCATION_OPTIONS: { value: EducationLevel; label: string; emoji: string }
 
 const TOTAL_STEPS = 2;
 
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
 export function OnboardingScreen({ navigation }: Props): React.ReactElement {
   const [step, setStep] = useState<1 | 2>(1);
   const [educationLevel, setEducationLevel] = useState<EducationLevel | null>(null);
@@ -41,11 +57,11 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
 
   const updateUser = useAuthStore((s) => s.updateUser);
 
-  const toggleSubject = (key: string) => {
+  const toggleSubject = useCallback((key: string) => {
     setSelectedSubjects((prev) =>
       prev.includes(key) ? prev.filter((s) => s !== key) : [...prev, key]
     );
-  };
+  }, []);
 
   const canContinue = step === 1 ? educationLevel !== null : selectedSubjects.length > 0;
 
@@ -70,90 +86,161 @@ export function OnboardingScreen({ navigation }: Props): React.ReactElement {
     }
   };
 
-  const progressPct = `${(step / TOTAL_STEPS) * 100}%`;
-
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {/* Top progress bar */}
+      {/* Animated progress bar */}
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: progressPct as any }]} />
+        <AnimatedProgressBar step={step} totalSteps={TOTAL_STEPS} />
       </View>
 
-      {/* Header row: wordmark + step counter */}
-      <View style={[styles.headerRow, { paddingVertical: isShort ? 10 : 16 }]}>
+      {/* Header row */}
+      <Animated.View
+        entering={FadeIn.duration(600)}
+        style={[styles.headerRow, { paddingVertical: isShort ? 10 : 16 }]}
+      >
         <ArielWordmark size={22} />
         <Text style={styles.stepCounter}>Step {step} of {TOTAL_STEPS}</Text>
-      </View>
+      </Animated.View>
 
-      {/* Content */}
+      {/* Step content with enter/exit transitions */}
       {step === 1 ? (
-        <EducationStep
-          selected={educationLevel}
-          onSelect={setEducationLevel}
-          isShort={isShort}
-        />
+        <Animated.View
+          key="step1"
+          entering={SlideInLeft.duration(350).easing(Easing.out(Easing.cubic))}
+          exiting={SlideOutLeft.duration(250).easing(Easing.in(Easing.cubic))}
+          style={{ flex: 1 }}
+        >
+          <EducationStep
+            selected={educationLevel}
+            onSelect={setEducationLevel}
+            isShort={isShort}
+          />
+        </Animated.View>
       ) : (
-        <SubjectStep
-          selected={selectedSubjects}
-          onToggle={toggleSubject}
-          isShort={isShort}
-        />
+        <Animated.View
+          key="step2"
+          entering={SlideInRight.duration(350).easing(Easing.out(Easing.cubic))}
+          exiting={SlideOutRight.duration(250).easing(Easing.in(Easing.cubic))}
+          style={{ flex: 1 }}
+        >
+          <SubjectStep
+            selected={selectedSubjects}
+            onToggle={toggleSubject}
+            isShort={isShort}
+          />
+        </Animated.View>
       )}
 
       {/* Footer */}
-      <View
+      <Animated.View
+        entering={FadeIn.delay(400).duration(400)}
         style={[
           styles.footer,
           { paddingBottom: Math.max(insets.bottom, 20) + 8, paddingTop: isShort ? 10 : 16 },
         ]}
       >
         <View style={styles.footerInner}>
-          {/* Back button (step 2 only) */}
           {step === 2 && (
-            <TouchableOpacity
-              style={styles.backBtn}
-              onPress={() => setStep(1)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.backBtnText}>Back</Text>
-            </TouchableOpacity>
+            <Animated.View entering={FadeIn.duration(200)}>
+              <TouchableOpacity
+                style={styles.backBtn}
+                onPress={() => setStep(1)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.backBtnText}>Back</Text>
+              </TouchableOpacity>
+            </Animated.View>
           )}
 
-          {/* N selected label (step 2 only) */}
           {step === 2 && selectedSubjects.length > 0 && (
-            <Text style={styles.selectedCount}>
+            <Animated.Text
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(150)}
+              style={styles.selectedCount}
+            >
               {selectedSubjects.length} selected
-            </Text>
+            </Animated.Text>
           )}
 
           <View style={{ flex: 1 }} />
 
-          {/* Continue / Get started */}
-          <TouchableOpacity
-            style={[
-              styles.continueBtn,
-              !canContinue && styles.continueBtnDisabled,
-            ]}
+          <ContinueButton
+            label={step === 2 ? 'Get started' : 'Continue'}
+            enabled={canContinue}
+            loading={saving}
             onPress={handleNext}
-            disabled={!canContinue || saving}
-            activeOpacity={0.85}
-          >
-            {saving ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <Text
-                style={[
-                  styles.continueBtnText,
-                  !canContinue && styles.continueBtnTextDisabled,
-                ]}
-              >
-                {step === 2 ? 'Get started' : 'Continue'}
-              </Text>
-            )}
-          </TouchableOpacity>
+          />
         </View>
-      </View>
+      </Animated.View>
     </View>
+  );
+}
+
+// ─── Animated Progress Bar ────────────────────────────────────────────────────
+
+function AnimatedProgressBar({ step, totalSteps }: { step: number; totalSteps: number }) {
+  const width = useSharedValue(step / totalSteps);
+
+  React.useEffect(() => {
+    width.value = withTiming(step / totalSteps, {
+      duration: 400,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [step, totalSteps]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    width: `${width.value * 100}%`,
+  }));
+
+  return <Animated.View style={[styles.progressFill, animStyle]} />;
+}
+
+// ─── Continue Button (animated enable/disable) ───────────────────────────────
+
+function ContinueButton({
+  label,
+  enabled,
+  loading,
+  onPress,
+}: {
+  label: string;
+  enabled: boolean;
+  loading: boolean;
+  onPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const bgOpacity = useSharedValue(enabled ? 1 : 0);
+
+  React.useEffect(() => {
+    bgOpacity.value = withTiming(enabled ? 1 : 0, { duration: 250 });
+  }, [enabled]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: bgOpacity.value > 0.5 ? '#ffffff' : '#27272a',
+  }));
+
+  const textStyle = useAnimatedStyle(() => ({
+    color: bgOpacity.value > 0.5 ? '#000000' : '#52525b',
+  }));
+
+  return (
+    <AnimatedTouchable
+      style={[styles.continueBtn, animStyle]}
+      onPress={onPress}
+      onPressIn={() => { scale.value = withSpring(0.95); }}
+      onPressOut={() => { scale.value = withSpring(1); }}
+      disabled={!enabled || loading}
+      activeOpacity={1}
+    >
+      {loading ? (
+        <ActivityIndicator color="#000" />
+      ) : (
+        <Animated.Text style={[styles.continueBtnText, textStyle]}>
+          {label}
+        </Animated.Text>
+      )}
+    </AnimatedTouchable>
   );
 }
 
@@ -170,38 +257,91 @@ function EducationStep({
 }) {
   return (
     <View style={[styles.stepContent, { paddingTop: isShort ? 14 : 28 }]}>
-      <Text style={[styles.stepTitle, { fontSize: isShort ? 18 : 22 }]}>Where are you learning?</Text>
-      <Text style={styles.stepSubtitle}>We'll tune your experience to fit.</Text>
+      <Animated.Text
+        entering={FadeIn.delay(100).duration(400)}
+        style={[styles.stepTitle, { fontSize: isShort ? 18 : 22 }]}
+      >
+        Where are you learning?
+      </Animated.Text>
+      <Animated.Text
+        entering={FadeIn.delay(200).duration(400)}
+        style={styles.stepSubtitle}
+      >
+        We'll tune your experience to fit.
+      </Animated.Text>
 
-      {/* 2×2 grid */}
       <View style={[styles.educationGrid, { marginTop: isShort ? 12 : 24 }]}>
-        {EDUCATION_OPTIONS.map((opt) => {
-          const active = selected === opt.value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              style={[
-                styles.educationCard,
-                active ? styles.educationCardActive : styles.educationCardInactive,
-                { aspectRatio: isShort ? 1.5 : 1.2, padding: isShort ? 12 : 20 },
-              ]}
-              onPress={() => onSelect(opt.value)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.educationEmoji, { fontSize: isShort ? 22 : 28 }]}>{opt.emoji}</Text>
-              <Text
-                style={[
-                  styles.educationLabel,
-                  active && styles.educationLabelActive,
-                ]}
-              >
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        {EDUCATION_OPTIONS.map((opt, i) => (
+          <EducationCard
+            key={opt.value}
+            opt={opt}
+            active={selected === opt.value}
+            onSelect={onSelect}
+            isShort={isShort}
+            index={i}
+          />
+        ))}
       </View>
     </View>
+  );
+}
+
+function EducationCard({
+  opt,
+  active,
+  onSelect,
+  isShort,
+  index,
+}: {
+  opt: { value: EducationLevel; label: string; emoji: string };
+  active: boolean;
+  onSelect: (v: EducationLevel) => void;
+  isShort: boolean;
+  index: number;
+}) {
+  const scale = useSharedValue(1);
+  const borderAnim = useSharedValue(active ? 1 : 0);
+
+  React.useEffect(() => {
+    borderAnim.value = withSpring(active ? 1 : 0, { damping: 15, stiffness: 200 });
+  }, [active]);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    borderColor: borderAnim.value > 0.5 ? '#ffffff' : '#27272a',
+    backgroundColor: `rgba(255,255,255,${borderAnim.value * 0.08})`,
+  }));
+
+  return (
+    <Animated.View
+      entering={FadeIn.delay(250 + index * 80).duration(350).springify().damping(18)}
+      layout={Layout.springify().damping(18)}
+      style={styles.educationCardWrapper}
+    >
+      <AnimatedTouchable
+        style={[
+          styles.educationCard,
+          { aspectRatio: isShort ? 1.5 : 1.2, padding: isShort ? 12 : 20 },
+          cardStyle,
+        ]}
+        onPress={() => onSelect(opt.value)}
+        onPressIn={() => { scale.value = withSpring(0.95, { damping: 15 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
+        activeOpacity={1}
+      >
+        <Text style={[styles.educationEmoji, { fontSize: isShort ? 22 : 28 }]}>
+          {opt.emoji}
+        </Text>
+        <Animated.Text
+          style={[
+            styles.educationLabel,
+            active && styles.educationLabelActive,
+          ]}
+        >
+          {opt.label}
+        </Animated.Text>
+      </AnimatedTouchable>
+    </Animated.View>
   );
 }
 
@@ -219,8 +359,18 @@ function SubjectStep({
   return (
     <>
       <View style={[styles.stepContent, { paddingTop: isShort ? 14 : 28 }]}>
-        <Text style={[styles.stepTitle, { fontSize: isShort ? 18 : 22 }]}>What do you want to learn?</Text>
-        <Text style={styles.stepSubtitle}>Choose at least one. You can change this later.</Text>
+        <Animated.Text
+          entering={FadeIn.delay(100).duration(400)}
+          style={[styles.stepTitle, { fontSize: isShort ? 18 : 22 }]}
+        >
+          What do you want to learn?
+        </Animated.Text>
+        <Animated.Text
+          entering={FadeIn.delay(200).duration(400)}
+          style={styles.stepSubtitle}
+        >
+          Choose at least one. You can change this later.
+        </Animated.Text>
       </View>
 
       <ScrollView
@@ -228,35 +378,77 @@ function SubjectStep({
         contentContainerStyle={styles.subjectGrid}
         showsVerticalScrollIndicator={false}
       >
-        {CANONICAL_SUBJECT_KEYS.map((key) => {
-          const meta = SUBJECT_META[key];
-          const active = selected.includes(key);
-          return (
-            <TouchableOpacity
-              key={key}
-              onPress={() => onToggle(key)}
-              activeOpacity={0.8}
-              style={[
-                styles.subjectCard,
-                active ? styles.subjectCardActive : styles.subjectCardInactive,
-                { padding: isShort ? 10 : 14 },
-              ]}
-            >
-              <Ionicons name={meta.icon as any} size={22} color={meta.color} />
-              <Text
-                style={[
-                  styles.subjectLabel,
-                  active && styles.subjectLabelActive,
-                ]}
-                numberOfLines={2}
-              >
-                {meta.short ?? meta.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        {CANONICAL_SUBJECT_KEYS.map((key, i) => (
+          <SubjectChip
+            key={key}
+            subjectKey={key}
+            active={selected.includes(key)}
+            onToggle={onToggle}
+            isShort={isShort}
+            index={i}
+          />
+        ))}
       </ScrollView>
     </>
+  );
+}
+
+function SubjectChip({
+  subjectKey,
+  active,
+  onToggle,
+  isShort,
+  index,
+}: {
+  subjectKey: SubjectKey;
+  active: boolean;
+  onToggle: (key: string) => void;
+  isShort?: boolean;
+  index: number;
+}) {
+  const meta = SUBJECT_META[subjectKey];
+  const scale = useSharedValue(1);
+  const selected = useSharedValue(active ? 1 : 0);
+
+  React.useEffect(() => {
+    selected.value = withSpring(active ? 1 : 0, { damping: 15, stiffness: 200 });
+  }, [active]);
+
+  const chipStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    borderColor: selected.value > 0.5 ? '#ffffff' : '#27272a',
+    backgroundColor: `rgba(255,255,255,${selected.value * 0.08})`,
+  }));
+
+  // Stagger entrance: 3 columns, so row delay based on Math.floor(index/3)
+  const row = Math.floor(index / 3);
+  const enterDelay = 150 + row * 50;
+
+  return (
+    <Animated.View entering={FadeIn.delay(enterDelay).duration(300)} style={styles.subjectCardWrapper}>
+      <AnimatedTouchable
+        onPress={() => onToggle(subjectKey)}
+        onPressIn={() => { scale.value = withSpring(0.92, { damping: 15 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
+        activeOpacity={1}
+        style={[
+          styles.subjectCard,
+          { padding: isShort ? 10 : 14 },
+          chipStyle,
+        ]}
+      >
+        <Ionicons name={meta.icon as any} size={22} color={meta.color} />
+        <Text
+          style={[
+            styles.subjectLabel,
+            active && styles.subjectLabelActive,
+          ]}
+          numberOfLines={2}
+        >
+          {meta.short ?? meta.label}
+        </Text>
+      </AnimatedTouchable>
+    </Animated.View>
   );
 }
 
@@ -268,7 +460,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
 
-  // Progress bar at top edge
   progressTrack: {
     height: 2,
     backgroundColor: '#27272a',
@@ -279,7 +470,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#7c3aed',
   },
 
-  // Header — paddingVertical applied inline (isShort-aware)
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -294,12 +484,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Step content — paddingTop applied inline (isShort-aware)
   stepContent: {
     paddingHorizontal: 24,
     paddingBottom: 8,
   },
-  // stepTitle fontSize applied inline (isShort-aware)
   stepTitle: {
     fontWeight: '700',
     color: '#fafafa',
@@ -312,27 +500,19 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Education 2×2 grid — marginTop/aspectRatio/padding applied inline (isShort-aware)
   educationGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
-  educationCard: {
+  educationCardWrapper: {
     width: '47%',
+  },
+  educationCard: {
     borderRadius: 16,
     borderWidth: 2,
     justifyContent: 'flex-end',
   },
-  educationCardActive: {
-    borderColor: '#ffffff',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  educationCardInactive: {
-    borderColor: '#27272a',
-    backgroundColor: 'transparent',
-  },
-  // educationEmoji fontSize applied inline (isShort-aware)
   educationEmoji: {
     marginBottom: 10,
   },
@@ -345,7 +525,6 @@ const styles = StyleSheet.create({
     color: '#fafafa',
   },
 
-  // Subject 3-column grid
   subjectGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -354,24 +533,14 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     gap: 10,
   },
-  // subjectCard padding applied inline (isShort-aware)
-  subjectCard: {
+  subjectCardWrapper: {
     width: '30%',
+  },
+  subjectCard: {
     borderRadius: 16,
     borderWidth: 2,
     alignItems: 'center',
     gap: 8,
-  },
-  subjectCardActive: {
-    borderColor: '#ffffff',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  subjectCardInactive: {
-    borderColor: '#27272a',
-    backgroundColor: 'transparent',
-  },
-  subjectEmoji: {
-    fontSize: 22,
   },
   subjectLabel: {
     fontSize: 11,
@@ -385,7 +554,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Footer — paddingTop applied inline (isShort-aware)
   footer: {
     borderTopWidth: 1,
     borderTopColor: '#1a1a1a',
@@ -417,19 +585,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 11,
     borderRadius: 999,
-    backgroundColor: '#ffffff',
     minWidth: 140,
     alignItems: 'center',
   },
-  continueBtnDisabled: {
-    backgroundColor: '#27272a',
-  },
   continueBtnText: {
-    color: '#000000',
     fontSize: 14,
     fontWeight: '700',
-  },
-  continueBtnTextDisabled: {
-    color: '#52525b',
   },
 });

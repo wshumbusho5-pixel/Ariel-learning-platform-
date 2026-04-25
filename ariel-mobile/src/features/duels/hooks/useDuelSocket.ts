@@ -200,17 +200,8 @@ export function useDuelSocket({
           break;
         }
 
-        case 'answer_submitted': {
-          // Our answer was acknowledged by server — no UI change needed
-          break;
-        }
-
-        case 'opponent_answered': {
-          // Opponent submitted their answer — could show "opponent answered" indicator
-          break;
-        }
-
         case 'opponent_disconnected': {
+          // Treat as waiting state again
           setWaitingForOpponent(true);
           setOpponentUsername(null);
           break;

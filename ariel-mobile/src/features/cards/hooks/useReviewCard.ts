@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
 import apiClient from '@/shared/api/client';
 import { CARDS } from '@/shared/api/endpoints';
 import { QUERY_KEYS } from '@/shared/constants/queryKeys';
+import { enqueueReview } from '@/shared/offline/reviewQueue';
 import type { CardReview } from '@/shared/types/card';
 
 interface ReviewPayload {
@@ -12,8 +14,14 @@ interface ReviewPayload {
 export function useReviewCard() {
   const queryClient = useQueryClient();
 
-  const mutation = useMutation<CardReview, Error, ReviewPayload>({
+  const mutation = useMutation<CardReview | null, Error, ReviewPayload>({
     mutationFn: async ({ cardId, quality }) => {
+      const net = await NetInfo.fetch();
+      if (!net.isConnected) {
+        // Queue for later sync
+        await enqueueReview(cardId, quality);
+        return null;
+      }
       const res = await apiClient.post<CardReview>(CARDS.review(cardId), {
         quality,
       });
@@ -24,6 +32,10 @@ export function useReviewCard() {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.CARDS.myDeck(),
       });
+    },
+    onError: async (_error, { cardId, quality }) => {
+      // Network failed mid-request — queue it
+      await enqueueReview(cardId, quality);
     },
   });
 

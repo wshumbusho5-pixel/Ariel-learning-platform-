@@ -109,11 +109,6 @@ export interface DuelWsOpponentDisconnected {
   type: 'opponent_disconnected';
 }
 
-export interface DuelWsAnswerSubmitted {
-  type: 'answer_submitted';
-  message?: string;
-}
-
 export interface DuelWsError {
   type: 'error';
   message: string;
@@ -125,7 +120,6 @@ export type DuelWsMessage =
   | DuelWsPlayerJoined
   | DuelWsGameStart
   | DuelWsRoundStart
-  | DuelWsAnswerSubmitted
   | DuelWsRoundResult
   | DuelWsGameOver
   | DuelWsOpponentAnswered
