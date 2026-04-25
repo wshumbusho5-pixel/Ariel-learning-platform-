@@ -1,7 +1,8 @@
 import axios, { AxiosError } from 'axios';
 import { useAuthStore } from '@/shared/auth/authStore';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://ariel-learning-platform-production.up.railway.app';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

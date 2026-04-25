@@ -1,5 +1,7 @@
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8000';
-const WS_BASE_URL = process.env.EXPO_PUBLIC_WS_BASE_URL ?? API_BASE_URL.replace(/^http/, 'ws');
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://ariel-learning-platform-production.up.railway.app';
+const WS_BASE_URL =
+  process.env.EXPO_PUBLIC_WS_BASE_URL ?? API_BASE_URL.replace(/^http/, 'ws');
 
 // ─── Auth (/api/auth) ──────────────────────────────────────────────────────────
 export const AUTH = {
@@ -121,6 +123,8 @@ export const REELS = {
   FEED: '/api/reels/feed',
   MY_REELS: '/api/reels/my-reels',
   SAVED: '/api/reels/saved',
+  SIGN_UPLOAD: '/api/reels/sign-upload',
+  SAVE: '/api/reels/save',
   byId: (id: string) => `/api/reels/${id}`,
 } as const;
 
