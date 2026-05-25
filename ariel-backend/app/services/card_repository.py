@@ -1,5 +1,5 @@
 from typing import Optional, List
-from app.models.card import Card, CardCreate, CardUpdate, DeckStats
+from app.models.card import Card, CardCreate, CardUpdate, DeckStats, CardVisibility
 from app.services.database_service import db_service
 from app.services.spaced_repetition import SpacedRepetitionService
 from app.core.subjects import normalize_subject
@@ -17,6 +17,11 @@ class CardRepository:
         # Calculate initial next_review (immediate for new cards)
         next_review = datetime.utcnow()
 
+        # Personal cards are the owner's own truth and are study-safe immediately.
+        # Shared cards (class/public) start in discussion so an unverified guess
+        # can't be saved into other people's decks until it's been vetted.
+        status = "verified" if card_data.visibility == CardVisibility.PRIVATE else "in_discussion"
+
         card_dict = {
             "user_id": user_id,
             "question": card_data.question,
@@ -27,6 +32,9 @@ class CardRepository:
             "tags": card_data.tags,
             "visibility": card_data.visibility,
             "class_id": card_data.class_id,
+            "status": status,
+            "verified_by": None,
+            "verified_at": None,
             "likes": 0,
             "saves": 0,
             "review_count": 0,
@@ -61,6 +69,9 @@ class CardRepository:
                 "tags": card_data.tags,
                 "visibility": card_data.visibility,
                 "class_id": card_data.class_id,
+                "status": "verified" if card_data.visibility == CardVisibility.PRIVATE else "in_discussion",
+                "verified_by": None,
+                "verified_at": None,
                 # Caption only on first card so it shows once in the feed
                 "caption": deck_caption if (i == 0 and deck_caption) else None,
                 "likes": 0,
@@ -284,6 +295,12 @@ class CardRepository:
         if not original_card or original_card.get("visibility", "public") == "private":
             return None
 
+        # Only verified cards are study-safe. Block saving an in-discussion guess
+        # into someone's deck — drilling a wrong answer is the exact false-memory
+        # problem Ariel exists to prevent.
+        if original_card.get("status", "in_discussion") != "verified":
+            raise ValueError("This card is still in discussion. It can be saved once its answer is verified.")
+
         # Create a copy for the user
         card_copy = {
             "user_id": user_id,
@@ -295,6 +312,9 @@ class CardRepository:
             "tags": original_card.get("tags", []),
             "visibility": "private",  # Saved cards are private by default
             "class_id": None,
+            "status": "verified",  # came from a verified card, so the copy is study-safe
+            "verified_by": original_card.get("verified_by"),
+            "verified_at": original_card.get("verified_at"),
             "likes": 0,
             "saves": 0,
             "review_count": 0,
@@ -317,6 +337,28 @@ class CardRepository:
         card_copy["id"] = str(result.inserted_id)
         del card_copy["_id"]
         return Card(**card_copy)
+
+    @staticmethod
+    async def verify_card(card_id: str, verified_by: str, verified: bool = True) -> Optional[Card]:
+        """Mark a card's answer as verified (study-safe) or send it back to discussion."""
+        db = db_service.get_db()
+
+        await db[CardRepository.collection_name].update_one(
+            {"_id": ObjectId(card_id)},
+            {"$set": {
+                "status": "verified" if verified else "in_discussion",
+                "verified_by": verified_by if verified else None,
+                "verified_at": datetime.utcnow() if verified else None,
+                "updated_at": datetime.utcnow(),
+            }}
+        )
+
+        card_doc = await db[CardRepository.collection_name].find_one({"_id": ObjectId(card_id)})
+        if not card_doc:
+            return None
+        card_doc["id"] = str(card_doc["_id"])
+        del card_doc["_id"]
+        return Card(**card_doc)
 
     @staticmethod
     async def delete_card(card_id: str, user_id: str) -> bool:

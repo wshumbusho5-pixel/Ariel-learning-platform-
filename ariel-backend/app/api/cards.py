@@ -13,6 +13,7 @@ from app.services.gamification_service import GamificationService
 from app.services.user_repository import UserRepository
 from app.services.personalized_feed import personalized_feed_service
 from app.api.auth import get_current_user_dependency, get_optional_user_dependency
+from app.api.admin import require_admin
 from app.services.database_service import db_service
 from app.core.database import get_database
 from app.api.activity_feed import create_activity
@@ -496,10 +497,34 @@ async def save_card_to_deck(
     card_id: str,
     current_user: User = Depends(get_current_user_dependency)
 ):
-    """Save someone else's public card to your deck"""
-    card = await CardRepository.save_card(card_id, current_user.id)
+    """Save someone else's public card to your deck.
+
+    Only verified cards can be saved — an in-discussion card is still someone's
+    unconfirmed take, so we don't let it into a study deck.
+    """
+    try:
+        card = await CardRepository.save_card(card_id, current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     if not card:
         raise HTTPException(status_code=404, detail="Card not found or is private")
+    return card
+
+
+@router.post("/{card_id}/verify", response_model=Card)
+async def verify_card(
+    card_id: str,
+    verified: bool = Query(True, description="Set to false to send a card back to discussion"),
+    admin: User = Depends(require_admin)
+):
+    """Mark a card's answer as verified so others can save it into their study decks.
+
+    Admin-only and manual for now — this is the "verify by hand" step for the first
+    cohort experiment, before any automated or accepted-answer flow exists.
+    """
+    card = await CardRepository.verify_card(card_id, verified_by=admin.id, verified=verified)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
     return card
 
 # ============== COMMENTS ==============

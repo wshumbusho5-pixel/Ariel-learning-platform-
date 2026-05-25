@@ -8,6 +8,10 @@ class CardVisibility(str, Enum):
     CLASS = "class"      # Shared with class/group
     PUBLIC = "public"    # Everyone can see (trending feed)
 
+class CardStatus(str, Enum):
+    IN_DISCUSSION = "in_discussion"  # Someone's take, open for correction; NOT study-safe yet
+    VERIFIED = "verified"            # Answer settled; safe to save into a study deck
+
 class Card(BaseModel):
     id: Optional[str] = None
     user_id: str
@@ -28,6 +32,12 @@ class Card(BaseModel):
     class_id: Optional[str] = None  # If shared with a class
     likes: int = 0
     saves: int = 0  # How many people saved this card to their deck
+
+    # Verification — gates whether others can save this into their study deck.
+    # Prevents an unconfirmed guess from being drilled as if it were correct.
+    status: CardStatus = CardStatus.IN_DISCUSSION
+    verified_by: Optional[str] = None   # user_id of whoever verified the answer
+    verified_at: Optional[datetime] = None
 
     # Spaced repetition data
     review_count: int = 0
