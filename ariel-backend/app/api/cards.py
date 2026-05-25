@@ -374,6 +374,8 @@ async def get_following_feed(
         async for card_doc in cursor:
             card_doc["id"] = str(card_doc["_id"])
             del card_doc["_id"]
+            # Older cards predate the status field — default them so the UI badge renders
+            card_doc.setdefault("status", "in_discussion")
             creator = await get_user(card_doc.get("user_id", ""))
             if creator:
                 card_doc["created_by"] = {

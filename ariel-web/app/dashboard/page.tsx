@@ -75,6 +75,8 @@ interface FeedCard {
   community_reviews?: number;
   community_pct_correct?: number;
   caption?: string;
+  status?: string;        // 'in_discussion' | 'verified' — gates saving into a deck
+  verified_by?: string;
 }
 
 interface DueCard { id: string; question: string; subject?: string; }
@@ -180,6 +182,13 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   });
   const [saveCount, setSaveCount] = useState(card.saves ?? 0);
 
+  // Verification gate: in-discussion cards can't be saved into a deck yet
+  const [status, setStatus] = useState<string | undefined>(card.status);
+  const [blockToast, setBlockToast] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const isAdmin = user?.role === 'admin';
+  const inDiscussion = status === 'in_discussion';
+
   const [cardComments, setCardComments] = useState<any[]>([]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
@@ -270,6 +279,12 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // In-discussion cards aren't study-safe yet — block the save with a clear nudge
+    if (inDiscussion) {
+      setBlockToast(true);
+      setTimeout(() => setBlockToast(false), 2200);
+      return;
+    }
     const next = !saved;
     if (next) {
       cardsAPI.saveCardToDeck(card.id).catch(() => {});
@@ -285,6 +300,20 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
       const updated = next ? [...stored.filter(id => id !== card.id), card.id] : stored.filter(id => id !== card.id);
       localStorage.setItem('ariel_saved', JSON.stringify(updated));
     } catch {}
+  };
+
+  const handleVerify = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (verifying) return;
+    setVerifying(true);
+    try {
+      await cardsAPI.verifyCard(card.id, true);
+      setStatus('verified');
+    } catch {
+      // leave the card in discussion on failure
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const [shareToast, setShareToast] = useState(false);
@@ -332,9 +361,9 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   return (
     <div className="relative py-4">
       {/* Toasts */}
-      {(saveToast || shareToast) && (
+      {(saveToast || shareToast || blockToast) && (
         <div className="animate-toast absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
-          {saveToast ? 'Saved to deck ✓' : 'Link copied ✓'}
+          {blockToast ? 'Still in discussion — verified cards only' : saveToast ? 'Saved to deck ✓' : 'Link copied ✓'}
         </div>
       )}
 
@@ -397,15 +426,39 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
 
             {/* Content */}
             <div className="flex-1 flex flex-col px-4 py-3 overflow-hidden">
-              {/* Top: label + subject chip */}
-              <div className="flex items-center justify-between mb-1">
-                <span
-                  className="text-[10px] font-bold tracking-widest uppercase"
-                  style={{ color: flipped ? '#8b5cf6' : (SUBJECT_COLOR[key] ?? '#a1a1aa') }}
-                >
-                  {flipped ? 'Answer' : 'Question'}
-                </span>
-                <span className="text-[10px] font-medium text-zinc-400 flex items-center gap-1">
+              {/* Top: label + status badge + subject chip */}
+              <div className="flex items-center justify-between mb-1 gap-2">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    className="text-[10px] font-bold tracking-widest uppercase flex-shrink-0"
+                    style={{ color: flipped ? '#8b5cf6' : (SUBJECT_COLOR[key] ?? '#a1a1aa') }}
+                  >
+                    {flipped ? 'Answer' : 'Question'}
+                  </span>
+                  {status && (inDiscussion ? (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 border border-amber-500/30 flex-shrink-0">
+                      <span className="w-1 h-1 rounded-full bg-amber-500" />
+                      In discussion
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 flex-shrink-0">
+                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Verified
+                    </span>
+                  ))}
+                  {isAdmin && inDiscussion && (
+                    <button
+                      onClick={handleVerify}
+                      disabled={verifying}
+                      className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/15 text-violet-700 border border-violet-500/30 hover:bg-violet-500/25 active:scale-95 transition disabled:opacity-50 flex-shrink-0"
+                    >
+                      {verifying ? 'Verifying…' : 'Verify ✓'}
+                    </button>
+                  )}
+                </div>
+                <span className="text-[10px] font-medium text-zinc-400 flex items-center gap-1 flex-shrink-0">
                   <SubjectIcon subject={key} size={11} />{meta.short}
                 </span>
               </div>

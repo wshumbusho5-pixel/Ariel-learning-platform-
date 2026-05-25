@@ -273,6 +273,11 @@ export const cardsAPI = {
     const response = await api.post(`/api/cards/${cardId}/save`);
     return response.data;
   },
+
+  verifyCard: async (cardId: string, verified = true) => {
+    const response = await api.post(`/api/cards/${cardId}/verify?verified=${verified}`);
+    return response.data;
+  },
 };
 
 // AI Card Generator API
