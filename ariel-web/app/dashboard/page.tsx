@@ -77,6 +77,7 @@ interface FeedCard {
   caption?: string;
   status?: string;        // 'in_discussion' | 'verified' — gates saving into a deck
   verified_by?: string;
+  refined_by?: string;    // username of the contributor whose answer was accepted
 }
 
 interface DueCard { id: string; question: string; subject?: string; }
@@ -188,6 +189,62 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   const [verifying, setVerifying] = useState(false);
   const isAdmin = user?.role === 'admin';
   const inDiscussion = status === 'in_discussion';
+
+  // ── Proposed answers (crowd refinement) ──
+  const [refinedBy, setRefinedBy] = useState<string | undefined>(card.refined_by);
+  const [showSuggest, setShowSuggest] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestionsLoaded, setSuggestionsLoaded] = useState(false);
+  const [suggestText, setSuggestText] = useState('');
+  const [submittingSuggest, setSubmittingSuggest] = useState(false);
+  const [isCardOwner, setIsCardOwner] = useState(false);
+  const [accepting, setAccepting] = useState<string | null>(null);
+  const [acceptToast, setAcceptToast] = useState(false);
+
+  const loadSuggestions = useCallback(async () => {
+    try {
+      const res = await cardsAPI.getCardSuggestions(card.id);
+      setSuggestions(res.suggestions || []);
+      setIsCardOwner(!!res.is_card_owner);
+      setSuggestionsLoaded(true);
+    } catch {}
+  }, [card.id]);
+
+  const toggleSuggest = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = !showSuggest;
+    setShowSuggest(next);
+    if (next && !suggestionsLoaded) loadSuggestions();
+  };
+
+  const submitSuggestion = async () => {
+    const text = suggestText.trim();
+    if (!text || submittingSuggest) return;
+    setSubmittingSuggest(true);
+    try {
+      const s = await cardsAPI.addCardSuggestion(card.id, text);
+      setSuggestions(prev => [...prev, s]);
+      setSuggestText('');
+    } catch {}
+    setSubmittingSuggest(false);
+  };
+
+  const acceptSuggestion = async (sid: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (accepting) return;
+    setAccepting(sid);
+    try {
+      const updated = await cardsAPI.acceptCardSuggestion(card.id, sid);
+      setStatus('verified');
+      setRefinedBy(updated?.refined_by);
+      setSuggestions(prev => prev.map(s =>
+        s.id === sid ? { ...s, status: 'accepted' } : (s.status === 'accepted' ? { ...s, status: 'superseded' } : s)
+      ));
+      setAcceptToast(true);
+      setTimeout(() => setAcceptToast(false), 1800);
+    } catch {}
+    setAccepting(null);
+  };
 
   const [cardComments, setCardComments] = useState<any[]>([]);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
@@ -361,9 +418,9 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
   return (
     <div className="relative py-4">
       {/* Toasts */}
-      {(saveToast || shareToast || blockToast) && (
+      {(saveToast || shareToast || blockToast || acceptToast) && (
         <div className="animate-toast absolute top-4 left-1/2 -translate-x-1/2 z-20 px-3.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-semibold text-white whitespace-nowrap pointer-events-none">
-          {blockToast ? 'Still in discussion — verified cards only' : saveToast ? 'Saved to deck ✓' : 'Link copied ✓'}
+          {acceptToast ? 'Answer accepted ✓' : blockToast ? 'Still in discussion — verified cards only' : saveToast ? 'Saved to deck ✓' : 'Link copied ✓'}
         </div>
       )}
 
@@ -481,7 +538,9 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
                 className="flex items-center justify-between pt-2 mt-1 border-t"
                 style={{ borderColor: flipped ? 'rgba(139,92,246,0.12)' : 'rgba(0,0,0,0.06)' }}
               >
-                {card.community_reviews != null && card.community_reviews > 0 ? (
+                {refinedBy ? (
+                  <span className="text-[10px] font-semibold text-violet-600">refined by @{refinedBy}</span>
+                ) : card.community_reviews != null && card.community_reviews > 0 ? (
                   <span className="text-[10px] text-zinc-400">{card.community_reviews} studied · {card.community_pct_correct}% correct</span>
                 ) : <span />}
                 <span className="text-[10px]" style={{ color: flipped ? 'rgba(139,92,246,0.45)' : 'rgba(0,0,0,0.22)' }}>
@@ -534,6 +593,86 @@ function CardTile({ card, onComment, flush = false }: { card: FeedCard; onCommen
               </svg>
             </button>
           </div>
+
+          {/* ── Proposed answers (crowd refinement) ── */}
+          {(inDiscussion || suggestions.length > 0) && (
+            <div className="mt-2.5">
+              <button
+                onClick={toggleSuggest}
+                className="flex items-center gap-1.5 text-[13px] font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+                  <circle cx="12" cy="12" r="9" />
+                </svg>
+                {isCardOwner ? 'Review proposed answers' : 'Suggest a better answer'}
+                {suggestions.length > 0 && <span className="text-zinc-500">({suggestions.length})</span>}
+              </button>
+
+              {showSuggest && (
+                <div className="mt-2.5 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-3 space-y-3" onClick={e => e.stopPropagation()}>
+                  {/* Composer */}
+                  <div className="space-y-2">
+                    <textarea
+                      value={suggestText}
+                      onChange={e => setSuggestText(e.target.value)}
+                      placeholder="Propose a clear, correct answer…"
+                      rows={3}
+                      className="w-full bg-zinc-800/70 border border-zinc-700 rounded-xl px-3 py-2 text-[14px] text-zinc-100 placeholder-zinc-500 resize-none focus:outline-none focus:border-violet-500"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        onClick={submitSuggestion}
+                        disabled={!suggestText.trim() || submittingSuggest}
+                        className="px-3.5 py-1.5 rounded-full bg-violet-500 text-white text-[13px] font-semibold disabled:opacity-40 active:scale-95 transition"
+                      >
+                        {submittingSuggest ? 'Posting…' : 'Suggest answer'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* List of proposed answers */}
+                  {suggestions.map(s => (
+                    <div key={s.id} className="flex items-start gap-2.5 pt-3 border-t border-zinc-800">
+                      <div className="w-7 h-7 rounded-full bg-zinc-800 overflow-hidden flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {s.profile_picture ? (
+                          <img src={s.profile_picture} className="w-7 h-7 object-cover" alt={s.username} />
+                        ) : (
+                          <span className="text-[11px] font-bold text-zinc-400">{(s.username || 'U')[0].toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[14px] font-bold" style={{ color: '#e7e9ea' }}>{s.username}</span>
+                          {s.status === 'accepted' && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                              Accepted
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[14px] leading-relaxed break-words mt-0.5" style={{ color: '#cbd5cf' }}>{s.proposed_answer}</p>
+                      </div>
+                      {isCardOwner && s.status !== 'accepted' && (
+                        <button
+                          onClick={e => acceptSuggestion(s.id, e)}
+                          disabled={accepting === s.id}
+                          className="flex-shrink-0 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[12px] font-bold hover:bg-emerald-500/25 active:scale-95 transition disabled:opacity-50"
+                        >
+                          {accepting === s.id ? '…' : 'Accept'}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {suggestionsLoaded && suggestions.length === 0 && (
+                    <p className="text-[13px] text-zinc-500 text-center pt-1">No proposed answers yet. Be the first.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Comments ── */}
           {cardComments.length > 0 && (

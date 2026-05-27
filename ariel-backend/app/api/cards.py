@@ -2,9 +2,10 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import List, Optional
 from bson import ObjectId
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
-from app.models.card import Card, CardCreate, CardUpdate, DeckStats, BulkCardCreate, CardReview, CardReviewRequest
+from app.models.card import Card, CardCreate, CardUpdate, DeckStats, BulkCardCreate, CardReview, CardReviewRequest, CardSuggestionCreate
 from app.core.subjects import normalize_subject
 from app.models.user import User
 from app.models.activity import ActivityType
@@ -528,6 +529,170 @@ async def verify_card(
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
     return card
+
+# ============== PROPOSED ANSWERS (crowd refinement) ==============
+
+@router.get("/{card_id}/suggestions")
+async def get_card_suggestions(
+    card_id: str,
+    current_user: User = Depends(get_current_user_dependency),
+    db=Depends(get_database)
+):
+    """List proposed answers for a card. `is_card_owner` tells the client whether to show Accept."""
+    try:
+        card = await db["cards"].find_one({"_id": ObjectId(card_id)})
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        is_owner = str(card.get("user_id")) == current_user.id
+
+        raw = await db["card_suggestions"].find({"card_id": card_id}).sort("created_at", 1).to_list(length=100)
+        suggestions = []
+        for s in raw:
+            suggestions.append({
+                "id": str(s["_id"]),
+                "card_id": card_id,
+                "user_id": str(s.get("user_id", "")),
+                "username": s.get("username", "unknown"),
+                "profile_picture": s.get("profile_picture"),
+                "proposed_answer": s.get("proposed_answer", ""),
+                "explanation": s.get("explanation"),
+                "status": s.get("status", "pending"),
+                "created_at": s["created_at"].isoformat() if hasattr(s.get("created_at"), "isoformat") else str(s.get("created_at", "")),
+            })
+        return {"is_card_owner": is_owner, "suggestions": suggestions}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting suggestions: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get suggestions: {str(e)}")
+
+
+@router.post("/{card_id}/suggestions")
+async def create_card_suggestion(
+    card_id: str,
+    body: CardSuggestionCreate,
+    current_user: User = Depends(get_current_user_dependency),
+    db=Depends(get_database)
+):
+    """Propose a cleaner/correct answer for an in-discussion card (distinct from a comment)."""
+    try:
+        card = await db["cards"].find_one({"_id": ObjectId(card_id)})
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+
+        answer = (body.proposed_answer or "").strip()
+        if not answer:
+            raise HTTPException(status_code=400, detail="A proposed answer is required")
+
+        doc = {
+            "card_id": card_id,
+            "user_id": current_user.id,
+            "username": current_user.username,
+            "profile_picture": getattr(current_user, "profile_picture", None),
+            "proposed_answer": answer,
+            "explanation": ((body.explanation or "").strip() or None),
+            "status": "pending",
+            "created_at": datetime.utcnow(),
+        }
+        result = await db["card_suggestions"].insert_one(doc)
+        return {
+            "id": str(result.inserted_id),
+            "card_id": card_id,
+            "user_id": current_user.id,
+            "username": current_user.username,
+            "profile_picture": getattr(current_user, "profile_picture", None),
+            "proposed_answer": answer,
+            "explanation": doc["explanation"],
+            "status": "pending",
+            "created_at": doc["created_at"].isoformat(),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating suggestion: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create suggestion: {str(e)}")
+
+
+@router.post("/{card_id}/suggestions/{suggestion_id}/accept", response_model=Card)
+async def accept_card_suggestion(
+    card_id: str,
+    suggestion_id: str,
+    current_user: User = Depends(get_current_user_dependency),
+    db=Depends(get_database)
+):
+    """Card owner accepts a proposed answer: it replaces the card's answer, the card
+    becomes verified, the poster's original answer is preserved, and the suggester is credited."""
+    try:
+        card = await db["cards"].find_one({"_id": ObjectId(card_id)})
+        if not card:
+            raise HTTPException(status_code=404, detail="Card not found")
+        if str(card.get("user_id")) != current_user.id:
+            raise HTTPException(status_code=403, detail="Only the card's author can accept an answer")
+
+        suggestion = await db["card_suggestions"].find_one({"_id": ObjectId(suggestion_id), "card_id": card_id})
+        if not suggestion:
+            raise HTTPException(status_code=404, detail="Suggestion not found")
+
+        now = datetime.utcnow()
+        # Preserve the poster's original answer the first time the card is refined
+        original_answer = card.get("original_answer") or card.get("answer")
+        contributors = card.get("contributors", []) or []
+        suggester_id = str(suggestion.get("user_id", ""))
+        if suggester_id and suggester_id not in contributors:
+            contributors.append(suggester_id)
+
+        await db["cards"].update_one(
+            {"_id": ObjectId(card_id)},
+            {"$set": {
+                "answer": suggestion.get("proposed_answer", card.get("answer")),
+                "explanation": suggestion.get("explanation") or card.get("explanation"),
+                "original_answer": original_answer,
+                "status": "verified",
+                "verified_by": current_user.id,
+                "verified_at": now,
+                "refined_by": suggestion.get("username"),
+                "refined_by_user_id": suggester_id,
+                "contributors": contributors,
+                "accepted_suggestion_id": suggestion_id,
+                "updated_at": now,
+            }}
+        )
+
+        # This suggestion is now the accepted one; supersede any previously accepted answer
+        await db["card_suggestions"].update_many(
+            {"card_id": card_id, "status": "accepted"},
+            {"$set": {"status": "superseded"}}
+        )
+        await db["card_suggestions"].update_one(
+            {"_id": ObjectId(suggestion_id)},
+            {"$set": {"status": "accepted"}}
+        )
+
+        # Recognise the contributor — this is the connection moment
+        if suggester_id and suggester_id != current_user.id:
+            try:
+                await create_activity(
+                    db=db,
+                    user_id=suggester_id,
+                    activity_type=ActivityType.ANSWER_ACCEPTED,
+                    title=f"{suggestion.get('username', 'Someone')}'s answer was accepted",
+                    description=f"refined a card: \"{card.get('question', '')[:60]}\"",
+                    icon="✅",
+                    related_user_id=current_user.id,
+                    metadata={"card_id": card_id, "suggestion_id": suggestion_id},
+                )
+            except Exception as act_err:
+                logger.error(f"Failed to log answer_accepted activity: {act_err}")
+
+        updated = await db["cards"].find_one({"_id": ObjectId(card_id)})
+        updated["id"] = str(updated["_id"])
+        del updated["_id"]
+        return Card(**updated)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error accepting suggestion: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to accept suggestion: {str(e)}")
 
 # ============== COMMENTS ==============
 

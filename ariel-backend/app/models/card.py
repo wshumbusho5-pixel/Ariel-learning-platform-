@@ -39,6 +39,14 @@ class Card(BaseModel):
     verified_by: Optional[str] = None   # user_id of whoever verified the answer
     verified_at: Optional[datetime] = None
 
+    # Crowd refinement — when a suggested answer is accepted, the card's answer is
+    # replaced (the poster's original is preserved here) and the contributor is credited.
+    original_answer: Optional[str] = None
+    refined_by: Optional[str] = None            # username of the latest accepted contributor ("refined by @x")
+    refined_by_user_id: Optional[str] = None
+    contributors: List[str] = []                # user_ids whose suggestions have been accepted
+    accepted_suggestion_id: Optional[str] = None
+
     # Spaced repetition data
     review_count: int = 0
     ease_factor: float = 2.5
@@ -64,6 +72,11 @@ class CardCreate(BaseModel):
     tags: List[str] = []
     visibility: CardVisibility = CardVisibility.PRIVATE
     class_id: Optional[str] = None
+
+class CardSuggestionCreate(BaseModel):
+    """A proposed answer for an in-discussion card (distinct from a chat comment)."""
+    proposed_answer: str
+    explanation: Optional[str] = None
 
 class CardUpdate(BaseModel):
     question: Optional[str] = None

@@ -278,6 +278,21 @@ export const cardsAPI = {
     const response = await api.post(`/api/cards/${cardId}/verify?verified=${verified}`);
     return response.data;
   },
+
+  getCardSuggestions: async (cardId: string) => {
+    const response = await api.get(`/api/cards/${cardId}/suggestions`);
+    return response.data;
+  },
+
+  addCardSuggestion: async (cardId: string, proposedAnswer: string, explanation?: string) => {
+    const response = await api.post(`/api/cards/${cardId}/suggestions`, { proposed_answer: proposedAnswer, explanation });
+    return response.data;
+  },
+
+  acceptCardSuggestion: async (cardId: string, suggestionId: string) => {
+    const response = await api.post(`/api/cards/${cardId}/suggestions/${suggestionId}/accept`);
+    return response.data;
+  },
 };
 
 // AI Card Generator API

@@ -25,6 +25,7 @@ class ActivityType(str, Enum):
     # Content
     STORY_POSTED = "story_posted"
     COMMENT_POSTED = "comment_posted"
+    ANSWER_ACCEPTED = "answer_accepted"  # Your suggested answer was accepted and now refines a card
 
 
 class Activity(BaseModel):
