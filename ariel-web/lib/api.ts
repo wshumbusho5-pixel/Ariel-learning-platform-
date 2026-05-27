@@ -293,6 +293,11 @@ export const cardsAPI = {
     const response = await api.post(`/api/cards/${cardId}/suggestions/${suggestionId}/accept`);
     return response.data;
   },
+
+  getContributions: async (userId: string) => {
+    const response = await api.get(`/api/cards/contributions/${userId}`);
+    return response.data;
+  },
 };
 
 // AI Card Generator API

@@ -2,8 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { socialAPI } from '@/lib/api';
+import { socialAPI, cardsAPI } from '@/lib/api';
 import UserCard from '@/components/UserCard';
+
+interface Contributions {
+  cards_refined: number;
+  people_reached: number;
+  acceptance_rate: number;
+  subjects: { subject: string; count: number }[];
+}
 
 interface UserProfile {
   id: string;
@@ -26,12 +33,19 @@ interface UserProfile {
   created_at: string;
 }
 
+function fmtCount(n: number): string {
+  if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(n);
+}
+
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
   const userId = params.userId as string;
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [contrib, setContrib] = useState<Contributions | null>(null);
   const [followers, setFollowers] = useState<any[]>([]);
   const [following, setFollowing] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'about' | 'followers' | 'following'>('about');
@@ -49,6 +63,7 @@ export default function ProfilePage() {
       const data = await socialAPI.getUserProfile(userId);
       setProfile(data);
       setIsFollowing(data.is_following);
+      cardsAPI.getContributions(userId).then(setContrib).catch(() => {});
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -262,6 +277,43 @@ export default function ProfilePage() {
                 {s}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Contributions — reputation earned by accepted answers, not upvotes */}
+        {contrib && contrib.cards_refined > 0 && (
+          <div className="mt-4 rounded-2xl border border-violet-500/20 bg-violet-500/[0.06] p-3.5">
+            <div className="flex items-center gap-1.5 mb-3">
+              <svg className="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-violet-300">Contributions</span>
+            </div>
+            <div className="flex gap-6">
+              <div>
+                <p className="text-[20px] font-black leading-none" style={{ color: '#e7e9ea' }}>{contrib.cards_refined}</p>
+                <p className="text-[12px] mt-1" style={{ color: '#8b9099' }}>cards refined</p>
+              </div>
+              <div>
+                <p className="text-[20px] font-black leading-none" style={{ color: '#e7e9ea' }}>{fmtCount(contrib.people_reached)}</p>
+                <p className="text-[12px] mt-1" style={{ color: '#8b9099' }}>people reached</p>
+              </div>
+              {contrib.acceptance_rate > 0 && (
+                <div>
+                  <p className="text-[20px] font-black leading-none" style={{ color: '#e7e9ea' }}>{contrib.acceptance_rate}%</p>
+                  <p className="text-[12px] mt-1" style={{ color: '#8b9099' }}>accepted</p>
+                </div>
+              )}
+            </div>
+            {contrib.subjects.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {contrib.subjects.slice(0, 6).map(s => (
+                  <span key={s.subject} className="px-2.5 py-0.5 text-[12px] font-medium bg-zinc-900/60 border border-zinc-800 text-zinc-400 rounded-full">
+                    {s.subject} · {s.count}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

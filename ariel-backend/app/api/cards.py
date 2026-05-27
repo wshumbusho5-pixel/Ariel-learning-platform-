@@ -694,6 +694,47 @@ async def accept_card_suggestion(
         logger.error(f"Error accepting suggestion: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to accept suggestion: {str(e)}")
 
+
+@router.get("/contributions/{user_id}")
+async def get_user_contributions(
+    user_id: str,
+    current_user: User = Depends(get_current_user_dependency),
+    db=Depends(get_database)
+):
+    """A user's verified-contribution record: cards they've refined (had an answer
+    accepted on), how many people study those cards, and a per-subject breakdown.
+    This is reputation earned by accepted answers, not by upvotes."""
+    try:
+        cards_refined = 0
+        people_reached = 0
+        subj_counts: dict = {}
+        async for c in db["cards"].find({"contributors": user_id}):
+            cards_refined += 1
+            people_reached += int(c.get("saves", 0) or 0)
+            subj = c.get("subject") or "Other"
+            subj_counts[subj] = subj_counts.get(subj, 0) + 1
+
+        total_suggestions = await db["card_suggestions"].count_documents({"user_id": user_id})
+        accepted_suggestions = await db["card_suggestions"].count_documents({"user_id": user_id, "status": "accepted"})
+        acceptance_rate = round((accepted_suggestions / total_suggestions) * 100) if total_suggestions else 0
+
+        subjects = sorted(
+            [{"subject": s, "count": n} for s, n in subj_counts.items()],
+            key=lambda x: x["count"], reverse=True
+        )
+        return {
+            "user_id": user_id,
+            "cards_refined": cards_refined,
+            "people_reached": people_reached,
+            "suggestions_made": total_suggestions,
+            "suggestions_accepted": accepted_suggestions,
+            "acceptance_rate": acceptance_rate,
+            "subjects": subjects,
+        }
+    except Exception as e:
+        logger.error(f"Error getting contributions: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get contributions: {str(e)}")
+
 # ============== COMMENTS ==============
 
 @router.get("/{card_id}/comments")
